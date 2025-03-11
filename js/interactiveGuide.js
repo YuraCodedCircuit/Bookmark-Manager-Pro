@@ -397,12 +397,11 @@ export const interactiveGuide = async (status) => {
             // Start the animation
             startAnimation();
         }
-        // currentGuideStep=112;
 
         const guideSteps = async () => {
             switch (currentGuideStep) {
                 case 0:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `mainBody`;
                     updateMiddlePosition();
@@ -410,7 +409,7 @@ export const interactiveGuide = async (status) => {
                     imagePreload1.src = step2ImageBase64[0];
                     break;
                 case 1:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `mainBody`;
                     updateMiddlePosition();
@@ -420,7 +419,7 @@ export const interactiveGuide = async (status) => {
                     break;
                 case 2:
                     let start = true;
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `mainBody`;
                     pseudoAnimation('guideStepImg', step3ImageBase64);
@@ -433,25 +432,25 @@ export const interactiveGuide = async (status) => {
                     }
                     break;
                 case 3:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `mainBody`;
                     updateMiddlePosition();
                     break;
                 case 4:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `mainBody`;
                     updateMiddlePosition();
                     break;
                 case 5:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `addressBarBody`;
                     updateMiddlePosition();
                     break;
                 case 6:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `bookmarksBody`;
                     updateMiddlePosition();
@@ -459,7 +458,7 @@ export const interactiveGuide = async (status) => {
                 case 7:
                     createContextMenu(true, 'default', { x: (window.innerWidth / 2), y: (window.innerHeight / 2) });
                     await waitForElement('#contextMenuBody').then(() => {
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `contextMenuBody`;
                         updateMiddlePosition();
@@ -469,7 +468,7 @@ export const interactiveGuide = async (status) => {
                     createContextMenu(false, 'clean');
                     createAndEditBookmarksWindow('default', 'newFolder');
                     await waitForElement('#mainWindowBody').then(() => {
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `mainWindowBody`;
                         updateMiddlePosition();
@@ -481,7 +480,7 @@ export const interactiveGuide = async (status) => {
                     const newFolderName = 'New Folder';
                     inputEl.value = newFolderName;
                     bookmarkTextPreviewEl.innerText = newFolderName;
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `titleEditorInputContainer`;
                     updateMiddlePosition();
@@ -491,7 +490,7 @@ export const interactiveGuide = async (status) => {
                     linkEditorEl.style.display = 'flex';
                     const urlEditorInputEl = document.getElementById('urlEditorInput');
                     urlEditorInputEl.value = 'https://www.example.com/';
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `urlEditorInput`;
                     updateMiddlePosition();
@@ -501,25 +500,25 @@ export const interactiveGuide = async (status) => {
                     urlEditorInputEls.value = '';
                     const linkEditorEls = document.getElementById('linkEditor');
                     linkEditorEls.style.display = 'none';
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `listToSelectFolder`;
                     updateMiddlePosition();
                     break;
                 case 12:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `showBookmarkPreview`;
                     updateMiddlePosition();
                     break;
                 case 13:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightStyleMenuContainer`;
                     updateMiddlePosition();
                     break;
                 case 14:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `bookmarkBoxStyleBody`;
                     updateMiddlePosition();
@@ -529,7 +528,7 @@ export const interactiveGuide = async (status) => {
                     if (buttonColor) {
                         buttonColor.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `styleMenuBody`;
                     updateMiddlePosition();
@@ -539,7 +538,7 @@ export const interactiveGuide = async (status) => {
                     if (buttonImage) {
                         buttonImage.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `styleMenuBody`;
                     updateMiddlePosition();
@@ -549,7 +548,7 @@ export const interactiveGuide = async (status) => {
                     if (buttonText) {
                         buttonText.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `styleMenuBody`;
                     updateMiddlePosition();
@@ -559,19 +558,19 @@ export const interactiveGuide = async (status) => {
                     if (buttonFont) {
                         buttonFont.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `styleMenuBody`;
                     updateMiddlePosition();
                     break;
                 case 19:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `buttonsContainerForNew`;
                     updateMiddlePosition();
                     break;
                 case 20:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `buttonsContainerForSave`;
                     updateMiddlePosition();
@@ -582,7 +581,7 @@ export const interactiveGuide = async (status) => {
                         contextMenuWindowSave.click();
                     }
                     await waitForElement('#bookmarkBody').then(() => {
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `bookmarkBody`;
                         updateMiddlePosition();
@@ -595,7 +594,7 @@ export const interactiveGuide = async (status) => {
                         userProfileExport.currentIdToEdit = getIdOfObjectWithIndexZero;
                         createContextMenu(true, 'bookmark', {x: (elementRect.x + (elementRect.width / 2)), y: (elementRect.y + (elementRect.height / 2))});
                         await waitForElement('#contextMenuBody').then(() => {
-                            createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                            createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                             elementID = `guideStep`;
                             targetElementID = `contextMenuBody`;
                             updateMiddlePosition();
@@ -608,7 +607,7 @@ export const interactiveGuide = async (status) => {
                     const contextMenuItemBody = document.querySelector('[data-type="delete"]');
                     if (contextMenuItemBody) {
                         contextMenuItemBody.click();
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `mainWindowDeleteBody`;
                         updateMiddlePosition();
@@ -619,7 +618,7 @@ export const interactiveGuide = async (status) => {
                     if (mainWindowDeleteBodyDelete) {
                         mainWindowDeleteBodyDelete.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `profileMenu`;
                     updateMiddlePosition();
@@ -627,7 +626,7 @@ export const interactiveGuide = async (status) => {
                 case 25:
                     showProfileMenu();
                     await waitForAnimation('profileMenu', 200, 240).then(() => {
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `profileMenu`;
                         updateMiddlePosition();
@@ -638,7 +637,7 @@ export const interactiveGuide = async (status) => {
                     if (profileMenuItemSearch) {
                         profileMenuItemSearch.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `searchWindow`;
                     updateMiddlePosition();
@@ -647,7 +646,7 @@ export const interactiveGuide = async (status) => {
                     userSearchWindow('close');
                     showProfileMenu();
                     await waitForAnimation('profileMenu', 200, 240).then(() => {
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `profileMenu`;
                         updateMiddlePosition();
@@ -659,26 +658,26 @@ export const interactiveGuide = async (status) => {
                         profileMenuItemFolderSettings.click();
                     }
                     await waitForElement('#settingsWindow').then(() => {
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `settingsWindow`;
                         updateMiddlePosition();
                     });
                     break;
                 case 29:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `transparencyGridPreview`;
                     updateMiddlePosition();
                     break;
                 case 30:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 31:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
@@ -688,13 +687,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuBackgroundImage) {
                         leftMenuListSubmenuBackgroundImage.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 33:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
@@ -704,13 +703,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuBookmarksSize) {
                         leftMenuListSubmenuBookmarksSize.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 35:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
@@ -720,13 +719,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuNavigationBarSymbol) {
                         leftMenuListSubmenuNavigationBarSymbol.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 37:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
@@ -736,13 +735,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuNavigationBarBackgroundColor) {
                         leftMenuListSubmenuNavigationBarBackgroundColor.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 39:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
@@ -752,19 +751,19 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuNavigationBarFont) {
                         leftMenuListSubmenuNavigationBarFont.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 41:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
                     break;
                 case 42:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `buttonsSection`;
                     updateMiddlePosition();
@@ -773,7 +772,7 @@ export const interactiveGuide = async (status) => {
                     openCloseSettingWindow('close');
                     showProfileMenu();
                     await waitForAnimation('profileMenu', 200, 240).then(() => {
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `profileMenu`;
                         updateMiddlePosition();
@@ -785,7 +784,7 @@ export const interactiveGuide = async (status) => {
                         profileMenuItemSettings.click();
                     }
                     await waitForElement('#settingsWindow').then(() => {
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `settingsWindow`;
                         updateMiddlePosition();
@@ -796,25 +795,25 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuOfflineProfile) {
                         leftMenuListSubmenuOfflineProfile.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 46:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
                 case 47:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `headerProfile`;
                     updateMiddlePosition();
                     break;
                 case 48:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `bodyProfileList`;
                     updateMiddlePosition();
@@ -824,7 +823,7 @@ export const interactiveGuide = async (status) => {
                     if (profileEditButton) {
                         profileEditButton.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `bodyProfileSection`;
                     updateMiddlePosition();
@@ -834,13 +833,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuOnlineProfile) {
                         leftMenuListSubmenuOnlineProfile.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 51:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
@@ -850,13 +849,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuBackgroundImageDefault) {
                         leftMenuListSubmenuBackgroundImageDefault.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 53:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
@@ -866,13 +865,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuNavigationBarSymbolDefault) {
                         leftMenuListSubmenuNavigationBarSymbolDefault.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 55:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
@@ -882,13 +881,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuWindowBackgroundColor) {
                         leftMenuListSubmenuWindowBackgroundColor.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 57:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
@@ -898,13 +897,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuWindowFont) {
                         leftMenuListSubmenuWindowFont.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 59:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
@@ -914,13 +913,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuWindowBorder) {
                         leftMenuListSubmenuWindowBorder.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 61:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
@@ -930,25 +929,25 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuWindowButtons) {
                         leftMenuListSubmenuWindowButtons.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 63:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `windowButtonsMenuSection`;
                     updateMiddlePosition();
                     break;
                 case 64:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
                 case 65:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `windowButtonsMenuOptionsFirstSection`;
                     updateMiddlePosition();
@@ -958,25 +957,25 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuWindowButtonsFont) {
                         leftMenuListSubmenuWindowButtonsFont.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 67:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `windowButtonsMenuSection`;
                     updateMiddlePosition();
                     break;
                 case 68:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
                 case 69:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `windowButtonsMenuOptionsFirstSection`;
                     updateMiddlePosition();
@@ -986,25 +985,25 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuMyActivity) {
                         leftMenuListSubmenuMyActivity.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 71:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
                 case 72:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `userActivityTop`;
                     updateMiddlePosition();
                     break;
                 case 73:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `userActivityStatus`;
                     updateMiddlePosition();
@@ -1014,7 +1013,7 @@ export const interactiveGuide = async (status) => {
                     if (editAllUserActivityBtn) {
                         editAllUserActivityBtn.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `editAllUserActivityMenuBox`;
                     updateMiddlePosition();
@@ -1024,25 +1023,25 @@ export const interactiveGuide = async (status) => {
                     if (editAllUserActivityBtnClose) {
                         editAllUserActivityBtnClose.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `userActivityRightTop`;
                     updateMiddlePosition();
                     break;
                 case 76:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `quantityFilterSection`;
                     updateMiddlePosition();
                     break;
                 case 77:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `userActivityRightBottom`;
                     updateMiddlePosition();
                     break;
                 case 78:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `userActivityMiddle`;
                     updateMiddlePosition();
@@ -1052,25 +1051,25 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuExportProfile) {
                         leftMenuListSubmenuExportProfile.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 80:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
                 case 81:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `exportFileTitle`;
                     updateMiddlePosition();
                     break;
                 case 82:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `exportSelectType`;
                     updateMiddlePosition();
@@ -1080,7 +1079,7 @@ export const interactiveGuide = async (status) => {
                     if (showHideExportPassword) {
                         showHideExportPassword.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `exportFilePassword`;
                     updateMiddlePosition();
@@ -1088,7 +1087,7 @@ export const interactiveGuide = async (status) => {
                     exportFilePasswordInputEl.focus({ focusVisible: false });
                     break;
                 case 84:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `exportAnimationAndButton`;
                     updateMiddlePosition();
@@ -1098,13 +1097,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuImportProfile) {
                         leftMenuListSubmenuImportProfile.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 86:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
@@ -1112,7 +1111,7 @@ export const interactiveGuide = async (status) => {
                 case 87:
                     const filePickerInputFileNameEl = document.getElementById('filePickerInputFileName');
                     filePickerInputFileNameEl.innerText = 'Export 0-00-0000_0-00-00 AM.bme';
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importSelectFileSection`;
                     updateMiddlePosition();
@@ -1121,7 +1120,7 @@ export const interactiveGuide = async (status) => {
                     const importFileInfoTopEl = document.getElementById('importFileInfoTop');
                     importFileInfoTopEl.style.opacity = 1;
                     importFileInfoTopEl.innerHTML = `<div id="importFileInfoTopTitle">Information About File</div><div id="importFileInfoDetail"><div id="importFileInfoInclude">Current Bookmarks, Default Folder Style</div><div id="importFileInfoSizeAndDate"><div id="importFileInfoDate"><div id="importFileDateTitle">Date</div><div id="importFileDate">0/00/0000</div></div><div id="importFileInfoSize"><div id="importFileSizeTitle">Size</div><div id="importFileSize">00.00 KB</div></div></div></div>`;
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoTop`;
                     updateMiddlePosition();
@@ -1129,7 +1128,7 @@ export const interactiveGuide = async (status) => {
                 case 89:
                     const importFileInfoMiddleDetailEl = document.getElementById('importFileInfoMiddleDetail');
                     importFileInfoMiddleDetailEl.innerHTML = `<div id="importFileInfoMiddleDetailBox"><div id="decryptionBox"><div id="passwordBox"><title for="importFilePasswordInput" id="importFilePasswordInputTitle">File Password</title><div id="passwordAndIcon"><input type="password" id="importFilePasswordInput" ><button id="passwordShowHideIcon"><svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16.01C14.2091 16.01 16 14.2191 16 12.01C16 9.80087 14.2091 8.01001 12 8.01001C9.79086 8.01001 8 9.80087 8 12.01C8 14.2191 9.79086 16.01 12 16.01Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11.98C8.09 1.31996 15.91 1.32996 22 11.98" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 12.01C15.91 22.67 8.09 22.66 2 12.01" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div><button id="decryptButton">Decrypt</button></div></div>`;
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoMiddle`;
                     updateMiddlePosition();
@@ -1137,7 +1136,7 @@ export const interactiveGuide = async (status) => {
                 case 90:
                     const importFileInfoMiddleDetailElement = document.getElementById('importFileInfoMiddleDetail');
                     importFileInfoMiddleDetailElement.innerHTML = `<div id="importDataDetailExtension" style="background-color: #1AEEEE;"><div id="importDataDetailExtensionTitle">Extension Version</div><div id="importDataDetailExtensionDetail">0.0.0</div></div><div id="importDataDetailBrowser" style="background-color: #27FBFB;"><div id="importDataDetailBrowserTitle">Browser Information</div><div id="importDataDetailBrowserDetail">Firefox, v. 134.0</div></div><div id="importDataDetailOS" style="background-color: #1AEEEE;"><div id="importDataDetailOSTitle">OS Type</div><div id="importDataDetailOSDetail">Linux</div></div><div id="importDataDetailTimestamp" style="background-color: #27FBFB;"><div id="importDataDetailTimestampTitle">Created At</div><div id="importDataDetailTimestampDetail">0/00/0000, 0:00:00 AM</div></div><div id="importDataDetailProfile" style="background-color: #1AEEEE;"><div id="resultTableHeaderCurrentProfile">Profile Name</div><div id="importDataDetailProfileDetail"><div id="importDataDetailProfileDetailBox"><div id="profileDetailImage" style="background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAABbElEQVR4nO2XS0oDQRRFTwZG0C24ADFxAboCnTnTDWQsLiSaYDAzHfsZaiZ+NhHFeZyFgDEx4CChpOEFJJDGqorpp74DF4qmu+ve4lJdDYZhGH+NdaAKPALvomRcAYooZhE4AUaAm6IhUAPyKDT/kGJ8UvfaQtQ9zI91jKLOp9UmrU4FFFANMD/WIQp4igjQRAH9iAA9FNCLCPCGAn59hSoRAcoooChbYsg2uoYSagEBku1XDcmx4M7D/C2wgDLycjxIq9NQVl6d+a8U5AvblG9EX8ZlTZ03DMPQQ062xxJwBDSAZ6ANfIjacq0h95TkmVxWppeBXeAK6EQc5jrApbxraR7GV4EzYBBhepoGwKnMMXNWgIvAn3dfjYBzmXMm7ETWJFRdYC/W/EEGxt2E9kPNb86pMu4bldoICXCjwLwTXYcE6Cow7kSvIQGcMnmTtWH37wO8KFh1J2r5Fwi2QUWIFrAVEsAwDIMf5xMzFG7a+AMMkQAAAABJRU5ErkJggg==) center center / cover no-repeat;"></div><div id="profileDetailName">${userActiveProfile.name}</div></div>`;
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoMiddle`;
                     updateMiddlePosition();
@@ -1145,7 +1144,7 @@ export const interactiveGuide = async (status) => {
                 case 91:
                     const importFileContinueButtonEl = document.getElementById('importFileContinueButton');
                     importFileContinueButtonEl.style.display = 'flex';
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileButtons`;
                     updateMiddlePosition();
@@ -1422,7 +1421,7 @@ export const interactiveGuide = async (status) => {
                             </div>
                         </div>
                     `;
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoMiddleDetail`;
                     updateMiddlePosition();
@@ -1430,13 +1429,13 @@ export const interactiveGuide = async (status) => {
                     countTo(0, 1, (1000), document.getElementById('importFileVerificationStatusErrorCount'));
                     break;
                 case 93:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileVerificationStatus`;
                     updateMiddlePosition();
                     break;
                 case 94:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileVerificationMiddle`;
                     updateMiddlePosition();
@@ -1446,7 +1445,7 @@ export const interactiveGuide = async (status) => {
                     const importFileContinueButton = document.getElementById('importFileContinueButton');
                     importFileContinueButton.style.display = 'none';
                     importFileApplyButton.style.display = 'flex';
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileButtons`;
                     updateMiddlePosition();
@@ -1456,31 +1455,31 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuSyncBrowserBookmarks) {
                         leftMenuListSubmenuSyncBrowserBookmarks.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 97:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeBrowserBookmarksContainerTop`;
                     updateMiddlePosition();
                     break;
                 case 98:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeStatusContainer`;
                     updateMiddlePosition();
                     break;
                 case 99:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeTypeContainer`;
                     updateMiddlePosition();
                     break;
                 case 100:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeVisualStatusContainer`;
                     updateMiddlePosition();
@@ -1492,7 +1491,7 @@ export const interactiveGuide = async (status) => {
                     }
                     allowNextStep = false;
                     setTimeout(() => {
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `synchronizeBrowserBookmarksContainerMiddle`;
                         updateMiddlePosition();
@@ -1516,7 +1515,7 @@ export const interactiveGuide = async (status) => {
                             gsap.killTweensOf(folderNameRoot);
                         }
                     });
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeBrowserBookmarksContainerMiddle`;
                     updateMiddlePosition();
@@ -1528,7 +1527,7 @@ export const interactiveGuide = async (status) => {
                     }
                     allowNextStep = false;
                     setTimeout(() => {
-                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                         elementID = `guideStep`;
                         targetElementID = `synchronizeVisualStatusExtensionFolder`;
                         updateMiddlePosition();
@@ -1543,7 +1542,7 @@ export const interactiveGuide = async (status) => {
                     browserFolderName.innerText = 'Synchronization';
                     browserFolderDeleteButton.style.display = 'flex';
                     browserFolderDeleteButton.style.backgroundColor = '#e53935';
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeVisualStatusBrowserFolder`;
                     updateMiddlePosition();
@@ -1553,7 +1552,7 @@ export const interactiveGuide = async (status) => {
                     const synchronizeStatusInputTitle = document.getElementById('synchronizeStatusInputTitle');
                     synchronizeStatusInput.checked = true;
                     synchronizeStatusInputTitle.innerText = 'Synchronization is On';
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeStatusContainer`;
                     updateMiddlePosition();
@@ -1609,7 +1608,7 @@ export const interactiveGuide = async (status) => {
                     }
                     creationOfSynchronizeVisualBrowserToExtension();
                     creationOfSynchronizeVisualExtensionToBrowser();
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeVisualStatusMiddle`;
                     updateMiddlePosition();
@@ -1617,7 +1616,7 @@ export const interactiveGuide = async (status) => {
                 case 107:
                     const synchronizeApplyButton = document.getElementById('synchronizeApplyButton');
                     synchronizeApplyButton.style.display = 'flex';
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeBrowserBookmarksContainerBottomButtons`;
                     updateMiddlePosition();
@@ -1627,13 +1626,13 @@ export const interactiveGuide = async (status) => {
                     if (leftMenuListSubmenuAboutInfo) {
                         leftMenuListSubmenuAboutInfo.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 109:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
@@ -1643,20 +1642,20 @@ export const interactiveGuide = async (status) => {
                     if (AboutChangelog) {
                         AboutChangelog.click();
                     }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 111:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
                 case 112:
                     openCloseSettingWindow('close');
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title + ' ' + currentGuideStep, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `mainBody`;
                     updateMiddlePosition();
