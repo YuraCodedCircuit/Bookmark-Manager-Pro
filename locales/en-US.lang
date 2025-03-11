@@ -1,0 +1,1098 @@
+{
+    "license": "This file is part of Bookmark Manager Pro, which is licensed under the GPL-3.0.",
+    "_welcomeWindow": {
+        "extensionName": "Bookmark Manager Pro",
+        "messageTop": "Effortlessly manage your bookmarks with a powerful, user-friendly interface that feels just like your OS file manager. Whether you have a handful or hundreds of bookmarks, Bookmark Manager Pro is designed to keep your browser organized and efficient.",
+        "middleOneRight": "Create, Edit, Delete: Seamlessly manage your bookmarks and folders with intuitive controls.",
+        "middleTwoLeft": "Cross-Browser Sync: Synchronize your bookmarks between Firefox and Chrome using reliable online services like Google or Microsoft.",
+        "messageMiddleThree": "To get started, please enter your name to create an offline profile. This profile can be personalized and modified later to suit your needs. Also, choose your preferred language or stick with the default (US English).",
+        "userNameTitle": "Name",
+        "messageMiddleFive": "Start organizing your bookmarks now and experience the efficiency of Bookmark Manager Pro.",
+        "continueBtn": "Continue",
+        "animation": "Animation",
+        "animationMessage": "Toggle this switch to turn the background animation on or off.",
+        "guide": "Guide",
+        "guideMessage": "Toggle this switch to show or hide the app guide after registration. When enabled, you'll receive helpful tips and tutorials to navigate the app. If turned off, the guide will not be displayed."
+    },
+    "interactiveGuideWindow": {
+        "step0": {
+            "title": "Welcome to Bookmark Manager Pro!",
+            "message": "This guide will help you explore all the amazing features of the Bookmark Manager Pro extension. Use the 'Next' button to navigate through the guide, and feel free to exit anytime by clicking the 'Close' button or pressing the 'Esc' key. Let's get started!"
+        },
+        "step1": {
+            "title": "Locate the Extension Icon",
+            "message": "You can easily find the Bookmark Manager Pro extension button icon on your browser's toolbar and in the omnibox*. This icon is your gateway to accessing all the features of the extension. <br>*The Firefox omnibox is a multifunctional address bar that allows you to type website URLs, search queries, and access bookmarks all in one place, providing suggestions and security information as you type."
+        },
+        "step2": {
+            "title": "Pin the Extension to Your Toolbar",
+            "message": "If you can't find the Bookmark Manager Pro icon on your toolbar, you may need to pin it. Click the puzzle piece icon in the toolbar to open your extensions menu. Find Bookmark Manager Pro in the list and click the pin icon next to it. This will add it to your toolbar for easy access! You can also see how to do this in the GIF at the bottom of the message."
+        },
+        "step3": {
+            "title": "Set Your New Tab Experience",
+            "message": "With the Bookmark Manager Pro extension, your browser's default new tab is replaced with a customized experience. Every time you open a new tab, you'll see the Bookmark Manager Pro interface, making it easier to access your bookmarks and features right away. Enjoy a more organized browsing experience!"
+        },
+        "step4": {
+            "title": "Create Custom Bookmarks & Folders",
+            "message": "In the Bookmark Manager Pro interface, you can easily create custom-designed bookmarks or folders to organize your links. The interface resembles an OS file manager, making it intuitive and user-friendly. Start customizing your bookmarks today for a more personalized browsing experience!"
+        },
+        "step5": {
+            "title": "Understanding the Navigation Bar",
+            "message": "The navigation bar, located at the top of your browser window, starts with the 'Home' folder, serving as your foundation for organizing bookmarks. As you explore deeper into your folders, the navigation bar shows the path from 'Home' to your current location, with clickable folder names for quick access. Plus, you can customize the navigation bar style of each folder individually, making your navigation experience both functional and personalized!"
+        },
+        "step6": {
+            "title": "View Your Bookmarks and Folders",
+            "message": "In the larger area of the browser window, known as the viewport, you'll find all the bookmarks and folders you've created. This space is designed for easy access and organization, allowing you to quickly locate and manage your saved links. Enjoy a streamlined view of your personalized bookmarks!"
+        },
+        "step7": {
+            "title": "Access Key Actions with Right Click",
+            "message": "Right-clicking on the viewport opens the main context menu, providing quick access to essential actions. Here, you can choose 'New bookmark' to create a new bookmark, 'New folder' to set up a new folder, 'Search' to find any bookmark or folder within the extension, and 'Folder settings' to customize the style of the current folder. Next, let's proceed to create a new folder in the Bookmark Manager window!"
+        },
+        "step8": {
+            "title": "Create Folders or Bookmarks Easily",
+            "message": "The Bookmark Manager window is designed similarly for creating both folders and bookmarks, with one key difference: the input field for the URL. When creating a bookmark, you'll need to enter the URL in this field, while creating a folder does not require it. This streamlined process makes it easy to organize your bookmarks and folders efficiently!"
+        },
+        "step9": {
+            "title": "Enter a Title for Your Bookmark/Folder",
+            "message": "In the title input field, you can enter the name for your new folder or bookmark. This field requires a minimum of 1 character and a maximum of 254 characters. Any leading or trailing white spaces will be automatically removed to ensure a clean title. Make sure to choose a descriptive title to easily identify your bookmarks and folders!"
+        },
+        "step10": {
+            "title": "URL Input Field for New Bookmark",
+            "message": "For demonstration purposes, the input field for the URL will be shown, but it will be removed after this message. To save a new bookmark, the URL must pass validation, ensuring it's a valid link. Make sure to enter a correct URL to successfully create your bookmark!"
+        },
+        "step11": {
+            "title": "Select a Destination Folder",
+            "message": "In this area, you'll see a tree view of all your saved folder names within the extension. This allows you to easily change the destination folder for your new folder or bookmark at any time. A small checkmark will appear next to the selected folder name, indicating your choice. Organize your bookmarks exactly where you want them!"
+        },
+        "step12": {
+            "title": "Preview Your Style Changes",
+            "message": "This area displays a live preview of the current styles being edited, allowing you to see how your bookmark or folder will look once created. As you make changes to any style, the preview will update in real-time, helping you visualize your customizations. Enjoy creating a look that reflects your personal style!"
+        },
+        "step13": {
+            "title": "Explore Style Editing Menu Tabs",
+            "message": "In this area, you'll find menu tabs to edit styles for various elements, including borders (the four sides of the bookmark/folder tile), color or image (only one can be saved), and the title (name) of the tile under the 'Text' menu. The last tab, 'Font,' allows you to change the font of the title. Each tab offers specific customization options to help you create your ideal look!"
+        },
+        "step14": {
+            "title": "Customize Your Tile Borders",
+            "message": "In the 'Border' tab menu, you can customize each side of the tile for your bookmark or folder. Adjust the width, color, and style of the borders, and change the radius for each side to create a unique look. Personalize your tile's appearance to match your style preferences!"
+        },
+        "step15": {
+            "title": "Select a Color for Your Tile",
+            "message": "In the 'Color' tab, you can choose a color using the color picker, which will represent your created bookmark or folder. This color area is adjustable, allowing you to change its size, position, and rotation within the tile. Customize the color to enhance the visual appeal of your bookmarks and folders!"
+        },
+        "step16": {
+            "title": "Add an Image to Your Tile",
+            "message": "In the 'Image' tab, you'll find the same adjustment options as in the 'Color' tab. You can select an image to represent your bookmark or folder. Please note that if you choose an image, it will remove any saved color, and vice versa. Customize your tile with either a vibrant color or a striking image!"
+        },
+        "step17": {
+            "title": "Customize Your Tile's Text",
+            "message": "In the 'Text' tab, you can modify the background color, size, position, and rotation angle of the text section in the tile. These adjustments allow you to create a visually appealing and personalized title for your bookmark or folder, ensuring it stands out just the way you want!"
+        },
+        "step18": {
+            "title": "Adjust Your Tile's Font Settings",
+            "message": "In the 'Font' tab, you can customize various aspects of the text in your tile. Change the color, weight, size, style, font family, and alignment to create the perfect look for your bookmark or folder title. Tailor the font settings to match your personal style and enhance readability!"
+        },
+        "step19": {
+            "title": "Manage Your Style Settings",
+            "message": "In this area, you'll find two important buttons. The 'Save by Default' button allows you to save your current styles as the default settings, which will be loaded the next time you open the Bookmark Manager window to create a new bookmark or folder. The 'Load Default' button lets you load any previously saved styles, replacing any changes made in the current window. Easily manage your style preferences with these options!"
+        },
+        "step20": {
+            "title": "Cancel or Save Your Changes",
+            "message": "The 'Cancel' button will close this window without saving any changes you've made. The 'Save' button will apply your current settings and create the folder or bookmark based on your inputs. In the next step, we'll create an example folder to demonstrate how the second context menu works when interacting with your saved folders and bookmarks."
+        },
+        "step21": {
+            "title": "View Default Style for New Items",
+            "message": "This is how newly created folders or bookmarks will look with the default style. To access additional options, simply right-click on the folder or bookmark tile to open the second context menu. Explore more features and customization options to enhance your bookmarks and folders!"
+        },
+        "step22": {
+            "title": "Explore Actions in the Context Menu",
+            "message": "The second context menu offers several useful actions: 'Edit' lets you modify the selected folder or bookmark; 'Cut' and 'Copy' allow you to move or duplicate it, with a 'Paste' option appearing in the main menu for easy placement. Use 'Delete' to remove the selected item, and 'Copy Title' to copy its name to the OS clipboard. If the selected item is a bookmark, you'll also see the 'Copy URL' option to copy the URL address."
+        },
+        "step23": {
+            "title": "Confirming Deletion",
+            "message": "When you press the 'Delete' button, a confirmation window will appear to prevent accidental removal. This window will display important information about the bookmark or folder, including the title, type, date of creation, and if it's a folder, the number of included child folders and bookmarks. If it's a bookmark, the URL will also be shown."
+        },
+        "step24": {
+            "title": "Access Your Profile Menu",
+            "message": "In the top-right corner, you'll find your profile image. Clicking on the image with the left mouse button will reveal a new menu that includes the main menu options, along with an additional 'Settings' option. This allows you to easily access your settings and manage your preferences for a personalized experience!"
+        },
+        "step25": {
+            "title": "Explore the Profile Menu Options",
+            "message": "Next, we will explore the options in the profile menu. The first two options are familiar: creating a new bookmark or folder. The next option is 'Search.' When you click on 'Search,' a search window will appear, allowing you to quickly find any bookmark or folder within the extension. Let's dive into the search functionality!"
+        },
+        "step26": {
+            "title": "Utilize the Search Functionality",
+            "message": "The search window is divided into two sections. At the top, you'll find an input field where you can type the title of the folder or bookmark you're searching for. Matching results will appear in the area below. Clicking on a folder from the results will load that folder, while clicking on a bookmark will open its URL. To close the search window without opening anything, simply press the 'Esc' key or click the large 'X' icon in the top right corner."
+        },
+        "step27": {
+            "title": "Access Folder Settings",
+            "message": "The next option in the profile menu is 'Folder Settings.' This feature allows you to change the style of the currently open folder. Let's explore these settings in detail to see how you can customize the appearance of your folders and make them uniquely yours!"
+        },
+        "step28": {
+            "title": "Explore the Folder Style Manager",
+            "message": "Welcome to the settings manager window for editing the current folder styles. This window is divided into two main sections: on the left, you'll find a list of available menus, while the right side features two sections—at the top, a preview of the edited element, and at the bottom, all options for the selected menu style. Next, we will explore each of these menus in detail!"
+        },
+        "step29": {
+            "title": "Preview Your Background Style",
+            "message": "This area provides a preview of how the current folder will look with the selected styles. The preview includes the navigation bar and six default folders, giving you a clear impression of how the bookmark tiles will be oriented. As you change the style, the preview will update in real-time to reflect those changes, helping you visualize your customizations!"
+        },
+        "step30": {
+            "title": "Select Background Style",
+            "message": "If the current folder has a background image, the 'Background Image' option will be displayed first. If it has a background color, the 'Background Color' option will appear instead. Since this folder does not have an image, we will explore the 'Background Color' settings first."
+        },
+        "step31": {
+            "title": "Customize Background Color",
+            "message": "In the 'Background Color' menu, you can change the color of the current folder. You also have the option to add multiple colors to create a gradient effect. If you choose a gradient, you can adjust its direction as well. Please note that adding a color or gradient will remove any background image, allowing you to fully customize the folder's appearance!"
+        },
+        "step32": {
+            "title": "Explore Background Image Options",
+            "message": "Next, we will explore the 'Background Image' menu. This section allows you to select and customize a background image for your current folder. Let's dive into the options available for adding a personal touch to your folder's appearance!"
+        },
+        "step33": {
+            "title": "Load and Position Your Background Image",
+            "message": "To load an image, simply left-click on the 'Select Image' button. Keep in mind that loading larger images may impact the extension and browser performance, so it's best to use images that match your screen size for optimal results. Once an image is loaded, you can adjust its position: 'Center' will center the image in the viewport; 'Stretch' will resize the image to fill the viewport regardless of its original size; 'Fit' will set the image's width to match the viewport; 'Fill' will adjust the image's height to fit the viewport; and 'Tile' will duplicate the image horizontally if it's smaller than the viewport. Please note that if an image is loaded, any previously saved color or gradient will be removed."
+        },
+        "step34": {
+            "title": "Explore Bookmarks Size Options",
+            "message": "Next, we will explore the 'Bookmarks Size' menu. This section allows you to adjust the size of the bookmark tiles within the current folder. Let's take a closer look at the options available for customizing the appearance of your bookmarks!"
+        },
+        "step35": {
+            "title": "Adjust Grid Flow and Tile Size",
+            "message": "The first option in the 'Bookmarks Size' menu is grid flow control. Selecting 'Row' will arrange the bookmarks and folders from left to right, while 'Column' will stack them from top to bottom. Additionally, you can change the width and height of all tiles in the current folder, allowing for a customized layout that suits your preferences!"
+        },
+        "step36": {
+            "title": "Explore Navigation Bar Styles",
+            "message": "Next, we will explore the styles for the navigation bar, starting with the 'Symbol' menu. This section allows you to customize the symbols used in the navigation bar, enhancing the visual appeal and functionality of your folder organization. Let's dive into the options available for personalizing your navigation experience!"
+        },
+        "step37": {
+            "title": "Customize Navigation Bar Symbols",
+            "message": "In the 'Symbol' menu, you can change the color and size of the symbols used in the navigation bar. Additionally, you can select a different symbol from the available list to further personalize your navigation experience. Change the symbols to match your style and make your navigation bar uniquely yours!"
+        },
+        "step38": {
+            "title": "Explore Navigation Bar Background Color",
+            "message": "Next, we will explore the styles for the navigation bar, focusing on the 'Background Color' menu. This section allows you to customize the background color of the navigation bar, enhancing its appearance and ensuring it complements your overall folder design. Let's take a closer look at the options available for personalizing the navigation bar's background!"
+        },
+        "step39": {
+            "title": "Customize Navigation Bar Background Color",
+            "message": "In the 'Background Color' menu, you can change the background color of the navigation bar. Additionally, you'll have the option to adjust the alpha of the color, allowing you to create transparency effects. Personalize the navigation bar to enhance its visibility and match your folder's overall style!"
+        },
+        "step40": {
+            "title": "Explore Navigation Bar Font Options",
+            "message": "Next, we will explore the styles for the navigation bar, focusing on the 'Font' menu. This section allows you to customize the font settings for the text displayed in the navigation bar, enhancing readability and style. Let's dive into the available options for personalizing the navigation bar's font!"
+        },
+        "step41": {
+            "title": "Customize Navigation Bar Font Settings",
+            "message": "You can change the color, size, and font family for the text in the navigation bar. These adjustments allow you to enhance the readability and overall aesthetic of the navigation bar, ensuring it aligns with your personal style. Tailor the font settings to create a navigation experience that feels just right!"
+        },
+        "step42": {
+            "title": "Finalize Your Folder Style Changes",
+            "message": "In this section, you'll find two buttons: 'Save' and 'Cancel.' Click 'Save' to apply all the styles to the current folder, ensuring your customizations are saved. If you decide not to keep your changes, click 'Cancel' to discard any modifications made."
+        },
+        "step43": {
+            "title": "Access General Settings",
+            "message": "Next, in the user profile menu, we will explore the last option, which is the 'Settings' menu. This option is unique to the user profile and contains the general settings for the Bookmark Manager PRO extension. Let's dive into each of these settings in detail to help you customize your experience and optimize the extension's functionality!"
+        },
+        "step44": {
+            "title": "Explore the Settings Manager",
+            "message": "Welcome to the settings manager window for editing the extension's settings. This window is divided into two main sections: on the left, you'll find a list of available menus, while the right side displays all options for the selected menu. Next, we will explore each of these menus in detail to help you configure the extension to your liking!"
+        },
+        "step45": {
+            "title": "Explore User Profile Settings",
+            "message": "The first menu is 'User Profile,' which includes two submenus: 'Offline Profile' and 'Online Profile.' We will explore the 'Offline Profile' in more detail to understand its settings."
+        },
+        "step46": {
+            "title": "Manage Your Offline Profile",
+            "message": "In the 'Offline Profile' menu, you can edit, create, and manage your offline profile. This allows you to customize your settings and preferences for using the Bookmark Manager PRO extension without an internet connection. Let's take a closer look at the options available for managing your offline profile!"
+        },
+        "step47": {
+            "title": "Create a New Offline Profile",
+            "message": "In this area, you can create a new offline profile. Start by entering a name in the input field at the top. Next, select the data types to copy from: 'Bookmarks' (with options 'Default' for factory data or 'Current' for the current profile), 'Default Bookmarks Style,' 'Default Folder Style,' and 'Settings' (each with the same copy options). To finish creating the new profile, simply left-click the 'Apply' button."
+        },
+        "step48": {
+            "title": "Manage Your Offline Profiles",
+            "message": "In this area, you'll find a list of all your offline profiles displayed in a table format. The headers include 'Name,' 'Created' (date of creation), 'Active' (with buttons to change the active profile—only one can be active at a time), 'Edit' (to modify a selected profile), and 'Delete' (to remove any profile except the active one). Next, we will explore the options for editing a profile."
+        },
+        "step49": {
+            "title": "Edit Your Offline Profile",
+            "message": "In the edit profile section, you'll find an arrow pointing to the left to return to the previous options. Below that, there's an input field for changing the profile name; after making changes, click the 'Apply' button next to it. Next, use the 'Select Image' button to change the profile image. Below, you'll see a table with types: 'Bookmarks,' 'Default Bookmarks Style,' 'Default Folder Style,' and 'Settings,' each with a 'Reset' button. Clicking any of these buttons will reset that type to factory settings, and the effect will apply immediately, so proceed with caution!"
+        },
+        "step50": {
+            "title": "Explore Online Profile Settings",
+            "message": "Next, we will explore the 'Online Profile' submenu from the first menu. This section allows you to manage your online profile settings and preferences for the Bookmark Manager PRO extension. Let's dive into the available options for customizing your online profile!"
+        },
+        "step51": {
+            "title": "Online Profile Feature Under Development",
+            "message": "This feature is currently under development. Any support from users will help speed up this process and enhance the functionality of the Bookmark Manager PRO extension. We appreciate your patience and involvement as we work to improve your experience!"
+        },
+        "step52": {
+            "title": "Set Default Folder Styles",
+            "message": "The next menu is 'Default Folder Style,' which includes the same submenus: 'Background Image,' 'Background Color,' and 'Bookmarks Size' as seen in previous steps from 30 to 35. In those steps, the styles applied to the current folder."
+        },
+        "step53": {
+            "title": "Skip Default Folder Style Menu",
+            "message": "When a user creates a new folder, the default folder style will demonstrate how it will look inside the new folder. We will skip this menu and its submenus because the options and parameters are the same as those previously covered."
+        },
+        "step54": {
+            "title": "Set Default Navigation Bar Styles",
+            "message": "The next menu is 'Default Navigation Bar Style,' and its submenus—'Symbol,' 'Background Color,' and 'Font'—were explained in steps 36 to 41. In those steps, the styles applied to the navigation bar of the current folder."
+        },
+        "step55": {
+            "title": "Skip Default Navigation Bar Style Menu",
+            "message": "Just as the 'Default Folder Styles' apply to newly created folders, the 'Default Navigation Bar Styles' will also apply to the navigation bar in those folders. We will skip the submenus because the options and parameters have already been mentioned in previous steps."
+        },
+        "step56": {
+            "title": "Explore Window Style Menu",
+            "message": "The next menu is 'Window Style,' which contains the submenus: 'Background Color,' 'Font,' 'Borders,' 'Buttons,' and 'Buttons Font.' This menu is designed to change the styles for all additional windows and context menus in the Bookmark Manager PRO extension. We will start with the first submenu, 'Background Color.'"
+        },
+        "step57": {
+            "title": "Customize Background Color",
+            "message": "In the 'Background Color' submenu, a user can change only the background color. There are plans to add new options in the future, such as gradient colors, to enhance customization. For now, select your preferred background color to personalize the appearance of the additional windows and context menus."
+        },
+        "step58": {
+            "title": "Customize Font Style",
+            "message": "The next submenu is 'Font,' which allows you to change the font style for all additional windows and context menus in the Bookmark Manager PRO extension."
+        },
+        "step59": {
+            "title": "Adjust Font Settings",
+            "message": "In the 'Font' submenu, you can change the font color, font size, and font family. These options allow you to customize the text in all additional windows and context menus, ensuring that the appearance aligns with your personal style and preferences."
+        },
+        "step60": {
+            "title": "Customize Border Styles",
+            "message": "The next submenu is 'Borders.' This submenu allows you to apply styles to the borders of additional windows, but it will not affect the context menus. Customize the border appearance to enhance the overall look of the extension's additional windows!"
+        },
+        "step61": {
+            "title": "Customize Border Sides",
+            "message": "At the top, you'll see tabs for 'Left,' 'Top,' 'Right,' and 'Bottom' to style each border side. Adjust the color, style (Dotted, Dashed, Solid, Double, Groove, Ridge, Inset, Outset), width, and radius for a uniquely tailored look."
+        },
+        "step62": {
+            "title": "Customize Button Styles",
+            "message": "In the 'Buttons' submenu, you can apply styles specifically to the buttons in additional windows of the Bookmark Manager PRO extension. This customization will not affect context menus or menu lists."
+        },
+        "step63": {
+            "title": "Explore Button Categories",
+            "message": "In the 'Buttons' submenu, you'll find buttons organized into four categories: 'Actions,' 'Alerts,' 'Notifications,' and 'Neutrals.' Each category has its own tab, allowing you to easily navigate and customize the button styles according to their specific functions. Let's dive into each category to see the available options!"
+        },
+        "step64": {
+            "title": "Understand Button Types",
+            "message": "Each button category features two types: 'Primary' and 'Secondary' for 'Actions'; 'Success' and 'Danger' for 'Alerts'; 'Warning' and 'Info' for 'Notifications'; and 'Light' and 'Dark' for 'Neutrals.' In the next step, we will explore the style options for the 'Primary' button as an example, showcasing how to customize these buttons effectively."
+        },
+        "step65": {
+            "title": "Customize Primary Button Styles",
+            "message": "In this area, you can customize the styles for the 'Primary' button type, including background color, mouse hover background color, and animations when the button is pressed. The same options apply to all buttons of each type. In the right corner, you'll see a live updated button preview, giving you an example of how your customized button will look in real-time!"
+        },
+        "step66": {
+            "title": "Customize Button Font Styles",
+            "message": "In the 'Buttons Font' submenu, you can change the font style specifically for the buttons in each category. This customization allows you to enhance the readability and aesthetic appeal of your buttons, ensuring they align with your overall design preferences."
+        },
+        "step67": {
+            "title": "Explore Font Categories for Buttons",
+            "message": "The 'Buttons Font' submenu features the same tabs as the previous 'Buttons' submenu: 'Actions,' 'Alerts,' 'Notifications,' and 'Neutrals.' This design ensures that you can easily select the correct button in each category to change its font styles."
+        },
+        "step68": {
+            "title": "Understand Button Font Types",
+            "message": "Each category in the 'Buttons Font' submenu also has the same two types of buttons as in the previous submenu: 'Primary' and 'Secondary' for 'Actions'; 'Success' and 'Danger' for 'Alerts'; 'Warning' and 'Info' for 'Notifications'; and 'Light' and 'Dark' for 'Neutrals.' This consistency allows you to easily apply font styles to each button type across all categories."
+        },
+        "step69": {
+            "title": "Customize Primary Button Font Styles",
+            "message": "In this step, we will explore font styles using the 'Primary' button as an example. However, the same font styling options apply to all categories and their types. You can change the font color, font size, font family, font style, and font weight. A live button preview in the right corner will update in real-time, allowing you to see how your changes affect the button's appearance!"
+        },
+        "step70": {
+            "title": "Explore Activity Menu",
+            "message": "The next menu is 'Activity,' which includes a single submenu: 'My Activity.' This submenu allows you to monitor all actions related to your folders and bookmarks, including created, edited, and deleted items, as well as created and deleted profiles. You can also track when the extension was opened and closed. Additionally, you have the option to turn these monitoring features on or off at any time."
+        },
+        "step71": {
+            "title": "Explore My Activity Submenu",
+            "message": "In the 'My Activity' submenu, you'll find it divided into two sections. At the top, you can access all the parameters that allow you to customize your activity monitoring preferences. Next to this, there is a table displaying a comprehensive list of all your user activities. This layout makes it easy to manage your monitoring settings while keeping track of your activities!"
+        },
+        "step72": {
+            "title": "Customize Activity Monitoring Options",
+            "message": "The top section of the 'My Activity' submenu is divided into four areas. In the top left, you'll find a switcher to turn monitoring on or off, along with a menu to enable or disable notifications for different events. The top right features a button to delete all recorded activities. The bottom left includes navigation buttons to change pages in the activity list, while the bottom right has two buttons: one to export all activities as a CSV file and another to filter the user activities list. This setup provides you with comprehensive control over your activity monitoring!"
+        },
+        "step73": {
+            "title": "Manage Overall Monitoring Settings",
+            "message": "In this section, you'll find a switcher that allows you to enable or disable monitoring for all activities at once. To the right, there's a button with three vertical dots. When you left-click on this button, a menu will appear, presenting switchers for different events. This feature makes it easy to customize your monitoring preferences quickly and efficiently!"
+        },
+        "step74": {
+            "title": "Explore Event Monitoring Options",
+            "message": "In this menu, you'll find 10 switchers for monitoring specific events: 1. When profiles are created, 2. When profiles are deleted, 3. When the extension is opened, 4. When the extension is closed, 5. When bookmarks are created, 6. When folders are created, 7. When bookmarks are edited, 8. When folders are edited, 9. When bookmarks are deleted, and 10. When folders are deleted. To enhance extension performance and reduce profile size, the third and fourth switchers are turned off by default. If you choose to enable these two switchers, please note that it may impact the extension's performance."
+        },
+        "step75": {
+            "title": "Delete All User Activities",
+            "message": "Here is the button to delete all user activities. Please exercise caution: left-clicking on this button will instantly and permanently delete all recorded activities. Once deleted, this information cannot be recovered, so ensure that you truly want to remove all your activity logs before proceeding!"
+        },
+        "step76": {
+            "title": "Navigate Through Activity List",
+            "message": "These buttons allow you to navigate through all activities in the list. There are five buttons: the first button jumps to the first page, the second decreases the page number, and the third displays the current page number out of the total. When you left-click on this button, a list will appear showing how many items can be displayed per page (20, 50, 100, 150, 200). The fourth button increases the page number, and the fifth button jumps to the last page. This navigation setup makes it easy to manage and review your activity logs!"
+        },
+        "step77": {
+            "title": "Filter and Export User Activities",
+            "message": "In this section, you'll find two buttons. When you left-click on the first button, a menu will appear, allowing you to create a filter for the activity list. This feature helps you narrow down the displayed activities based on your preferences. The second button, when clicked, will generate a CSV file containing the current list of user activities. This makes it easy to save and analyze your activity data outside the extension!"
+        },
+        "step78": {
+            "title": "View User Activity List",
+            "message": "Here is the list of all user actions. Each action entry includes the date, type of action, and details that provide additional information. For bookmarks and folders, the detail will show the title; for profiles, it will display the profile name. Additionally, there is shared detail for both types that includes information about the user's browser and operating system. You can sort the list of actions by clicking the up or down arrows in the header of the date or type columns. By default, the list is sorted to show the most recent action first. Each entry also features a button to delete the current action. Please exercise caution: clicking this button will instantly and permanently delete the selected action!"
+        },
+        "step79": {
+            "title": "Explore Export/Import Options Menu",
+            "message": "The next menu is 'Export/Import Options,' which includes two submenus: 'Export Profile' and 'Import Profile.' This menu is designed to help you manage your profiles effectively. We will start with the first submenu, 'Export Profile,' to learn how to save your profile data for future use or transfer."
+        },
+        "step80": {
+            "title": "Export Your Profile Data",
+            "message": "In the 'Export Profile' submenu, you can choose to export all profiles or select specific parts of your user data. This flexibility allows you to manage your information according to your needs. Additionally, you have the option to encrypt the exported data with a password, ensuring that your sensitive information remains secure during the export process. Let's explore how to use these features!"
+        },
+        "step81": {
+            "title": "Name Your Export File",
+            "message": "In this section, you'll find an input field where you can change the name of your export file. Please note that the file extension will always be '.bme' (which stands for Bookmark Manager Extension). Customizing the file name helps you easily identify your exported data later."
+        },
+        "step82": {
+            "title": "Select Export Options",
+            "message": "In this area, you'll find switchers to choose what will be included in your export file. Be aware that enabling certain switchers will affect others. If 'All Profiles' is on, it will automatically enable and disable changes for 'Current Profile,' 'Current Bookmarks,' 'Default Folder Style,' 'Default Bookmark Style,' 'Current User Settings,' and 'Current Activity Log.' If 'Current Profile' is selected, it will turn off 'All Profiles' and enable the same options, also disabling changes. Enabling any of the other options will turn off both 'All Profiles' and 'Current Profile' and disable changes."
+        },
+        "step83": {
+            "title": "Enable File Encryption",
+            "message": "To set encryption for your export file, simply turn on the 'Set Encryption' switcher in this area. Once enabled, an input field will appear for you to enter a password. Remember, the same password will be required for decryption later, so choose a secure and memorable one. Please note that there is no password restoration mechanism, so losing the password will prevent access to your encrypted file. This feature helps protect your exported data from unauthorized access!"
+        },
+        "step84": {
+            "title": "Export Your Profile Data",
+            "message": "Once you have entered the file name, selected your export options, and chosen whether to encrypt the file, click the 'Export' button. This will initiate the file creation process. When the progress bar reaches 100%, your browser will prompt you to save the file. If the prompt does not appear, the file will be saved in the default OS folder, typically the Downloads folder, or in a location specified in your browser settings."
+        },
+        "step85": {
+            "title": "Explore Import Profile Submenu",
+            "message": "The next submenu in the 'Export/Import Options' menu is 'Import Profile.' This section allows you to bring in previously exported profiles or data into the Bookmark Manager PRO extension. Let's dive into the options available for importing your profile data!"
+        },
+        "step86": {
+            "title": "Start Importing Your Profile Data",
+            "message": "To begin importing data, click the 'Click To Import' button and select a file with the '.bme' extension. If the selected file is not suitable for import, an error message will be displayed, and the operation will be terminated. Ensure you choose the correct file to successfully import your profile data!"
+        },
+        "step87": {
+            "title": "Confirm Selected File",
+            "message": "If the selected file passes the initial checks, the file name will be displayed next to the 'Click To Import' button. This confirmation ensures that you have chosen the correct file for importing your profile data."
+        },
+        "step88": {
+            "title": "View File Details",
+            "message": "In this area, you'll find additional information about the selected file. On the right side, the date, and time of file creation will be displayed. If the file is not encrypted, a list of imported options will appear on the left, separated by commas. For example, you will see the imported parameters 'Current Bookmarks' and 'Default Folder Style.' If the file is encrypted, you will need to input a valid password in the designated field, which we will explore in the next step."
+        },
+        "step89": {
+            "title": "Decrypt Your Encrypted File",
+            "message": "If the file was encrypted, you will see a password input field. Enter your password and click the 'Decrypt' button. If the password is incorrect, an error message will appear in the bottom right corner of the browser viewport. If the password is correct and decryption is successful, the password field will be replaced with more details about the imported data, which we will explore in the next step."
+        },
+        "step90": {
+            "title": "View Detailed Import Information",
+            "message": "If the file was not encrypted, you will see detailed information about the imported data. This information is presented from top to bottom as follows: 1. Extension Version - the version of the extension when this data was exported; 2. Browser Information - the name and version of the browser used during export; 3. OS Type - details about the operating system at the time of export; 4. Created At - the date and time when the data was exported; 5. Profile Name - the profile name and image associated with the exported data."
+        },
+        "step91": {
+            "title": "Proceed with Data Validation",
+            "message": "If you are satisfied with the file information displayed, click the 'Continue' button to start the file data validation process. This step ensures that the imported data is accurate and ready for use in the Bookmark Manager PRO extension. Let's move forward with the validation!"
+        },
+        "step92": {
+            "title": "File Data Validation in Progress",
+            "message": "The file data validation will start instantly after you click 'Continue.' The results of the validation will be displayed at the top of this area, divided into three rows of boxes: 'Success,' 'Error,' and 'Critical Error.' Below this, you'll find a table of the import data, along with two toggles that allow you to decide where the imported data will be saved. This setup helps you easily review the validation results and make your import decisions!"
+        },
+        "step93": {
+            "title": "Understand Validation Results",
+            "message": "The top area is divided into three boxes: the 'Success' box shows the count of correct data values; the 'Error' box indicates how many values were incorrect and replaced with defaults; the 'Critical Error' box counts missing objects or arrays in the JSON file, which will also be replaced with defaults. If any 'Error' or 'Critical Error' occurs, a toggle button will appear in the top right corner of each box. Clicking the button in the 'Error' box will display a list of explanations for invalid values, while clicking the button in the 'Critical Error' box will show a list for invalid objects or arrays. You can close these explanations by clicking the same button again."
+        },
+        "step94": {
+            "title": "Review and Save Imported Data",
+            "message": "If you do not click the toggle buttons, a table will display the imported data, each with two toggles: one to save in 'Current Profile' and another to save in 'New Profile.' Some imported data can only be saved in the current profile, while others can only be saved in a new profile. For example, if the file contains 'All Profiles' or 'Current Profile' data, the 'New Profile' option will be available, and the 'Current Profile' toggle will be disabled. Conversely, if 'Current Bookmarks,' 'Default Folder Style,' 'Default Bookmarks Style,' or 'User Settings' are present, they can only be saved in the 'Current Profile,' disabling the other toggles. Be aware that applying 'Default Folder Style,' 'Default Bookmarks Style,' or 'User Settings' to the current profile will replace the original data, and this action cannot be undone."
+        },
+        "step95": {
+            "title": "Apply Imported Data",
+            "message": "To apply data from the import file, you must change at least one toggle to 'true' and then click the 'Apply' button. If you attempt to press the button without changing any toggles, an error message will be displayed, prompting you to make a selection before proceeding. Ensure you select the appropriate options to successfully apply your imported data!"
+        },
+        "step96": {
+            "title": "Explore Sync/Backup Menu",
+            "message": "The next menu is 'Sync/Backup,' which includes a single submenu: 'Sync Browser Bookmarks.' This submenu is designed to help you synchronize your browser bookmarks with the Bookmark Manager PRO extension. Let's dive into the options available for syncing your bookmarks!"
+        },
+        "step97": {
+            "title": "Manage Sync Browser Bookmarks",
+            "message": "The 'Sync Browser Bookmarks' submenu contains three areas, arranged from top to bottom. The first area features an on/off toggle that allows you to start or disable synchronization with your browser. The second area, labeled 'Synchronize Type,' includes three toggles: 'Browser to Extension,' 'Both Direction,' and 'Extension to Browser.' The last area provides a visualization of the sync process or displays a tree view of your browser and extension bookmarks, helping you understand the current sync status."
+        },
+        "step98": {
+            "title": "Enable Bookmark Synchronization",
+            "message": "In the 'Synchronize Bookmarks' area, you'll find an on/off toggle. Before you can enable synchronization, three conditions must be met: first, you must select a folder from the extension; second, you must select a folder from the browser; and third, you must choose a synchronization type. Once all conditions are satisfied, you can turn on the synchronization to keep your bookmarks in sync!"
+        },
+        "step99": {
+            "title": "Choose Synchronization Type",
+            "message": "The 'Synchronize Type' area features three toggles: 1. 'Browser to Extension' - with this setting, any bookmarks you create, edit, or delete in the browser will be reflected in the extension, but changes made within the extension will not affect the browser. 2. 'Both Directions' - this setting allows changes made in either the browser or the extension to be synchronized in both directions. 3. 'Extension to Browser' - with this option, you can create, edit, or delete bookmarks in the extension, and those changes will be reflected in the browser, while bookmarks created in the browser will not affect the extension. Note that these changes apply to all child bookmarks and folders within the two selected folders and do not affect other folders or their child bookmarks."
+        },
+        "step100": {
+            "title": "Select Folders for Synchronization",
+            "message": "The last area is divided into two sections. The first section, featuring a browser icon, contains a button that allows you to select a folder in the browser. The second section, with an extension icon, has a button to select a folder in the extension. To display the browser or extension folders tree, simply left-click on the corresponding button. In the next step, we will explore the example of the extension folders tree."
+        },
+        "step101": {
+            "title": "View Folder Tree for Selection",
+            "message": "This is how the tree area looks. At the top left, the name of the selected folder will be displayed, while the top right features two buttons: the first, 'Cancel,' will return you to the previous visualization, and the second, 'Set Folder,' allows you to set the selected folder as one of the sync folders. The rest of the area will display the folder tree itself. In the next step, we will select the first folder, 'Home,' in the extension."
+        },
+        "step102": {
+            "title": "Select Your Desired Folder",
+            "message": "To select your desired folder, simply left-click on the folder name. A check icon will appear before to the selected folder name, and the name will be displayed at the top left to confirm your selection. Once you've made your choice, click the 'Set Folder' button to continue with the synchronization setup."
+        },
+        "step103": {
+            "title": "Confirm Selected Folder",
+            "message": "In this area, you will see the name of the selected folder accompanied by a check icon, confirming your choice. Additionally, next to the edit button, a new button will appear that allows you to delete the selected folder if needed. This setup provides a clear overview of your selection and options for managing it."
+        },
+        "step104": {
+            "title": "Skip Browser Folder Selection",
+            "message": "We will skip the process of selecting a browser folder, as it follows the same steps previously demonstrated. For demonstration purposes in this guide, we will use a non-existent folder named 'Synchronization' from the browser bookmarks."
+        },
+        "step105": {
+            "title": "Enable Synchronization",
+            "message": "Now that you have selected one folder from the browser bookmarks and one folder from the extension bookmarks, you can change the synchronization toggle to 'on.'"
+        },
+        "step106": {
+            "title": "Visualize Synchronization Direction",
+            "message": "Since 'Both Directions' is selected in the 'Synchronize Type,' the visualization area will display an animation of arrows moving in opposite directions. This animation indicates that changes made in either the browser or the extension will be synchronized in both directions. The direction of the arrows will vary based on the selected synchronization type, providing a clear visual representation of the sync process."
+        },
+        "step107": {
+            "title": "Start Synchronization Process",
+            "message": "To initiate synchronization, you must left-click the 'Synchronize' button, provided that all conditions are met. If any condition is false, an error message will appear with a description of the issue. To turn off synchronization, simply change the toggle in the first area, 'Synchronize Bookmarks,' to 'off.'"
+        },
+        "step108": {
+            "title": "Explore About Menu",
+            "message": "The last menu is 'About,' which contains two submenus: 'Info' and 'Changelog.' Let's explore the 'Info' submenu first!"
+        },
+        "step109": {
+            "title": "Access Useful Links",
+            "message": "In the 'Info' submenu, you'll find important links related to the Bookmark Manager PRO extension. Visit the Firefox extension store page to leave a review and share your thoughts. You can also connect with us on X (Twitter) to mention the extension. Additionally, check out our GitHub page for legal documents like the 'Privacy Policy' and 'Terms of Use.' Lastly, support us on 'Buy Me a Coffee' to help us keep improving!"
+        },
+        "step110": {
+            "title": "Explore Changelog Submenu",
+            "message": "The next submenu is 'Changelog,' where you can find a detailed record of updates and changes made to the Bookmark Manager PRO extension. In the following step, we will dive deeper into the changelog to keep you informed about the latest enhancements and fixes!"
+        },
+        "step111": {
+            "title": "Understand the Changelog",
+            "message": "The 'Changelog' is a valuable resource that keeps you informed about all the updates and improvements made to the Bookmark Manager PRO extension. It lists new features, bug fixes, and any changes that enhance your user experience. By reviewing the changelog, you can stay updated on how the extension evolves and benefits from the latest enhancements. It's a great way to see how your feedback contributes to the app's development!"
+        },
+        "step112": {
+            "title": "Thank You for Using Our Guide",
+            "message": "Thank you for following this guide! We hope it has helped you navigate and make the most of the Bookmark Manager PRO extension. Your experience is important to us, and we wish you the best as you explore all its features. Enjoy organizing your bookmarks, and feel free to reach out with any feedback or questions!"
+        }
+    },
+    "_contextMenu": {
+        "create": "Create"
+    },
+    "_createOrEditWindow": {
+        "_buttons": {
+            "cancel": "Cancel",
+            "save": "Save",
+            "loadDefaultStyle": "Load Default",
+            "saveByDefaultStyle": "Save by Default"
+        },
+        "title": "Title:",
+        "url": "URL:",
+        "selectFolder": "Select Folder:",
+        "_styleMenu": {
+            "_border": {
+                "_buttonMenu": {
+                    "border": "Border",
+                    "_borerLeft": {
+                        "_button": {
+                            "left": "Left",
+                            "select": "Select"
+                        },
+                        "borderLeftWidth": "Border Left Width:",
+                        "borderLeftColor": "Border Left Color:",
+                        "borderLeftStyle": "Border Left Style:",
+                        "borderLeftRadius": "Border Left Radius:"
+                    },
+                    "_borerTop": {
+                        "_button": {
+                            "top": "Top",
+                            "select": "Select"
+                        },
+                        "borderTopWidth": "Border Top Width:",
+                        "borderTopColor": "Border Top Color:",
+                        "borderTopStyle": "Border Top Style:",
+                        "borderTopRadius": "Border Top Radius:"
+                    },
+                    "_borerRight": {
+                        "_button": {
+                            "right": "Right",
+                            "select": "Select"
+                        },
+                        "borderRightWidth": "Border Right Width:",
+                        "borderRightColor": "Border Right Color:",
+                        "borderRightStyle": "Border Right Style:",
+                        "borderRightRadius": "Border Right Radius:"
+                    },
+                    "_borerBottom": {
+                        "_button": {
+                            "bottom": "Bottom",
+                            "select": "Select"
+                        },
+                        "borderBottomWidth": "Border Bottom Width:",
+                        "borderBottomColor": "Border Bottom Color:",
+                        "borderBottomStyle": "Border Bottom Style:",
+                        "borderBottomRadius": "Border Bottom Radius:"
+                    }
+                }
+            },
+            "_color": {
+                "_buttonMenu": {
+                    "color": "Color"
+                },
+                "chooseColor": "Choose Color:",
+                "adjustWidth": "Adjust Width:",
+                "adjustHeight": "Adjust Height:",
+                "defineRotationAngle": "Define Rotation Angle:",
+                "horizontalPosition": "Horizontal Position:",
+                "verticalPosition": "Vertical Position:"
+            },
+            "_image": {
+                "_buttonMenu": {
+                    "image": "Image"
+                },
+                "chooseImage": "Choose Image:",
+                "adjustWidth": "Adjust Width:",
+                "adjustHeight": "Adjust Height:",
+                "defineRotationAngle": "Define Rotation Angle:",
+                "horizontalPosition": "Horizontal Position:",
+                "verticalPosition": "Vertical Position:"
+            },
+            "_text": {
+                "_buttonMenu": {
+                    "text": "Text"
+                },
+                "backgroundColor": "Background Color:",
+                "adjustWidth": "Adjust Width:",
+                "adjustHeight": "Adjust Height:",
+                "defineRotationAngle": "Define Rotation Angle:",
+                "horizontalPosition": "Horizontal Position:",
+                "verticalPosition": "Vertical Position:"
+            },
+            "_font": {
+                "_buttonMenu": {
+                    "font": "Font"
+                },
+                "chooseColor": "Choose Color:",
+                "chooseFontWeight": "Choose Font Weight::",
+                "adjustFontSize": "Adjust Font Size:",
+                "chooseFontStyle": "Choose Font Style:",
+                "chooseFontFamily": "Choose Font Family:",
+                "chooseFontAlignment": "Choose Font Alignment:"
+            }
+        }
+    },
+    "_deleteWindow": {
+        "_buttons": {
+            "cancel": "Cancel",
+            "delete": "Delete"
+        },
+        "deleteTitle": "Are you sure you want to delete it?",
+        "title": "Title:",
+        "type": "Type:",
+        "created": "Created:",
+        "url": "URL:",
+        "included": "Included:",
+        "_IncludedForPlural": {
+            "singular": "item",
+            "plural": "items"
+        }
+    },
+    "_settingWindow": {
+        "_menuList": {
+            "_default": {
+                "_userProfile": {
+                    "_data": "User Profile",
+                    "_offlineProfile":{
+                        "_data": "Offline Profile",
+                        "createNewProfile": "Create New Profile",
+                        "name": "Name",
+                        "type": "Type",
+                        "default": "Default",
+                        "current": "Current",
+                        "_typeList": {
+                            "bookmarks": "Bookmarks",
+                            "defaultBookmarkStyle": "Default Bookmarks Style",
+                            "defaultFolderStyle": "Default Folder Style",
+                            "settings": "Settings"
+                        },
+                        "_tableHeaderProfilesList": {
+                            "name": "Name",
+                            "created": "Created",
+                            "active": "Active",
+                            "edit": "Edit",
+                            "delete": "Delete"
+                        },
+                        "_buttons": {
+                            "apply": "Apply",
+                            "reset": "Reset",
+                            "delete": "Delete"
+                        },
+                        "changeName": "Change Name",
+                        "chooseProfilePicture": "Choose Profile Picture",
+                        "selectImage": "Select Image",
+                        "_tableHeaderEditedProfile": {
+                            "type": "Type",
+                            "detail": "Detail",
+                            "default": "Default"
+                        },
+                        "bookmarksTypeDetailFolders": "Folders",
+                        "bookmarksTypeDetailBookmarks": "Bookmarks"
+                    },
+                    "_onlineProfile": {
+                        "_data": "Online Profile"
+                    }
+                },
+                "_defaultFolderStyle": {
+                    "_data" : "Default Folder Style",
+                    "_backgroundImage": {
+                        "_data": "Background Image",
+                        "chooseAnImage": "Choose an Image",
+                        "selectImage": "Select Image",
+                        "setBackgroundImagePosition": "Set Background Image Position",
+                        "center": "Center",
+                        "stretch": "Stretch",
+                        "fit": "Fit",
+                        "fill": "Fill",
+                        "tile": "Tile"
+                    },
+                    "_backgroundColor": {
+                        "_data": "Background Color",
+                        "chooseColor": "Choose Color",
+                        "defineRotationAngle": "Define Rotation Angle"
+                    },
+                    "_bookmarksSize": {
+                        "_data": "Bookmarks Size",
+                        "gridFlowControl": "Grid Flow Control",
+                        "_gridButtons": {
+                            "row": "Row",
+                            "column": "Column",
+                            "rowReverse": "Row Reverse",
+                            "columnReverse": "Column Reverse"
+                        },
+                        "_gridAutoFlowStatusDirection": {
+                            "row": "The grid flow is now set to Row.",
+                            "column": "The grid flow is now set to Column."
+                        },
+                        "_gridAutoFlowStatusExplanation": {
+                            "row": "Items will be arranged horizontally.",
+                            "column": "Items will be arranged vertically."
+                        },
+                        "width": "Width",
+                        "height": "Height"
+                    }
+                },
+                "_navigationBarStyle": {
+                    "_data": "Default Navigation Bar Style",
+                    "_navigationBarSymbol": {
+                        "_data": "Symbol",
+                        "chooseColor": "Choose Color",
+                        "chooseSize": "Choose Size",
+                        "chooseSymbol": "Choose Symbol"
+                    },
+                    "_navigationBarBackgroundColor": {
+                        "_data": "Background Color",
+                        "chooseColor": "Choose Color"
+                    },
+                    "_navigationBarFont": {
+                        "_data": "Font",
+                        "chooseColor": "Choose Color",
+                        "chooseSize": "Choose Size"
+                    }
+                },
+                "_windowStyle": {
+                    "_data": "Window Style",
+                    "_windowBackgroundColor": {
+                        "_data": "Background Color",
+                        "chooseColor": "Choose Color"
+                    },
+                    "_windowFont": {
+                        "_data": "Font",
+                        "chooseColor": "Choose Color",
+                        "chooseSize": "Choose Size"
+                    },
+                    "_windowBorder": {
+                        "_data": "Borders",
+                        "_typeMenu": {
+                            "left": "Left",
+                            "right": "Right",
+                            "top": "Top",
+                            "bottom": "Bottom"
+                        },
+                        "_styleMenu": {
+                            "dotted": "Dotted",
+                            "dashed": "Dashed",
+                            "solid": "Solid",
+                            "double": "Double",
+                            "groove": "Groove",
+                            "ridge": "Ridge",
+                            "inset": "Inset",
+                            "outset": "Outset"
+                        },
+                        "_left": {
+                            "chooseLeftColor": "Choose Left Color",
+                            "chooseLeftStyle": "Choose Left Style",
+                            "chooseLeftWidth": "Choose Left Width",
+                            "chooseLeftRadius": "Choose Left Radius"
+                        },
+                        "_right": {
+                            "chooseRightColor": "Choose Right Color",
+                            "chooseRightStyle": "Choose Right Style",
+                            "chooseRightWidth": "Choose Right Width",
+                            "chooseRightRadius": "Choose Right Radius"
+                        },
+                        "_top": {
+                            "chooseTopColor": "Choose Top Color",
+                            "chooseTopStyle": "Choose Top Style",
+                            "chooseTopWidth": "Choose Top Width",
+                            "chooseTopRadius": "Choose Top Radius"
+                        },
+                        "_bottom": {
+                            "chooseBottomColor": "Choose Bottom Color",
+                            "chooseBottomStyle": "Choose Bottom Style",
+                            "chooseBottomWidth": "Choose Bottom Width",
+                            "chooseBottomRadius": "Choose Bottom Radius"
+                        }
+                    },
+                    "_windowButtons": {
+                        "_data": "Buttons",
+                        "noEmoji": "No Emoji",
+                        "_actions": {
+                            "_data": "Actions",
+                            "_primary": {
+                                "primaryButton": "Primary Button",
+                                "chooseColor": "Choose Color",
+                                "chooseHoverColor": "Choose Hover Color",
+                                "chooseEmoji": "Choose Emoji",
+                                "emoji": "Emoji",
+                                "primary": "Primary"
+                            },
+                            "_secondary": {
+                                "secondaryButton": "Secondary Button",
+                                "chooseColor": "Choose Color",
+                                "chooseHoverColor": "Choose Hover Color",
+                                "chooseEmoji": "Choose Emoji",
+                                "emoji": "Emoji",
+                                "secondary": "Secondary"
+                            }
+                        },
+                        "_alerts": {
+                            "_data": "Alerts",
+                            "_success": {
+                                "successButton": "Success Button",
+                                "chooseColor": "Choose Color",
+                                "chooseHoverColor": "Choose Hover Color",
+                                "chooseEmoji": "Choose Emoji",
+                                "emoji": "Emoji",
+                                "success": "Success"
+                            },
+                            "_danger": {
+                                "dangerButton": "Danger Button",
+                                "chooseColor": "Choose Color",
+                                "chooseHoverColor": "Choose Hover Color",
+                                "chooseEmoji": "Choose Emoji",
+                                "emoji": "Emoji",
+                                "danger": "Danger"
+                            }
+                        },
+                        "_notifications": {
+                            "_data": "Notifications",
+                            "_warning": {
+                                "warningButton": "Warning Button",
+                                "chooseColor": "Choose Color",
+                                "chooseHoverColor": "Choose Hover Color",
+                                "chooseEmoji": "Choose Emoji",
+                                "emoji": "Emoji",
+                                "warning": "Warning"
+                            },
+                            "_info": {
+                                "infoButton": "Info Button",
+                                "chooseColor": "Choose Color",
+                                "chooseHoverColor": "Choose Hover Color",
+                                "chooseEmoji": "Choose Emoji",
+                                "emoji": "Emoji",
+                                "info": "Info"
+                            }
+                        },
+                        "_neutrals": {
+                            "_data": "Neutrals",
+                            "_light": {
+                                "lightButton": "Light Button",
+                                "chooseColor": "Choose Color",
+                                "chooseHoverColor": "Choose Hover Color",
+                                "chooseEmoji": "Choose Emoji",
+                                "emoji": "Emoji",
+                                "light": "Light"
+                            },
+                            "_dark": {
+                                "darkButton": "Dark Button",
+                                "chooseColor": "Choose Color",
+                                "chooseHoverColor": "Choose Hover Color",
+                                "chooseEmoji": "Choose Emoji",
+                                "emoji": "Emoji",
+                                "dark": "Dark"
+                            }
+                        }
+                    },
+                    "_windowButtonsFont": {
+                        "_data": "Buttons Font",
+                        "_actions": {
+                            "_data": "Actions",
+                            "_primary": {
+                                "primaryButton": "Primary Button",
+                                "chooseColor": "Choose Color",
+                                "chooseSize": "Choose Size",
+                                "fontFamily": "Font Family",
+                                "fontStyle": "Font Style",
+                                "fontWeight": "Font Weight",
+                                "primary": "Primary"
+                            },
+                            "_secondary": {
+                                "secondaryButton": "Secondary Button",
+                                "chooseColor": "Choose Color",
+                                "chooseSize": "Choose Size",
+                                "fontFamily": "Font Family",
+                                "fontStyle": "Font Style",
+                                "fontWeight": "Font Weight",
+                                "secondary": "Secondary"
+                            }
+                        },
+                        "_alerts": {
+                            "_data": "Alerts",
+                            "_success": {
+                                "successButton": "Success Button",
+                                "chooseColor": "Choose Color",
+                                "chooseSize": "Choose Size",
+                                "fontFamily": "Font Family",
+                                "fontStyle": "Font Style",
+                                "fontWeight": "Font Weight",
+                                "success": "Success"
+                            },
+                            "_danger": {
+                                "dangerButton": "Danger Button",
+                                "chooseColor": "Choose Color",
+                                "chooseSize": "Choose Size",
+                                "fontFamily": "Font Family",
+                                "fontStyle": "Font Style",
+                                "fontWeight": "Font Weight",
+                                "danger": "Danger"
+                            }
+                        },
+                        "_notifications": {
+                            "_data": "Notifications",
+                            "_warning": {
+                                "warningButton": "Warning Button",
+                                "chooseColor": "Choose Color",
+                                "chooseSize": "Choose Size",
+                                "fontFamily": "Font Family",
+                                "fontStyle": "Font Style",
+                                "fontWeight": "Font Weight",
+                                "warning": "Warning"
+                            },
+                            "_info": {
+                                "infoButton": "Info Button",
+                                "chooseColor": "Choose Color",
+                                "chooseSize": "Choose Size",
+                                "fontFamily": "Font Family",
+                                "fontStyle": "Font Style",
+                                "fontWeight": "Font Weight",
+                                "info": "Info"
+                            }
+                        },
+                        "_neutrals": {
+                            "_data": "Neutrals",
+                            "_light": {
+                                "lightButton": "Light Button",
+                                "chooseColor": "Choose Color",
+                                "chooseSize": "Choose Size",
+                                "fontFamily": "Font Family",
+                                "fontStyle": "Font Style",
+                                "fontWeight": "Font Weight",
+                                "light": "Light"
+                            },
+                            "_dark": {
+                                "darkButton": "Dark Button",
+                                "chooseColor": "Choose Color",
+                                "chooseSize": "Choose Size",
+                                "fontFamily": "Font Family",
+                                "fontStyle": "Font Style",
+                                "fontWeight": "Font Weight",
+                                "dark": "Dark"
+                            }
+                        }
+                    }
+                },
+                "_activity": {
+                    "_data": "Activity",
+                    "_myActivity": {
+                        "_data": "My Activity",
+                        "activityIsEnabled": "Activity is Enabled",
+                        "activityIsDisabled": "Activity is Disabled",
+                        "deleteAllMyActivity": "Delete All My Activity",
+                        "page": "Page",
+                        "_activityListTitles": {
+                            "createProfile": "Create Profile",
+                            "deleteProfile": "Delete Profile",
+                            "openExtension": "Open Extension",
+                            "closeExtension": "Close Extension",
+                            "createBookmark": "Create Bookmark",
+                            "deleteBookmark": "Delete Bookmark",
+                            "editBookmark": "Edit Bookmark",
+                            "createFolder": "Create Folder",
+                            "deleteFolder": "Delete Folder",
+                            "editFolder": "Edit Folder"
+                        },
+                        "_activityTableHeader": {
+                            "date": "Date",
+                            "action": "Action",
+                            "detail": "Detail",
+                            "delete": "Delete"
+                        }
+                    }
+                },
+                "_exportImportOptions": {
+                    "_data": "Export/Import Options",
+                    "_exportProfile": {
+                        "_data": "Export Profile",
+                        "chooseTitle": "Choose Title",
+                        "setEncryption": "Set Encryption",
+                        "setPassword": "Set Password",
+                        "export": "Export",
+                        "_exportTypes": {
+                            "allProfiles": "All Profiles",
+                            "currentAllProfile": "Current Profile",
+                            "currentBookmarks": "Current Bookmarks",
+                            "defaultFolderStyle": "Default Folder Style",
+                            "defaultBookmarksStyle": "Default Bookmark Style",
+                            "userSettings": "Current User Settings",
+                            "currentUserActivityLog": "Current Activity Log"
+                        }
+                    },
+                    "_importProfile": {
+                        "_data": "Import Profile",
+                        "chooseFile": "Choose File",
+                        "clickToImport": "Click To Import",
+                        "informationAboutFile": "Information About File",
+                        "date": "Date",
+                        "size": "Size",
+                        "filePassword": "File Password",
+                        "decrypt": "Decrypt",
+                        "extensionVersion": "Extension Version",
+                        "browser": "Browser Information",
+                        "browserVersion": "v.",
+                        "osType": "OS Type",
+                        "createdAt": "Created At",
+                        "profileName": "Profile Name",
+                        "continue": "Continue",
+                        "success": "Success",
+                        "error": "Error",
+                        "criticalError": "Critical Error",
+                        "_importTableHeader": {
+                            "importType": "Import Type",
+                            "toCurrentProfile": "To Current Profile",
+                            "toNewProfile": "To New Profile"
+                        },
+                        "apply": "Apply",
+                        "noDataFound": "No data found",
+                        "noProfileDetailFound": "No profile detail found",
+                        "_infoMessages": {
+                            "importSuccessful": "Import successful: All data has been imported successfully.",
+                            "notSelectedLocation": "Please select a location to save the imported data.",
+                            "errorImportingFile": "Error importing file: Some data could not be saved. Please check the file format and try again.",
+                            "failedToDecryptFile": "Failed to decrypt file: Invalid password or file is corrupted.",
+                            "errorReadEmpty": "Error to read file. It is probably empty.",
+                            "errorReadCorrupted": "Error to read file. It is probably corrupted.",
+                            "errorReadInvalid": "Error to read file. It is probably invalid."
+                        }
+                    }
+                },
+                "_syncBackup": {
+                    "_data": "Sync/Backup",
+                    "_syncBrowserBookmarks": {
+                        "_data": "Sync Browser Bookmarks",
+                        "synchronizeBookmarks": "Synchronize Bookmarks",
+                        "synchronizationIsOn": "Synchronization is On",
+                        "synchronizationIsOff": "Synchronization is Off",
+                        "synchronizeType": "Synchronize Type",
+                        "_browserToExtension": {
+                            "title": "Browser To Extension",
+                            "explain": "With this synchronization setting, any bookmarks you create, edit, or delete in the browser will be reflected in the extension. However, changes made to bookmarks within the extension will not be reflected in the browser. Please ensure you select a folder in both the browser and the extension for synchronization."
+                        },
+                        "_bothDirections": {
+                            "title": "Both Directions",
+                            "explain": "With this synchronization setting, any bookmarks you create, edit, or delete in the browser will be reflected in the extension, and vice versa. Changes made in either the browser or the extension will be synchronized in both directions. Please select a folder in both the browser and the extension for synchronization."
+                        },
+                        "_extensionToBrowser": {
+                            "title": "Extension To Browser",
+                            "explain": "This synchronization setting allows you to create, edit, or delete bookmarks in the extension, and those changes will be reflected in the browser. However, bookmarks created in the browser will not be reflected in the extension. Please make sure to select a folder in both the extension and the browser for synchronization."
+                        },
+                        "browserFolder": "Browser Folder",
+                        "extensionFolder": "Extension Folder",
+                        "cancel": "Cancel",
+                        "setFolder": "Set Folder",
+                        "synchronize": "Synchronize"
+                    }
+                },
+                "_about": {
+                    "_data": "About",
+                    "_aboutInfo": {
+                        "_data": "Info"
+                    },
+                    "_aboutChangelog": {
+                        "_data": "Changelog"
+                    }
+                }
+            },
+            "_folder": {
+                "_defaultFolderStyle": {
+                    "_data": "Folder Style",
+                    "_backgroundImage": {
+                        "_data": "Background Image",
+                        "chooseAnImage": "Choose an Image",
+                        "selectImage": "Select Image",
+                        "setBackgroundImagePosition": "Set Background Image Position",
+                        "center": "Center",
+                        "stretch": "Stretch",
+                        "fit": "Fit",
+                        "fill": "Fill",
+                        "tile": "Tile"
+                    },
+                    "_backgroundColor": {
+                        "_data": "Background Color",
+                        "chooseColor": "Choose Color",
+                        "defineRotationAngle": "Define Rotation Angle"
+                    },
+                    "_bookmarksSize": {
+                        "_data": "Bookmarks Size",
+                        "gridFlowControl": "Grid Flow Control",
+                        "_gridButtons": {
+                            "row": "Row",
+                            "column": "Column",
+                            "rowReverse": "Row Reverse",
+                            "columnReverse": "Column Reverse"
+                        },
+                        "_gridAutoFlowStatusDirection": {
+                            "row": "The grid flow is now set to Row.",
+                            "column": "The grid flow is now set to Column."
+                        },
+                        "_gridAutoFlowStatusExplanation": {
+                            "row": "Items will be arranged horizontally.",
+                            "column": "Items will be arranged vertically."
+                        },
+                        "width": "Width",
+                        "height": "Height"
+                    }
+                },
+                "_navigationBarStyle": {
+                    "_data": "Navigation Bar Style",
+                    "_navigationBarSymbol": {
+                        "_data": "Symbol",
+                        "chooseColor": "Choose Color",
+                        "chooseSize": "Choose Size",
+                        "chooseSymbol": "Choose Symbol"
+                    },
+                    "_navigationBarBackgroundColor": {
+                        "_data": "Background Color",
+                        "chooseColor": "Choose Color"
+                    },
+                    "_navigationBarFont": {
+                        "_data": "Font",
+                        "chooseColor": "Choose Color",
+                        "chooseSize": "Choose Size"
+                    }
+                }
+            }
+        }
+    }
+}

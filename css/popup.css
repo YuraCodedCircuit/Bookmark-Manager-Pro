@@ -1,0 +1,1195 @@
+/*
+    Copyright (C) 2025 YuraCodedCircuit
+
+    This file is part of Bookmark Manager Pro.
+
+    Bookmark Manager Pro is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Bookmark Manager Pro is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Bookmark Manager Pro. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/*
+    Bookmark Manager Pro
+    This project uses third-party libraries:
+    - jQuery (MIT License)
+    - Toastify (MIT License)
+    - JavaScript Color Gradient (MIT License)
+    - Coloris (MIT License)
+    - LocalForage (MIT License)
+    - CryptoJS (MIT License)
+    - GSAP (Standard License)
+    - tsParticles (MIT License)
+    - Emoji Mart (MIT License)
+    - jQuery Knob (MIT License)
+    - Howler (MIT License)
+
+    All third-party libraries are included under their respective licenses.
+    For more information, please refer to the documentation of each library.
+ */
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    cursor: default;
+    outline: none;
+    position: relative;
+    user-select: none;
+    list-style-type: none;
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+    word-spacing: inherit;
+}
+
+svg {
+    pointer-events: none;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 400px;
+    height: 600px;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: height 1.2s ease;
+}
+
+body>#content {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: 400px;
+    height: 100%;
+    overflow: hidden;
+}
+
+body>#content>#popupMainWindow {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowTopWelcomeMessage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    margin: 10px 0px 0px 0px;
+    font-size: 24px;
+    text-align: center;
+    width: 100%;
+    height: fit-content;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowTopMessage {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+    height: 350px;
+    padding: 10px;
+    font-size: 20px;
+    white-space: pre-wrap;
+    text-align: justify;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddleButton {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 150px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddleButton>#popupMainWindowMiddleButtonContent {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 150px;
+    height: 50px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000050;
+    z-index: 1;
+}
+
+body>#content>#popupMainWindow>#waveEffect {
+    display: flex;
+    width: 100%;
+    height: 110px;
+    position: absolute;
+    bottom: 0px;
+}
+
+body>#content>#popupMainWindow>#waveEffect svg {
+    display: flex;
+    position: absolute;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowTop {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: 100%;
+    height: 70px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowTop>#currentUserNameAndImage {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: #00000030;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowTop>#currentUserNameAndImage>#currentUserName {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: 10px;
+    width: 350px;
+    height: 70px;
+    font-size: 2rem;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowTop>#currentUserNameAndImage>#currentUserImage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
+    height: 70px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowTop>#currentUserNameAndImage>#currentUserImage>#userImage {
+    display: flex;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 1px solid #333;
+    overflow: hidden;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowTop>#currentUserNameAndImage>#currentUserImage>#userImage>#logoImg {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 60px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+    padding: 0px 2px 0px 2px;
+    width: 100%;
+    height: 100px;
+    background-color: #ad7670;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 80px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioIcon>#currentLiveRadioImage {
+    display: flex;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioIcon>#currentLiveRadioText {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioIcon>#currentLiveRadioText>#currentStationIconSVG>#currentStationIconText {
+    font-size: 5cqw;
+    font-family: 'Courier New';
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+figure {
+    display: flex;
+    position: absolute;
+    width: 100%;
+    height: 10px;
+    bottom: 0;
+    right: 0;
+}
+
+figure audio {
+    display: flex;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    margin: 0px 5px 0px 5px;
+    width: 284px;
+    height: 80px;
+    background-color: #dfa679;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 284px;
+    height: 40px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioTitle>#currentLiveRadioTitleContainer {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioTitle>#currentLiveRadioTitleContainer>#scrollText {
+    display: inline-block;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 284px;
+    height: 40px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>#liveRadioControlVolumeButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    left: 5px;
+    bottom: 0;
+    width: 90px;
+    height: 25px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>#liveRadioControlVolumeButton input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    width: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>#liveRadioControlVolumeButton input[type="range"]:focus {
+    outline: none;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>#liveRadioControlVolumeButton input[type="range"]::-webkit-slider-runnable-track {
+    background-color: #67783B;
+    border-radius: 10px;
+    height: 10px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>#liveRadioControlVolumeButton input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -5px;
+    background-color: #5E808C;
+    border-radius: 0.5rem;
+    height: 20px;
+    width: 10px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>#liveRadioControlVolumeButton input[type="range"]:focus::-webkit-slider-thumb {
+    outline: 3px solid #5E808C;
+    outline-offset: 0.125rem;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>#liveRadioControlVolumeButton input[type="range"]::-moz-range-track {
+    background-color: #67783B;
+    border-radius: 10px;
+    height: 10px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>#liveRadioControlVolumeButton input[type="range"]::-moz-range-thumb {
+    background-color: #5E808C;
+    border: none;
+    border-radius: 0.5rem;
+    height: 20px;
+    width: 10px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>#liveRadioControlVolumeButton input[type="range"]:focus::-moz-range-thumb {
+    outline: 3px solid #5E808C;
+    outline-offset: 0.125rem;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 35px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioControlsAndTitle>#currentLiveRadioControls>button:active {
+    top: 2px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioPlayList {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 40px;
+    height: 40px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioContainer>#currentLiveRadioPlayList>button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListTop {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+    padding: 0px 5px 0px 5px;
+    width: 100%;
+    height: 50px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListTop>#liveRadioPlayListAndDelete {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 0px 5px 0px 0px;
+    border-radius: 35px;
+    border: 0px solid #00000000;
+    width: 325px;
+    height: 35px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListTop>#liveRadioPlayListAndDelete>#liveRadioPlayListInput {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    border-radius: 35px;
+    padding: 0px 30px 0px 15px;
+    width: 355px;
+    height: 35px;
+    border: 0px solid #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListTop>#liveRadioPlayListAndDelete>#liveRadioPlayListInput:focus {
+    border: 2px solid #0046a1;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListTop>#liveRadioPlayListAndDelete>#liveRadioPlayListDeleteInputTextButton {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    right: 5px;
+    width: 27px;
+    height: 27px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListTop>#liveRadioPlayListAdvancedSearch {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 30px;
+    height: 35px;
+    margin: 0px 2px 0px 0px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListTop>#liveRadioPlayListSearch {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 30px;
+    height: 35px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    padding: 5px;
+    width: 100%;
+    height: 375px;
+    overflow: scroll;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle>#loaderContainerMessages {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle>#loaderContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle>.stationBox {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 0px 0px 5px 0px;
+    width: 100%;
+    height: 50px;
+    border-radius: 10px;
+    background-color: #89fce9;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle>.stationBox:last-child {
+    margin: 0px 0px 0px 0px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle>.stationBox>.stationIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px 0px 0px 10px;
+    background-color: #32d3d0;
+    box-shadow: 0px 0px 1px 0.4px rgba(0, 0, 0, 0.75) inset;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle>.stationBox>.stationIcon>.stationIconSVG>.stationIconText {
+    font-size: 8cqw;
+    font-family: 'Courier New';
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle>.stationBox>.stationNameAndCountry {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 290px;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle>.stationBox>.stationNameAndCountry>.stationName {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 0px 0px 5px;
+    width: 290px;
+    height: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle>.stationBox>.stationNameAndCountry>.stationCountry {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 0px 0px 5px;
+    width: 290px;
+    height: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioPlayListMiddle>.stationBox>.stationPlayButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 100%;
+    border-radius: 0px 10px 10px 0px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioAdvancedMenu {
+    display: none;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 5px;
+    position: absolute;
+    top: 10px;
+    width: 350px;
+    height: 300px;
+    z-index: 1;
+    border: 0px solid #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioAdvancedMenuBlur {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 350px;
+    backdrop-filter: blur(5px);
+    transform: translate3d(0, 0, 0);
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioAdvancedMenu>#liveRadioPlaySearchLimitContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 35px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioAdvancedMenu>#liveRadioPlaySearchLimitContainer>#liveRadioPlaySearchLimitLabel {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioAdvancedMenu>#liveRadioPlaySearchLimitContainer>#liveRadioPlaySearchLimitInputAndButtons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 90px;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioAdvancedMenu>#liveRadioPlaySearchLimitContainer>#liveRadioPlaySearchLimitInputAndButtons button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 20px;
+    height: 20px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#liveRadioPlayListContainer>#liveRadioAdvancedMenu>#liveRadioPlaySearchLimitContainer>#liveRadioPlaySearchLimitInputAndButtons>#liveRadioPlaySearchLimit {
+    display: flex;
+    width: 50px;
+    height: 30px;
+    text-align: center;
+    border: 0px solid #00000000;
+    border-bottom: 1px solid #000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: row;
+    width: 100%;
+    height: 70px;
+    overflow: hidden;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#messageWrongUrl {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 0px 5px;
+    font-size: 15px;
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#bookmarkExistContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#bookmarkExistContainer>#bookmarkExistIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 40px;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#bookmarkExistContainer>#bookmarkExistMessage {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 335px;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#bookmarkExistContainer>#bookmarkExistButtons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 65px;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#bookmarkExistContainer>#bookmarkExistButtons button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 45px;
+    height: 30px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#bookmarkExistContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabPreview {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    height: 70px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabPreview>#activeTabPreviewImage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
+    height: 70px;
+    background-size: cover;
+    background-position: top left;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabPreview>#activeTabPreviewUrlAndFolder {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 240px;
+    height: 70px;
+    overflow: hidden;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabPreview>#activeTabPreviewUrlAndFolder>#activeTabPreviewUrl {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 250px;
+    height: 35px;
+    padding: 0px 5px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabPreview>#activeTabPreviewUrlAndFolder>#activeTabPreviewUrl>#scrollTextUrl {
+    display: inline-block;
+    width: fit-content;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabPreview>#activeTabPreviewUrlAndFolder>#activeTabPreviewFolder {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 250px;
+    height: 35px;
+    padding: 0px 5px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabPreview>#activeTabPreviewUrlAndFolder>#activeTabPreviewFolder>#scrollTextFolder {
+    display: inline-block;
+    width: fit-content;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabPreview>#activeTabPreviewButtons {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    flex-direction: column;
+    width: 45px;
+    height: 70px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabPreview>#activeTabPreviewButtons button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 25px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000030;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabPreview>#activeTabPreviewButtons button:active {
+    top: 2px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabImage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 200px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabImage>#siteScreenshot {
+    display: flex;
+    width: 200px;
+    height: auto;
+    max-height: 200px;
+    background-color: #17b62e;
+    border-width: 0px;
+    border-style: solid;
+    border-color: #000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabImage>#activeTabImageZoomButtons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    right: 10px;
+    bottom: 0;
+    flex-direction: column;
+    width: 60px;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabImage>#activeTabImageZoomButtons button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    background-color: #00000000;
+    border: 0px solid #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+    height: 190px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabName {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 4px;
+    padding: 0px 10px 0px 10px;
+    width: 100%;
+    height: 40px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabName>#popupMainWindowTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 80px;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabName>#popupMainWindowTabTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 300px;
+    height: 100%;
+    border-top-style: none;
+    border-left-style: none;
+    border-right-style: none;
+    border-bottom-style: solid;
+    background-color: #00000000;
+    border-color: #000000;
+    border-width: 1px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabUrl {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 4px;
+    padding: 0px 10px 0px 10px;
+    width: 100%;
+    height: 40px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabUrl>#popupMainWindowUrl {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 80px;
+    min-width: 80px;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabUrl>#popupMainWindowTabUrl {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 300px;
+    height: 100%;
+    border-top-style: none;
+    border-left-style: none;
+    border-right-style: none;
+    border-bottom-style: solid;
+    background-color: #00000000;
+    border-color: #000000;
+    border-width: 1px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabFolder {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 4px;
+    padding-left: 10px;
+    width: 100%;
+    height: 40px;
+    overflow: auto;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabFolder>#popupMainWindowFolder {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 80px;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabFolder>#popupMainWindowTabFolder {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 270px;
+    height: 100%;
+    text-wrap: nowrap;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabFolder>#popupMainWindowTabFolderChangeButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    right: 5px;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabFolder>#popupMainWindowTabFolderChangeButton:active {
+    bottom: 2px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder>#activeTabMessage {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 0px 0px 0px 10px;
+    width: 100%;
+    height: 40px;
+    overflow: hidden;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder .tree {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    position: absolute;
+    left: 0px;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 208px;
+    overflow: scroll;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder .tree ul {
+    list-style: none;
+    padding-left: 5px;
+    left: -10px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder .tree ul li {
+    padding-left: 16px;
+    position: relative;
+    box-sizing: border-box;
+    --lineWidth: 15px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder .tree ul li .folder {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: auto;
+    height: 26px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder .tree ul li .folder .check {
+    display: flex;
+    position: absolute;
+    left: -10px;
+    justify-content: center;
+    align-items: center;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder .tree ul li .folder .folderName {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 4px;
+    border-radius: 5px;
+    text-wrap: nowrap;
+    margin: 0px 0px 0px 5px;
+    min-width: 40px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder .tree ul li::before {
+    content: "";
+    height: 1px;
+    width: var(--lineWidth);
+    background-color: #333;
+    position: absolute;
+    top: 13px;
+    left: 0;
+    margin: auto;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder .tree ul li::after {
+    content: "";
+    width: 1px;
+    height: 100%;
+    background-color: #333;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder .tree ul li:first-child::after {
+    content: "";
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabNameUrlFolder .tree ul li:last-child::after {
+    height: 13px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabButtons {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0px 3px 0px 0px;
+    width: 100%;
+    height: 40px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabButtons button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 170px;
+    height: 30px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000050;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabDetail>#activeTabButtons button:active {
+    top: 2px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabThankYou {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 10px 5px 0px 5px;
+    width: 100%;
+    height: 500px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabThankYou>#savedSuccessfully {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 19px;
+    width: 100%;
+    height: 50px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabThankYou>#savedSuccessfully>#savedSuccessfullyIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabThankYou>#savedSuccessfully>#savedSuccessfullyIcon>#bookmarkHeartSvg {
+    width: 100%;
+    height: 100%;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabThankYou>#shareMessage {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-wrap: wrap;
+    text-align: justify;
+    font-size: 19px;
+    width: 100%;
+    height: fit-content;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabThankYou>#sharedIcons {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: flex-start;
+    position: absolute;
+    bottom: 0;
+    padding: 10px 0px 0px 0px;
+    width: 100%;
+    height: 150px;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabThankYou>#sharedIcons>#sharedReview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabThankYou>#sharedIcons>#sharedTwitter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabThankYou>#sharedIcons>#sharedGitHub {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#content>#popupMainWindow>#popupMainWindowMiddle>#popupMiddleContainer>#saveActiveTabContainer>#activeTabThankYou>#sharedIcons>#sharedSponsorship {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}

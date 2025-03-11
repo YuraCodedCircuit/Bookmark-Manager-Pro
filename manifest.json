@@ -1,0 +1,76 @@
+{
+	"manifest_version": 3,
+	"name": "Bookmark Manager Pro",
+	"version": "0.2.6",
+	"description": "Organize, customize, and efficiently access your Browser bookmarks. Bookmark Manager Pro provides powerful, free bookmark management with an intuitive OS-like interface.",
+	"author": "CyberVoyager",
+	"homepage_url": "https://github.com/YuraCodedCircuit",
+	"license": "https://www.gnu.org/licenses/gpl-3.0-standalone.html",
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "yurawebdev@proton.me",
+			"strict_min_version": "130.0"
+		}
+	},
+	"icons": {
+		"32": "icons/extensionsLogo/icon-32.png",
+		"48": "icons/extensionsLogo/icon-48.png",
+		"64": "icons/extensionsLogo/icon-64.png"
+	},
+	"action": {
+		"default_title": "Browser bookmarks",
+		"default_popup": "./popup/popupInterface.html",
+		"default_icon": {
+			"32": "icons/extensionsLogo/icon-32.png",
+			"48": "icons/extensionsLogo/icon-48.png",
+			"64": "icons/extensionsLogo/icon-64.png"
+		}
+	},
+	"page_action": {
+		"default_icon": {
+			"48": "icons/extensionsLogo/bookmark.svg"
+		},
+		"default_title": "Save this page to the Bookmark Manager PRO"
+	},
+	"background": {
+		"scripts": [
+			"./js/libraries/localforage.min.js",
+			"./js/libraries/howler.min.js",
+			"./js/background.js"
+		],
+		"type": "module"
+	},
+	"permissions": [
+		"unlimitedStorage",
+		"notifications",
+		"contextMenus",
+		"activeTab",
+		"bookmarks",
+		"storage",
+		"tabs"
+	],
+	"content_scripts": [
+		{
+			"matches": [
+				"<all_urls>"
+			],
+			"js": [
+				"./js/main.js"
+			]
+		}
+	],
+	"chrome_url_overrides": {
+		"newtab": "index.html"
+	},
+	"content_security_policy": {
+		"extension_pages": "script-src 'self' 'wasm-unsafe-eval'"
+	},
+	"commands": {
+		"open-popup-interface": {
+			"suggested_key": {
+				"default": "Ctrl+Alt+O"
+			},
+			"description": "Send to open the popup Bookmark Manager PRO window"
+		}
+	}
+}

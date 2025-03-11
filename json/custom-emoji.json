@@ -1,0 +1,6840 @@
+[
+    {"license": "This file is part of Bookmark Manager Pro, which is licensed under the GPL-3.0."},
+    {
+        "id": "copyright-sign",
+        "name": "Copyright sign",
+        "keywords": [
+            "copyright",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+000A9",
+                "native": "©"
+            }
+        ]
+    },
+    {
+        "id": "registered-trade-mark-sign",
+        "name": "Registered trade mark sign",
+        "keywords": [
+            "registered",
+            "trade",
+            "mark",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+000AE",
+                "native": "®"
+            }
+        ]
+    },
+    {
+        "id": "trade-mark-sign",
+        "name": "Trade mark sign",
+        "keywords": [
+            "trade",
+            "mark",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02122",
+                "native": "™"
+            }
+        ]
+    },
+    {
+        "id": "at-symbol",
+        "name": "At symbol",
+        "keywords": [
+            "at",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+00040",
+                "native": "@"
+            }
+        ]
+    },
+    {
+        "id": "paragraph-sign",
+        "name": "Paragraph sign",
+        "keywords": [
+            "paragraph",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+000B6",
+                "native": "¶"
+            }
+        ]
+    },
+    {
+        "id": "section-sign",
+        "name": "Section sign",
+        "keywords": [
+            "section",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+000A7",
+                "native": "§"
+            }
+        ]
+    },
+    {
+        "id": "account-of",
+        "name": "Account of",
+        "keywords": [
+            "account",
+            "of",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02100",
+                "native": "℀"
+            }
+        ]
+    },
+    {
+        "id": "addressed-to-the-subject",
+        "name": "Addressed to the subject",
+        "keywords": [
+            "addressed",
+            "to",
+            "the",
+            "subject",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02101",
+                "native": "℁"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-capital-c",
+        "name": "Double-struck capital c",
+        "keywords": [
+            "double-struck",
+            "capital",
+            "c",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02102",
+                "native": "ℂ"
+            }
+        ]
+    },
+    {
+        "id": "degree-celsius",
+        "name": "Degree celsius",
+        "keywords": [
+            "degree",
+            "celsius",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02103",
+                "native": "℃"
+            }
+        ]
+    },
+    {
+        "id": "centre-line-symbol",
+        "name": "Centre line symbol",
+        "keywords": [
+            "centre",
+            "line",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02104",
+                "native": "℄"
+            }
+        ]
+    },
+    {
+        "id": "care-of",
+        "name": "Care of",
+        "keywords": [
+            "care",
+            "of",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02105",
+                "native": "℅"
+            }
+        ]
+    },
+    {
+        "id": "cada-una",
+        "name": "Cada una",
+        "keywords": [
+            "cada",
+            "una",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02106",
+                "native": "℆"
+            }
+        ]
+    },
+    {
+        "id": "euler-constant",
+        "name": "Euler constant",
+        "keywords": [
+            "euler",
+            "constant",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02107",
+                "native": "ℇ"
+            }
+        ]
+    },
+    {
+        "id": "scruple",
+        "name": "Scruple",
+        "keywords": [
+            "scruple",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02108",
+                "native": "℈"
+            }
+        ]
+    },
+    {
+        "id": "degree-fahrenheit",
+        "name": "Degree fahrenheit",
+        "keywords": [
+            "degree",
+            "fahrenheit",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02109",
+                "native": "℉"
+            }
+        ]
+    },
+    {
+        "id": "script-small-g",
+        "name": "Script small g",
+        "keywords": [
+            "script",
+            "small",
+            "g",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0210A",
+                "native": "ℊ"
+            }
+        ]
+    },
+    {
+        "id": "script-capital-h",
+        "name": "Script capital h",
+        "keywords": [
+            "script",
+            "capital",
+            "h",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0210B",
+                "native": "ℋ"
+            }
+        ]
+    },
+    {
+        "id": "black-letter-capital-h",
+        "name": "Black-letter capital h",
+        "keywords": [
+            "black-letter",
+            "capital",
+            "h",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0210C",
+                "native": "ℌ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-capital-h",
+        "name": "Double-struck capital h",
+        "keywords": [
+            "double-struck",
+            "capital",
+            "h",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0210D",
+                "native": "ℍ"
+            }
+        ]
+    },
+    {
+        "id": "planck-constant",
+        "name": "Planck constant",
+        "keywords": [
+            "planck",
+            "constant",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0210E",
+                "native": "ℎ"
+            }
+        ]
+    },
+    {
+        "id": "planck-constant-over-two-pi",
+        "name": "Planck constant over two pi",
+        "keywords": [
+            "planck",
+            "constant",
+            "over",
+            "two",
+            "pi",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0210F",
+                "native": "ℏ"
+            }
+        ]
+    },
+    {
+        "id": "script-capital-i",
+        "name": "Script capital i",
+        "keywords": [
+            "script",
+            "capital",
+            "i",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02110",
+                "native": "ℐ"
+            }
+        ]
+    },
+    {
+        "id": "black-letter-capital-i",
+        "name": "Black-letter capital i",
+        "keywords": [
+            "black-letter",
+            "capital",
+            "i",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02111",
+                "native": "ℑ"
+            }
+        ]
+    },
+    {
+        "id": "script-capital-l",
+        "name": "Script capital l",
+        "keywords": [
+            "script",
+            "capital",
+            "l",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02112",
+                "native": "ℒ"
+            }
+        ]
+    },
+    {
+        "id": "script-small-l",
+        "name": "Script small l",
+        "keywords": [
+            "script",
+            "small",
+            "l",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02113",
+                "native": "ℓ"
+            }
+        ]
+    },
+    {
+        "id": "l-b-bar-symbol",
+        "name": "L b bar symbol",
+        "keywords": [
+            "l",
+            "b",
+            "bar",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02114",
+                "native": "℔"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-capital-n",
+        "name": "Double-struck capital n",
+        "keywords": [
+            "double-struck",
+            "capital",
+            "n",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02115",
+                "native": "ℕ"
+            }
+        ]
+    },
+    {
+        "id": "numero-sign",
+        "name": "Numero sign",
+        "keywords": [
+            "numero",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02116",
+                "native": "№"
+            }
+        ]
+    },
+    {
+        "id": "sound-recording-copyright",
+        "name": "Sound recording copyright",
+        "keywords": [
+            "sound",
+            "recording",
+            "copyright",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02117",
+                "native": "℗"
+            }
+        ]
+    },
+    {
+        "id": "script-capital-p",
+        "name": "Script capital p",
+        "keywords": [
+            "script",
+            "capital",
+            "p",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02118",
+                "native": "℘"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-capital-p",
+        "name": "Double-struck capital p",
+        "keywords": [
+            "double-struck",
+            "capital",
+            "p",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02119",
+                "native": "ℙ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-capital-q",
+        "name": "Double-struck capital q",
+        "keywords": [
+            "double-struck",
+            "capital",
+            "q",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0211A",
+                "native": "ℚ"
+            }
+        ]
+    },
+    {
+        "id": "script-capital-r",
+        "name": "Script capital r",
+        "keywords": [
+            "script",
+            "capital",
+            "r",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0211B",
+                "native": "ℛ"
+            }
+        ]
+    },
+    {
+        "id": "black-letter-capital-r",
+        "name": "Black-letter capital r",
+        "keywords": [
+            "black-letter",
+            "capital",
+            "r",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0211C",
+                "native": "ℜ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-capital-r",
+        "name": "Double-struck capital r",
+        "keywords": [
+            "double-struck",
+            "capital",
+            "r",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0211D",
+                "native": "ℝ"
+            }
+        ]
+    },
+    {
+        "id": "prescription-take",
+        "name": "Prescription take",
+        "keywords": [
+            "prescription",
+            "take",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0211E",
+                "native": "℞"
+            }
+        ]
+    },
+    {
+        "id": "response",
+        "name": "Response",
+        "keywords": [
+            "response",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0211F",
+                "native": "℟"
+            }
+        ]
+    },
+    {
+        "id": "service-mark",
+        "name": "Service mark",
+        "keywords": [
+            "service",
+            "mark",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02120",
+                "native": "℠"
+            }
+        ]
+    },
+    {
+        "id": "telephone-sign",
+        "name": "Telephone sign",
+        "keywords": [
+            "telephone",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02121",
+                "native": "℡"
+            }
+        ]
+    },
+    {
+        "id": "versicle",
+        "name": "Versicle",
+        "keywords": [
+            "versicle",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02123",
+                "native": "℣"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-capital-z",
+        "name": "Double-struck capital z",
+        "keywords": [
+            "double-struck",
+            "capital",
+            "z",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02124",
+                "native": "ℤ"
+            }
+        ]
+    },
+    {
+        "id": "ounce-sign",
+        "name": "Ounce sign",
+        "keywords": [
+            "ounce",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02125",
+                "native": "℥"
+            }
+        ]
+    },
+    {
+        "id": "ohm-sign",
+        "name": "Ohm sign",
+        "keywords": [
+            "ohm",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02126",
+                "native": "Ω"
+            }
+        ]
+    },
+    {
+        "id": "inverted-ohm-sign",
+        "name": "Inverted ohm sign",
+        "keywords": [
+            "inverted",
+            "ohm",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02127",
+                "native": "℧"
+            }
+        ]
+    },
+    {
+        "id": "black-letter-capital-z",
+        "name": "Black-letter capital z",
+        "keywords": [
+            "black-letter",
+            "capital",
+            "z",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02128",
+                "native": "ℨ"
+            }
+        ]
+    },
+    {
+        "id": "turned-greek-small-letter-iota",
+        "name": "Turned greek small letter iota",
+        "keywords": [
+            "turned",
+            "greek",
+            "small",
+            "letter",
+            "iota",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02129",
+                "native": "℩"
+            }
+        ]
+    },
+    {
+        "id": "kelvin-sign",
+        "name": "Kelvin sign",
+        "keywords": [
+            "kelvin",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0212A",
+                "native": "K"
+            }
+        ]
+    },
+    {
+        "id": "angstrom-sign",
+        "name": "Angstrom sign",
+        "keywords": [
+            "angstrom",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0212B",
+                "native": "Å"
+            }
+        ]
+    },
+    {
+        "id": "script-capital-b",
+        "name": "Script capital b",
+        "keywords": [
+            "script",
+            "capital",
+            "b",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0212C",
+                "native": "ℬ"
+            }
+        ]
+    },
+    {
+        "id": "black-letter-capital-c",
+        "name": "Black-letter capital c",
+        "keywords": [
+            "black-letter",
+            "capital",
+            "c",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0212D",
+                "native": "ℭ"
+            }
+        ]
+    },
+    {
+        "id": "estimated-symbol",
+        "name": "Estimated symbol",
+        "keywords": [
+            "estimated",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0212E",
+                "native": "℮"
+            }
+        ]
+    },
+    {
+        "id": "script-small-e",
+        "name": "Script small e",
+        "keywords": [
+            "script",
+            "small",
+            "e",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0212F",
+                "native": "ℯ"
+            }
+        ]
+    },
+    {
+        "id": "script-capital-e",
+        "name": "Script capital e",
+        "keywords": [
+            "script",
+            "capital",
+            "e",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02130",
+                "native": "ℰ"
+            }
+        ]
+    },
+    {
+        "id": "script-capital-f",
+        "name": "Script capital f",
+        "keywords": [
+            "script",
+            "capital",
+            "f",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02131",
+                "native": "ℱ"
+            }
+        ]
+    },
+    {
+        "id": "turned-capital-f",
+        "name": "Turned capital f",
+        "keywords": [
+            "turned",
+            "capital",
+            "f",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02132",
+                "native": "Ⅎ"
+            }
+        ]
+    },
+    {
+        "id": "script-capital-m",
+        "name": "Script capital m",
+        "keywords": [
+            "script",
+            "capital",
+            "m",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02133",
+                "native": "ℳ"
+            }
+        ]
+    },
+    {
+        "id": "script-small-o",
+        "name": "Script small o",
+        "keywords": [
+            "script",
+            "small",
+            "o",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02134",
+                "native": "ℴ"
+            }
+        ]
+    },
+    {
+        "id": "alef-symbol",
+        "name": "Alef symbol",
+        "keywords": [
+            "alef",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02135",
+                "native": "ℵ"
+            }
+        ]
+    },
+    {
+        "id": "bet-symbol",
+        "name": "Bet symbol",
+        "keywords": [
+            "bet",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02136",
+                "native": "ℶ"
+            }
+        ]
+    },
+    {
+        "id": "gimel-symbol",
+        "name": "Gimel symbol",
+        "keywords": [
+            "gimel",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02137",
+                "native": "ℷ"
+            }
+        ]
+    },
+    {
+        "id": "dalet-symbol",
+        "name": "Dalet symbol",
+        "keywords": [
+            "dalet",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02138",
+                "native": "ℸ"
+            }
+        ]
+    },
+    {
+        "id": "information-source",
+        "name": "Information source",
+        "keywords": [
+            "information",
+            "source",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02139",
+                "native": "ℹ"
+            }
+        ]
+    },
+    {
+        "id": "rotated-capital-q",
+        "name": "Rotated capital q",
+        "keywords": [
+            "rotated",
+            "capital",
+            "q",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0213A",
+                "native": "℺"
+            }
+        ]
+    },
+    {
+        "id": "facsimile-sign",
+        "name": "Facsimile sign",
+        "keywords": [
+            "facsimile",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0213B",
+                "native": "℻"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-small-pi",
+        "name": "Double-struck small pi",
+        "keywords": [
+            "double-struck",
+            "small",
+            "pi",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0213C",
+                "native": "ℼ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-small-gamma",
+        "name": "Double-struck small gamma",
+        "keywords": [
+            "double-struck",
+            "small",
+            "gamma",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0213D",
+                "native": "ℽ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-capital-gamma",
+        "name": "Double-struck capital gamma",
+        "keywords": [
+            "double-struck",
+            "capital",
+            "gamma",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0213E",
+                "native": "ℾ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-capital-pi",
+        "name": "Double-struck capital pi",
+        "keywords": [
+            "double-struck",
+            "capital",
+            "pi",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0213F",
+                "native": "ℿ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-n-ary-summation",
+        "name": "Double-struck n-ary summation",
+        "keywords": [
+            "double-struck",
+            "n-ary",
+            "summation",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02140",
+                "native": "⅀"
+            }
+        ]
+    },
+    {
+        "id": "turned-sans-serif-capital-g",
+        "name": "Turned sans-serif capital g",
+        "keywords": [
+            "turned",
+            "sans-serif",
+            "capital",
+            "g",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02141",
+                "native": "⅁"
+            }
+        ]
+    },
+    {
+        "id": "turned-sans-serif-capital-l",
+        "name": "Turned sans-serif capital l",
+        "keywords": [
+            "turned",
+            "sans-serif",
+            "capital",
+            "l",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02142",
+                "native": "⅂"
+            }
+        ]
+    },
+    {
+        "id": "reversed-sans-serif-capital-l",
+        "name": "Reversed sans-serif capital l",
+        "keywords": [
+            "reversed",
+            "sans-serif",
+            "capital",
+            "l",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02143",
+                "native": "⅃"
+            }
+        ]
+    },
+    {
+        "id": "turned-sans-serif-capital-y",
+        "name": "Turned sans-serif capital y",
+        "keywords": [
+            "turned",
+            "sans-serif",
+            "capital",
+            "y",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02144",
+                "native": "⅄"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-italic-capital-d",
+        "name": "Double-struck italic capital d",
+        "keywords": [
+            "double-struck",
+            "italic",
+            "capital",
+            "d",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02145",
+                "native": "ⅅ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-italic-small-d",
+        "name": "Double-struck italic small d",
+        "keywords": [
+            "double-struck",
+            "italic",
+            "small",
+            "d",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02146",
+                "native": "ⅆ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-italic-small-e",
+        "name": "Double-struck italic small e",
+        "keywords": [
+            "double-struck",
+            "italic",
+            "small",
+            "e",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02147",
+                "native": "ⅇ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-italic-small-i",
+        "name": "Double-struck italic small i",
+        "keywords": [
+            "double-struck",
+            "italic",
+            "small",
+            "i",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02148",
+                "native": "ⅈ"
+            }
+        ]
+    },
+    {
+        "id": "double-struck-italic-small-j",
+        "name": "Double-struck italic small j",
+        "keywords": [
+            "double-struck",
+            "italic",
+            "small",
+            "j",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02149",
+                "native": "ⅉ"
+            }
+        ]
+    },
+    {
+        "id": "property-line",
+        "name": "Property line",
+        "keywords": [
+            "property",
+            "line",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0214A",
+                "native": "⅊"
+            }
+        ]
+    },
+    {
+        "id": "turned-ampersand",
+        "name": "Turned ampersand",
+        "keywords": [
+            "turned",
+            "ampersand",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0214B",
+                "native": "⅋"
+            }
+        ]
+    },
+    {
+        "id": "aktieselskab",
+        "name": "Aktieselskab",
+        "keywords": [
+            "aktieselskab",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0214D",
+                "native": "⅍"
+            }
+        ]
+    },
+    {
+        "id": "turned-small-f",
+        "name": "Turned small f",
+        "keywords": [
+            "turned",
+            "small",
+            "f",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0214E",
+                "native": "ⅎ"
+            }
+        ]
+    },
+    {
+        "id": "black-sun-with-rays",
+        "name": "Black sun with rays",
+        "keywords": [
+            "black",
+            "sun",
+            "with",
+            "rays",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02600",
+                "native": "☀"
+            }
+        ]
+    },
+    {
+        "id": "cloud",
+        "name": "Cloud",
+        "keywords": [
+            "cloud",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02601",
+                "native": "☁"
+            }
+        ]
+    },
+    {
+        "id": "umbrella",
+        "name": "Umbrella",
+        "keywords": [
+            "umbrella",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02602",
+                "native": "☂"
+            }
+        ]
+    },
+    {
+        "id": "snowman",
+        "name": "Snowman",
+        "keywords": [
+            "snowman",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02603",
+                "native": "☃"
+            }
+        ]
+    },
+    {
+        "id": "comet",
+        "name": "Comet",
+        "keywords": [
+            "comet",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02604",
+                "native": "☄"
+            }
+        ]
+    },
+    {
+        "id": "black-star",
+        "name": "Black star",
+        "keywords": [
+            "black",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02605",
+                "native": "★"
+            }
+        ]
+    },
+    {
+        "id": "white-star",
+        "name": "White star",
+        "keywords": [
+            "white",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02606",
+                "native": "☆"
+            }
+        ]
+    },
+    {
+        "id": "lightning",
+        "name": "Lightning",
+        "keywords": [
+            "lightning",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02607",
+                "native": "☇"
+            }
+        ]
+    },
+    {
+        "id": "thunderstorm",
+        "name": "Thunderstorm",
+        "keywords": [
+            "thunderstorm",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02608",
+                "native": "☈"
+            }
+        ]
+    },
+    {
+        "id": "sun",
+        "name": "Sun",
+        "keywords": [
+            "sun",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02609",
+                "native": "☉"
+            }
+        ]
+    },
+    {
+        "id": "ascending-node",
+        "name": "Ascending node",
+        "keywords": [
+            "ascending",
+            "node",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0260A",
+                "native": "☊"
+            }
+        ]
+    },
+    {
+        "id": "descending-node",
+        "name": "Descending node",
+        "keywords": [
+            "descending",
+            "node",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0260B",
+                "native": "☋"
+            }
+        ]
+    },
+    {
+        "id": "conjunction",
+        "name": "Conjunction",
+        "keywords": [
+            "conjunction",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0260C",
+                "native": "☌"
+            }
+        ]
+    },
+    {
+        "id": "opposition",
+        "name": "Opposition",
+        "keywords": [
+            "opposition",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0260D",
+                "native": "☍"
+            }
+        ]
+    },
+    {
+        "id": "black-telephone",
+        "name": "Black telephone",
+        "keywords": [
+            "black",
+            "telephone",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0260E",
+                "native": "☎"
+            }
+        ]
+    },
+    {
+        "id": "white-telephone",
+        "name": "White telephone",
+        "keywords": [
+            "white",
+            "telephone",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0260F",
+                "native": "☏"
+            }
+        ]
+    },
+    {
+        "id": "ballot-box",
+        "name": "Ballot box",
+        "keywords": [
+            "ballot",
+            "box",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02610",
+                "native": "☐"
+            }
+        ]
+    },
+    {
+        "id": "ballot-box-with-check",
+        "name": "Ballot box with check",
+        "keywords": [
+            "ballot",
+            "box",
+            "with",
+            "check",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02611",
+                "native": "☑"
+            }
+        ]
+    },
+    {
+        "id": "ballot-box-with-x",
+        "name": "Ballot box with x",
+        "keywords": [
+            "ballot",
+            "box",
+            "with",
+            "x",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02612",
+                "native": "☒"
+            }
+        ]
+    },
+    {
+        "id": "saltire",
+        "name": "Saltire",
+        "keywords": [
+            "saltire",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02613",
+                "native": "☓"
+            }
+        ]
+    },
+    {
+        "id": "white-shogi-piece",
+        "name": "White shogi piece",
+        "keywords": [
+            "white",
+            "shogi",
+            "piece",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02616",
+                "native": "☖"
+            }
+        ]
+    },
+    {
+        "id": "black-shogi-piece",
+        "name": "Black shogi piece",
+        "keywords": [
+            "black",
+            "shogi",
+            "piece",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02617",
+                "native": "☗"
+            }
+        ]
+    },
+    {
+        "id": "shamrock",
+        "name": "Shamrock",
+        "keywords": [
+            "shamrock",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02618",
+                "native": "☘"
+            }
+        ]
+    },
+    {
+        "id": "reversed-rotated-floral-heart-bullet",
+        "name": "Reversed rotated floral heart bullet",
+        "keywords": [
+            "reversed",
+            "rotated",
+            "floral",
+            "heart",
+            "bullet",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02619",
+                "native": "☙"
+            }
+        ]
+    },
+    {
+        "id": "black-left-pointing-index",
+        "name": "Black left pointing index",
+        "keywords": [
+            "black",
+            "left",
+            "pointing",
+            "index",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0261A",
+                "native": "☚"
+            }
+        ]
+    },
+    {
+        "id": "black-right-pointing-index",
+        "name": "Black right pointing index",
+        "keywords": [
+            "black",
+            "right",
+            "pointing",
+            "index",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0261B",
+                "native": "☛"
+            }
+        ]
+    },
+    {
+        "id": "white-left-pointing-index",
+        "name": "White left pointing index",
+        "keywords": [
+            "white",
+            "left",
+            "pointing",
+            "index",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0261C",
+                "native": "☜"
+            }
+        ]
+    },
+    {
+        "id": "white-up-pointing-index",
+        "name": "White up pointing index",
+        "keywords": [
+            "white",
+            "up",
+            "pointing",
+            "index",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0261D",
+                "native": "☝"
+            }
+        ]
+    },
+    {
+        "id": "white-right-pointing-index",
+        "name": "White right pointing index",
+        "keywords": [
+            "white",
+            "right",
+            "pointing",
+            "index",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0261E",
+                "native": "☞"
+            }
+        ]
+    },
+    {
+        "id": "white-down-pointing-index",
+        "name": "White down pointing index",
+        "keywords": [
+            "white",
+            "down",
+            "pointing",
+            "index",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0261F",
+                "native": "☟"
+            }
+        ]
+    },
+    {
+        "id": "skull-and-crossbones",
+        "name": "Skull and crossbones",
+        "keywords": [
+            "skull",
+            "and",
+            "crossbones",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02620",
+                "native": "☠"
+            }
+        ]
+    },
+    {
+        "id": "caution-sign",
+        "name": "Caution sign",
+        "keywords": [
+            "caution",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02621",
+                "native": "☡"
+            }
+        ]
+    },
+    {
+        "id": "radioactive-sign",
+        "name": "Radioactive sign",
+        "keywords": [
+            "radioactive",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02622",
+                "native": "☢"
+            }
+        ]
+    },
+    {
+        "id": "biohazard-sign",
+        "name": "Biohazard sign",
+        "keywords": [
+            "biohazard",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02623",
+                "native": "☣"
+            }
+        ]
+    },
+    {
+        "id": "caduceus",
+        "name": "Caduceus",
+        "keywords": [
+            "caduceus",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02624",
+                "native": "☤"
+            }
+        ]
+    },
+    {
+        "id": "ankh",
+        "name": "Ankh",
+        "keywords": [
+            "ankh",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02625",
+                "native": "☥"
+            }
+        ]
+    },
+    {
+        "id": "orthodox-cross",
+        "name": "Orthodox cross",
+        "keywords": [
+            "orthodox",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02626",
+                "native": "☦"
+            }
+        ]
+    },
+    {
+        "id": "chi-rho",
+        "name": "Chi rho",
+        "keywords": [
+            "chi",
+            "rho",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02627",
+                "native": "☧"
+            }
+        ]
+    },
+    {
+        "id": "cross-of-lorraine",
+        "name": "Cross of lorraine",
+        "keywords": [
+            "cross",
+            "of",
+            "lorraine",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02628",
+                "native": "☨"
+            }
+        ]
+    },
+    {
+        "id": "cross-of-jerusalem",
+        "name": "Cross of jerusalem",
+        "keywords": [
+            "cross",
+            "of",
+            "jerusalem",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02629",
+                "native": "☩"
+            }
+        ]
+    },
+    {
+        "id": "star-and-crescent",
+        "name": "Star and crescent",
+        "keywords": [
+            "star",
+            "and",
+            "crescent",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0262A",
+                "native": "☪"
+            }
+        ]
+    },
+    {
+        "id": "farsi-symbol",
+        "name": "Farsi symbol",
+        "keywords": [
+            "farsi",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0262B",
+                "native": "☫"
+            }
+        ]
+    },
+    {
+        "id": "adi-shakti",
+        "name": "Adi shakti",
+        "keywords": [
+            "adi",
+            "shakti",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0262C",
+                "native": "☬"
+            }
+        ]
+    },
+    {
+        "id": "hammer-and-sickle",
+        "name": "Hammer and sickle",
+        "keywords": [
+            "hammer",
+            "and",
+            "sickle",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0262D",
+                "native": "☭"
+            }
+        ]
+    },
+    {
+        "id": "peace-symbol",
+        "name": "Peace symbol",
+        "keywords": [
+            "peace",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0262E",
+                "native": "☮"
+            }
+        ]
+    },
+    {
+        "id": "yin-yang",
+        "name": "Yin yang",
+        "keywords": [
+            "yin",
+            "yang",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0262F",
+                "native": "☯"
+            }
+        ]
+    },
+    {
+        "id": "trigram-for-heaven",
+        "name": "Trigram for heaven",
+        "keywords": [
+            "trigram",
+            "for",
+            "heaven",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02630",
+                "native": "☰"
+            }
+        ]
+    },
+    {
+        "id": "trigram-for-lake",
+        "name": "Trigram for lake",
+        "keywords": [
+            "trigram",
+            "for",
+            "lake",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02631",
+                "native": "☱"
+            }
+        ]
+    },
+    {
+        "id": "trigram-for-fire",
+        "name": "Trigram for fire",
+        "keywords": [
+            "trigram",
+            "for",
+            "fire",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02632",
+                "native": "☲"
+            }
+        ]
+    },
+    {
+        "id": "trigram-for-thunder",
+        "name": "Trigram for thunder",
+        "keywords": [
+            "trigram",
+            "for",
+            "thunder",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02633",
+                "native": "☳"
+            }
+        ]
+    },
+    {
+        "id": "trigram-for-wind",
+        "name": "Trigram for wind",
+        "keywords": [
+            "trigram",
+            "for",
+            "wind",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02634",
+                "native": "☴"
+            }
+        ]
+    },
+    {
+        "id": "trigram-for-water",
+        "name": "Trigram for water",
+        "keywords": [
+            "trigram",
+            "for",
+            "water",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02635",
+                "native": "☵"
+            }
+        ]
+    },
+    {
+        "id": "trigram-for-mountain",
+        "name": "Trigram for mountain",
+        "keywords": [
+            "trigram",
+            "for",
+            "mountain",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02636",
+                "native": "☶"
+            }
+        ]
+    },
+    {
+        "id": "trigram-for-earth",
+        "name": "Trigram for earth",
+        "keywords": [
+            "trigram",
+            "for",
+            "earth",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02637",
+                "native": "☷"
+            }
+        ]
+    },
+    {
+        "id": "wheel-of-dharma",
+        "name": "Wheel of dharma",
+        "keywords": [
+            "wheel",
+            "of",
+            "dharma",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02638",
+                "native": "☸"
+            }
+        ]
+    },
+    {
+        "id": "white-frowning-face",
+        "name": "White frowning face",
+        "keywords": [
+            "white",
+            "frowning",
+            "face",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02639",
+                "native": "☹"
+            }
+        ]
+    },
+    {
+        "id": "white-smiling-face",
+        "name": "White smiling face",
+        "keywords": [
+            "white",
+            "smiling",
+            "face",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0263A",
+                "native": "☺"
+            }
+        ]
+    },
+    {
+        "id": "black-smiling-face",
+        "name": "Black smiling face",
+        "keywords": [
+            "black",
+            "smiling",
+            "face",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0263B",
+                "native": "☻"
+            }
+        ]
+    },
+    {
+        "id": "white-sun-with-rays",
+        "name": "White sun with rays",
+        "keywords": [
+            "white",
+            "sun",
+            "with",
+            "rays",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0263C",
+                "native": "☼"
+            }
+        ]
+    },
+    {
+        "id": "first-quarter-moon",
+        "name": "First quarter moon",
+        "keywords": [
+            "first",
+            "quarter",
+            "moon",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0263D",
+                "native": "☽"
+            }
+        ]
+    },
+    {
+        "id": "last-quarter-moon",
+        "name": "Last quarter moon",
+        "keywords": [
+            "last",
+            "quarter",
+            "moon",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0263E",
+                "native": "☾"
+            }
+        ]
+    },
+    {
+        "id": "mercury",
+        "name": "Mercury",
+        "keywords": [
+            "mercury",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0263F",
+                "native": "☿"
+            }
+        ]
+    },
+    {
+        "id": "female-sign",
+        "name": "Female sign",
+        "keywords": [
+            "female",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02640",
+                "native": "♀"
+            }
+        ]
+    },
+    {
+        "id": "earth",
+        "name": "Earth",
+        "keywords": [
+            "earth",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02641",
+                "native": "♁"
+            }
+        ]
+    },
+    {
+        "id": "male-sign",
+        "name": "Male sign",
+        "keywords": [
+            "male",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02642",
+                "native": "♂"
+            }
+        ]
+    },
+    {
+        "id": "jupiter",
+        "name": "Jupiter",
+        "keywords": [
+            "jupiter",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02643",
+                "native": "♃"
+            }
+        ]
+    },
+    {
+        "id": "saturn",
+        "name": "Saturn",
+        "keywords": [
+            "saturn",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02644",
+                "native": "♄"
+            }
+        ]
+    },
+    {
+        "id": "uranus",
+        "name": "Uranus",
+        "keywords": [
+            "uranus",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02645",
+                "native": "♅"
+            }
+        ]
+    },
+    {
+        "id": "neptune",
+        "name": "Neptune",
+        "keywords": [
+            "neptune",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02646",
+                "native": "♆"
+            }
+        ]
+    },
+    {
+        "id": "pluto",
+        "name": "Pluto",
+        "keywords": [
+            "pluto",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02647",
+                "native": "♇"
+            }
+        ]
+    },
+    {
+        "id": "white-chess-king",
+        "name": "White chess king",
+        "keywords": [
+            "white",
+            "chess",
+            "king",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02654",
+                "native": "♔"
+            }
+        ]
+    },
+    {
+        "id": "white-chess-queen",
+        "name": "White chess queen",
+        "keywords": [
+            "white",
+            "chess",
+            "queen",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02655",
+                "native": "♕"
+            }
+        ]
+    },
+    {
+        "id": "white-chess-rook",
+        "name": "White chess rook",
+        "keywords": [
+            "white",
+            "chess",
+            "rook",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02656",
+                "native": "♖"
+            }
+        ]
+    },
+    {
+        "id": "white-chess-bishop",
+        "name": "White chess bishop",
+        "keywords": [
+            "white",
+            "chess",
+            "bishop",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02657",
+                "native": "♗"
+            }
+        ]
+    },
+    {
+        "id": "white-chess-knight",
+        "name": "White chess knight",
+        "keywords": [
+            "white",
+            "chess",
+            "knight",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02658",
+                "native": "♘"
+            }
+        ]
+    },
+    {
+        "id": "white-chess-pawn",
+        "name": "White chess pawn",
+        "keywords": [
+            "white",
+            "chess",
+            "pawn",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02659",
+                "native": "♙"
+            }
+        ]
+    },
+    {
+        "id": "black-chess-king",
+        "name": "Black chess king",
+        "keywords": [
+            "black",
+            "chess",
+            "king",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0265A",
+                "native": "♚"
+            }
+        ]
+    },
+    {
+        "id": "black-chess-queen",
+        "name": "Black chess queen",
+        "keywords": [
+            "black",
+            "chess",
+            "queen",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0265B",
+                "native": "♛"
+            }
+        ]
+    },
+    {
+        "id": "black-chess-rook",
+        "name": "Black chess rook",
+        "keywords": [
+            "black",
+            "chess",
+            "rook",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0265C",
+                "native": "♜"
+            }
+        ]
+    },
+    {
+        "id": "black-chess-bishop",
+        "name": "Black chess bishop",
+        "keywords": [
+            "black",
+            "chess",
+            "bishop",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0265D",
+                "native": "♝"
+            }
+        ]
+    },
+    {
+        "id": "black-chess-knight",
+        "name": "Black chess knight",
+        "keywords": [
+            "black",
+            "chess",
+            "knight",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0265E",
+                "native": "♞"
+            }
+        ]
+    },
+    {
+        "id": "black-chess-pawn",
+        "name": "Black chess pawn",
+        "keywords": [
+            "black",
+            "chess",
+            "pawn",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0265F",
+                "native": "♟"
+            }
+        ]
+    },
+    {
+        "id": "black-spade-suit",
+        "name": "Black spade suit",
+        "keywords": [
+            "black",
+            "spade",
+            "suit",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02660",
+                "native": "♠"
+            }
+        ]
+    },
+    {
+        "id": "white-heart-suit",
+        "name": "White heart suit",
+        "keywords": [
+            "white",
+            "heart",
+            "suit",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02661",
+                "native": "♡"
+            }
+        ]
+    },
+    {
+        "id": "white-diamond-suit",
+        "name": "White diamond suit",
+        "keywords": [
+            "white",
+            "diamond",
+            "suit",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02662",
+                "native": "♢"
+            }
+        ]
+    },
+    {
+        "id": "black-club-suit",
+        "name": "Black club suit",
+        "keywords": [
+            "black",
+            "club",
+            "suit",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02663",
+                "native": "♣"
+            }
+        ]
+    },
+    {
+        "id": "white-spade-suit",
+        "name": "White spade suit",
+        "keywords": [
+            "white",
+            "spade",
+            "suit",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02664",
+                "native": "♤"
+            }
+        ]
+    },
+    {
+        "id": "black-heart-suit",
+        "name": "Black heart suit",
+        "keywords": [
+            "black",
+            "heart",
+            "suit",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02665",
+                "native": "♥"
+            }
+        ]
+    },
+    {
+        "id": "black-diamond-suit",
+        "name": "Black diamond suit",
+        "keywords": [
+            "black",
+            "diamond",
+            "suit",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02666",
+                "native": "♦"
+            }
+        ]
+    },
+    {
+        "id": "white-club-suit",
+        "name": "White club suit",
+        "keywords": [
+            "white",
+            "club",
+            "suit",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02667",
+                "native": "♧"
+            }
+        ]
+    },
+    {
+        "id": "hot-springs",
+        "name": "Hot springs",
+        "keywords": [
+            "hot",
+            "springs",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02668",
+                "native": "♨"
+            }
+        ]
+    },
+    {
+        "id": "quarter-note",
+        "name": "Quarter note",
+        "keywords": [
+            "quarter",
+            "note",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02669",
+                "native": "♩"
+            }
+        ]
+    },
+    {
+        "id": "eighth-note",
+        "name": "Eighth note",
+        "keywords": [
+            "eighth",
+            "note",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0266A",
+                "native": "♪"
+            }
+        ]
+    },
+    {
+        "id": "beamed-eighth-notes",
+        "name": "Beamed eighth notes",
+        "keywords": [
+            "beamed",
+            "eighth",
+            "notes",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0266B",
+                "native": "♫"
+            }
+        ]
+    },
+    {
+        "id": "beamed-sixteenth-notes",
+        "name": "Beamed sixteenth notes",
+        "keywords": [
+            "beamed",
+            "sixteenth",
+            "notes",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0266C",
+                "native": "♬"
+            }
+        ]
+    },
+    {
+        "id": "music-flat-sign",
+        "name": "Music flat sign",
+        "keywords": [
+            "music",
+            "flat",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0266D",
+                "native": "♭"
+            }
+        ]
+    },
+    {
+        "id": "music-natural-sign",
+        "name": "Music natural sign",
+        "keywords": [
+            "music",
+            "natural",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0266E",
+                "native": "♮"
+            }
+        ]
+    },
+    {
+        "id": "music-sharp-sign",
+        "name": "Music sharp sign",
+        "keywords": [
+            "music",
+            "sharp",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0266F",
+                "native": "♯"
+            }
+        ]
+    },
+    {
+        "id": "west-syriac-cross",
+        "name": "West syriac cross",
+        "keywords": [
+            "west",
+            "syriac",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02670",
+                "native": "♰"
+            }
+        ]
+    },
+    {
+        "id": "east-syriac-cross",
+        "name": "East syriac cross",
+        "keywords": [
+            "east",
+            "syriac",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02671",
+                "native": "♱"
+            }
+        ]
+    },
+    {
+        "id": "universal-recycling-symbol",
+        "name": "Universal recycling symbol",
+        "keywords": [
+            "universal",
+            "recycling",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02672",
+                "native": "♲"
+            }
+        ]
+    },
+    {
+        "id": "recycling-symbol-for-type-1-plastics",
+        "name": "Recycling symbol for type-1 plastics",
+        "keywords": [
+            "recycling",
+            "symbol",
+            "for",
+            "type-1",
+            "plastics",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02673",
+                "native": "♳"
+            }
+        ]
+    },
+    {
+        "id": "recycling-symbol-for-type-2-plastics",
+        "name": "Recycling symbol for type-2 plastics",
+        "keywords": [
+            "recycling",
+            "symbol",
+            "for",
+            "type-2",
+            "plastics",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02674",
+                "native": "♴"
+            }
+        ]
+    },
+    {
+        "id": "recycling-symbol-for-type-3-plastics",
+        "name": "Recycling symbol for type-3 plastics",
+        "keywords": [
+            "recycling",
+            "symbol",
+            "for",
+            "type-3",
+            "plastics",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02675",
+                "native": "♵"
+            }
+        ]
+    },
+    {
+        "id": "recycling-symbol-for-type-4-plastics",
+        "name": "Recycling symbol for type-4 plastics",
+        "keywords": [
+            "recycling",
+            "symbol",
+            "for",
+            "type-4",
+            "plastics",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02676",
+                "native": "♶"
+            }
+        ]
+    },
+    {
+        "id": "recycling-symbol-for-type-5-plastics",
+        "name": "Recycling symbol for type-5 plastics",
+        "keywords": [
+            "recycling",
+            "symbol",
+            "for",
+            "type-5",
+            "plastics",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02677",
+                "native": "♷"
+            }
+        ]
+    },
+    {
+        "id": "recycling-symbol-for-type-6-plastics",
+        "name": "Recycling symbol for type-6 plastics",
+        "keywords": [
+            "recycling",
+            "symbol",
+            "for",
+            "type-6",
+            "plastics",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02678",
+                "native": "♸"
+            }
+        ]
+    },
+    {
+        "id": "recycling-symbol-for-type-7-plastics",
+        "name": "Recycling symbol for type-7 plastics",
+        "keywords": [
+            "recycling",
+            "symbol",
+            "for",
+            "type-7",
+            "plastics",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02679",
+                "native": "♹"
+            }
+        ]
+    },
+    {
+        "id": "recycling-symbol-for-generic-materials",
+        "name": "Recycling symbol for generic materials",
+        "keywords": [
+            "recycling",
+            "symbol",
+            "for",
+            "generic",
+            "materials",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0267A",
+                "native": "♺"
+            }
+        ]
+    },
+    {
+        "id": "black-universal-recycling-symbol",
+        "name": "Black universal recycling symbol",
+        "keywords": [
+            "black",
+            "universal",
+            "recycling",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0267B",
+                "native": "♻"
+            }
+        ]
+    },
+    {
+        "id": "recycled-paper-symbol",
+        "name": "Recycled paper symbol",
+        "keywords": [
+            "recycled",
+            "paper",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0267C",
+                "native": "♼"
+            }
+        ]
+    },
+    {
+        "id": "partially-recycled-paper-symbol",
+        "name": "Partially-recycled paper symbol",
+        "keywords": [
+            "partially-recycled",
+            "paper",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0267D",
+                "native": "♽"
+            }
+        ]
+    },
+    {
+        "id": "permanent-paper-sign",
+        "name": "Permanent paper sign",
+        "keywords": [
+            "permanent",
+            "paper",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0267E",
+                "native": "♾"
+            }
+        ]
+    },
+    {
+        "id": "die-face-1",
+        "name": "Die face-1",
+        "keywords": [
+            "die",
+            "face-1",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02680",
+                "native": "⚀"
+            }
+        ]
+    },
+    {
+        "id": "die-face-2",
+        "name": "Die face-2",
+        "keywords": [
+            "die",
+            "face-2",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02681",
+                "native": "⚁"
+            }
+        ]
+    },
+    {
+        "id": "die-face-3",
+        "name": "Die face-3",
+        "keywords": [
+            "die",
+            "face-3",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02682",
+                "native": "⚂"
+            }
+        ]
+    },
+    {
+        "id": "die-face-4",
+        "name": "Die face-4",
+        "keywords": [
+            "die",
+            "face-4",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02683",
+                "native": "⚃"
+            }
+        ]
+    },
+    {
+        "id": "die-face-5",
+        "name": "Die face-5",
+        "keywords": [
+            "die",
+            "face-5",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02684",
+                "native": "⚄"
+            }
+        ]
+    },
+    {
+        "id": "die-face-6",
+        "name": "Die face-6",
+        "keywords": [
+            "die",
+            "face-6",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02685",
+                "native": "⚅"
+            }
+        ]
+    },
+    {
+        "id": "white-circle-with-dot-right",
+        "name": "White circle with dot right",
+        "keywords": [
+            "white",
+            "circle",
+            "with",
+            "dot",
+            "right",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02686",
+                "native": "⚆"
+            }
+        ]
+    },
+    {
+        "id": "white-circle-with-two-dots",
+        "name": "White circle with two dots",
+        "keywords": [
+            "white",
+            "circle",
+            "with",
+            "two",
+            "dots",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02687",
+                "native": "⚇"
+            }
+        ]
+    },
+    {
+        "id": "black-circle-with-white-dot-right",
+        "name": "Black circle with white dot right",
+        "keywords": [
+            "black",
+            "circle",
+            "with",
+            "white",
+            "dot",
+            "right",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02688",
+                "native": "⚈"
+            }
+        ]
+    },
+    {
+        "id": "black-circle-with-two-white-dots",
+        "name": "Black circle with two white dots",
+        "keywords": [
+            "black",
+            "circle",
+            "with",
+            "two",
+            "white",
+            "dots",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02689",
+                "native": "⚉"
+            }
+        ]
+    },
+    {
+        "id": "monogram-for-yang",
+        "name": "Monogram for yang",
+        "keywords": [
+            "monogram",
+            "for",
+            "yang",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0268A",
+                "native": "⚊"
+            }
+        ]
+    },
+    {
+        "id": "monogram-for-yin",
+        "name": "Monogram for yin",
+        "keywords": [
+            "monogram",
+            "for",
+            "yin",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0268B",
+                "native": "⚋"
+            }
+        ]
+    },
+    {
+        "id": "digram-for-greater-yang",
+        "name": "Digram for greater yang",
+        "keywords": [
+            "digram",
+            "for",
+            "greater",
+            "yang",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0268C",
+                "native": "⚌"
+            }
+        ]
+    },
+    {
+        "id": "digram-for-lesser-yin",
+        "name": "Digram for lesser yin",
+        "keywords": [
+            "digram",
+            "for",
+            "lesser",
+            "yin",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0268D",
+                "native": "⚍"
+            }
+        ]
+    },
+    {
+        "id": "digram-for-lesser-yang",
+        "name": "Digram for lesser yang",
+        "keywords": [
+            "digram",
+            "for",
+            "lesser",
+            "yang",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0268E",
+                "native": "⚎"
+            }
+        ]
+    },
+    {
+        "id": "digram-for-greater-yin",
+        "name": "Digram for greater yin",
+        "keywords": [
+            "digram",
+            "for",
+            "greater",
+            "yin",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0268F",
+                "native": "⚏"
+            }
+        ]
+    },
+    {
+        "id": "white-flag",
+        "name": "White flag",
+        "keywords": [
+            "white",
+            "flag",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02690",
+                "native": "⚐"
+            }
+        ]
+    },
+    {
+        "id": "black-flag",
+        "name": "Black flag",
+        "keywords": [
+            "black",
+            "flag",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02691",
+                "native": "⚑"
+            }
+        ]
+    },
+    {
+        "id": "hammer-and-pick",
+        "name": "Hammer and pick",
+        "keywords": [
+            "hammer",
+            "and",
+            "pick",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02692",
+                "native": "⚒"
+            }
+        ]
+    },
+    {
+        "id": "crossed-swords",
+        "name": "Crossed swords",
+        "keywords": [
+            "crossed",
+            "swords",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02694",
+                "native": "⚔"
+            }
+        ]
+    },
+    {
+        "id": "staff-of-aesculapius",
+        "name": "Staff of aesculapius",
+        "keywords": [
+            "staff",
+            "of",
+            "aesculapius",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02695",
+                "native": "⚕"
+            }
+        ]
+    },
+    {
+        "id": "scales",
+        "name": "Scales",
+        "keywords": [
+            "scales",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02696",
+                "native": "⚖"
+            }
+        ]
+    },
+    {
+        "id": "alembic",
+        "name": "Alembic",
+        "keywords": [
+            "alembic",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02697",
+                "native": "⚗"
+            }
+        ]
+    },
+    {
+        "id": "flower",
+        "name": "Flower",
+        "keywords": [
+            "flower",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02698",
+                "native": "⚘"
+            }
+        ]
+    },
+    {
+        "id": "gear",
+        "name": "Gear",
+        "keywords": [
+            "gear",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02699",
+                "native": "⚙"
+            }
+        ]
+    },
+    {
+        "id": "staff-of-hermes",
+        "name": "Staff of hermes",
+        "keywords": [
+            "staff",
+            "of",
+            "hermes",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0269A",
+                "native": "⚚"
+            }
+        ]
+    },
+    {
+        "id": "atom-symbol",
+        "name": "Atom symbol",
+        "keywords": [
+            "atom",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0269B",
+                "native": "⚛"
+            }
+        ]
+    },
+    {
+        "id": "fleur-de-lis",
+        "name": "Fleur-de-lis",
+        "keywords": [
+            "fleur-de-lis",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0269C",
+                "native": "⚜"
+            }
+        ]
+    },
+    {
+        "id": "outlined-white-star",
+        "name": "Outlined white star",
+        "keywords": [
+            "outlined",
+            "white",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0269D",
+                "native": "⚝"
+            }
+        ]
+    },
+    {
+        "id": "three-lines-converging-right",
+        "name": "Three lines converging right",
+        "keywords": [
+            "three",
+            "lines",
+            "converging",
+            "right",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0269E",
+                "native": "⚞"
+            }
+        ]
+    },
+    {
+        "id": "three-lines-converging-left",
+        "name": "Three lines converging left",
+        "keywords": [
+            "three",
+            "lines",
+            "converging",
+            "left",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0269F",
+                "native": "⚟"
+            }
+        ]
+    },
+    {
+        "id": "warning-sign",
+        "name": "Warning sign",
+        "keywords": [
+            "warning",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026A0",
+                "native": "⚠"
+            }
+        ]
+    },
+    {
+        "id": "doubled-female-sign",
+        "name": "Doubled female sign",
+        "keywords": [
+            "doubled",
+            "female",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026A2",
+                "native": "⚢"
+            }
+        ]
+    },
+    {
+        "id": "doubled-male-sign",
+        "name": "Doubled male sign",
+        "keywords": [
+            "doubled",
+            "male",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026A3",
+                "native": "⚣"
+            }
+        ]
+    },
+    {
+        "id": "interlocked-female-and-male-sign",
+        "name": "Interlocked female and male sign",
+        "keywords": [
+            "interlocked",
+            "female",
+            "and",
+            "male",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026A4",
+                "native": "⚤"
+            }
+        ]
+    },
+    {
+        "id": "male-and-female-sign",
+        "name": "Male and female sign",
+        "keywords": [
+            "male",
+            "and",
+            "female",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026A5",
+                "native": "⚥"
+            }
+        ]
+    },
+    {
+        "id": "male-with-stroke-sign",
+        "name": "Male with stroke sign",
+        "keywords": [
+            "male",
+            "with",
+            "stroke",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026A6",
+                "native": "⚦"
+            }
+        ]
+    },
+    {
+        "id": "male-with-stroke-and-male-and-female-sign",
+        "name": "Male with stroke and male and female sign",
+        "keywords": [
+            "male",
+            "with",
+            "stroke",
+            "and",
+            "male",
+            "and",
+            "female",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026A7",
+                "native": "⚧"
+            }
+        ]
+    },
+    {
+        "id": "vertical-male-with-stroke-sign",
+        "name": "Vertical male with stroke sign",
+        "keywords": [
+            "vertical",
+            "male",
+            "with",
+            "stroke",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026A8",
+                "native": "⚨"
+            }
+        ]
+    },
+    {
+        "id": "horizontal-male-with-stroke-sign",
+        "name": "Horizontal male with stroke sign",
+        "keywords": [
+            "horizontal",
+            "male",
+            "with",
+            "stroke",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026A9",
+                "native": "⚩"
+            }
+        ]
+    },
+    {
+        "id": "medium-small-white-circle",
+        "name": "Medium small white circle",
+        "keywords": [
+            "medium",
+            "small",
+            "white",
+            "circle",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026AC",
+                "native": "⚬"
+            }
+        ]
+    },
+    {
+        "id": "marriage-symbol",
+        "name": "Marriage symbol",
+        "keywords": [
+            "marriage",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026AD",
+                "native": "⚭"
+            }
+        ]
+    },
+    {
+        "id": "divorce-symbol",
+        "name": "Divorce symbol",
+        "keywords": [
+            "divorce",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026AE",
+                "native": "⚮"
+            }
+        ]
+    },
+    {
+        "id": "unmarried-partnership-symbol",
+        "name": "Unmarried partnership symbol",
+        "keywords": [
+            "unmarried",
+            "partnership",
+            "symbol",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026AF",
+                "native": "⚯"
+            }
+        ]
+    },
+    {
+        "id": "coffin",
+        "name": "Coffin",
+        "keywords": [
+            "coffin",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026B0",
+                "native": "⚰"
+            }
+        ]
+    },
+    {
+        "id": "funeral-urn",
+        "name": "Funeral urn",
+        "keywords": [
+            "funeral",
+            "urn",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026B1",
+                "native": "⚱"
+            }
+        ]
+    },
+    {
+        "id": "neuter",
+        "name": "Neuter",
+        "keywords": [
+            "neuter",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026B2",
+                "native": "⚲"
+            }
+        ]
+    },
+    {
+        "id": "baseball",
+        "name": "Baseball",
+        "keywords": [
+            "baseball",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026BE",
+                "native": "⚾"
+            }
+        ]
+    },
+    {
+        "id": "astronomical-symbol-for-uranus",
+        "name": "Astronomical symbol for uranus",
+        "keywords": [
+            "astronomical",
+            "symbol",
+            "for",
+            "uranus",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+026E2",
+                "native": "⛢"
+            }
+        ]
+    },
+    {
+        "id": "upper-blade-scissors",
+        "name": "Upper blade scissors",
+        "keywords": [
+            "upper",
+            "blade",
+            "scissors",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02701",
+                "native": "✁"
+            }
+        ]
+    },
+    {
+        "id": "black-scissors",
+        "name": "Black scissors",
+        "keywords": [
+            "black",
+            "scissors",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02702",
+                "native": "✂"
+            }
+        ]
+    },
+    {
+        "id": "lower-blade-scissors",
+        "name": "Lower blade scissors",
+        "keywords": [
+            "lower",
+            "blade",
+            "scissors",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02703",
+                "native": "✃"
+            }
+        ]
+    },
+    {
+        "id": "white-scissors",
+        "name": "White scissors",
+        "keywords": [
+            "white",
+            "scissors",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02704",
+                "native": "✄"
+            }
+        ]
+    },
+    {
+        "id": "telephone-location-sign",
+        "name": "Telephone location sign",
+        "keywords": [
+            "telephone",
+            "location",
+            "sign",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02706",
+                "native": "✆"
+            }
+        ]
+    },
+    {
+        "id": "tape-drive",
+        "name": "Tape drive",
+        "keywords": [
+            "tape",
+            "drive",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02707",
+                "native": "✇"
+            }
+        ]
+    },
+    {
+        "id": "airplane",
+        "name": "Airplane",
+        "keywords": [
+            "airplane",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02708",
+                "native": "✈"
+            }
+        ]
+    },
+    {
+        "id": "envelope",
+        "name": "Envelope",
+        "keywords": [
+            "envelope",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02709",
+                "native": "✉"
+            }
+        ]
+    },
+    {
+        "id": "victory-hand",
+        "name": "Victory hand",
+        "keywords": [
+            "victory",
+            "hand",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0270C",
+                "native": "✌"
+            }
+        ]
+    },
+    {
+        "id": "writing-hand",
+        "name": "Writing hand",
+        "keywords": [
+            "writing",
+            "hand",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0270D",
+                "native": "✍"
+            }
+        ]
+    },
+    {
+        "id": "lower-right-pencil",
+        "name": "Lower right pencil",
+        "keywords": [
+            "lower",
+            "right",
+            "pencil",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0270E",
+                "native": "✎"
+            }
+        ]
+    },
+    {
+        "id": "pencil",
+        "name": "Pencil",
+        "keywords": [
+            "pencil",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0270F",
+                "native": "✏"
+            }
+        ]
+    },
+    {
+        "id": "upper-right-pencil",
+        "name": "Upper right pencil",
+        "keywords": [
+            "upper",
+            "right",
+            "pencil",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02710",
+                "native": "✐"
+            }
+        ]
+    },
+    {
+        "id": "white-nib",
+        "name": "White nib",
+        "keywords": [
+            "white",
+            "nib",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02711",
+                "native": "✑"
+            }
+        ]
+    },
+    {
+        "id": "black-nib",
+        "name": "Black nib",
+        "keywords": [
+            "black",
+            "nib",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02712",
+                "native": "✒"
+            }
+        ]
+    },
+    {
+        "id": "check-mark",
+        "name": "Check mark",
+        "keywords": [
+            "check",
+            "mark",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02713",
+                "native": "✓"
+            }
+        ]
+    },
+    {
+        "id": "heavy-check-mark",
+        "name": "Heavy check mark",
+        "keywords": [
+            "heavy",
+            "check",
+            "mark",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02714",
+                "native": "✔"
+            }
+        ]
+    },
+    {
+        "id": "multiplication-x",
+        "name": "Multiplication x",
+        "keywords": [
+            "multiplication",
+            "x",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02715",
+                "native": "✕"
+            }
+        ]
+    },
+    {
+        "id": "heavy-multiplication-x",
+        "name": "Heavy multiplication x",
+        "keywords": [
+            "heavy",
+            "multiplication",
+            "x",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02716",
+                "native": "✖"
+            }
+        ]
+    },
+    {
+        "id": "ballot-x",
+        "name": "Ballot x",
+        "keywords": [
+            "ballot",
+            "x",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02717",
+                "native": "✗"
+            }
+        ]
+    },
+    {
+        "id": "heavy-ballot-x",
+        "name": "Heavy ballot x",
+        "keywords": [
+            "heavy",
+            "ballot",
+            "x",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02718",
+                "native": "✘"
+            }
+        ]
+    },
+    {
+        "id": "outlined-greek-cross",
+        "name": "Outlined greek cross",
+        "keywords": [
+            "outlined",
+            "greek",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02719",
+                "native": "✙"
+            }
+        ]
+    },
+    {
+        "id": "heavy-greek-cross",
+        "name": "Heavy greek cross",
+        "keywords": [
+            "heavy",
+            "greek",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0271A",
+                "native": "✚"
+            }
+        ]
+    },
+    {
+        "id": "open-centre-cross",
+        "name": "Open centre cross",
+        "keywords": [
+            "open",
+            "centre",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0271B",
+                "native": "✛"
+            }
+        ]
+    },
+    {
+        "id": "heavy-open-centre-cross",
+        "name": "Heavy open centre cross",
+        "keywords": [
+            "heavy",
+            "open",
+            "centre",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0271C",
+                "native": "✜"
+            }
+        ]
+    },
+    {
+        "id": "latin-cross",
+        "name": "Latin cross",
+        "keywords": [
+            "latin",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0271D",
+                "native": "✝"
+            }
+        ]
+    },
+    {
+        "id": "shadowed-white-latin-cross",
+        "name": "Shadowed white latin cross",
+        "keywords": [
+            "shadowed",
+            "white",
+            "latin",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0271E",
+                "native": "✞"
+            }
+        ]
+    },
+    {
+        "id": "outlined-latin-cross",
+        "name": "Outlined latin cross",
+        "keywords": [
+            "outlined",
+            "latin",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0271F",
+                "native": "✟"
+            }
+        ]
+    },
+    {
+        "id": "maltese-cross",
+        "name": "Maltese cross",
+        "keywords": [
+            "maltese",
+            "cross",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02720",
+                "native": "✠"
+            }
+        ]
+    },
+    {
+        "id": "star-of-david",
+        "name": "Star of david",
+        "keywords": [
+            "star",
+            "of",
+            "david",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02721",
+                "native": "✡"
+            }
+        ]
+    },
+    {
+        "id": "four-teardrop-spoked-asterisk",
+        "name": "Four teardrop-spoked asterisk",
+        "keywords": [
+            "four",
+            "teardrop-spoked",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02722",
+                "native": "✢"
+            }
+        ]
+    },
+    {
+        "id": "four-balloon-spoked-asterisk",
+        "name": "Four balloon-spoked asterisk",
+        "keywords": [
+            "four",
+            "balloon-spoked",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02723",
+                "native": "✣"
+            }
+        ]
+    },
+    {
+        "id": "heavy-four-balloon-spoked-asterisk",
+        "name": "Heavy four balloon-spoked asterisk",
+        "keywords": [
+            "heavy",
+            "four",
+            "balloon-spoked",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02724",
+                "native": "✤"
+            }
+        ]
+    },
+    {
+        "id": "four-club-spoked-asterisk",
+        "name": "Four club-spoked asterisk",
+        "keywords": [
+            "four",
+            "club-spoked",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02725",
+                "native": "✥"
+            }
+        ]
+    },
+    {
+        "id": "black-four-pointed-star",
+        "name": "Black four pointed star",
+        "keywords": [
+            "black",
+            "four",
+            "pointed",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02726",
+                "native": "✦"
+            }
+        ]
+    },
+    {
+        "id": "white-four-pointed-star",
+        "name": "White four pointed star",
+        "keywords": [
+            "white",
+            "four",
+            "pointed",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02727",
+                "native": "✧"
+            }
+        ]
+    },
+    {
+        "id": "stress-outlined-white-star",
+        "name": "Stress outlined white star",
+        "keywords": [
+            "stress",
+            "outlined",
+            "white",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02729",
+                "native": "✩"
+            }
+        ]
+    },
+    {
+        "id": "circled-white-star",
+        "name": "Circled white star",
+        "keywords": [
+            "circled",
+            "white",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0272A",
+                "native": "✪"
+            }
+        ]
+    },
+    {
+        "id": "open-centre-black-star",
+        "name": "Open centre black star",
+        "keywords": [
+            "open",
+            "centre",
+            "black",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0272B",
+                "native": "✫"
+            }
+        ]
+    },
+    {
+        "id": "black-centre-white-star",
+        "name": "Black centre white star",
+        "keywords": [
+            "black",
+            "centre",
+            "white",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0272C",
+                "native": "✬"
+            }
+        ]
+    },
+    {
+        "id": "outlined-black-star",
+        "name": "Outlined black star",
+        "keywords": [
+            "outlined",
+            "black",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0272D",
+                "native": "✭"
+            }
+        ]
+    },
+    {
+        "id": "heavy-outlined-black-star",
+        "name": "Heavy outlined black star",
+        "keywords": [
+            "heavy",
+            "outlined",
+            "black",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0272E",
+                "native": "✮"
+            }
+        ]
+    },
+    {
+        "id": "pinwheel-star",
+        "name": "Pinwheel star",
+        "keywords": [
+            "pinwheel",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0272F",
+                "native": "✯"
+            }
+        ]
+    },
+    {
+        "id": "shadowed-white-star",
+        "name": "Shadowed white star",
+        "keywords": [
+            "shadowed",
+            "white",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02730",
+                "native": "✰"
+            }
+        ]
+    },
+    {
+        "id": "heavy-asterisk",
+        "name": "Heavy asterisk",
+        "keywords": [
+            "heavy",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02731",
+                "native": "✱"
+            }
+        ]
+    },
+    {
+        "id": "open-centre-asterisk",
+        "name": "Open centre asterisk",
+        "keywords": [
+            "open",
+            "centre",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02732",
+                "native": "✲"
+            }
+        ]
+    },
+    {
+        "id": "eight-spoked-asterisk",
+        "name": "Eight spoked asterisk",
+        "keywords": [
+            "eight",
+            "spoked",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02733",
+                "native": "✳"
+            }
+        ]
+    },
+    {
+        "id": "eight-pointed-black-star",
+        "name": "Eight pointed black star",
+        "keywords": [
+            "eight",
+            "pointed",
+            "black",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02734",
+                "native": "✴"
+            }
+        ]
+    },
+    {
+        "id": "eight-pointed-pinwheel-star",
+        "name": "Eight pointed pinwheel star",
+        "keywords": [
+            "eight",
+            "pointed",
+            "pinwheel",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02735",
+                "native": "✵"
+            }
+        ]
+    },
+    {
+        "id": "six-pointed-black-star",
+        "name": "Six pointed black star",
+        "keywords": [
+            "six",
+            "pointed",
+            "black",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02736",
+                "native": "✶"
+            }
+        ]
+    },
+    {
+        "id": "eight-pointed-rectilinear-black-star",
+        "name": "Eight pointed rectilinear black star",
+        "keywords": [
+            "eight",
+            "pointed",
+            "rectilinear",
+            "black",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02737",
+                "native": "✷"
+            }
+        ]
+    },
+    {
+        "id": "heavy-eight-pointed-rectilinear-black-star",
+        "name": "Heavy eight pointed rectilinear black star",
+        "keywords": [
+            "heavy",
+            "eight",
+            "pointed",
+            "rectilinear",
+            "black",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02738",
+                "native": "✸"
+            }
+        ]
+    },
+    {
+        "id": "twelve-pointed-black-star",
+        "name": "Twelve pointed black star",
+        "keywords": [
+            "twelve",
+            "pointed",
+            "black",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02739",
+                "native": "✹"
+            }
+        ]
+    },
+    {
+        "id": "sixteen-pointed-asterisk",
+        "name": "Sixteen pointed asterisk",
+        "keywords": [
+            "sixteen",
+            "pointed",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0273A",
+                "native": "✺"
+            }
+        ]
+    },
+    {
+        "id": "teardrop-spoked-asterisk",
+        "name": "Teardrop-spoked asterisk",
+        "keywords": [
+            "teardrop-spoked",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0273B",
+                "native": "✻"
+            }
+        ]
+    },
+    {
+        "id": "open-centre-teardrop-spoked-asterisk",
+        "name": "Open centre teardrop-spoked asterisk",
+        "keywords": [
+            "open",
+            "centre",
+            "teardrop-spoked",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0273C",
+                "native": "✼"
+            }
+        ]
+    },
+    {
+        "id": "heavy-teardrop-spoked-asterisk",
+        "name": "Heavy teardrop-spoked asterisk",
+        "keywords": [
+            "heavy",
+            "teardrop-spoked",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0273D",
+                "native": "✽"
+            }
+        ]
+    },
+    {
+        "id": "six-petalled-black-and-white-florette",
+        "name": "Six petalled black and white florette",
+        "keywords": [
+            "six",
+            "petalled",
+            "black",
+            "and",
+            "white",
+            "florette",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0273E",
+                "native": "✾"
+            }
+        ]
+    },
+    {
+        "id": "black-florette",
+        "name": "Black florette",
+        "keywords": [
+            "black",
+            "florette",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0273F",
+                "native": "✿"
+            }
+        ]
+    },
+    {
+        "id": "white-florette",
+        "name": "White florette",
+        "keywords": [
+            "white",
+            "florette",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02740",
+                "native": "❀"
+            }
+        ]
+    },
+    {
+        "id": "eight-petalled-outlined-black-florette",
+        "name": "Eight petalled outlined black florette",
+        "keywords": [
+            "eight",
+            "petalled",
+            "outlined",
+            "black",
+            "florette",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02741",
+                "native": "❁"
+            }
+        ]
+    },
+    {
+        "id": "circled-open-centre-eight-pointed-star",
+        "name": "Circled open centre eight pointed star",
+        "keywords": [
+            "circled",
+            "open",
+            "centre",
+            "eight",
+            "pointed",
+            "star",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02742",
+                "native": "❂"
+            }
+        ]
+    },
+    {
+        "id": "heavy-teardrop-spoked-pinwheel-asterisk",
+        "name": "Heavy teardrop-spoked pinwheel asterisk",
+        "keywords": [
+            "heavy",
+            "teardrop-spoked",
+            "pinwheel",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02743",
+                "native": "❃"
+            }
+        ]
+    },
+    {
+        "id": "snowflake",
+        "name": "Snowflake",
+        "keywords": [
+            "snowflake",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02744",
+                "native": "❄"
+            }
+        ]
+    },
+    {
+        "id": "tight-trifoliate-snowflake",
+        "name": "Tight trifoliate snowflake",
+        "keywords": [
+            "tight",
+            "trifoliate",
+            "snowflake",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02745",
+                "native": "❅"
+            }
+        ]
+    },
+    {
+        "id": "heavy-chevron-snowflake",
+        "name": "Heavy chevron snowflake",
+        "keywords": [
+            "heavy",
+            "chevron",
+            "snowflake",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02746",
+                "native": "❆"
+            }
+        ]
+    },
+    {
+        "id": "sparkle",
+        "name": "Sparkle",
+        "keywords": [
+            "sparkle",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02747",
+                "native": "❇"
+            }
+        ]
+    },
+    {
+        "id": "heavy-sparkle",
+        "name": "Heavy sparkle",
+        "keywords": [
+            "heavy",
+            "sparkle",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02748",
+                "native": "❈"
+            }
+        ]
+    },
+    {
+        "id": "balloon-spoked-asterisk",
+        "name": "Balloon-spoked asterisk",
+        "keywords": [
+            "balloon-spoked",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02749",
+                "native": "❉"
+            }
+        ]
+    },
+    {
+        "id": "eight-teardrop-spoked-propeller-asterisk",
+        "name": "Eight teardrop-spoked propeller asterisk",
+        "keywords": [
+            "eight",
+            "teardrop-spoked",
+            "propeller",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0274A",
+                "native": "❊"
+            }
+        ]
+    },
+    {
+        "id": "heavy-eight-teardrop-spoked-propeller-asterisk",
+        "name": "Heavy eight teardrop-spoked propeller asterisk",
+        "keywords": [
+            "heavy",
+            "eight",
+            "teardrop-spoked",
+            "propeller",
+            "asterisk",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0274B",
+                "native": "❋"
+            }
+        ]
+    },
+    {
+        "id": "shadowed-white-circle",
+        "name": "Shadowed white circle",
+        "keywords": [
+            "shadowed",
+            "white",
+            "circle",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0274D",
+                "native": "❍"
+            }
+        ]
+    },
+    {
+        "id": "lower-right-drop-shadowed-white-square",
+        "name": "Lower right drop-shadowed white square",
+        "keywords": [
+            "lower",
+            "right",
+            "drop-shadowed",
+            "white",
+            "square",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0274F",
+                "native": "❏"
+            }
+        ]
+    },
+    {
+        "id": "upper-right-drop-shadowed-white-square",
+        "name": "Upper right drop-shadowed white square",
+        "keywords": [
+            "upper",
+            "right",
+            "drop-shadowed",
+            "white",
+            "square",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02750",
+                "native": "❐"
+            }
+        ]
+    },
+    {
+        "id": "lower-right-shadowed-white-square",
+        "name": "Lower right shadowed white square",
+        "keywords": [
+            "lower",
+            "right",
+            "shadowed",
+            "white",
+            "square",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02751",
+                "native": "❑"
+            }
+        ]
+    },
+    {
+        "id": "upper-right-shadowed-white-square",
+        "name": "Upper right shadowed white square",
+        "keywords": [
+            "upper",
+            "right",
+            "shadowed",
+            "white",
+            "square",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02752",
+                "native": "❒"
+            }
+        ]
+    },
+    {
+        "id": "black-diamond-minus-white-x",
+        "name": "Black diamond minus white x",
+        "keywords": [
+            "black",
+            "diamond",
+            "minus",
+            "white",
+            "x",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02756",
+                "native": "❖"
+            }
+        ]
+    },
+    {
+        "id": "light-vertical-bar",
+        "name": "Light vertical bar",
+        "keywords": [
+            "light",
+            "vertical",
+            "bar",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02758",
+                "native": "❘"
+            }
+        ]
+    },
+    {
+        "id": "medium-vertical-bar",
+        "name": "Medium vertical bar",
+        "keywords": [
+            "medium",
+            "vertical",
+            "bar",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02759",
+                "native": "❙"
+            }
+        ]
+    },
+    {
+        "id": "heavy-vertical-bar",
+        "name": "Heavy vertical bar",
+        "keywords": [
+            "heavy",
+            "vertical",
+            "bar",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0275A",
+                "native": "❚"
+            }
+        ]
+    },
+    {
+        "id": "heavy-single-turned-comma-quotation-mark-ornament",
+        "name": "Heavy single turned comma quotation mark ornament",
+        "keywords": [
+            "heavy",
+            "single",
+            "turned",
+            "comma",
+            "quotation",
+            "mark",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0275B",
+                "native": "❛"
+            }
+        ]
+    },
+    {
+        "id": "heavy-single-comma-quotation-mark-ornament",
+        "name": "Heavy single comma quotation mark ornament",
+        "keywords": [
+            "heavy",
+            "single",
+            "comma",
+            "quotation",
+            "mark",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0275C",
+                "native": "❜"
+            }
+        ]
+    },
+    {
+        "id": "heavy-double-turned-comma-quotation-mark-ornament",
+        "name": "Heavy double turned comma quotation mark ornament",
+        "keywords": [
+            "heavy",
+            "double",
+            "turned",
+            "comma",
+            "quotation",
+            "mark",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0275D",
+                "native": "❝"
+            }
+        ]
+    },
+    {
+        "id": "heavy-double-comma-quotation-mark-ornament",
+        "name": "Heavy double comma quotation mark ornament",
+        "keywords": [
+            "heavy",
+            "double",
+            "comma",
+            "quotation",
+            "mark",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0275E",
+                "native": "❞"
+            }
+        ]
+    },
+    {
+        "id": "curved-stem-paragraph-sign-ornament",
+        "name": "Curved stem paragraph sign ornament",
+        "keywords": [
+            "curved",
+            "stem",
+            "paragraph",
+            "sign",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02761",
+                "native": "❡"
+            }
+        ]
+    },
+    {
+        "id": "heavy-exclamation-mark-ornament",
+        "name": "Heavy exclamation mark ornament",
+        "keywords": [
+            "heavy",
+            "exclamation",
+            "mark",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02762",
+                "native": "❢"
+            }
+        ]
+    },
+    {
+        "id": "heavy-heart-exclamation-mark-ornament",
+        "name": "Heavy heart exclamation mark ornament",
+        "keywords": [
+            "heavy",
+            "heart",
+            "exclamation",
+            "mark",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02763",
+                "native": "❣"
+            }
+        ]
+    },
+    {
+        "id": "heavy-black-heart",
+        "name": "Heavy black heart",
+        "keywords": [
+            "heavy",
+            "black",
+            "heart",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02764",
+                "native": "❤"
+            }
+        ]
+    },
+    {
+        "id": "rotated-heavy-black-heart-bullet",
+        "name": "Rotated heavy black heart bullet",
+        "keywords": [
+            "rotated",
+            "heavy",
+            "black",
+            "heart",
+            "bullet",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02765",
+                "native": "❥"
+            }
+        ]
+    },
+    {
+        "id": "floral-heart",
+        "name": "Floral heart",
+        "keywords": [
+            "floral",
+            "heart",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02766",
+                "native": "❦"
+            }
+        ]
+    },
+    {
+        "id": "rotated-floral-heart-bullet",
+        "name": "Rotated floral heart bullet",
+        "keywords": [
+            "rotated",
+            "floral",
+            "heart",
+            "bullet",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02767",
+                "native": "❧"
+            }
+        ]
+    },
+    {
+        "id": "medium-left-parenthesis-ornament",
+        "name": "Medium left parenthesis ornament",
+        "keywords": [
+            "medium",
+            "left",
+            "parenthesis",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02768",
+                "native": "❨"
+            }
+        ]
+    },
+    {
+        "id": "medium-right-parenthesis-ornament",
+        "name": "Medium right parenthesis ornament",
+        "keywords": [
+            "medium",
+            "right",
+            "parenthesis",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02769",
+                "native": "❩"
+            }
+        ]
+    },
+    {
+        "id": "medium-flattened-left-parenthesis-ornament",
+        "name": "Medium flattened left parenthesis ornament",
+        "keywords": [
+            "medium",
+            "flattened",
+            "left",
+            "parenthesis",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0276A",
+                "native": "❪"
+            }
+        ]
+    },
+    {
+        "id": "medium-flattened-right-parenthesis-ornament",
+        "name": "Medium flattened right parenthesis ornament",
+        "keywords": [
+            "medium",
+            "flattened",
+            "right",
+            "parenthesis",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0276B",
+                "native": "❫"
+            }
+        ]
+    },
+    {
+        "id": "medium-left-pointing-angle-bracket-ornament",
+        "name": "Medium left-pointing angle bracket ornament",
+        "keywords": [
+            "medium",
+            "left-pointing",
+            "angle",
+            "bracket",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0276C",
+                "native": "❬"
+            }
+        ]
+    },
+    {
+        "id": "medium-right-pointing-angle-bracket-ornament",
+        "name": "Medium right-pointing angle bracket ornament",
+        "keywords": [
+            "medium",
+            "right-pointing",
+            "angle",
+            "bracket",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0276D",
+                "native": "❭"
+            }
+        ]
+    },
+    {
+        "id": "heavy-left-pointing-angle-quotation-mark-ornament",
+        "name": "Heavy left-pointing angle quotation mark ornament",
+        "keywords": [
+            "heavy",
+            "left-pointing",
+            "angle",
+            "quotation",
+            "mark",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0276E",
+                "native": "❮"
+            }
+        ]
+    },
+    {
+        "id": "heavy-right-pointing-angle-quotation-mark-ornament",
+        "name": "Heavy right-pointing angle quotation mark ornament",
+        "keywords": [
+            "heavy",
+            "right-pointing",
+            "angle",
+            "quotation",
+            "mark",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0276F",
+                "native": "❯"
+            }
+        ]
+    },
+    {
+        "id": "heavy-left-pointing-angle-bracket-ornament",
+        "name": "Heavy left-pointing angle bracket ornament",
+        "keywords": [
+            "heavy",
+            "left-pointing",
+            "angle",
+            "bracket",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02770",
+                "native": "❰"
+            }
+        ]
+    },
+    {
+        "id": "heavy-right-pointing-angle-bracket-ornament",
+        "name": "Heavy right-pointing angle bracket ornament",
+        "keywords": [
+            "heavy",
+            "right-pointing",
+            "angle",
+            "bracket",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02771",
+                "native": "❱"
+            }
+        ]
+    },
+    {
+        "id": "light-left-tortoise-shell-bracket-ornament",
+        "name": "Light left tortoise shell bracket ornament",
+        "keywords": [
+            "light",
+            "left",
+            "tortoise",
+            "shell",
+            "bracket",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02772",
+                "native": "❲"
+            }
+        ]
+    },
+    {
+        "id": "light-right-tortoise-shell-bracket-ornament",
+        "name": "Light right tortoise shell bracket ornament",
+        "keywords": [
+            "light",
+            "right",
+            "tortoise",
+            "shell",
+            "bracket",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02773",
+                "native": "❳"
+            }
+        ]
+    },
+    {
+        "id": "medium-left-curly-bracket-ornament",
+        "name": "Medium left curly bracket ornament",
+        "keywords": [
+            "medium",
+            "left",
+            "curly",
+            "bracket",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02774",
+                "native": "❴"
+            }
+        ]
+    },
+    {
+        "id": "medium-right-curly-bracket-ornament",
+        "name": "Medium right curly bracket ornament",
+        "keywords": [
+            "medium",
+            "right",
+            "curly",
+            "bracket",
+            "ornament",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02775",
+                "native": "❵"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-digit-one",
+        "name": "Dingbat negative circled digit one",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "digit",
+            "one",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02776",
+                "native": "❶"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-digit-two",
+        "name": "Dingbat negative circled digit two",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "digit",
+            "two",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02777",
+                "native": "❷"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-digit-three",
+        "name": "Dingbat negative circled digit three",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "digit",
+            "three",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02778",
+                "native": "❸"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-digit-four",
+        "name": "Dingbat negative circled digit four",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "digit",
+            "four",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02779",
+                "native": "❹"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-digit-five",
+        "name": "Dingbat negative circled digit five",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "digit",
+            "five",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0277A",
+                "native": "❺"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-digit-six",
+        "name": "Dingbat negative circled digit six",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "digit",
+            "six",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0277B",
+                "native": "❻"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-digit-seven",
+        "name": "Dingbat negative circled digit seven",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "digit",
+            "seven",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0277C",
+                "native": "❼"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-digit-eight",
+        "name": "Dingbat negative circled digit eight",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "digit",
+            "eight",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0277D",
+                "native": "❽"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-digit-nine",
+        "name": "Dingbat negative circled digit nine",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "digit",
+            "nine",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0277E",
+                "native": "❾"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-number-ten",
+        "name": "Dingbat negative circled number ten",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "number",
+            "ten",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0277F",
+                "native": "❿"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-circled-sans-serif-digit-one",
+        "name": "Dingbat circled sans-serif digit one",
+        "keywords": [
+            "dingbat",
+            "circled",
+            "sans-serif",
+            "digit",
+            "one",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02780",
+                "native": "➀"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-circled-sans-serif-digit-two",
+        "name": "Dingbat circled sans-serif digit two",
+        "keywords": [
+            "dingbat",
+            "circled",
+            "sans-serif",
+            "digit",
+            "two",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02781",
+                "native": "➁"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-circled-sans-serif-digit-three",
+        "name": "Dingbat circled sans-serif digit three",
+        "keywords": [
+            "dingbat",
+            "circled",
+            "sans-serif",
+            "digit",
+            "three",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02782",
+                "native": "➂"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-circled-sans-serif-digit-four",
+        "name": "Dingbat circled sans-serif digit four",
+        "keywords": [
+            "dingbat",
+            "circled",
+            "sans-serif",
+            "digit",
+            "four",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02783",
+                "native": "➃"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-circled-sans-serif-digit-five",
+        "name": "Dingbat circled sans-serif digit five",
+        "keywords": [
+            "dingbat",
+            "circled",
+            "sans-serif",
+            "digit",
+            "five",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02784",
+                "native": "➄"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-circled-sans-serif-digit-six",
+        "name": "Dingbat circled sans-serif digit six",
+        "keywords": [
+            "dingbat",
+            "circled",
+            "sans-serif",
+            "digit",
+            "six",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02785",
+                "native": "➅"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-circled-sans-serif-digit-seven",
+        "name": "Dingbat circled sans-serif digit seven",
+        "keywords": [
+            "dingbat",
+            "circled",
+            "sans-serif",
+            "digit",
+            "seven",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02786",
+                "native": "➆"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-circled-sans-serif-digit-eight",
+        "name": "Dingbat circled sans-serif digit eight",
+        "keywords": [
+            "dingbat",
+            "circled",
+            "sans-serif",
+            "digit",
+            "eight",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02787",
+                "native": "➇"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-circled-sans-serif-digit-nine",
+        "name": "Dingbat circled sans-serif digit nine",
+        "keywords": [
+            "dingbat",
+            "circled",
+            "sans-serif",
+            "digit",
+            "nine",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02788",
+                "native": "➈"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-circled-sans-serif-number-ten",
+        "name": "Dingbat circled sans-serif number ten",
+        "keywords": [
+            "dingbat",
+            "circled",
+            "sans-serif",
+            "number",
+            "ten",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02789",
+                "native": "➉"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-sans-serif-digit-one",
+        "name": "Dingbat negative circled sans-serif digit one",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "sans-serif",
+            "digit",
+            "one",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0278A",
+                "native": "➊"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-sans-serif-digit-two",
+        "name": "Dingbat negative circled sans-serif digit two",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "sans-serif",
+            "digit",
+            "two",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0278B",
+                "native": "➋"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-sans-serif-digit-three",
+        "name": "Dingbat negative circled sans-serif digit three",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "sans-serif",
+            "digit",
+            "three",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0278C",
+                "native": "➌"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-sans-serif-digit-four",
+        "name": "Dingbat negative circled sans-serif digit four",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "sans-serif",
+            "digit",
+            "four",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0278D",
+                "native": "➍"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-sans-serif-digit-five",
+        "name": "Dingbat negative circled sans-serif digit five",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "sans-serif",
+            "digit",
+            "five",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0278E",
+                "native": "➎"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-sans-serif-digit-six",
+        "name": "Dingbat negative circled sans-serif digit six",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "sans-serif",
+            "digit",
+            "six",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0278F",
+                "native": "➏"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-sans-serif-digit-seven",
+        "name": "Dingbat negative circled sans-serif digit seven",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "sans-serif",
+            "digit",
+            "seven",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02790",
+                "native": "➐"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-sans-serif-digit-eight",
+        "name": "Dingbat negative circled sans-serif digit eight",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "sans-serif",
+            "digit",
+            "eight",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02791",
+                "native": "➑"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-sans-serif-digit-nine",
+        "name": "Dingbat negative circled sans-serif digit nine",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "sans-serif",
+            "digit",
+            "nine",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02792",
+                "native": "➒"
+            }
+        ]
+    },
+    {
+        "id": "dingbat-negative-circled-sans-serif-number-ten",
+        "name": "Dingbat negative circled sans-serif number ten",
+        "keywords": [
+            "dingbat",
+            "negative",
+            "circled",
+            "sans-serif",
+            "number",
+            "ten",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02793",
+                "native": "➓"
+            }
+        ]
+    },
+    {
+        "id": "heavy-wide-headed-right-arrow",
+        "name": "Heavy wide-headed right arrow",
+        "keywords": [
+            "heavy",
+            "wide-headed",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02794",
+                "native": "➔"
+            }
+        ]
+    },
+    {
+        "id": "heavy-south-east-arrow",
+        "name": "Heavy south east arrow",
+        "keywords": [
+            "heavy",
+            "south",
+            "east",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02798",
+                "native": "➘"
+            }
+        ]
+    },
+    {
+        "id": "heavy-right-arrow",
+        "name": "Heavy right arrow",
+        "keywords": [
+            "heavy",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+02799",
+                "native": "➙"
+            }
+        ]
+    },
+    {
+        "id": "heavy-north-east-arrow",
+        "name": "Heavy north east arrow",
+        "keywords": [
+            "heavy",
+            "north",
+            "east",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0279A",
+                "native": "➚"
+            }
+        ]
+    },
+    {
+        "id": "drafting-point-right-arrow",
+        "name": "Drafting point right arrow",
+        "keywords": [
+            "drafting",
+            "point",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0279B",
+                "native": "➛"
+            }
+        ]
+    },
+    {
+        "id": "heavy-round-tipped-right-arrow",
+        "name": "Heavy round-tipped right arrow",
+        "keywords": [
+            "heavy",
+            "round-tipped",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0279C",
+                "native": "➜"
+            }
+        ]
+    },
+    {
+        "id": "triangle-headed-right-arrow",
+        "name": "Triangle-headed right arrow",
+        "keywords": [
+            "triangle-headed",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0279D",
+                "native": "➝"
+            }
+        ]
+    },
+    {
+        "id": "heavy-triangle-headed-right-arrow",
+        "name": "Heavy triangle-headed right arrow",
+        "keywords": [
+            "heavy",
+            "triangle-headed",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0279E",
+                "native": "➞"
+            }
+        ]
+    },
+    {
+        "id": "dashed-triangle-headed-right-arrow",
+        "name": "Dashed triangle-headed right arrow",
+        "keywords": [
+            "dashed",
+            "triangle-headed",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+0279F",
+                "native": "➟"
+            }
+        ]
+    },
+    {
+        "id": "heavy-dashed-triangle-headed-right-arrow",
+        "name": "Heavy dashed triangle-headed right arrow",
+        "keywords": [
+            "heavy",
+            "dashed",
+            "triangle-headed",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027A0",
+                "native": "➠"
+            }
+        ]
+    },
+    {
+        "id": "black-right-arrow",
+        "name": "Black right arrow",
+        "keywords": [
+            "black",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027A1",
+                "native": "➡"
+            }
+        ]
+    },
+    {
+        "id": "three-d-top-lighted-right-arrowhead",
+        "name": "Three-d top-lighted right arrowhead",
+        "keywords": [
+            "three-d",
+            "top-lighted",
+            "right",
+            "arrowhead",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027A2",
+                "native": "➢"
+            }
+        ]
+    },
+    {
+        "id": "three-d-bottom-lighted-right-arrowhead",
+        "name": "Three-d bottom-lighted right arrowhead",
+        "keywords": [
+            "three-d",
+            "bottom-lighted",
+            "right",
+            "arrowhead",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027A3",
+                "native": "➣"
+            }
+        ]
+    },
+    {
+        "id": "black-right-arrowhead",
+        "name": "Black right arrowhead",
+        "keywords": [
+            "black",
+            "right",
+            "arrowhead",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027A4",
+                "native": "➤"
+            }
+        ]
+    },
+    {
+        "id": "heavy-black-curved-down-and-right-arrow",
+        "name": "Heavy black curved down and right arrow",
+        "keywords": [
+            "heavy",
+            "black",
+            "curved",
+            "down",
+            "and",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027A5",
+                "native": "➥"
+            }
+        ]
+    },
+    {
+        "id": "heavy-black-curved-up-and-right-arrow",
+        "name": "Heavy black curved up and right arrow",
+        "keywords": [
+            "heavy",
+            "black",
+            "curved",
+            "up",
+            "and",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027A6",
+                "native": "➦"
+            }
+        ]
+    },
+    {
+        "id": "squat-black-right-arrow",
+        "name": "Squat black right arrow",
+        "keywords": [
+            "squat",
+            "black",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027A7",
+                "native": "➧"
+            }
+        ]
+    },
+    {
+        "id": "heavy-concave-pointed-black-right-arrow",
+        "name": "Heavy concave-pointed black right arrow",
+        "keywords": [
+            "heavy",
+            "concave-pointed",
+            "black",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027A8",
+                "native": "➨"
+            }
+        ]
+    },
+    {
+        "id": "right-shaded-white-right-arrow",
+        "name": "Right-shaded white right arrow",
+        "keywords": [
+            "right-shaded",
+            "white",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027A9",
+                "native": "➩"
+            }
+        ]
+    },
+    {
+        "id": "left-shaded-white-right-arrow",
+        "name": "Left-shaded white right arrow",
+        "keywords": [
+            "left-shaded",
+            "white",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027AA",
+                "native": "➪"
+            }
+        ]
+    },
+    {
+        "id": "back-tilted-shadowed-white-right-arrow",
+        "name": "Back-tilted shadowed white right arrow",
+        "keywords": [
+            "back-tilted",
+            "shadowed",
+            "white",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027AB",
+                "native": "➫"
+            }
+        ]
+    },
+    {
+        "id": "front-tilted-shadowed-white-right-arrow",
+        "name": "Front-tilted shadowed white right arrow",
+        "keywords": [
+            "front-tilted",
+            "shadowed",
+            "white",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027AC",
+                "native": "➬"
+            }
+        ]
+    },
+    {
+        "id": "heavy-lower-right-shadowed-white-right-arrow",
+        "name": "Heavy lower right-shadowed white right arrow",
+        "keywords": [
+            "heavy",
+            "lower",
+            "right-shadowed",
+            "white",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027AD",
+                "native": "➭"
+            }
+        ]
+    },
+    {
+        "id": "heavy-upper-right-shadowed-white-right-arrow",
+        "name": "Heavy upper right-shadowed white right arrow",
+        "keywords": [
+            "heavy",
+            "upper",
+            "right-shadowed",
+            "white",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027AE",
+                "native": "➮"
+            }
+        ]
+    },
+    {
+        "id": "notched-lower-right-shadowed-white-right-arrow",
+        "name": "Notched lower right-shadowed white right arrow",
+        "keywords": [
+            "notched",
+            "lower",
+            "right-shadowed",
+            "white",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027AF",
+                "native": "➯"
+            }
+        ]
+    },
+    {
+        "id": "notched-upper-right-shadowed-white-right-arrow",
+        "name": "Notched upper right-shadowed white right arrow",
+        "keywords": [
+            "notched",
+            "upper",
+            "right-shadowed",
+            "white",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027B1",
+                "native": "➱"
+            }
+        ]
+    },
+    {
+        "id": "circled-heavy-white-right-arrow",
+        "name": "Circled heavy white right arrow",
+        "keywords": [
+            "circled",
+            "heavy",
+            "white",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027B2",
+                "native": "➲"
+            }
+        ]
+    },
+    {
+        "id": "white-feathered-right-arrow",
+        "name": "White-feathered right arrow",
+        "keywords": [
+            "white-feathered",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027B3",
+                "native": "➳"
+            }
+        ]
+    },
+    {
+        "id": "black-feathered-south-east-arrow",
+        "name": "Black-feathered south east arrow",
+        "keywords": [
+            "black-feathered",
+            "south",
+            "east",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027B4",
+                "native": "➴"
+            }
+        ]
+    },
+    {
+        "id": "black-feathered-right-arrow",
+        "name": "Black-feathered right arrow",
+        "keywords": [
+            "black-feathered",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027B5",
+                "native": "➵"
+            }
+        ]
+    },
+    {
+        "id": "black-feathered-north-east-arrow",
+        "name": "Black-feathered north east arrow",
+        "keywords": [
+            "black-feathered",
+            "north",
+            "east",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027B6",
+                "native": "➶"
+            }
+        ]
+    },
+    {
+        "id": "heavy-black-feathered-south-east-arrow",
+        "name": "Heavy black-feathered south east arrow",
+        "keywords": [
+            "heavy",
+            "black-feathered",
+            "south",
+            "east",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027B7",
+                "native": "➷"
+            }
+        ]
+    },
+    {
+        "id": "heavy-black-feathered-right-arrow",
+        "name": "Heavy black-feathered right arrow",
+        "keywords": [
+            "heavy",
+            "black-feathered",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027B8",
+                "native": "➸"
+            }
+        ]
+    },
+    {
+        "id": "heavy-black-feathered-north-east-arrow",
+        "name": "Heavy black-feathered north east arrow",
+        "keywords": [
+            "heavy",
+            "black-feathered",
+            "north",
+            "east",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027B9",
+                "native": "➹"
+            }
+        ]
+    },
+    {
+        "id": "teardrop-barbed-right-arrow",
+        "name": "Teardrop-barbed right arrow",
+        "keywords": [
+            "teardrop-barbed",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027BA",
+                "native": "➺"
+            }
+        ]
+    },
+    {
+        "id": "heavy-teardrop-shanked-right-arrow",
+        "name": "Heavy teardrop-shanked right arrow",
+        "keywords": [
+            "heavy",
+            "teardrop-shanked",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027BB",
+                "native": "➻"
+            }
+        ]
+    },
+    {
+        "id": "wedge-tailed-right-arrow",
+        "name": "Wedge-tailed right arrow",
+        "keywords": [
+            "wedge-tailed",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027BC",
+                "native": "➼"
+            }
+        ]
+    },
+    {
+        "id": "heavy-wedge-tailed-right-arrow",
+        "name": "Heavy wedge-tailed right arrow",
+        "keywords": [
+            "heavy",
+            "wedge-tailed",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027BD",
+                "native": "➽"
+            }
+        ]
+    },
+    {
+        "id": "open-outlined-right-arrow",
+        "name": "Open-outlined right arrow",
+        "keywords": [
+            "open-outlined",
+            "right",
+            "arrow",
+            "customColor"
+        ],
+        "skins": [
+            {
+                "unified": "U+027BE",
+                "native": "➾"
+            }
+        ]
+    }
+]
