@@ -1,6 +1,6 @@
 ### TERMS OF USE
 
-_Last updated February 26, 2025_
+_Last updated March 13, 2025_
 
 ### AGREEMENT TO OUR LEGAL TERMS
 
