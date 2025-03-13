@@ -8,7 +8,7 @@
 	"license": "https://www.gnu.org/licenses/gpl-3.0-standalone.html",
 	"browser_specific_settings": {
 		"gecko": {
-			"id": "yurawebdev@proton.me",
+			"id": "{3a1de31b-582d-4add-aa01-7b6ac6f7e4bb}",
 			"strict_min_version": "130.0"
 		}
 	},

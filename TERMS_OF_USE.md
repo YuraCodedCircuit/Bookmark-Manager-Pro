@@ -24,7 +24,7 @@ The Bookmark Manager Pro browser extension allows users to efficiently manage th
 
 ### Our intellectual property
 
-The Bookmark Manager Pro browser extension and its source code are open-source software licensed under the MIT License. The full text of the MIT License can be found in the LICENSE file located at [MIT License](/LICENSE.md). Subject to the terms and conditions of the MIT License, we retain copyright and certain intellectual property rights to the original code.
+The Bookmark Manager Pro browser extension and its source code are open-source software licensed under the GNU General Public License v3.0. The full text of the GNU General Public License v3.0 can be found in the LICENSE file located at [GNU General Public License v3.0](/LICENSE.md). Subject to the terms and conditions of the GNU General Public License v3.0, we retain copyright and certain intellectual property rights to the original code.
 
 The extension's name, logo, and branding elements (the "Marks") are important identifiers for the Bookmark Manager Pro project. We consider these Marks to be part of our project's identity and goodwill.
 
@@ -34,7 +34,7 @@ The Marks should not be used in any way that is likely to cause confusion, or in
 
 ### Your use of our Services
 
-Your use of the Bookmark Manager Pro extension is governed by the terms of the MIT License. Please refer to the [LICENSE](/LICENSE.md) file for the specific permissions and limitations granted under this license.
+Your use of the Bookmark Manager Pro extension is governed by the terms of the GNU General Public License v3.0. Please refer to the [LICENSE](/LICENSE.md) file for the specific permissions and limitations granted under this license.
 
 ## PROHIBITED ACTIVITIES
 
@@ -139,7 +139,7 @@ These Legal Terms shall remain in full force and effect while you use the Bookma
 
 We may terminate your access to support and updates for the extension at any time, without warning, in our sole discretion.
 
-If we terminate your support access, you are prohibited from seeking support or updates again. In addition to terminating support, we reserve the right to take appropriate legal action, including pursuing remedies available under copyright law or other applicable laws, should your usage infringe upon our intellectual property rights in the Marks or original non-open-source elements (if any) or otherwise cause us direct harm in a manner not permitted by the open-source license. However, for typical usage within the scope of the MIT License, termination of support is expected to be the primary action.
+If we terminate your support access, you are prohibited from seeking support or updates again. In addition to terminating support, we reserve the right to take appropriate legal action, including pursuing remedies available under copyright law or other applicable laws, should your usage infringe upon our intellectual property rights in the Marks or original non-open-source elements (if any) or otherwise cause us direct harm in a manner not permitted by the open-source license. However, for typical usage within the scope of the GNU General Public License v3.0, termination of support is expected to be the primary action.
 
 ## MODIFICATIONS AND INTERRUPTIONS
 
