@@ -38,7 +38,7 @@
 
 "use strict";
 import { userProfileExport, defaultUserBookmarks, defaultBookmarkStyle, defaultFolderStyle, currentFolderId, userActiveProfile, currentLanguageTextObj, manageUserProfiles, userActivityRegister, createCurrentBookmarkFolder} from './main.js';
-import { isObjectEmpty, findBookmarkByKey, checkIfColorBrightness, pSBC, truncateString, invertHexColor, getNextMaxIndex, generateRandomIdForObj, indexedDBManipulation, showMessageToastify, capitalizeString, actionForArray, updateInputRangeAndOutput, updateColorisInputValue, checkIfAllowedToCreateScreenshotFromURL, getSupportedFontFamilies, getRandomColor, ensureHttps, resizeImageBase64, inputHexValid } from './utilityFunctions.js';
+import { isObjectEmpty, findBookmarkByKey, checkIfColorBrightness, pSBC, truncateString, invertHexColor, getNextMaxIndex, generateRandomIdForObj, indexedDBManipulation, showMessageToastify, capitalizeString, actionForArray, updateInputRangeAndOutput, updateColorisInputValue, checkIfAllowedToCreateScreenshotFromURL, getSupportedFontFamilies, getRandomColor, ensureHttps, resizeImageBase64, inputHexValid, generateColorPalette, truncateTextIfOverflow, createTooltip } from './utilityFunctions.js';
 
 /**
  * Creates a new bookmark or folder object with default properties.
@@ -91,6 +91,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
     let objType = '';
     let editingObjBookmarkStyle = {};
     let bookmarkBoxSize = { width: '200px', height: '200px' };
+    let colorPalette = [];
 
     if (type == 'close') {
         contextMenuWindowEl.css('display', 'none').html(``);
@@ -115,6 +116,10 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         currentEditingObj.parentId = selectedFolderId;
         editingObjBookmarkStyle = window.structuredClone(currentEditingObj.style.bookmark);
     }
+
+    const userColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
+    colorPalette = generateColorPalette(userColor);
+    console.log(userProfileExport.mainUserSettings);
 
     const updateBookmarkBoxSize = (folderId) => {
         let obj = findBookmarkByKey(userProfileExport.currentUserBookmarks, folderId);
@@ -143,7 +148,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         case 'edit':
             contextMenuWindowEl.css('display', 'flex');
             createEditWindowHtml = `
-            <div id="mainWindowBody">
+            <div id="mainWindowBody" data-listenerAdded="false">
                 <div id="leftPanel">
                     <div id="titleEditor">
                         <div id="titleEditorInfo">Title:</div>
@@ -206,7 +211,27 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
     }
     contextMenuWindowEl.html(createEditWindowHtml);
 
-    let linkEditorInputButtonIconEl = document.getElementById('linkEditorInputButtonIcon');
+    /**
+     * Set default styles to the title, URL, and folder tree input fields in the context menu window.
+     * It sets the border color of the input fields to black if the background color is light or white if the background color is dark.
+     * @function
+     */
+    const setDefaultStylesToTitleURLFolderTree = () => {
+        const titleEditorInputEl = document.getElementById('titleEditorInput');
+        const urlEditorInputEl = document.getElementById('urlEditorInput');
+        const listOfFolderNamesEl = document.getElementById('listToSelectFolder');
+        const borderColor = checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? '#000000' : '#ffffff';
+
+        titleEditorInputEl.style.border = `1px solid ${borderColor}`;
+        titleEditorInputEl.style.backgroundColor = colorPalette[3];
+        urlEditorInputEl.style.border = `1px solid ${borderColor}`;
+        urlEditorInputEl.style.backgroundColor = colorPalette[3];
+        listOfFolderNamesEl.style.border = `1px solid ${borderColor}`;
+        listOfFolderNamesEl.style.backgroundColor = colorPalette[3];
+    }
+    setDefaultStylesToTitleURLFolderTree();
+
+    const linkEditorInputButtonIconEl = document.getElementById('linkEditorInputButtonIcon');
     linkEditorInputButtonIconEl.innerHTML = `<path fill="none" d="M0 0h24v24H0z"/><path d="M3 3h2v2H3V3zm4 0h2v2H7V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm0 4h2v2h-2V7zM3 19h2v2H3v-2zm0-4h2v2H3v-2zm0-4h2v2H3v-2zm0-4h2v2H3V7zm7.667 4l1.036-1.555A1 1 0 0 1 12.535 9h2.93a1 1 0 0 1 .832.445L17.333 11H20a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h2.667zM9 19h10v-6h-2.737l-1.333-2h-1.86l-1.333 2H9v6zm5-1a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>`;
 
     linkEditorInputButtonIconEl.addEventListener('mouseenter', () => {
@@ -229,7 +254,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         const bookmarkTextPreviewEl = document.getElementById('bookmarkTextPreview');
         // Remove the existing 'input' event listener if it exists to prevent duplicates.
         if (currentTitleEditorInputListener) {
-            titleEditorInputEl.removeEventListener('input', currentTitleEditorInputListener)
+            titleEditorInputEl.removeEventListener('input', currentTitleEditorInputListener);
         }
         bookmarkTextPreviewEl.innerHTML = currentEditingObj.title;
         titleEditorInputEl.value = currentEditingObj.title;
@@ -297,75 +322,65 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
 
     const createAndUpdateSelectFolderSection = () => {
         const listToSelectFolderEl = document.getElementById('listToSelectFolder');
-        const checkMarkHtml = `<svg class="checkMarkFolder" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 12.5L11 15.5L16 9.5" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="10" stroke="#000000" stroke-width="2"/></svg>`;
+        const checkMarkSVG = `<svg class="checkMarkFolder" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 12.5L11 15.5L16 9.5" stroke="${userProfileExport.mainUserSettings.windows.button.success.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="10" stroke="${userProfileExport.mainUserSettings.windows.button.success.backgroundColor}" stroke-width="2"/></svg>`;
+
         /**
         * Generates an HTML string representing a list (ul) from an array of data.
         * @returns {string} The HTML string of the list.
         */
         const generateHtmlListFromData = () => {
-            let selectedSelfId = '';
-            currentEditingObj.id == 'root' ? selectedSelfId = 'root' : selectedSelfId = currentEditingObj.id;
-            /**
-            * Converts an array of items into a string of HTML list items (li).
-            * @param {Array} items - The array of items to convert.
-            * @returns {string} The HTML string of list items.
-            */
-            const generateListItemsHtml = items => {
-                return items.map(item => {
-                    // Generate nested list if children exist
-                    let nestedListHtml = generateNestedListHtml(item.children || []);
-                    let listItemHtml = ``;
-                    if (item.type == 'folder' && item.id != selectedSelfId) {
-                        listItemHtml = `
-                            <li>
-                                <details data-id="${item.id}">
-                                    <summary class="folder" data-id="${item.id}"><div class="check" data-id="${item.id}"></div><p data-id="${item.id}">${item.title}</p></summary>
-                                </details>
-                            </li>
-                            ${nestedListHtml}
-                        `;
+            const buildFolderTreeHTML = (bookmarks) => {
+                let html = '<ul>'; // Start with an unordered list
+                bookmarks.forEach(bookmark => {
+                    if (bookmark.type === 'folder') {
+                        // Create the list item for the current bookmark
+                        html += `<li data-id="${bookmark.id}"><div class="folder"><div class="check" data-id="${bookmark.id}"></div><span class="folderName" data-id="${bookmark.id}">${bookmark.title}</span></div>`;
+                        // If there are children, recursively build their HTML
+                        if (bookmark.children && bookmark.children.length > 0) {
+                            html += buildFolderTreeHTML(bookmark.children); // Recursively build children
+                        }
+                        html += '</li>'; // Close the list item
                     }
-                    return listItemHtml;
-                }).join('');
+                });
+                html += '</ul>'; // Close the unordered list
+                return html; // Return the constructed HTML
             };
-            /**
-            * Generates an HTML string for a nested list if the dataset is not empty.
-            * @param {Array} dataset - The array of items to generate the nested list from.
-            * @returns {string} The HTML string of the nested list or an empty string if the dataset is empty.
-            */
-            const generateNestedListHtml = dataset => {
-                return dataset.length ? `<div id="selectFolderContainer"><ul>${generateListItemsHtml(dataset)}</ul></div>` : '';
-            };
-            // Generate the top-level list HTML using the default dataset
-            let topLevelListHtml = generateNestedListHtml(userProfileExport.currentUserBookmarks);
-            return topLevelListHtml;
+            // Generate the HTML
+            const htmlOutput = `<div class="tree" style="--lineColor:${userProfileExport.mainUserSettings.windows.window.font.color};">${buildFolderTreeHTML(userProfileExport.currentUserBookmarks)}</div>`; // Wrap the output in a single tree div
+            // Return the generated HTML
+            return htmlOutput;
         };
         listToSelectFolderEl.innerHTML = generateHtmlListFromData();
-        const setCheckMark = () => {
-            const checkMarkEl = document.querySelectorAll(`[class="check"]`);
-            checkMarkEl.forEach(element => {
-                if (element.dataset.id == selectedFolderId) {
-                    element.innerHTML = checkMarkHtml;
-                    element.nextSibling !== null ? element.nextElementSibling.style.marginLeft = '10px' : '';
+
+        const setCheckerToFolderTree = () => {
+            const checkArray = document.querySelectorAll('.check');
+            const liArray = document.querySelectorAll('li[data-id]');
+            const id = selectedFolderId;
+            if (checkArray.length === 0) { return; }
+            checkArray.forEach((check, index) => {
+                if (check.dataset.id === id && liArray[index].dataset.id === id) {
+                    liArray[index].style.setProperty('--lineWidth', '5px');
+                    check.innerHTML = checkMarkSVG;
                 } else {
-                    element.innerHTML = '';
-                    element.nextSibling !== null ? element.nextElementSibling.style.marginLeft = '0px' : '';
+                    liArray[index].style.setProperty('--lineWidth', '15px');
+                    check.innerHTML = '';
                 }
             });
         }
-        setCheckMark();
+        setCheckerToFolderTree();
+
         const folder = document.querySelectorAll('[class="folder"]');
         folder.forEach(element => {
             element.addEventListener('click', (e) => {
                 selectedFolderId = e.target.dataset.id;
-                setCheckMark();
-                updateBookmarkBoxSize(e.target.dataset.id);
+                setCheckerToFolderTree();
+                updateBookmarkBoxSize(selectedFolderId);
                 updateBookmarkStylePreview();
             });
         });
     }
-
     createAndUpdateSelectFolderSection();
+
     /**
     * Updates the text content of various UI elements in the context menu window based on the current language settings.
     * This function dynamically sets the text for elements like title, link editor, folder names, style menu options,
@@ -430,20 +445,14 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         const styleMenuBodyEl = $('#styleMenuBody');
         // Apply the main user settings background color to the main window body.
         mainWindowBodyEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
+        mainWindowBodyEl.style.borderLeft = `${userProfileExport.mainUserSettings.windows.window.border.left.width}px ${userProfileExport.mainUserSettings.windows.window.border.left.style} ${userProfileExport.mainUserSettings.windows.window.border.left.color}`;
+        mainWindowBodyEl.style.borderTop = `${userProfileExport.mainUserSettings.windows.window.border.top.width}px ${userProfileExport.mainUserSettings.windows.window.border.top.style} ${userProfileExport.mainUserSettings.windows.window.border.top.color}`;
+        mainWindowBodyEl.style.borderRight = `${userProfileExport.mainUserSettings.windows.window.border.right.width}px ${userProfileExport.mainUserSettings.windows.window.border.right.style} ${userProfileExport.mainUserSettings.windows.window.border.right.color}`;
+        mainWindowBodyEl.style.borderBottom = `${userProfileExport.mainUserSettings.windows.window.border.bottom.width}px ${userProfileExport.mainUserSettings.windows.window.border.bottom.style} ${userProfileExport.mainUserSettings.windows.window.border.bottom.color}`;
+        mainWindowBodyEl.style.borderRadius = `${userProfileExport.mainUserSettings.windows.window.border.left.radius}px ${userProfileExport.mainUserSettings.windows.window.border.top.radius}px ${userProfileExport.mainUserSettings.windows.window.border.right.radius}px ${userProfileExport.mainUserSettings.windows.window.border.bottom.radius}px`;
         mainWindowBodyEl.style.color = userProfileExport.mainUserSettings.windows.window.font.color;
-        // mainWindowBodyEl.css('background-color', userProfileExport.mainUserSettings.windows.window.backgroundColor);
-        // Initialize a variable to store the modified color.
-        let backgroundColor = '';
-        // Check the brightness of the main background color to decide whether to lighten or darken it.
-        if (checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor)) {
-            // Lighten the color if the background is dark.
-            backgroundColor = pSBC(0.30, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
-        } else {
-            // Darken the color if the background is light.
-            backgroundColor = pSBC(-0.30, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
-        }
-        // Apply the modified color to the style menu body's background.
-        styleMenuBodyEl.css('background-color', backgroundColor);
+
+        styleMenuBodyEl.css('background-color', colorPalette[2]);
 
         /**
         * Sets or removes the event listeners for mouseenter and mouseleave events on buttons within the context menu window.
@@ -514,6 +523,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
     * and updates the UI accordingly.
     */
     const saveCreateAndEditBookmarksWindow = () => {
+        const mainWindowBodyEl = document.getElementById('mainWindowBody');
         const contextMenuWindowSaveEl = document.getElementById('contextMenuWindowSave');
         const titleEditorInputEl = document.getElementById('titleEditorInput');
         const urlEditorInputEl = document.getElementById('urlEditorInput');
@@ -522,7 +532,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         const saveCurrentEditingObj = async () => {
             let syncObject = {};
             // Check if the title input is empty and show an error message if true.
-            if (!titleEditorInputEl.value) {
+            if (titleEditorInputEl.value.trim().length === 0) {
                 showMessageToastify('error', '', `Please enter a title`, 3000, false, 'bottom', 'right', true);
                 return;
             }
@@ -605,12 +615,37 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             contextMenuWindowEl.css('display', 'none').html(``);
         }
 
-        // If the user presses the 'Enter' key, trigger the save event.
-        contextMenuWindowEl.keypress(key => {
-            if (key.which == 13) {
+        // Define the event handler function
+        const handleKeyPress = (event) => {
+            if (event.key === 'Enter') {
                 saveCurrentEditingObj();
             }
-        });
+        };
+
+        // Function to add the keypress event listener
+        const addKeyPressListener = () => {
+            // Check if the listener is already added
+            if (!mainWindowBodyEl.dataset.listenerAdded) {
+                mainWindowBodyEl.dataset.listenerAdded = 'true'; // Set a flag to indicate the listener is added
+                mainWindowBodyEl.addEventListener('keypress', handleKeyPress);
+            }
+        };
+
+        // Function to remove the keypress event listener
+        const removeKeyPressListener = () => {
+            if (mainWindowBodyEl.dataset.listenerAdded) {
+                mainWindowBodyEl.removeEventListener('keypress', handleKeyPress);
+                delete mainWindowBodyEl.dataset.listenerAdded; // Remove the flag
+            }
+        };
+
+        // Check if the listener is already added
+        if (mainWindowBodyEl.dataset.listenerAdded !== undefined && mainWindowBodyEl.dataset.listenerAdded === 'true') {
+            // Remove the listener
+            removeKeyPressListener();
+        }
+        // Add the listener
+        addKeyPressListener();
 
         contextMenuWindowSaveEl.addEventListener('click', saveCurrentEditingObj);
     };
@@ -780,21 +815,21 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         let borderHtmlBody = `
             <div id="bookmarkBoxStyleBody">
                 <div id="borderPositionContainer">
-                    <div id="borderPosition" data-position="left">
-                        <span id="borderPositionTitle" data-position="left">${currentLanguageTextObj._createOrEditWindow._styleMenu._border._buttonMenu._borerLeft._button.left || 'Left'}</span>
-                        <span id="borderPositionIcon" data-position="left"></span>
+                    <div class="borderPosition" data-position="left">
+                        <span class="borderPositionTitle" data-position="left">${currentLanguageTextObj._createOrEditWindow._styleMenu._border._buttonMenu._borerLeft._button.left || 'Left'}</span>
+                        <span class="borderPositionIcon" data-position="left"></span>
                     </div>
-                    <div id="borderPosition" data-position="top">
-                        <span id="borderPositionTitle" data-position="top">${currentLanguageTextObj._createOrEditWindow._styleMenu._border._buttonMenu._borerTop._button.top || 'Top'}</span>
-                        <span id="borderPositionIcon" data-position="top"></span>
+                    <div class="borderPosition" data-position="top">
+                        <span class="borderPositionTitle" data-position="top">${currentLanguageTextObj._createOrEditWindow._styleMenu._border._buttonMenu._borerTop._button.top || 'Top'}</span>
+                        <span class="borderPositionIcon" data-position="top"></span>
                     </div>
-                    <div id="borderPosition" data-position="right">
-                        <span id="borderPositionTitle" data-position="right">${currentLanguageTextObj._createOrEditWindow._styleMenu._border._buttonMenu._borerRight._button.right || 'Right'}</span>
-                        <span id="borderPositionIcon" data-position="right"></span>
+                    <div class="borderPosition" data-position="right">
+                        <span class="borderPositionTitle" data-position="right">${currentLanguageTextObj._createOrEditWindow._styleMenu._border._buttonMenu._borerRight._button.right || 'Right'}</span>
+                        <span class="borderPositionIcon" data-position="right"></span>
                     </div>
-                    <div id="borderPosition" data-position="bottom">
-                        <span id="borderPositionTitle" data-position="bottom">${currentLanguageTextObj._createOrEditWindow._styleMenu._border._buttonMenu._borerBottom._button.bottom || 'Bottom'}</span>
-                        <span id="borderPositionIcon" data-position="bottom"></span>
+                    <div class="borderPosition" data-position="bottom">
+                        <span class="borderPositionTitle" data-position="bottom">${currentLanguageTextObj._createOrEditWindow._styleMenu._border._buttonMenu._borerBottom._button.bottom || 'Bottom'}</span>
+                        <span class="borderPositionIcon" data-position="bottom"></span>
                     </div>
                 </div>
                 <div id="bookmarkBoxBorderWidthContainer">
@@ -810,6 +845,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                     <div id="borderColorTitle">Border color:</div>
                     <div id="borderColorInputPicker">
                         <input type="text" id="borderColorInput" data-coloris readonly="readonly">
+                        <button id="addRandomColor"></button>
                     </div>
                 </div>
                 <div id="borderStyleContainer">
@@ -1013,10 +1049,12 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 updateColorisInputValue('borderColorInput', borderStyle.color);
                 const updateButtonIconStyle = (color) => {
                     const arrowRightEl = document.getElementById('styleButtonArrow');
-                    arrowRightEl.style.backgroundColor = color;
+                    arrowRightEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.font.color;
                     changeButtonStyleUl(color);
                 };
-                borderColorInputEl.style.border = `1px solid ${invertHexColor(userProfileExport.mainUserSettings.windows.window.backgroundColor)}`;
+
+                const borderColor = checkIfColorBrightness(editingObjBookmarkStyle.border.left.color) ? '#000000' : '#ffffff';
+                borderColorInputEl.style.border = `1px solid ${borderColor}`;
                 updateButtonIconStyle(borderStyle.color);
                 styleButtonMenuTitleEl.innerHTML = borderStyle.style.charAt(0).toUpperCase() + borderStyle.style.slice(1);
                 updateInputRangeAndOutput('bookmarkBoxBorderRadiusRange', 'borderRadiusValue', borderStyle.radius);
@@ -1042,6 +1080,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             const borderColorInputEl = document.getElementById('borderColorInput');
             const bookmarkBoxBorderRadiusRangeEl = document.getElementById('bookmarkBoxBorderRadiusRange');
             const borderSelectLiEl = document.querySelectorAll('[id="borderSelectLi"]');
+            const addRandomColorEl = document.getElementById('addRandomColor');
 
             // Remove existing event listeners to avoid duplicates.
             if (currentInputRangeWidthListener) {
@@ -1054,6 +1093,19 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 });
                 currentClickEventListeners = [];
             }
+
+            /**
+             * Add a random color button to the background color picker.
+             * Creates a CSS string that sets the background color of the button to the user's primary button color
+             * and the color of the SVG icon to the user's primary button font color.
+             * The SVG icon is a random color icon.
+             */
+            const addIconToRandomColorEl = () => {
+                addRandomColorEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                addRandomColorEl.innerHTML = `<svg fill="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`;
+            };
+            addIconToRandomColorEl();
+
             /**
              * Handles input events for the border width range input, updating the border width
              * in the newUserBookmarkStyle object based on the selected position. It also updates
@@ -1090,6 +1142,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                     borderColor = borderColorInputEl.value;
                     borderColorInputEl.style.backgroundColor = borderColor;
                     borderColorInputEl.style.color = invertHexColor(borderColor); // Adjust text color for visibility
+                    borderColorInputEl.style.borderColor = checkIfColorBrightness(borderColor) ? '#000000' : '#ffffff'; // Adjust border color
                 } else {
                     console.error('Invalid HEX color input');
                     return;
@@ -1112,6 +1165,33 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 changeButtonStyleUl(borderColor); // Apply UI changes for the button style
                 updateBookmarkStylePreview(); // Refresh the bookmark style preview
             };
+
+            /**
+             * Generates a random color and applies it to the border color input element.
+             * This function sets the input value, adjusts the background and text color for visibility,
+             * updates the border color in the bookmark style, and refreshes the UI preview.
+             */
+            const createRandomColor = () => {
+                const randomHexColor = getRandomColor();
+                borderColorInputEl.value = randomHexColor;
+                borderColorInputEl.style.backgroundColor = randomHexColor;
+                borderColorInputEl.style.color = invertHexColor(randomHexColor); // Adjust text color for visibility
+                borderColorInputEl.style.borderColor = checkIfColorBrightness(randomHexColor) ? '#000000' : '#ffffff'; // Adjust border color
+                editingObjBookmarkStyle.border[position].color = randomHexColor;
+                changeButtonStyleUl(randomHexColor); // Apply UI changes for the button style
+                updateBookmarkStylePreview(); // Refresh the bookmark style preview
+            }
+
+            // Mouse enter and leave event handlers for the random color button
+            const createRandomColorMouseEnter = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.hoverBackgroundColor;
+            };
+
+            // Mouse enter and leave event handlers for the random color button
+            const createRandomColorMouseLeave = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+            };
+
             /**
              * Initializes and configures the border style selection menu. This includes setting up the
              * dropdown menu's appearance based on the user's settings, and handling mouse enter, leave,
@@ -1123,22 +1203,21 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 const arrowRightEl = document.getElementById('styleButtonArrow');
 
                 // Adjust the background color of the dropdown button based on the window's background color brightness.
-                const backgroundColorAdjustment = checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.40 : -0.40;
-                dropDownMenuButtonEl.style.backgroundColor = pSBC(backgroundColorAdjustment, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
+                dropDownMenuButtonEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                Object.assign(dropDownMenuButtonEl.style, userProfileExport.mainUserSettings.windows.button.primary.font);
                 arrowRightEl.style.clipPath = "path('M 0 0 L 10 20 L 20 0')";
 
                 // Handle mouse enter event on the dropdown menu button.
                 const handleMouseEnter = () => {
                     dropDownMenuButtonEl.dataset.status = 'true';
-                    const hoverColorAdjustment = checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.45 : -0.45;
-                    dropDownMenuButtonEl.style.backgroundColor = pSBC(hoverColorAdjustment, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
+                    dropDownMenuButtonEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.hoverBackgroundColor;
                     arrowRightEl.style.clipPath = "path('M 0 20 L 20 10 L 0 0')";
                 };
 
                 // Handle mouse leave event on the dropdown menu button.
                 const handleMouseLeave = () => {
                     dropDownMenuButtonEl.dataset.status = 'false';
-                    dropDownMenuButtonEl.style.backgroundColor = pSBC(backgroundColorAdjustment, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
+                    dropDownMenuButtonEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
                     arrowRightEl.style.clipPath = "path('M 0 0 L 10 20 L 20 0')";
                 };
 
@@ -1168,6 +1247,11 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                     element.addEventListener('click', handleMouseClick);
                     currentClickEventListeners.push({ element, listener: handleMouseClick });
                 });
+
+                addRandomColorEl.addEventListener('click', createRandomColor);
+                addRandomColorEl.addEventListener('mouseenter', createRandomColorMouseEnter);
+                addRandomColorEl.addEventListener('mouseleave', createRandomColorMouseLeave);
+                currentClickEventListeners.push({ element: addRandomColorEl, listener: createRandomColor });
 
                 // Attach mouse enter and leave event listeners to the dropdown menu button.
                 dropDownMenuButtonEl.addEventListener('mouseenter', handleMouseEnter);
@@ -1218,11 +1302,12 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         * updates the UI to reflect the selected border position.
         */
         const setupBorderPositionButtonsInteraction = () => {
-            const borderPositionButtonsEl = document.querySelectorAll('[id="borderPosition"]');
+            const borderPositionButtonsEl = document.querySelectorAll('.borderPosition');
+            let position = 'left';
 
             /**
             * Changes the icon of the border position buttons based on the selected position.
-            * This function iterates over all elements with the ID 'borderPositionIcon' and
+            * This function iterates over all elements with the class 'borderPositionIcon' and
             * updates their clipPath style to reflect the selected border position. The clipPath
             * is set to a specific SVG path value that visually indicates the selected state for
             * the icon corresponding to the current position, and a different one for non-selected
@@ -1233,12 +1318,12 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             *                            This determines which icon will be shown as selected.
             */
             const changeButtonIcon = (position) => {
-                const borderPositionIconEl = document.querySelectorAll('[id="borderPositionIcon"]');
+                const borderPositionIconEl = document.querySelectorAll('.borderPositionIcon');
                 borderPositionIconEl.forEach(el => {
                     if (el.dataset.position == position) {
                         // Sets the clipPath for the selected position icon to a specific SVG path that indicates selection.
                         el.style.clipPath = 'path("M 10 0 C 10 0 10 0 10 0 L 10 0 C 15 0 20 5 20 10 L 20 10 C 20 15 16 20 10 20 L 10 20 C 5 20 0 15 0 10 L 0 10 C 0 5 5 0 10 0 L 10 5 L 10 17 L 15 5 L 10 5 L 5 5 L 10 17")';
-                        el.style.backgroundColor = '#af5';
+                        el.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.font.color;
                     } else {
                         // Sets the clipPath for non-selected position icons to a different SVG path.
                         el.style.clipPath = 'path("M 10 0 C 10 0 10 0 10 0 L 10 0 C 15 0 20 5 20 10 L 20 10 C 20 15 16 20 10 20 L 10 20 C 5 20 0 15 0 10 L 0 10 C 0 5 5 0 10 0 L 10 5 L 10 15 L 10 5 L 10 5 L 10 5 L 10 15")';
@@ -1254,27 +1339,42 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             */
             borderPositionButtonsEl.forEach(button => {
                 /**
-                * Adjusts the background color of a button based on a brightness adjustment value.
-                * This is used to visually indicate the button's state (e.g., hover or default).
-                *
-                * @param {number} brightnessAdjustment - The amount to adjust the brightness by. Positive values brighten, negative values darken.
+                * Sets the default button style based on its position.
+                * Applies the primary style if the button's position is 'left',
+                * otherwise applies the secondary style.
                 */
-                const adjustBackgroundColor = (brightnessAdjustment) => {
-                    button.style.backgroundColor = pSBC(brightnessAdjustment, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
-                };
-                // Initial background color adjustment based on the window's background color brightness.
-                adjustBackgroundColor(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.40 : -0.40);
+                const setDefaultButtonStyle = () => {
+                    if (button.dataset.position === position) {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                    } else {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                    }
+                }
+                setDefaultButtonStyle();
                 /**
                 * Handles the mouse enter event on a button, brightening its background color to indicate hover state.
                 */
-                const buttonPositionMouseEnter = () => {
-                    adjustBackgroundColor(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.45 : -0.45);
+                const buttonPositionMouseEnter = (el) => {
+                    if (el.target.getAttribute('data-position') === position) {
+                        el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.hoverBackgroundColor;
+                    } else {
+                        el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                    }
+                    Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.primary.font);
                 };
                 /**
                 * Handles the mouse leave event on a button, resetting its background color to the default state.
                 */
-                const buttonPositionMouseLeave = () => {
-                    adjustBackgroundColor(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.40 : -0.40);
+                const buttonPositionMouseLeave = (el) => {
+                    if (el.target.dataset.position === position) {
+                        el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                        Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                    } else {
+                        el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                        Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                    }
                 };
                 /**
                 * Handles the click event on a button, applying the selected border style and setting up the UI for the selected border position.
@@ -1283,16 +1383,26 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 *
                 * @param {string} position - The border position selected by the user ('left', 'top', 'right', 'bottom').
                 */
-                const buttonPositionMouseClick = (position) => {
+                const buttonPositionMouseClick = () => {
+                    position = button.dataset.position;
                     changeButtonIcon(position);
                     updateBorderSettingsTitlesUI(position);
                     applyBorderStyleToUI(position);
                     eventListenerBorderStyleEl(position);
+                    borderPositionButtonsEl.forEach(btn => {
+                        if (btn.dataset.position === position) {
+                            btn.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                            Object.assign(btn.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                        } else {
+                            btn.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                            Object.assign(btn.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                        }
+                    });
                 };
                 // Assign event listeners for mouse enter, mouse leave, and click events to the button.
                 button.addEventListener('mouseenter', buttonPositionMouseEnter);
                 button.addEventListener('mouseleave', buttonPositionMouseLeave);
-                button.addEventListener('click', el => buttonPositionMouseClick(button.dataset.position));
+                button.addEventListener('click', buttonPositionMouseClick);
             });
 
             // Initial setup for the 'left' border position as the default selection.
@@ -1447,13 +1557,15 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         // Call the function to update the UI with the current color style settings.
         updateColorStyleToUI();
 
-        const setButtonIcon = () => {
+        const setButtonIconAndStyleToRandomColorAndApply = () => {
             const randomColorButtonEl = document.getElementById('randomColor');
             const applyColorButtonEl = document.getElementById('applyColor');
-            randomColorButtonEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg>`;
-            applyColorButtonEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 -960 960 960"><path d="M382-240 154-468l57-57 171 171 367-367 57 57z"/></svg>`;
+            randomColorButtonEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg>`;
+            applyColorButtonEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${userProfileExport.mainUserSettings.windows.button.success.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><path d="M20 6 9 17l-5-5"/></svg>`;
+            randomColorButtonEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+            applyColorButtonEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.success.backgroundColor;
         }
-        setButtonIcon();
+        setButtonIconAndStyleToRandomColorAndApply();
 
         /**
          * Sets up and manages event listeners for color style elements in the UI.
@@ -1490,10 +1602,31 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 updateBookmarkStylePreview();
             }
 
+            // Updates the background color in newUserBookmarkStyle and the UI.
+            const mouseEnterApplyColorButton = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.success.hoverBackgroundColor;
+            }
+
+            // Updates the background color in newUserBookmarkStyle and the UI.
+            const mouseLeaveApplyColorButton = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.success.backgroundColor;
+            }
+
+            // Updates the background color in newUserBookmarkStyle and the UI.
             const randomColor = () => {
                 const randomHexColor = getRandomColor();
                 // Update the color picker input value with the current background color.
                 updateColorisInputValue('colorPickerInput', randomHexColor);
+            }
+
+            // Updates the background color in newUserBookmarkStyle and the UI.
+            const mouseEnterRandomColorButton = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.hoverBackgroundColor;
+            }
+
+            // Updates the background color in newUserBookmarkStyle and the UI.
+            const mouseLeaveRandomColorButton = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
             }
 
             // Updates the background color in newUserBookmarkStyle and the UI.
@@ -1569,7 +1702,11 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             currentInputPositionYRangeListener = getColorPositionY;
 
             randomColorButtonEl.addEventListener('click', randomColorListener);
+            randomColorButtonEl.addEventListener('mouseenter', mouseEnterRandomColorButton);
+            randomColorButtonEl.addEventListener('mouseleave', mouseLeaveRandomColorButton);
             applyColorButtonEl.addEventListener('click', applyColorListener);
+            applyColorButtonEl.addEventListener('mouseenter', mouseEnterApplyColorButton);
+            applyColorButtonEl.addEventListener('mouseleave', mouseLeaveApplyColorButton);
             colorPickerInputEl.addEventListener('input', currentInputColorisListener);
             colorWidthRangeInputEl.addEventListener('input', currentInputWidthRangeListener);
             colorHeightRangeInputEl.addEventListener('input', currentInputHeighRangeListener);
@@ -1649,6 +1786,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         const updateImageSettingsTitlesUI = () => {
             // Retrieve each UI element by its ID.
             const imagePickerInputTitleEl = document.getElementById('imagePickerInputTitle');
+            const imagePickerInputFileInfoEl = document.getElementById('imagePickerInputFileInfo');
             const imageWidthRangeInputTitleEl = document.getElementById('imageWidthRangeInputTitle');
             const imageHeightRangeInputTitleEl = document.getElementById('imageHeightRangeInputTitle');
             const imageRotationInputTitleEl = document.getElementById('imageRotationInputTitle');
@@ -1670,6 +1808,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
 
             // Update the text content of each UI element with the corresponding text from the current language object.
             updateTextContent(imagePickerInputTitleEl, currentLanguageTextObj._createOrEditWindow._styleMenu._image.chooseImage);
+            updateTextContent(imagePickerInputFileInfoEl, currentLanguageTextObj._createOrEditWindow._styleMenu._image.clickToOpen);
             updateTextContent(imageWidthRangeInputTitleEl, currentLanguageTextObj._createOrEditWindow._styleMenu._image.adjustWidth);
             updateTextContent(imageHeightRangeInputTitleEl, currentLanguageTextObj._createOrEditWindow._styleMenu._image.adjustHeight);
             updateTextContent(imageRotationInputTitleEl, currentLanguageTextObj._createOrEditWindow._styleMenu._image.defineRotationAngle);
@@ -1702,23 +1841,15 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             imagePickerInputEl.value = null;
 
             /**
-             * Adjusts the background color of the image picker input file section based on the brightness of the window's background color.
-             * This function dynamically adjusts the background color to ensure optimal contrast and readability regardless of the window's current theme or color scheme.
-             *
-             * @param {number} brightnessAdjustment - A positive or negative value to adjust the brightness of the background color. Positive values make the color lighter, while negative values make it darker.
+             * Sets the style for the image picker button.
+             * This function updates the background color and font style of the image picker button
+             * using the primary button styles defined in the user's profile settings.
              */
-            const adjustBackgroundColor = (brightnessAdjustment) => {
-                // Calls the pSBC function to adjust the background color based on the brightness adjustment parameter and the current window background color.
-                // The pSBC function modifies the brightness of the color, where the first parameter is the adjustment amount,
-                // the second is the original color, the third indicates whether to blend with white (lighten) or black (darken),
-                // and the fourth is a boolean indicating if the output should be in the same format as the input.
-                imagePickerInputFileSectionEl.style.backgroundColor = pSBC(brightnessAdjustment, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
+            const setImagePickerButtonStyle = () => {
+                imagePickerInputFileSectionEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                Object.assign(imagePickerInputFileSectionEl.style, userProfileExport.mainUserSettings.windows.button.primary.font);
             };
-
-            // Initial call to adjustBackgroundColor function.
-            // Determines whether to lighten or darken the background color based on the current brightness of the window's background color.
-            // Uses the checkIfColorBrightness function to determine the brightness of the window's background color and adjusts accordingly by 50%.
-            adjustBackgroundColor(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.35 : -0.35);
+            setImagePickerButtonStyle();
 
             // Update the width range input and its output display with the current width.
             updateInputRangeAndOutput('imageWidthRangeInput', 'imageWidthRangeInputValue', imageStyle.width);
@@ -1751,6 +1882,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
          */
         const eventListenerImageStyleEl = () => {
             // Reference to the image style input elements in the DOM.
+            const imagePickerInputFileSectionEl = document.getElementById("imagePickerInputFileSection");
             const imagePickerInputEl = document.getElementById('imagePickerInputFile');
             const imagePickerInputFileNameEl = document.getElementById('imagePickerInputFileName');
             const imageWidthRangeInputEl = document.getElementById('imageWidthRangeInput');
@@ -1822,6 +1954,16 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 reader.readAsDataURL(file);
             };
 
+            // Handles the mouse enter event on the image picker input file section.
+            const mouseEnterImagePickerInput = () => {
+                imagePickerInputFileSectionEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.hoverBackgroundColor;
+            };
+
+            // Handles the mouse leave event on the image picker input file section.
+            const mouseLeaveImagePickerInput = () => {
+                imagePickerInputFileSectionEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+            };
+
             // Updates the width in newUserBookmarkStyle and the UI.
             const getImageWidth = () => {
                 editingObjBookmarkStyle.image.width = imageWidthRangeInputEl.value;
@@ -1865,6 +2007,8 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
 
             // Assign the event listeners to the respective elements.
             imagePickerInputEl.addEventListener('change', currentInputFileListener);
+            imagePickerInputEl.addEventListener('mouseenter', mouseEnterImagePickerInput);
+            imagePickerInputEl.addEventListener('mouseleave', mouseLeaveImagePickerInput);
             imageWidthRangeInputEl.addEventListener('input', currentInputWidthRangeListener);
             imageHeightRangeInputEl.addEventListener('input', currentInputHeighRangeListener);
             imagePositionXRangeInputEl.addEventListener('input', currentInputPositionXRangeListener);
@@ -1912,7 +2056,10 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             <div id="bookmarkStyleTextSettings">
                 <div id="textBackgroundPickerSection">
                     <label for="backgroundColorPickerInput" id="backgroundColorPickerInputTitle">Choose Color:</label>
-                    <input type="text" id="backgroundColorPickerInput" data-coloris="" readonly="readonly">
+                    <div id="colorInputContainer">
+                        <input type="text" id="backgroundColorPickerInput" data-coloris="" readonly="readonly">
+                        <button id="addRandomColor"></button>
+                    </div>
                 </div>
                 <div id="textWidthSection">
                     <label for="textWidthRangeInput" id="textWidthRangeInputTitle">Adjust Width:</label>
@@ -2001,12 +2148,24 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         * the bookmark style preview to reflect these changes.
         */
         const updateTextStyleToUI = () => {
-            // const textColorPickerInputEl = document.getElementById('textColorPickerInput');
+            const addRandomColorEl = document.getElementById('addRandomColor');
             const backgroundColorPickerInputEl = document.getElementById('backgroundColorPickerInput');
             // Select the text rotation input element by its class.
             const textRotationInputEl = $(".textRotationInputDial");
             // Copy the current text style settings from the newUserBookmarkStyle object.
             const textStyle = editingObjBookmarkStyle.text;
+
+            /**
+             * Add a random color button to the background color picker.
+             * Creates a CSS string that sets the background color of the button to the user's primary button color
+             * and the color of the SVG icon to the user's primary button font color.
+             * The SVG icon is a random color icon.
+             */
+            const addIconToRandomColorEl = () => {
+                addRandomColorEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                addRandomColorEl.innerHTML = `<svg fill="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`;
+            };
+            addIconToRandomColorEl();
 
             backgroundColorPickerInputEl.style.border = `1px solid ${invertHexColor(userProfileExport.mainUserSettings.windows.window.backgroundColor)}`;
             updateColorisInputValue('backgroundColorPickerInput', textStyle.backgroundColor == '' ? getRandomColor() : textStyle.backgroundColor, true);
@@ -2037,6 +2196,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         const eventListenerColorStyleEl = () => {
             // Reference to the color style input elements in the DOM.
             const backgroundColorPickerInputEl = document.getElementById('backgroundColorPickerInput');
+            const addRandomColorEl = document.getElementById('addRandomColor');
             const textWidthRangeInputEl = document.getElementById('textWidthRangeInput');
             const textHeightRangeInputEl = document.getElementById('textHeightRangeInput');
             const textRotationInputDialEl = $(".textRotationInputDial");
@@ -2059,6 +2219,27 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 backgroundColorPickerInputEl.style.color = backgroundColorPickerInputEl.value.length === 9 ? invertHexColor(backgroundColorPickerInputEl.value.substring(0, 7)) : invertHexColor(backgroundColorPickerInputEl.value);
                 updateBookmarkStylePreview();
             };
+
+            const getRandomBackgroundColor = () => {
+                const randomColor = getRandomColor();
+                backgroundColorPickerInputEl.value = randomColor;
+                backgroundColorPickerInputEl.style.backgroundColor = randomColor;
+                backgroundColorPickerInputEl.style.color = invertHexColor(randomColor);
+                editingObjBookmarkStyle.text.backgroundColor = randomColor;
+                backgroundColorPickerInputEl.style.border = `1px solid ${checkIfColorBrightness(editingObjBookmarkStyle.text.backgroundColor, 120) ? '#000000' : '#ffffff'}`;
+                addRandomColorEl.style.border = `1px solid ${checkIfColorBrightness(editingObjBookmarkStyle.text.backgroundColor, 120) ? '#000000' : '#ffffff'}`;
+                updateBookmarkStylePreview();
+            }
+
+            // Changes the background color when the mouse enters the element.
+            const addRandomColorElMouseEnter = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.hoverBackgroundColor;
+            }
+
+            // Restores the original background color when the mouse leaves the element.
+            const addRandomColorElMouseLeave = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+            }
 
             // Updates the width in newUserBookmarkStyle and the UI.
             const getColorWidth = () => {
@@ -2124,6 +2305,9 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             currentInputPositionYRangeListener = getColorPositionY;
 
             backgroundColorPickerInputEl.addEventListener('input', currentInputColorisBackgroundListener);
+            addRandomColorEl.addEventListener('click', getRandomBackgroundColor);
+            addRandomColorEl.addEventListener('mouseenter', addRandomColorElMouseEnter);
+            addRandomColorEl.addEventListener('mouseleave', addRandomColorElMouseLeave);
             textWidthRangeInputEl.addEventListener('input', currentInputWidthRangeListener);
             textHeightRangeInputEl.addEventListener('input', currentInputHeighRangeListener);
             textPositionXRangeInputEl.addEventListener('input', currentInputPositionXRangeListener);
@@ -2138,24 +2322,40 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         let currentInputFontSizeRangeListener = null; // Stores the event listener for width range input changes
         let currentClickEventListeners = [];
         const fontFamilies = getSupportedFontFamilies();
+        const borderColor = checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? '#000000' : '#ffffff';
+        const tooltipStyle = {
+            backgroundColor: userProfileExport.mainUserSettings.windows.window.backgroundColor,
+            color: userProfileExport.mainUserSettings.windows.window.font.color,
+            padding: '5px',
+            borderRadius: '5px',
+            border: `1px solid ${borderColor}`,
+            fontSize: `${userProfileExport.mainUserSettings.windows.window.font.fontSize}px`,
+            fontWeight: userProfileExport.mainUserSettings.windows.window.font.fontWeight,
+            fontFamily: userProfileExport.mainUserSettings.windows.window.font.fontFamily,
+            width: 'auto',
+            maxWidth: '250px',
+        }
 
         const fontHtmlBody = `
             <div id="bookmarkStyleFontSettings">
                 <div id="fontBackgroundPickerSection">
                     <label for="fontColorPickerInput" id="fontColorPickerInputTitle">Choose Color:</label>
-                    <input type="text" id="fontColorPickerInput" data-coloris="" readonly="readonly">
+                    <div id="colorInputContainer">
+                        <input type="text" id="fontColorPickerInput" data-coloris="" readonly="readonly">
+                        <button id="addRandomColor"></button>
+                    </div>
                 </div>
                 <div id="fontWeightButtonsSection">
                     <label for="fontWeightButtons" id="fontWeightButtonsTitle">Choose Font Weight:</label>
                     <div id="buttonsWeightSections">
-                        <button type="button" id="buttonWeight" data-weight="200">Ultra Light</button>
-                        <button type="button" id="buttonWeight" data-weight="300">Light</button>
-                        <button type="button" id="buttonWeight" data-weight="400">Normal</button>
-                        <button type="button" id="buttonWeight" data-weight="500">Medium</button>
-                        <button type="button" id="buttonWeight" data-weight="600">Semibold</button>
-                        <button type="button" id="buttonWeight" data-weight="700">Bold</button>
-                        <button type="button" id="buttonWeight" data-weight="800">Ultra Bold</button>
-                        <button type="button" id="buttonWeight" data-weight="900">Black</button>
+                        <button type="button" class="buttonWeight" data-weight="200">Ultra Light</button>
+                        <button type="button" class="buttonWeight" data-weight="300">Light</button>
+                        <button type="button" class="buttonWeight" data-weight="400">Normal</button>
+                        <button type="button" class="buttonWeight" data-weight="500">Medium</button>
+                        <button type="button" class="buttonWeight" data-weight="600">Semibold</button>
+                        <button type="button" class="buttonWeight" data-weight="700">Bold</button>
+                        <button type="button" class="buttonWeight" data-weight="800">Ultra Bold</button>
+                        <button type="button" class="buttonWeight" data-weight="900">Black</button>
                     </div>
                 </div>
                 <div id="fontSizeSection">
@@ -2168,8 +2368,8 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 <div id="fontStyleButtonsSection">
                     <label for="fontStyleButtons" id="fontStyleButtonsTitle">Choose Font Style:</label>
                     <div id="buttonsStyleSections">
-                        <button type="button" id="buttonStyle" data-style="normal">Normal</button>
-                        <button type="button" id="buttonStyle" data-style="italic">Italic</button>
+                        <button type="button" class="buttonStyle" data-style="normal">Normal</button>
+                        <button type="button" class="buttonStyle" data-style="italic">Italic</button>
                     </div>
                 </div>
                 <div id="fontFamilySection">
@@ -2187,9 +2387,9 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 <div id="fontAlignmentButtonsSection">
                 <label for="fontAlignmentButtons" id="fontAlignmentButtonsTitle">Choose Font Alignment:</label>
                 <div id="buttonsAlignmentSections">
-                    <button type="button" class="buttonAlignment" data-align="start">Left</button>
+                    <button type="button" class="buttonAlignment" data-align="flex-start">Left</button>
                     <button type="button" class="buttonAlignment" data-align="center">Center</button>
-                    <button type="button" class="buttonAlignment" data-align="end">Right</button>
+                    <button type="button" class="buttonAlignment" data-align="flex-end">Right</button>
                 </div>
             </div>
             </div>
@@ -2198,12 +2398,19 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         styleMenuBodyEl.html(fontHtmlBody);
         updateBookmarkStylePreview();
 
+        /**
+         * Populates the font family dropdown list in the UI.
+         * This function generates a list of supported font families as list items
+         * and inserts them into the font family selection dropdown. It ensures that
+         * the font family options are dynamically populated based on the available font
+         * families array.
+         */
         const createListOfFontFamily = () => {
             if (fontFamilies.length <= 0) return;
             const fontFamilySelectUlEl = document.getElementById('fontFamilySelectUl');
             let fontFamiliesHtml = ``;
             fontFamilies.forEach((fontFamily) => {
-                fontFamiliesHtml += `<li id="fontFamilySelectLi" data-value="${fontFamily.id}">${fontFamily.fontFamily}</li>`;
+                fontFamiliesHtml += `<li class="fontFamilySelectLi" data-id="${fontFamily.id}">${fontFamily.fontFamily}</li>`;
             });
             fontFamilySelectUlEl.innerHTML = fontFamiliesHtml;
         }
@@ -2250,6 +2457,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
 
         const updateFontStyleToUI = () => {
             const fontColorPickerInputEl = document.getElementById('fontColorPickerInput');
+            const addRandomColorEl = document.getElementById('addRandomColor');
             const buttonWeightEl = document.querySelectorAll('#buttonsWeightSections button');
             const buttonStyleEl = document.querySelectorAll('#buttonsStyleSections button');
             const buttonAlignmentEl = document.querySelectorAll('.buttonAlignment');
@@ -2257,54 +2465,88 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             const fontFamilyButtonMenuTitleEl = document.getElementById('fontFamilyButtonMenuTitle');
             const fontFamilyButtonArrowEl = document.getElementById('fontFamilyButtonArrow');
             const fontFamilySelectUlEl = document.getElementById('fontFamilySelectUl');
-            const fontFamilySelectLiEl = document.querySelectorAll('#fontFamilySelectLi');
+            const fontFamilySelectLiEl = document.querySelectorAll('.fontFamilySelectLi');
             // Copy the current text style settings from the newUserBookmarkStyle object.
             const fontStyle = editingObjBookmarkStyle.font;
             updateInputRangeAndOutput('fontSizeRangeInput', 'fontSizeRangeInputValue', fontStyle.size);
 
+            /**
+             * Add a random color button to the background color picker.
+             * Creates a CSS string that sets the background color of the button to the user's primary button color
+             * and the color of the SVG icon to the user's primary button font color.
+             * The SVG icon is a random color icon.
+             */
+            const addIconToRandomColorEl = () => {
+                addRandomColorEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                addRandomColorEl.innerHTML = `<svg fill="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`;
+            };
+            addIconToRandomColorEl();
+
+            let fontObj = fontFamilies.find(obj => obj.fontFamily === editingObjBookmarkStyle.font.fontFamily);
+            if (fontObj) {
+                truncateTextIfOverflow(fontFamilyButtonMenuTitleEl, fontObj.fontFamily)
+                createTooltip(fontFamilyButtonMenuTitleEl, 'top', fontObj.fontFamily, tooltipStyle);
+            } else {
+                truncateTextIfOverflow(fontFamilyButtonMenuTitleEl, fontFamilies[0].fontFamily);
+                createTooltip(fontFamilyButtonMenuTitleEl, 'top', fontFamilies[0].fontFamily, tooltipStyle);
+                fontObj = fontFamilies[0];
+                editingObjBookmarkStyle.font.fontFamily = fontFamilies[0].fontFamily;
+            }
             fontFamilySelectLiEl.forEach((button) => {
-                button.setAttribute('style', `--hoverBackgroundColorFontFamilySelectLi: ${userProfileExport.mainUserSettings.windows.window.backgroundColor};`);
+                if (parseInt(button.getAttribute('data-id')) === fontObj.id) {
+                    button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                    Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                } else {
+                    button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                    Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                }
             });
             buttonWeightEl.forEach((button) => {
-                button.setAttribute('style', `--hoverBackgroundColorFontWeight: ${userProfileExport.mainUserSettings.windows.window.backgroundColor};--backgroundColorFontWeight: ${fontStyle.weight === button.getAttribute('data-weight') ? userProfileExport.mainUserSettings.windows.window.backgroundColor : pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.40 : -0.40, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`);
-                button.style.border = `1px solid ${pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.50 : -0.50, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`
+                if (button.getAttribute('data-weight') === editingObjBookmarkStyle.font.fontWeight) {
+                    button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                    Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                } else {
+                    button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                    Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                }
             });
             buttonStyleEl.forEach((button) => {
-                button.setAttribute('style', `--hoverBackgroundColorFontStyle: ${userProfileExport.mainUserSettings.windows.window.backgroundColor};--backgroundColorFontStyle: ${fontStyle.style === button.getAttribute('data-style') ? userProfileExport.mainUserSettings.windows.window.backgroundColor : pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.40 : -0.40, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`);
-                button.style.border = `1px solid ${pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.50 : -0.50, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`
+                if (button.getAttribute('data-style') === editingObjBookmarkStyle.font.fontStyle) {
+                    button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                    Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                } else {
+                    button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                    Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                }
             });
             buttonAlignmentEl.forEach((button) => {
-                button.setAttribute('style', `--hoverBackgroundColorFontAlignment: ${userProfileExport.mainUserSettings.windows.window.backgroundColor};--backgroundColorFontAlignment: ${fontStyle.textAlign === button.getAttribute('data-align') ? userProfileExport.mainUserSettings.windows.window.backgroundColor : pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.40 : -0.40, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`);
-                button.style.border = `1px solid ${pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.50 : -0.50, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`
+                if (button.getAttribute('data-align') === editingObjBookmarkStyle.font.textAlign) {
+                    button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                    Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                } else {
+                    button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                    Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                }
             });
 
-            let fontObj = fontFamilies.find(obj => obj.fontFamily == fontStyle.family);
-            if (fontObj === undefined) {
-                fontObj = '';
-            } else {
-                fontFamilyButtonMenuTitleEl.innerHTML = fontObj.fontFamily;
-            }
+            fontFamilyDropDownMenuButtonEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+            Object.assign(fontFamilyDropDownMenuButtonEl.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+
             fontFamilyButtonArrowEl.style.clipPath = "path('M 0 0 L 10 20 L 20 0')";
-            fontFamilyButtonArrowEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
+            fontFamilyButtonArrowEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.font.color;
+            fontFamilySelectUlEl.style.backgroundColor = colorPalette[7];
+            fontFamilySelectUlEl.style.border = `1px solid ${borderColor}`;
 
             fontColorPickerInputEl.style.border = `1px solid ${invertHexColor(fontColorPickerInputEl.value)}`;
             updateColorisInputValue('fontColorPickerInput', fontStyle.color == '' ? getRandomColor() : fontStyle.color);
             // Update the width range input and its output display with the current width.
             updateInputRangeAndOutput('fontSizeRangeInput', 'fontSizeRangeInputValue', fontStyle.fontSize);
 
-            const adjustBackgroundColor = (brightnessAdjustment) => {
-                fontFamilyDropDownMenuButtonEl.style.backgroundColor = pSBC(brightnessAdjustment, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
-                fontFamilySelectUlEl.style.backgroundColor = pSBC(brightnessAdjustment, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
-            };
-            // Initial background color adjustment based on the window's background color brightness.
-            adjustBackgroundColor(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.40 : -0.40);
-
             // Trigger an update to the bookmark style preview to reflect the current text style settings.
             updateBookmarkStylePreview();
         };
         // Call the function to update the UI with the current text style settings.
         updateFontStyleToUI();
-
 
         const eventListenerFontStyleEl = () => {
             // Reference to the color style input elements in the DOM.
@@ -2313,19 +2555,21 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             const fontSizeRangeInputEl = document.getElementById('fontSizeRangeInput');
             const buttonStyleEl = document.querySelectorAll('#buttonsStyleSections button');
             const buttonAlignmentEl = document.querySelectorAll('.buttonAlignment');
+            const addRandomColorEl = document.getElementById('addRandomColor');
             const fontFamilyDropDownMenuButtonEl = document.getElementById('fontFamilyDropDownMenuButton');
             const fontFamilyButtonMenuTitleEl = document.getElementById('fontFamilyButtonMenuTitle');
             const fontFamilyButtonArrowEl = document.getElementById('fontFamilyButtonArrow');
-            const fontFamilySelectLiEl = document.querySelectorAll('#fontFamilySelectLi');
+            const fontFamilySelectLiEl = document.querySelectorAll('.fontFamilySelectLi');
 
             // Remove existing event listeners if they are already set.
             if (currentInputColorisFontColorListener) {
                 fontColorPickerInputEl.removeEventListener('input', currentInputColorisFontColorListener);
                 fontSizeRangeInputEl.removeEventListener('input', currentInputFontSizeRangeListener);
 
-                buttonWeightEl.forEach(element => element.removeEventListener('click', () => { handleMouseClickButtonWeightEl }));
-                buttonStyleEl.forEach(element => element.removeEventListener('click', () => { handleMouseClickButtonWeightEl }));
-                buttonAlignmentEl.forEach(element => element.removeEventListener('click', () => { handleMouseClickButtonAlignmentEl }));
+                buttonWeightEl.forEach(element => element.removeEventListener('click', () => { handleMouseClickButtonWeight }));
+                buttonStyleEl.forEach(element => element.removeEventListener('click', () => { handleMouseClickButtonWeight }));
+                buttonAlignmentEl.forEach(element => element.removeEventListener('click', () => { handleMouseClickButtonAlignment }));
+                addRandomColorEl.removeEventListener('click', () => { generateRandomFontColor });
                 fontFamilySelectLiEl.forEach(element => element.removeEventListener('click', () => { handleMouseClickFontFamily }));
                 currentClickEventListeners.forEach(({ element, listener }) => {
                     element.removeEventListener('click', listener);
@@ -2333,36 +2577,64 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 currentClickEventListeners = [];
             }
 
-            const handleMouseClickFontFamily = (el) => {
-                let fontObj = {}
-                fontFamilies.forEach((fontFamily) => {
-                    if (fontFamily.id == el.target.dataset.value) {
-                        fontObj = fontFamily;
-                    }
-                });
-                fontFamilyButtonMenuTitleEl.innerHTML = fontObj.fontFamily;
-                editingObjBookmarkStyle.font.fontFamily = fontObj.fontFamily;
-                fontFamilyDropDownMenuButtonEl.dataset.status = 'false';
-                updateBookmarkStylePreview();
-            };
-
             const getFontColor = () => {
                 editingObjBookmarkStyle.font.color = fontColorPickerInputEl.value;
-                let invertColor = invertHexColor(fontColorPickerInputEl.value);
+                const invertColor = invertHexColor(fontColorPickerInputEl.value);
                 fontColorPickerInputEl.style.backgroundColor = fontColorPickerInputEl.value;
-                fontColorPickerInputEl.style.color = invertColor;
                 fontColorPickerInputEl.style.color = invertColor;
                 fontColorPickerInputEl.style.border = `1px solid ${invertColor}`;
                 updateBookmarkStylePreview();
             };
 
-            const handleMouseClickButtonWeightEl = (el) => {
-                editingObjBookmarkStyle.font.fontWeight = el.target.dataset.weight;
+            const generateRandomFontColor = () => {
+                const randomColor = getRandomColor();
+                editingObjBookmarkStyle.font.color = randomColor;
+                fontColorPickerInputEl.value = randomColor;
+                const invertColor = invertHexColor(fontColorPickerInputEl.value);
+                fontColorPickerInputEl.style.backgroundColor = fontColorPickerInputEl.value;
+                fontColorPickerInputEl.style.color = invertColor;
+                fontColorPickerInputEl.style.border = `1px solid ${invertColor}`;
+                updateBookmarkStylePreview();
+            };
+
+            // Handles the mouse enter event for the add random color button.
+            const handleMouseEnterAddRandomColor = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.hoverBackgroundColor;
+            }
+
+            // Handles the mouse leave event for the add random color button.
+            const handleMouseLeaveAddRandomColor = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+            }
+
+            const handleMouseClickButtonWeight = (el) => {
+                const weight = el.target.dataset.weight;
+                editingObjBookmarkStyle.font.fontWeight = weight;
                 buttonWeightEl.forEach((button) => {
-                    button.setAttribute('style', `--hoverBackgroundColorFontWeight: ${userProfileExport.mainUserSettings.windows.window.backgroundColor};--backgroundColorFontWeight: ${el.target.getAttribute('data-weight') === button.getAttribute('data-weight') ? userProfileExport.mainUserSettings.windows.window.backgroundColor : pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.40 : -0.40, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`);
-                    button.style.border = `1px solid ${pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.50 : -0.50, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`
+                    if (button.getAttribute('data-weight') === weight) {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                    } else {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                    }
                 });
                 updateBookmarkStylePreview();
+            }
+
+            const handleMouseEnterButtonWeight = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+            }
+
+            const handleMouseLeaveButtonWeight = (el) => {
+                if (el.target.getAttribute('data-weight') === editingObjBookmarkStyle.font.fontWeight) {
+                    el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                    Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                } else {
+                    el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                    Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                }
             }
 
             const getFontSize = () => {
@@ -2371,32 +2643,121 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                 updateBookmarkStylePreview();
             };
 
-            const handleMouseClickButtonStyleEl = (el) => {
-                editingObjBookmarkStyle.font.fontStyle = el.target.dataset.style;
+            const handleMouseClickButtonStyle = (el) => {
+                const fontStyle = el.target.dataset.style;
+                editingObjBookmarkStyle.font.fontStyle = fontStyle;
                 buttonStyleEl.forEach((button) => {
-                    button.setAttribute('style', `--hoverBackgroundColorFontStyle: ${userProfileExport.mainUserSettings.windows.window.backgroundColor};--backgroundColorFontStyle: ${el.target.getAttribute('data-style') === button.getAttribute('data-style') ? userProfileExport.mainUserSettings.windows.window.backgroundColor : pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.40 : -0.40, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`);
-                    button.style.border = `1px solid ${pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.50 : -0.50, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`
+                    if (button.getAttribute('data-style') === fontStyle) {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                    } else {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                    }
                 });
                 updateBookmarkStylePreview();
             }
 
-            const handleMouseClickButtonAlignmentEl = (el) => {
-                editingObjBookmarkStyle.font.textAlign = el.target.dataset.align;
+            const handleMouseEnterButtonStyle = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+            }
+
+            const handleMouseLeaveButtonStyle = (el) => {
+                if (el.target.getAttribute('data-style') === editingObjBookmarkStyle.font.fontStyle) {
+                    el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                    Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                } else {
+                    el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                    Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                }
+            }
+
+            const handleMouseClickButtonAlignment = (el) => {
+                const align = el.target.dataset.align;
+                editingObjBookmarkStyle.font.textAlign = align;
                 buttonAlignmentEl.forEach((button) => {
-                    button.setAttribute('style', `--hoverBackgroundColorFontAlignment: ${userProfileExport.mainUserSettings.windows.window.backgroundColor};--backgroundColorFontAlignment: ${el.target.getAttribute('data-align') === button.getAttribute('data-align') ? userProfileExport.mainUserSettings.windows.window.backgroundColor : pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.40 : -0.40, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`);
-                    button.style.border = `1px solid ${pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? 0.50 : -0.50, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}`
+                    if (button.getAttribute('data-align') === align) {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                    } else {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                    }
                 });
                 updateBookmarkStylePreview();
             }
+
+            const handleMouseEnterButtonAlignment = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+            }
+
+            const handleMouseLeaveButtonAlignment = (el) => {
+                if (el.target.getAttribute('data-align') === editingObjBookmarkStyle.font.textAlign) {
+                    el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                    Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                } else {
+                    el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                    Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                }
+            }
+
+            const handleMouseClickFontFamily = (el) => {
+                const fontId = parseInt(el.target.dataset.id);
+                let fontObj = fontFamilies.find(obj => obj.id === fontId);
+                editingObjBookmarkStyle.font.fontFamily = fontObj.fontFamily;
+                truncateTextIfOverflow(fontFamilyButtonMenuTitleEl, fontObj.fontFamily);
+                createTooltip(fontFamilyButtonMenuTitleEl, 'top', fontObj.fontFamily, tooltipStyle);
+                fontFamilyDropDownMenuButtonEl.dataset.status = 'false';
+                updateBookmarkStylePreview();
+            };
+
+            const handleMouseEnterFontFamilyLi = (el) => {
+                const fontObj = fontFamilies.find(obj => obj.fontFamily == editingObjBookmarkStyle.font.fontFamily);
+                if (parseInt(el.target.getAttribute('data-id')) === fontObj.id) {
+                    el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.hoverBackgroundColor;
+                    Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                } else {
+                    el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.hoverBackgroundColor;
+                    Object.assign(el.target.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                }
+            };
+
+            const handleMouseLeaveFontFamilyLi = (el) => {
+                const fontObj = fontFamilies.find(obj => obj.fontFamily == editingObjBookmarkStyle.font.fontFamily);
+                fontFamilySelectLiEl.forEach((button) => {
+                    if (parseInt(button.getAttribute('data-id')) === fontObj.id) {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                    } else {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                    }
+                });
+            };
 
             // Handle mouse enter event on the dropdown menu button.
-            const handleMouseEnterFontFamily = () => {
+            const handleMouseEnterFontFamily = (el) => {
+                const fontFamilySelectLiEl = document.querySelectorAll('.fontFamilySelectLi');
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.hoverBackgroundColor;
                 fontFamilyDropDownMenuButtonEl.dataset.status = 'true';
                 fontFamilyButtonArrowEl.style.clipPath = "path('M 0 20 L 20 10 L 0 0')";
+                const fontObj = fontFamilies.find(obj => obj.fontFamily == editingObjBookmarkStyle.font.fontFamily);
+                fontFamilySelectLiEl.forEach((button) => {
+                    if (parseInt(button.getAttribute('data-id')) === fontObj.id) {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.primary.font);
+                    } else {
+                        button.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
+                        Object.assign(button.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
+                    }
+                });
             };
 
             // Handle mouse leave event on the dropdown menu button.
-            const handleMouseLeaveFontFamily = () => {
+            const handleMouseLeaveFontFamily = (el) => {
+                el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.secondary.backgroundColor;
                 fontFamilyDropDownMenuButtonEl.dataset.status = 'false';
                 fontFamilyButtonArrowEl.style.clipPath = "path('M 0 0 L 10 20 L 20 0')";
             };
@@ -2409,23 +2770,34 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             fontFamilyDropDownMenuButtonEl.addEventListener('mouseleave', handleMouseLeaveFontFamily);
 
             buttonWeightEl.forEach(element => {
-                element.addEventListener('click', handleMouseClickButtonWeightEl);
-                currentClickEventListeners.push({ element, listener: handleMouseClickButtonWeightEl });
+                element.addEventListener('click', handleMouseClickButtonWeight);
+                element.addEventListener('mouseenter', handleMouseEnterButtonWeight);
+                element.addEventListener('mouseleave', handleMouseLeaveButtonWeight);
+                currentClickEventListeners.push({ element, listener: handleMouseClickButtonWeight });
             });
             buttonStyleEl.forEach(element => {
-                element.addEventListener('click', handleMouseClickButtonStyleEl);
-                currentClickEventListeners.push({ element, listener: handleMouseClickButtonStyleEl });
+                element.addEventListener('click', handleMouseClickButtonStyle);
+                element.addEventListener('mouseenter', handleMouseEnterButtonStyle);
+                element.addEventListener('mouseleave', handleMouseLeaveButtonStyle);
+                currentClickEventListeners.push({ element, listener: handleMouseClickButtonStyle });
             });
             buttonAlignmentEl.forEach(element => {
-                element.addEventListener('click', handleMouseClickButtonAlignmentEl);
-                currentClickEventListeners.push({ element, listener: handleMouseClickButtonAlignmentEl });
+                element.addEventListener('click', handleMouseClickButtonAlignment);
+                element.addEventListener('mouseenter', handleMouseEnterButtonAlignment);
+                element.addEventListener('mouseleave', handleMouseLeaveButtonAlignment);
+                currentClickEventListeners.push({ element, listener: handleMouseClickButtonAlignment });
             });
             fontFamilySelectLiEl.forEach(element => {
                 element.addEventListener('click', handleMouseClickFontFamily);
+                element.addEventListener('mouseenter', handleMouseEnterFontFamilyLi);
+                element.addEventListener('mouseleave', handleMouseLeaveFontFamilyLi);
                 currentClickEventListeners.push({ element, listener: handleMouseClickFontFamily });
             });
 
             fontColorPickerInputEl.addEventListener('input', currentInputColorisFontColorListener);
+            addRandomColorEl.addEventListener('click', generateRandomFontColor);
+            addRandomColorEl.addEventListener('mouseenter', handleMouseEnterAddRandomColor);
+            addRandomColorEl.addEventListener('mouseleave', handleMouseLeaveAddRandomColor);
             fontSizeRangeInputEl.addEventListener('input', currentInputFontSizeRangeListener);
         };
         eventListenerFontStyleEl();
@@ -2434,28 +2806,16 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
     const removeClassFromAllStyleMenuButtons = () => {
         document.querySelectorAll('#rightStyleMenuContainer [data-id]').forEach(element => {
             element.classList.remove('styleMenuActive');
-            let backgroundColor = '';
-            if (checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor)) {
-                backgroundColor = pSBC(0.15, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
-            } else {
-                backgroundColor = pSBC(-0.15, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
-            }
-            element.style.backgroundColor = backgroundColor;
+            element.style.backgroundColor = colorPalette[0];
         });
     };
+
     const addClassToSelectedStyleMenuButton = (id) => {
         document.querySelectorAll('#rightStyleMenuContainer [data-id]').forEach(element => {
             if (id == element.dataset.id) {
-                //set active color to buttons
-                let backgroundColor = '';
-                if (checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor)) {
-                    backgroundColor = pSBC(0.30, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
-                } else {
-                    backgroundColor = pSBC(-0.30, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
-                }
                 element.classList.add('styleMenuActive');
-                element.setAttribute('style', `--backgroundColor: ${backgroundColor};`)
-                element.style.backgroundColor = `${backgroundColor}`;
+                element.setAttribute('style', `--backgroundColor: ${colorPalette[4]};`)
+                element.style.backgroundColor = `${colorPalette[4]}`;
             }
         });
     }

@@ -1643,7 +1643,7 @@ export const getBrowserAndOSInfo = () => {
                 return "Windows";
             } else if (/Mac OS/.test(userAgent)) {
                 return "MacOS";
-            } else if (/Linux/.test(userAgent)) {
+            } else if (/Linux/.test(userAgent) || /X11/i.test(userAgent)) {
                 return "Linux";
             } else if (/Android/.test(userAgent)) {
                 return "Android";

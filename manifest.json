@@ -5,7 +5,6 @@
 	"description": "Organize, customize, and efficiently access your Browser bookmarks. Bookmark Manager Pro provides powerful, free bookmark management with an intuitive OS-like interface.",
 	"author": "CyberVoyager",
 	"homepage_url": "https://github.com/YuraCodedCircuit",
-	"license": "https://www.gnu.org/licenses/gpl-3.0-standalone.html",
 	"browser_specific_settings": {
 		"gecko": {
 			"id": "{3a1de31b-582d-4add-aa01-7b6ac6f7e4bb}",

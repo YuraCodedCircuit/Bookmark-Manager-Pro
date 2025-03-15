@@ -543,6 +543,7 @@
                     "image": "Image"
                 },
                 "chooseImage": "Choose Image:",
+                "clickToOpen": "Click to open",
                 "adjustWidth": "Adjust Width:",
                 "adjustHeight": "Adjust Height:",
                 "defineRotationAngle": "Define Rotation Angle:",
@@ -565,7 +566,7 @@
                     "font": "Font"
                 },
                 "chooseColor": "Choose Color:",
-                "chooseFontWeight": "Choose Font Weight::",
+                "chooseFontWeight": "Choose Font Weight:",
                 "adjustFontSize": "Adjust Font Size:",
                 "chooseFontStyle": "Choose Font Style:",
                 "chooseFontFamily": "Choose Font Family:",
