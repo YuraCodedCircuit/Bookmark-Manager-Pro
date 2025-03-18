@@ -596,15 +596,15 @@ export const contextMenuItems = {
         },
         {
             id: 4,
-            data: 'folderSettings',
-            title: 'Folder Settings',
-            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACD0lEQVR4nO2ZPUscURSGH1ZJbecqibHwo7TQWEg0P2B/g/kB9lrZWegKulb+khBS7ELIYm2hCyG99mZZtdErF96BYZwv92vulXngsgxzDnPeOWfO/VgoKSl5d3wA6sAtYHKM/8Av4AuOcJQz8Oh4AL7iADcKaCOn/RRwLp+/wAQFYzTewiTwT37beCjA8l1+HTwVMAn8Bn7gqQBnMDEC2n12pkFHF2gBNV8FmNA4GERAUcwAu8CjYqr5JiBgTzHZcvJSQDW0bPFSwJviKgWMCFNmoGBMmYGCMWUGCsaUGSiYNvDH55k4Ny4IuFAM9q17KcAMEsc4BVSBn8ApUAGmgZ2IgB3ZVWTX0rUTAlqh59ly6SVsJ3uRbW3TFQGNSKB3wCGwCSzo90gbmbDdqSsCKsClnncFfEqwmwOuQ5myfk4IWAGe9OaTgg/4rEzcAx9dEXCiZ9myyUNd9vtpRkG92SONUfd5o2FrPQ/fIn7ttM5gz2NGRbTLLOX0W47xfUVNNx51HjPL8Ime9G31mYHEtdHBCI4G49J9pnu2VebhWPa2/WZSUzl1hyQg7m2tA8/qQrZVpjGvWKz9Ko5Q0R8iRn3etsqk4AO7TtY8ME4akSx11SrtN7Gomj+OqYLUmXicNENBdVQeceX3HMpA5lponFT1nQWr0bWYrDRU88FqtJm1GnUB48i+pG+CeSJzD/wCE/trU3hcxfsAAAAASUVORK5CYII=',
-        },
-        {
-            id: 5,
             data: 'search',
             title: 'Search',
             icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAADdUlEQVRo3u2YX2jNYRjHz9kxs7FsMTRrJnMhrIk0mczahQuFlBBNbrlBlAtxQcTV7IorJUq7kFL+JGqJYYaVYX+kJMzaWP5s7Oz4PvVZ/dKv9uf83rOdOk992ur3/t7zft/3eZ73eX6hUMpSlrKUjadFApwrR8wVhczbJwZdCwjH8W6GWCcqRJnI8pmzVdSLu6JjoghIE5Vin8gXMRH1mS/M2DDcE7Xiw3gKMDc5I0pxD6OLXf4sesRrUSX6xXoxWRQgZkCcFDfGQ0CRqBFzWEi3OIi/m3v88TmpPDFDbMXdshh/UZxLZBDnivMs3hb+QBwSnRD1ecdc66f4Kh4yJhtBy8Rv0ZyoTHVBPBENolzMGmPsrBV14pl4SvA7t42iUTwWu/DneFy2hM2wOa+LdJcuZKnyrMgULeKaaI9zQ74R+KvFdFzy1VgnSxvmeSXuYv58CRHxWj+ZqpV5t8Uz2XACKvjbyOKjAbllC/dCjOw2z4WAMMdsNkn8CjCubOHPScf2/xoXAnI85cFV0RtwcujxiMl3ISDP8zzXQXb7RCzE+K3ABWQyubnSSwcCBrjMYp6TDlRAl+d5qQMBVnYvQkCPKwFDY0oI5CDtB3OGKTcCF9BPrrYfmBLvjeljG6hUzZpc3QP3GVMeT6rzsWzyf4gq1pmAO54gW0wlGYQV0TPY6d6manUioJ0fsHHVYmEAfbTl/FPMY5tzxWUpEaLx+MvYE2LFCN/zM6ur9oiZ7H5dvMXhSHazl3axirshj79v2MHRuM12sYkNsHePi++J6MjeUlovpx9Yyi62EoSDwwRsKadX5mn0Izxr4FJz/l2ogYJuFUG9RCygy3rHyQwyZyE5vprn+1msXVgvPNVnNyfc5dNTO/usYgKOssihLxMxGpU+Fmm981RPoIYZd4xvRKcp1SOc7hFE9CZCQIhLbYvYyW7GPPEw+F9s2M7eEpdFmyd51HA6NvaL2M3t3JsIAV6bz0VnnxVnE+DdlAdNNEN+ed5c7LDYwTo+igPiPUKSwiwx7KVDa+FO2Dya6jQyzgKiNPTmZiuJnWnETxv3z4QWEGKRzSy6hOSQQVLoHC47RSaIK9lJPGLxxSSGYr7oDVAZJ4XZhtbiPu1clAUOehGnZou1764diKjHvZLKMrnFTcRNT+OTVJZOuZIRSlnKUpayCWv/AJXZyhAk2cauAAAAAElFTkSuQmCC',
+        },
+        {
+            id: 5,
+            data: 'folderSettings',
+            title: 'Folder Settings',
+            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACD0lEQVR4nO2ZPUscURSGH1ZJbecqibHwo7TQWEg0P2B/g/kB9lrZWegKulb+khBS7ELIYm2hCyG99mZZtdErF96BYZwv92vulXngsgxzDnPeOWfO/VgoKSl5d3wA6sAtYHKM/8Av4AuOcJQz8Oh4AL7iADcKaCOn/RRwLp+/wAQFYzTewiTwT37beCjA8l1+HTwVMAn8Bn7gqQBnMDEC2n12pkFHF2gBNV8FmNA4GERAUcwAu8CjYqr5JiBgTzHZcvJSQDW0bPFSwJviKgWMCFNmoGBMmYGCMWUGCsaUGSiYNvDH55k4Ny4IuFAM9q17KcAMEsc4BVSBn8ApUAGmgZ2IgB3ZVWTX0rUTAlqh59ly6SVsJ3uRbW3TFQGNSKB3wCGwCSzo90gbmbDdqSsCKsClnncFfEqwmwOuQ5myfk4IWAGe9OaTgg/4rEzcAx9dEXCiZ9myyUNd9vtpRkG92SONUfd5o2FrPQ/fIn7ttM5gz2NGRbTLLOX0W47xfUVNNx51HjPL8Ime9G31mYHEtdHBCI4G49J9pnu2VebhWPa2/WZSUzl1hyQg7m2tA8/qQrZVpjGvWKz9Ko5Q0R8iRn3etsqk4AO7TtY8ME4akSx11SrtN7Gomj+OqYLUmXicNENBdVQeceX3HMpA5lponFT1nQWr0bWYrDRU88FqtJm1GnUB48i+pG+CeSJzD/wCE/trU3hcxfsAAAAASUVORK5CYII=',
         },
     ],
     bookmark: [
@@ -979,7 +979,11 @@ export const changelog = [
             "&ensp;- In the 'User Profile Menu', if a username exceeds 15 characters, it will now display with a scrolling marquee effect.",
             "&ensp;- In the 'Settings Manager' within the 'Offline Profile' section, a marquee effect will be applied to usernames longer than 29 characters.",
             "Marquee Effect Behavior:",
-            "&ensp;- The marquee effect works by horizontally translating the username text.The text starts fully visible from the left, scrolls to the left until the end is visible, and then reverses direction, repeating this animation infinitely."
+            "&ensp;- The marquee effect works by horizontally translating the username text.The text starts fully visible from the left, scrolls to the left until the end is visible, and then reverses direction, repeating this animation infinitely.",
+            "Improved: Custom Context Menu Order:",
+            "&ensp;- The browser extension features a custom context menu that replaces the default browser context menu within the extension's tab. This menu has two variations: a 'default' menu appearing on right-click in empty spaces and a 'bookmark' menu for right-clicking on folders or bookmarks.",
+            "&ensp;- In the 'default' context menu, the order of options has been updated from 'New Bookmark,' 'New Folder,' 'Folder Settings,' 'Search' to 'New Bookmark,' 'New Folder,' 'Search,' 'Folder Settings'.",
+            "&ensp;- This change aligns with common user interface patterns where settings or configuration options are typically placed at the end of a menu. Each item in the context menu is also visually enhanced with an icon preceding the text. The functionalities of each item remain the same: 'New Bookmark' opens the bookmark creation UI, 'New Folder' opens the folder creation UI, 'Search' opens the search functionality, and 'Folder Settings' opens the customization options for the current folder's appearance and navigation."
         ]
     },
     {

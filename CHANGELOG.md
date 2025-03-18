@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.7]
+
+- Improved: Bookmark Manager UI Style Customization:
+  - The bookmark manager UI, which includes 'Border,' 'Color,' 'Image,' 'Text,' and 'Font' tabs for customization, now better reflects user-defined styles.
+  - In the 'Border' tab, the 'Left,' 'Top,' 'Right,' and 'Bottom' buttons, used to navigate and style individual bookmark borders, now apply the user's configured secondary button style. Previously, these buttons did not adopt user-defined styles.
+  - The random color generation buttons found in the 'Color,' 'Image,' 'Text,' and 'Font' tabs now utilize the user's configured primary button style.
+  - In the 'Font' tab, the buttons for selecting Font Weight, Font Style, and Font Alignment, along with the random color button, now primarily use the user's primary button style, while other elements in this tab utilize the secondary button style.
+- Enhanced: Input Field and Folder Tree Styling in Bookmark Manager:
+  - The title input field, URL input field, and the folder selection area in the bookmark manager now feature a highlighted background color that dynamically adapts to the user's selected overall UI background color. This provides better visual integration with the user's chosen theme.
+- Feature: Added Random Color Buttons in Text and Font Tabs:
+  - New buttons have been added to the 'Text' and 'Font' tabs within the bookmark manager to allow users to easily generate random colors for styling.
+- Improved: Font Family Dropdown Visibility:
+  - In the 'Font' tab, the dropdown menu used to select a font family for new bookmarks now has a background color that dynamically adjusts based on the user's selected UI background color. This resolves a previous issue where a black background could make the menu invisible if the user had selected a dark UI theme.
+- Created: Marquee Effect for Long Usernames:
+  - To ensure that long usernames are fully visible, a marquee effect has been implemented in specific areas of the extension.
+  - In the 'User Profile Menu', if a username exceeds 15 characters, it will now display with a scrolling marquee effect.
+  - In the 'Settings Manager' within the 'Offline Profile' section, a marquee effect will be applied to usernames longer than 29 characters.
+- Marquee Effect Behavior:
+  - The marquee effect works by horizontally translating the username text.The text starts fully visible from the left, scrolls to the left until the end is visible, and then reverses direction, repeating this animation infinitely.
+- Improved: Custom Context Menu Order:
+  - The browser extension features a custom context menu that replaces the default browser context menu within the extension's tab. This menu has two variations: a 'default' menu appearing on right-click in empty spaces and a 'bookmark' menu for right-clicking on folders or bookmarks.
+  - In the 'default' context menu, the order of options has been updated from 'New Bookmark,' 'New Folder,' 'Folder Settings,' 'Search' to 'New Bookmark,' 'New Folder,' 'Search,' 'Folder Settings'.
+  - This change aligns with common user interface patterns where settings or configuration options are typically placed at the end of a menu. Each item in the context menu is also visually enhanced with an icon preceding the text. The functionalities of each item remain the same: 'New Bookmark' opens the bookmark creation UI, 'New Folder' opens the folder creation UI, 'Search' opens the search functionality, and 'Folder Settings' opens the customization options for the current folder's appearance and navigation
+
 ## [0.2.6]
 
 - Integrated extension icon into the browser omnibox for quick access to extension features.
