@@ -12,8 +12,10 @@ Before installing the Bookmark Manager Pro extension, ensure you have the follow
 ### For Firefox:
 
 1. **Download the Extension**:
-   - Visit the [Firefox Add-ons](https://addons.mozilla.org).
-   - Click on the "Add to Firefox" button.
+   - You can find the Bookmark Manager Pro extension on the Firefox Add-ons website in two ways:
+     - **Search by Name:** Visit the [Firefox Add-ons](https://addons.mozilla.org) and search for **'Bookmark Manager Pro'**.
+     - **Visit by URL:** Alternatively, you can directly access the extension page by visiting the following URL: [https://addons.mozilla.org/en-US/firefox/addon/bookmark-manager-pro/](https://addons.mozilla.org/en-US/firefox/addon/bookmark-manager-pro/)
+   - Once you find the extension, click on the "Add to Firefox" button.
 
 2. **Enable Extension**:
    - Go to `about:addons`.
