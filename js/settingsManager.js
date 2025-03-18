@@ -957,7 +957,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     time = formatDateTime(profile.timestampCreation, currentLanguage, 'time');
                                 }
                                 if (profile.name.length >= 29) {
-                                    idsArrayForTooltip.push({id: profile.userId, name: profile.name});
+                                    idsArrayForTooltip.push({ id: profile.userId, name: profile.name });
                                 }
                                 bodyTableHtml += `
                                     <div class="bodyProfileListTableRow" ${index % 2 ? `style="background-color: ${colorPalette[3]}"` : `style="background-color: ${colorPalette[6]}"`}>
@@ -5970,7 +5970,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             el.target.style.color = editingMainUserSettings.windows.button.secondary.font.color;
                         }
 
-                        const showQuantityMenu = () =>{
+                        const showQuantityMenu = () => {
                             if (listQuantityEl.style.display === 'flex') {
                                 listQuantityEl.style.display = 'none';
                             } else {
@@ -7282,13 +7282,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 importFileVerificationResultTableHtml += `
                                     <div class="importTableBodyElement" style="background-color: ${index % 2 ? colorPalette[6] : colorPalette[3]};">
                                         <div class="tableBodyName">${conversionMap[exportType] ? conversionMap[exportType] : exportType}</div>
-                                        <div class="tableBodyCurrentProfile" data-status="${ exportType === 'allProfiles' || exportType === 'currentAllProfile' ? 'disabled' : 'allowed'}" data-index="${index}">
+                                        <div class="tableBodyCurrentProfile" data-status="${exportType === 'allProfiles' || exportType === 'currentAllProfile' ? 'disabled' : 'allowed'}" data-index="${index}">
                                             <button class="tableBodyCurrentProfileInfo" data-type="${exportType}"  style="display: ${exportType === 'allProfiles' || exportType === 'currentAllProfile' ? 'none' : 'flex'};">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/></svg>
                                             </button>
                                             <div class="importTypeBox">
                                                 <label class="toggle" for="importCurrentProfile${capitalizeString(exportType)}">
-                                                    <input type="checkbox" class="toggleInput importToggleInput" id="importCurrentProfile${capitalizeString(exportType)}" data-type="${exportType}Current" ${ exportType === 'allProfiles' || exportType === 'currentAllProfile' ? 'disabled' : '' } />
+                                                    <input type="checkbox" class="toggleInput importToggleInput" id="importCurrentProfile${capitalizeString(exportType)}" data-type="${exportType}Current" ${exportType === 'allProfiles' || exportType === 'currentAllProfile' ? 'disabled' : ''} />
                                                     <span class="toggleTrack">
                                                         <span class="toggleIndicator">
                                                             <span class="checkMark">
@@ -7301,10 +7301,10 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                                 </label>
                                             </div>
                                         </div>
-                                        <div class="tableBodyNewProfile" data-status="${ exportType === 'allProfiles' || exportType === 'currentAllProfile' ? 'allowed' : 'disabled' }" data-index="${index}">
+                                        <div class="tableBodyNewProfile" data-status="${exportType === 'allProfiles' || exportType === 'currentAllProfile' ? 'allowed' : 'disabled'}" data-index="${index}">
                                             <div class="importTypeBox">
                                                 <label class="toggle" for="importNewProfile${capitalizeString(exportType)}">
-                                                    <input type="checkbox" class="toggleInput importToggleInput" id="importNewProfile${capitalizeString(exportType)}" data-type="${exportType}New" ${ exportType === 'allProfiles' || exportType === 'currentAllProfile' ? '' : 'disabled' } />
+                                                    <input type="checkbox" class="toggleInput importToggleInput" id="importNewProfile${capitalizeString(exportType)}" data-type="${exportType}New" ${exportType === 'allProfiles' || exportType === 'currentAllProfile' ? '' : 'disabled'} />
                                                     <span class="toggleTrack">
                                                         <span class="toggleIndicator">
                                                             <span class="checkMark">
@@ -7531,7 +7531,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         setTimeout(() => {
                             importFileApplyButton.style.display = 'flex';
                             createToggleElements();
-                        },validObject.status.success + 800);
+                        }, validObject.status.success + 800);
 
                         const addEventListenerToApplyImport = () => {
                             const importFileApplyButton = document.getElementById('importFileApplyButton');
@@ -7797,7 +7797,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 profileDetailNameEl.innerText = data.validObject.export.profileDetail.name;
                                 data.validObject.details.exportType.forEach((exportType) => {
                                     if (conversionMap[exportType]) {
-                                        includeList+= `${conversionMap[exportType]}, `;
+                                        includeList += `${conversionMap[exportType]}, `;
                                     }
                                 });
                                 importFileInfoIncludeEl.innerText = includeList.slice(0, -2);
@@ -8759,7 +8759,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                             animationEvents.emit('animationComplete');
                                             reloadBrowserTree = false;
                                         },
-                                        onRepeat: () => {},
+                                        onRepeat: () => { },
                                     });
                                 },
                                 onRepeat: () => {
@@ -8767,7 +8767,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             });
                             return;
                         }
-                        if (synchronizeStatus) {synchronizeApplyButtonEl.style.display = 'flex';}
+                        if (synchronizeStatus) { synchronizeApplyButtonEl.style.display = 'flex'; }
                         gsap.fromTo(synchronizeBrowserBookmarksContainerMiddleEl, {
                             opacity: 1,
                             display: 'flex',
@@ -8786,7 +8786,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     duration: animationToshowFoldersTreeTime,
                                     ease: Quad.easeIn,
                                     onComplete: () => animationEvents.emit('animationCompleteTree'),
-                                    onRepeat: () => {},
+                                    onRepeat: () => { },
                                     onUpdate: () => animationEvents.emit('animationUpdate'),
                                 });
                             },
@@ -9250,6 +9250,40 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     }
                     addIconsToButtons();
 
+                    const getAllSavedUrls = (type) => {
+                        switch (type) {
+                            case 'firefox':
+                                return 'https://addons.mozilla.org/en-US/firefox/addon/bookmark-manager-pro/';
+                            case 'twitter':
+                                const twitterMessages = [
+                                    "🌟 Just started using Bookmark Manager Pro! It's an amazing offline bookmark manager that keeps my data secure. Highly recommend! #BookmarkManagerPro #Privacy",
+                                    "📚 Tired of messy bookmarks? Check out Bookmark Manager Pro! A user-friendly extension that organizes everything perfectly. #BookmarkManagerPro #Productivity",
+                                    "🔒 Love the privacy features of Bookmark Manager Pro! No data collection and works offline. Perfect for secure browsing! #BookmarkManagerPro #PrivacyFirst",
+                                    "✨ If you want a simple and effective way to manage your bookmarks, try Bookmark Manager Pro! It's a game changer! #BookmarkManagerPro #BrowserExtension",
+                                    "🚀 Just discovered Bookmark Manager Pro! It makes managing bookmarks so easy and secure. Give it a try! #BookmarkManagerPro #Tech",
+                                    "💡 Bookmark Manager Pro is a must-have for anyone who values organization and privacy in their browsing experience! #BookmarkManagerPro #Efficiency",
+                                    "🛡️ Keep your bookmarks safe and organized with Bookmark Manager Pro! Offline functionality means your data stays private. #BookmarkManagerPro #SecureBrowsing",
+                                    "👍 Loving Bookmark Manager Pro! It's like a file manager for your bookmarks. So intuitive and easy to use! #BookmarkManagerPro #UserFriendly"
+                                ];
+                                const randomMessage = twitterMessages[randomIntFromInterval(0, twitterMessages.length - 1)];
+                                return `https://twitter.com/intent/tweet?text=${encodeURIComponent(randomMessage)}`;
+                            case 'github':
+                                return 'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro';
+                            case 'buymeacoffee':
+                                return 'https://buymeacoffee.com/yuradeveloper';
+                            default:
+                                return false;
+                        }
+                    }
+
+                    const copyTextToClipboard = (text) => {
+                        navigator.clipboard.writeText(text).then(() => {
+                            showMessageToastify('info', ``, `URL copied to clipboard successfully!`, 4000, false, 'bottom', 'right', true);
+                        }, () => {
+                            showMessageToastify('error', ``, `Failed to copy URL. Please try again.`, 4000, false, 'bottom', 'right', true);
+                        });
+                    }
+
                     const addEventListenerToShareButtons = () => {
                         const shareFirefoxButton = document.getElementById('shareFirefox');
                         const shareTwitterButton = document.getElementById('shareTwitter');
@@ -9258,8 +9292,19 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         const shareBuyMeACoffeeButton = document.getElementById('shareBuyMeACoffee');
                         const steamArrayEl = document.querySelectorAll('.steam');
 
-                        const clickFirefoxButton = () => {
-                            browser.tabs.create({ url: 'https://addons.mozilla.org/en-US/firefox/addon/3728' });
+                        const clickFirefoxButton = (event) => {
+                            const url = getAllSavedUrls('firefox');
+                            if (!url) {
+                                showMessageToastify('error', ``, `Failed to get URL. Please try again.`, 4000, false, 'bottom', 'right', true);
+                                return;
+                            }
+                            if (event.button === 0) {
+                                window.open(url, '_self');
+                            } else if (event.button === 1) {
+                                browser.tabs.create({ url: url });
+                            } else if (event.button === 2) {
+                                copyTextToClipboard(url);
+                            }
                         }
 
                         const animationMouseEnterFirefoxButton = () => {
@@ -9346,20 +9391,19 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             });
                         }
 
-                        const clickTwitterButton = () => {
-                            const twitterMessages = [
-                                "🌟 Just started using Bookmark Manager Pro! It's an amazing offline bookmark manager that keeps my data secure. Highly recommend! #BookmarkManagerPro #Privacy",
-                                "📚 Tired of messy bookmarks? Check out Bookmark Manager Pro! A user-friendly extension that organizes everything perfectly. #BookmarkManagerPro #Productivity",
-                                "🔒 Love the privacy features of Bookmark Manager Pro! No data collection and works offline. Perfect for secure browsing! #BookmarkManagerPro #PrivacyFirst",
-                                "✨ If you want a simple and effective way to manage your bookmarks, try Bookmark Manager Pro! It's a game changer! #BookmarkManagerPro #BrowserExtension",
-                                "🚀 Just discovered Bookmark Manager Pro! It makes managing bookmarks so easy and secure. Give it a try! #BookmarkManagerPro #Tech",
-                                "💡 Bookmark Manager Pro is a must-have for anyone who values organization and privacy in their browsing experience! #BookmarkManagerPro #Efficiency",
-                                "🛡️ Keep your bookmarks safe and organized with Bookmark Manager Pro! Offline functionality means your data stays private. #BookmarkManagerPro #SecureBrowsing",
-                                "👍 Loving Bookmark Manager Pro! It's like a file manager for your bookmarks. So intuitive and easy to use! #BookmarkManagerPro #UserFriendly"
-                            ];
-                            const randomMessage = twitterMessages[randomIntFromInterval(0, twitterMessages.length - 1)];
-                            const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(randomMessage)}`;
-                            browser.tabs.create({ url: shareUrl });
+                        const clickTwitterButton = (event) => {
+                            const url = getAllSavedUrls('twitter');
+                            if (!url) {
+                                showMessageToastify('error', ``, `Failed to get URL. Please try again.`, 4000, false, 'bottom', 'right', true);
+                                return;
+                            }
+                            if (event.button === 0) {
+                                window.open(url, '_self');
+                            } else if (event.button === 1) {
+                                browser.tabs.create({ url: url });
+                            } else if (event.button === 2) {
+                                copyTextToClipboard(url);
+                            }
                         }
 
                         const animationMouseEnterTwitterButton = () => {
@@ -9503,8 +9547,19 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             });
                         }
 
-                        const clickGitHubButton = () => {
-                            browser.tabs.create({ url: 'https://github.com/YuraCodedCircuit/' });
+                        const clickGitHubButton = (event) => {
+                            const url = getAllSavedUrls('github');
+                            if (!url) {
+                                showMessageToastify('error', ``, `Failed to get URL. Please try again.`, 4000, false, 'bottom', 'right', true);
+                                return;
+                            }
+                            if (event.button === 0) {
+                                window.open(url, '_self');
+                            } else if (event.button === 1) {
+                                browser.tabs.create({ url: url });
+                            } else if (event.button === 2) {
+                                copyTextToClipboard(url);
+                            }
                         }
 
                         const animationMouseEnterGitHubButton = () => {
@@ -9646,8 +9701,19 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             });
                         }
 
-                        const clickBuyMeACoffeeButton = () => {
-                            browser.tabs.create({ url: 'https://buymeacoffee.com/yuradeveloper' });
+                        const clickBuyMeACoffeeButton = (event) => {
+                            const url = getAllSavedUrls('buymeacoffee');
+                            if (!url) {
+                                showMessageToastify('error', ``, `Failed to get URL. Please try again.`, 4000, false, 'bottom', 'right', true);
+                                return;
+                            }
+                            if (event.button === 0) {
+                                window.open(url, '_self');
+                            } else if (event.button === 1) {
+                                browser.tabs.create({ url: url });
+                            } else if (event.button === 2) {
+                                copyTextToClipboard(url);
+                            }
                         }
 
                         const animationMouseEnterBuyMeACoffeeButton = () => {
@@ -9720,22 +9786,20 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             });
                         }
 
-                        shareTwitterButton.addEventListener('click', clickTwitterButton);
-                        shareTwitterButton.addEventListener('mouseenter', animationMouseEnterTwitterButton);
-                        shareTwitterButton.addEventListener('mouseleave', animationMouseLeaveTwitterButton);
-                        shareFirefoxButton.addEventListener('click', clickFirefoxButton);
+                        shareFirefoxButton.addEventListener('mousedown', clickFirefoxButton);
                         shareFirefoxButton.addEventListener('mouseenter', animationMouseEnterFirefoxButton);
                         shareFirefoxButton.addEventListener('mouseleave', animationMouseLeaveFirefoxButton);
-                        shareGitHubButton.addEventListener('click', clickGitHubButton);
+                        shareTwitterButton.addEventListener('mousedown', clickTwitterButton);
+                        shareTwitterButton.addEventListener('mouseenter', animationMouseEnterTwitterButton);
+                        shareTwitterButton.addEventListener('mouseleave', animationMouseLeaveTwitterButton);
+                        shareGitHubButton.addEventListener('mousedown', clickGitHubButton);
                         shareGitHubButton.addEventListener('mouseenter', animationMouseEnterGitHubButton);
                         shareGitHubButton.addEventListener('mouseleave', animationMouseLeaveGitHubButton);
-                        shareBuyMeACoffeeButton.addEventListener('click', clickBuyMeACoffeeButton);
+                        shareBuyMeACoffeeButton.addEventListener('mousedown', clickBuyMeACoffeeButton);
                         shareBuyMeACoffeeButton.addEventListener('mouseenter', animationMouseEnterBuyMeACoffeeButton);
                         shareBuyMeACoffeeButton.addEventListener('mouseleave', animationMouseLeaveBuyMeACoffeeButton);
                     }
                     addEventListenerToShareButtons();
-
-
                     break;
                 case 'aboutChangelog':
                     settingsWindowRightSectionHtml = `
@@ -9746,134 +9810,6 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         </div>
                     `;
                     settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
-
-                    // TODO: add translation
-
-                    const addEventListenersToChangeLogSection = () => {
-                        const changeLog = document.getElementById('changeLog');
-                        const leftMenuBody = document.getElementById('leftMenuBody');
-                        const buttonList = document.querySelectorAll('.buttonList');
-                        const button = document.getElementById('reportButton');
-                        const bug = document.getElementById('bug');
-                        let moveInterval = null;
-                        let arrayOfIndex = [];
-
-                        const animateCrumpleAndFall = () => {
-                            gsap.set(changeLog, { transformOrigin: 'center top' });
-                            gsap.to(changeLog, {
-                                duration: 4,
-                                y: window.innerHeight,
-                                rotation: 180,
-                                ease: 'bounce.out',
-                                onComplete: () => {
-                                    gsap.to(changeLog, {
-                                        duration: 1,
-                                        scaleY: 0.2,
-                                        scaleX: 1.2,
-                                        ease: 'power1.inOut',
-                                    });
-                                }
-                            });
-
-                            for (let index = 0; index < randomIntFromInterval(1, buttonList.length - 1); index++) {
-                                arrayOfIndex.push(randomIntFromInterval(0, buttonList.length - 1));
-                            }
-
-                            buttonList.forEach((el, index) => {
-                                gsap.set(el, { transformOrigin: 'top left' });
-                                if (arrayOfIndex.includes(index)) {
-                                    gsap.to(el, {
-                                        duration: .5,
-                                        rotation: randomIntFromInterval(35, 90),
-                                        ease: 'power1.inOut',
-                                        onComplete: () => {
-                                            gsap.to(el, {
-                                                duration: 3,
-                                                x: randomIntFromInterval(4, 7),
-                                                y: leftMenuBody.offsetHeight - el.offsetHeight - el.offsetTop - el.firstElementChild.offsetWidth,
-                                                ease: 'bounce.out',
-                                            });
-                                        }
-                                    });
-                                } else {
-                                    gsap.to(el, {
-                                        duration: 3,
-                                        rotation: 90 + index,
-                                        ease: 'bounce.out',
-                                    });
-                                }
-                            });
-                        };
-
-                        const moveBack = () => {
-                            arrayOfIndex = [];
-                            gsap.to(changeLog, {
-                                duration: 2,
-                                y: 0,
-                                rotation: 0,
-                                scaleY: 1,
-                                scaleX: 1,
-                                ease: 'power1.inOut',
-                                onComplete: () => {
-                                    gsap.killTweensOf(changeLog);
-                                    gsap.set(changeLog, { clearProps: 'all' });
-                                }
-                            });
-
-                            buttonList.forEach(el => {
-                                gsap.to(el, {
-                                    duration: 2,
-                                    rotation: 0,
-                                    y: 0,
-                                    x: 0,
-                                    ease: 'power1.inOut',
-                                    onComplete: () => {
-                                        setTimeout(() => {
-                                            gsap.killTweensOf(el);
-                                            gsap.set(el, { clearProps: 'all' });
-                                        }, 200);
-                                    }
-                                });
-                            });
-                        };
-
-                        const getRandomPosition = () => {
-                            const x = Math.random() * 370;
-                            const y = Math.random() * 40;
-                            return { x, y };
-                        };
-
-                        const getRotationAngle = (x, y) => {
-                            return Math.atan2(y, x) * (380 / Math.PI);
-                        };
-
-                        const moveBugRandomly = () => {
-                            const { x, y } = getRandomPosition();
-                            const angle = getRotationAngle(x, y);
-                            gsap.to(bug, { rotation: angle, duration: 1.0, x, y });
-                        };
-
-                        button.addEventListener('mouseenter', () => {
-                            animateCrumpleAndFall();
-                            bug.style.display = 'flex';
-                            moveBugRandomly();
-                            if (moveInterval == null) {
-                                moveInterval = setInterval(moveBugRandomly, 1000);
-                            }
-                        });
-
-                        button.addEventListener('mouseleave', () => {
-                            moveBack();
-                            clearInterval(moveInterval);
-                            moveInterval = null;
-                            gsap.to(bug, {
-                                duration: 1, x: 0, y: 0, onComplete: () => {
-                                    bug.style.display = 'none';
-                                }
-                            });
-                        });
-                    }
-
                     break;
                 default:
                     console.error('%c%s', '', `Wrong data ${data}`);

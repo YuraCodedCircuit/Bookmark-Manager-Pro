@@ -983,7 +983,12 @@ export const changelog = [
             "Improved: Custom Context Menu Order:",
             "&ensp;- The browser extension features a custom context menu that replaces the default browser context menu within the extension's tab. This menu has two variations: a 'default' menu appearing on right-click in empty spaces and a 'bookmark' menu for right-clicking on folders or bookmarks.",
             "&ensp;- In the 'default' context menu, the order of options has been updated from 'New Bookmark,' 'New Folder,' 'Folder Settings,' 'Search' to 'New Bookmark,' 'New Folder,' 'Search,' 'Folder Settings'.",
-            "&ensp;- This change aligns with common user interface patterns where settings or configuration options are typically placed at the end of a menu. Each item in the context menu is also visually enhanced with an icon preceding the text. The functionalities of each item remain the same: 'New Bookmark' opens the bookmark creation UI, 'New Folder' opens the folder creation UI, 'Search' opens the search functionality, and 'Folder Settings' opens the customization options for the current folder's appearance and navigation."
+            "&ensp;- This change aligns with common user interface patterns where settings or configuration options are typically placed at the end of a menu. Each item in the context menu is also visually enhanced with an icon preceding the text. The functionalities of each item remain the same: 'New Bookmark' opens the bookmark creation UI, 'New Folder' opens the folder creation UI, 'Search' opens the search functionality, and 'Folder Settings' opens the customization options for the current folder's appearance and navigation.",
+            "Improved: Behavior of Information Buttons in Settings:",
+            "&ensp;- In the 'Info' section of the extension's settings UI, the behavior of the four buttons (for Firefox, X/Twitter, GitHub, and Buy Me A Coffee) has been updated to provide more interaction options.",
+            "&ensp;- Left Mouse Click: Clicking normally on any of these buttons will now open the corresponding URL in the current tab.",
+            "&ensp;- Middle Mouse Click (Mouse Wheel Click): Clicking with the mouse wheel on any of these buttons will now open the corresponding URL in a new tab.",
+            "&ensp;- Right Mouse Click: Right-clicking on any of these buttons will now copy the corresponding URL to your system clipboard."
         ]
     },
     {
