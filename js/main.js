@@ -39,7 +39,7 @@
 "use strict";
 import { openCloseSettingWindow } from './settingsManager.js';
 import { createAndEditBookmarksWindow } from './bookmarkManager.js';
-import { findBookmarkByKey, indexedDBManipulation, pSBC, returnRandomElementFromArray, getRandomHexColorByType, randomIntFromInterval, checkIfColorBrightness, findPathToRoot, getRandomColor, hexToRGB, isObjectEmpty, truncateString, showMessageToastify, sortFolderByChildrenIndex, getNextMaxIndex, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, getBrowserAndOSInfo, calculateGradientPercentages, changeBase64ImageColor, generateColorPalette, createTooltip, truncateTextIfOverflow } from './utilityFunctions.js';
+import { findBookmarkByKey, indexedDBManipulation, pSBC, returnRandomElementFromArray, getRandomHexColorByType, randomIntFromInterval, checkIfColorBrightness, findPathToRoot, getRandomColor, hexToRGB, isObjectEmpty, truncateString, showMessageToastify, sortFolderByChildrenIndex, getNextMaxIndex, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, getBrowserAndOSInfo, calculateGradientPercentages, changeBase64ImageColor, generateColorPalette, createTooltip, truncateTextIfOverflow, translateUserName } from './utilityFunctions.js';
 import { interactiveGuide } from './interactiveGuide.js';
 
 export let firstLoadStatus = false;
@@ -960,6 +960,29 @@ export const backgroundImageExample = [
 ];
 export const changelog = [
     {
+        "id": 8,
+        "version": "0.2.7",
+        "log": [
+            "Improved: Bookmark Manager UI Style Customization:",
+            "&ensp;- The bookmark manager UI, which includes 'Border,' 'Color,' 'Image,' 'Text,' and 'Font' tabs for customization, now better reflects user-defined styles.",
+            "&ensp;- In the 'Border' tab, the 'Left,' 'Top,' 'Right,' and 'Bottom' buttons, used to navigate and style individual bookmark borders, now apply the user's configured secondary button style. Previously, these buttons did not adopt user-defined styles.",
+            "&ensp;- The random color generation buttons found in the 'Color,' 'Image,' 'Text,' and 'Font' tabs now utilize the user's configured primary button style.",
+            "&ensp;- In the 'Font' tab, the buttons for selecting Font Weight, Font Style, and Font Alignment, along with the random color button, now primarily use the user's primary button style, while other elements in this tab utilize the secondary button style.",
+            "Enhanced: Input Field and Folder Tree Styling in Bookmark Manager:",
+            "&ensp;- The title input field, URL input field, and the folder selection area in the bookmark manager now feature a highlighted background color that dynamically adapts to the user's selected overall UI background color. This provides better visual integration with the user's chosen theme.",
+            "Feature: Added Random Color Buttons in Text and Font Tabs:",
+            "&ensp;- New buttons have been added to the 'Text' and 'Font' tabs within the bookmark manager to allow users to easily generate random colors for styling.",
+            "Improved: Font Family Dropdown Visibility:",
+            "&ensp;- In the 'Font' tab, the dropdown menu used to select a font family for new bookmarks now has a background color that dynamically adjusts based on the user's selected UI background color. This resolves a previous issue where a black background could make the menu invisible if the user had selected a dark UI theme.",
+            "Created: Marquee Effect for Long Usernames:",
+            "&ensp;- To ensure that long usernames are fully visible, a marquee effect has been implemented in specific areas of the extension.",
+            "&ensp;- In the 'User Profile Menu', if a username exceeds 15 characters, it will now display with a scrolling marquee effect.",
+            "&ensp;- In the 'Settings Manager' within the 'Offline Profile' section, a marquee effect will be applied to usernames longer than 29 characters.",
+            "Marquee Effect Behavior:",
+            "&ensp;- The marquee effect works by horizontally translating the username text.The text starts fully visible from the left, scrolls to the left until the end is visible, and then reverses direction, repeating this animation infinitely."
+        ]
+    },
+    {
         "id": 7,
         "version": "0.2.6",
         "log": [
@@ -1606,7 +1629,7 @@ const mainFunction = () => {
         if (interactiveGuideEl !== null) { return; }
         createContextMenu(false, 'clean');
         if (showProfileMenuStatus) {
-            showProfileMenu();
+            // showProfileMenu();
         }
     });
 
@@ -2890,8 +2913,6 @@ export const showProfileMenu = async () => {
 
     if (showProfileMenuStatus) {
         const profileMenuItem = document.querySelectorAll('.profileMenuItem[data-type]'); // All profile menu items
-        profileUserNameEl.innerHTML = ``; // Clear the username display
-        profileUserNameEl.classList.remove("typing-effect"); // Remove typing effect class
 
         profileMenuItem.forEach((item, index) => {
             gsap.to(item, {
@@ -2938,33 +2959,8 @@ export const showProfileMenu = async () => {
             `;
         });
         profileMenuBodyEl.innerHTML = html;
-        profileUserNameEl.innerHTML = `<span id="userName" style="color:${userActiveProfile.mainUserSettings.windows.window.font.color}"></span>`;
+        profileUserNameEl.innerHTML = `<span id="userName" style="color:${userActiveProfile.mainUserSettings.windows.window.font.color}">${userActiveProfile.name}</span>`;
         const profileMenuItem = document.querySelectorAll('.profileMenuItem[data-type]'); // All profile menu items
-        const userNameEl = document.getElementById('userName'); // The username element
-        profileUserNameEl.setAttribute('style', `--blinkColor: ${userActiveProfile.mainUserSettings.windows.window.font.color}`);
-
-        /**
-         * Displays the user's name with a typing effect.
-         *
-         * @description This function types out the user's name one character at a time.
-         * It uses a timeout to create the typing effect.
-         */
-        const typeEffect = () => {
-            const name = userActiveProfile.name; // The active user's name
-            const nameArray = name.split(''); // Split the name into an array of characters
-            let timeout = 500; // Timeout duration for typing effect
-
-            nameArray.forEach((item, index) => {
-                setTimeout(() => {
-                    userNameEl.innerHTML += item;
-                }, timeout * (index + 1));
-                if (index == nameArray.length - 1) {
-                    setTimeout(() => {
-                        userNameEl.classList.remove("blink");
-                    }, timeout * (index + 1) * 2.8);
-                }
-            });
-        }
 
         gsap.to(profileMenuEl, {
             duration: 2,
@@ -2973,8 +2969,12 @@ export const showProfileMenu = async () => {
             backgroundColor: userProfileExport.mainUserSettings.windows.window.backgroundColor,
             ease: 'elastic.out(1,0.5)',
             onComplete: () => {
-                userNameEl.className = 'blink';
-                typeEffect();
+                if (userActiveProfile.name.length > 15) {
+                    const status = translateUserName('profileUserName', 'userName');
+                    if (!status) {
+                        showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                    }
+                }
             }
         });
         profileMenuItem.forEach((item, index) => {

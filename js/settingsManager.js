@@ -38,7 +38,7 @@
 
 "use strict";
 import { settingMainMenu, defaultUserBookmarks, defaultBookmarkStyle, defaultFolderStyle, defaultMainUserSettings, settingWindowOpen, currentFolderId, folderNamesForAddressBarPreview, exportFileExtensionName, browserAndOSInfo, currentLanguage, userProfileExport, backgroundImageExample, symbolArray, userActivityRegister, userProfile, userActiveProfile, exportType, defaultProfileImageBase64, manageUserProfiles, createCurrentBookmarkFolder, firefoxLogoSVG, chromeLogoSVG, extensionLogoSVG } from './main.js';
-import { indexedDBManipulation, generateColorPalette, showEmojiPicker, getInfoFromVersion, updateIdsAndParentIds, findBookmarkByKey, animateElement, getElementPosition, debounce, createTooltip, truncateTextIfOverflow, checkIfColorBrightness, randomIntFromInterval, getRandomColor, inputHexValid, invertHexColor, rgbToHex, hexToRGB, hexToRGBA, isObjectEmpty, resizeImageBase64, truncateString, getColorFormat, checkIfAllowedToCreateScreenshotFromURL, changeBase64ImageColor, showMessageToastify, getSupportedFontFamilies, sortFolderByChildrenIndex, applyStylesToElement, getNextMaxIndex, generateRandomIdForObj, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, countTo, moveElementsInArray, getType, fetchImageAsBase64, getBrowserAndOSInfo, removeAllNestingFromObj, calculateGradientPercentages, formatBytes, isValidDate, checkIfImageBase64, updateInputRangeAndOutput, updateColorisInputValue } from './utilityFunctions.js';
+import { indexedDBManipulation, generateColorPalette, showEmojiPicker, getInfoFromVersion, updateIdsAndParentIds, findBookmarkByKey, animateElement, getElementPosition, debounce, createTooltip, truncateTextIfOverflow, checkIfColorBrightness, randomIntFromInterval, getRandomColor, inputHexValid, invertHexColor, rgbToHex, hexToRGB, hexToRGBA, isObjectEmpty, resizeImageBase64, truncateString, translateUserName, checkIfAllowedToCreateScreenshotFromURL, changeBase64ImageColor, showMessageToastify, getSupportedFontFamilies, sortFolderByChildrenIndex, applyStylesToElement, getNextMaxIndex, generateRandomIdForObj, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, countTo, moveElementsInArray, getType, fetchImageAsBase64, getBrowserAndOSInfo, removeAllNestingFromObj, calculateGradientPercentages, formatBytes, isValidDate, checkIfImageBase64, updateInputRangeAndOutput, updateColorisInputValue } from './utilityFunctions.js';
 import { importValidation } from './importValidation.js';
 
 /**
@@ -607,7 +607,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         <div id="editProfileSection">
                             <div id="headerProfileSection">
                                 <div id="profileName">
-                                    <div id="name">My name</div>
+                                    <div id="name"></div>
                                 </div>
                                 <div id="profileLogo">
                                     <div id="logo">
@@ -633,15 +633,20 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         const nameEl = document.getElementById('name');
                         const logoImgEl = document.getElementById('logoImg');
                         if (isObjectEmpty(userActiveProfile) || isObjectEmpty(userProfile)) return;
-                        if (userActiveProfile.name.trim().length > 0) {
-                            nameEl.textContent = userActiveProfile.name;
-                        } else {
-                            nameEl.textContent = `Not set`;
-                        }
                         if (checkIfImageBase64(userActiveProfile.image)) {
                             logoImgEl.src = userActiveProfile.image;
                         } else {
                             logoImgEl.src = defaultProfileImageBase64;
+                        }
+                        if (userActiveProfile.name.trim().length > 0) {
+                            nameEl.textContent = userActiveProfile.name;
+                            if (userActiveProfile.name.length < 30) { return };
+                            const status = translateUserName('profileUserName', 'name');
+                            if (!status) {
+                                showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                            }
+                        } else {
+                            nameEl.textContent = `Not set`;
                         }
                     }
                     setCurrentProfileToHeader();
@@ -911,7 +916,10 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
 
                         const createBodyProfileListTableBody = () => {
                             if (!Array.isArray(userProfile.offline)) return;
+                            const bodyProfileListEl = document.getElementById('bodyProfileList');
                             const bodyProfileListTableBodyEl = document.getElementById('bodyProfileListTableBody');
+                            let bodyTableHtml = ``;
+                            let idsArrayForTooltip = [];
                             const selectedSvg = `
                                 <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M8 12.5L11 15.5L16 9.5" stroke="${editingMainUserSettings.windows.button.success.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -939,7 +947,6 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 </svg>
                             `;
 
-                            let bodyTableHtml = ``;
                             userProfile.offline.sort((a, b) => (a.timestampCreation > b.timestampCreation) ? ((a.timestampCreation > b.timestampCreation) ? 1 : 0) : -1);
                             // userProfile.offline.sort((a, b) => (a.timestampCreation < b.timestampCreation) ? ((a.timestampCreation > b.timestampCreation) ? 1 : 0) : -1);
                             userProfile.offline.forEach((profile, index) => {
@@ -949,9 +956,12 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     date = formatDateTime(profile.timestampCreation, currentLanguage, 'date');
                                     time = formatDateTime(profile.timestampCreation, currentLanguage, 'time');
                                 }
+                                if (profile.name.length >= 29) {
+                                    idsArrayForTooltip.push({id: profile.userId, name: profile.name});
+                                }
                                 bodyTableHtml += `
-                                    <div class="bodyProfileListTableRow" ${index % 2 ? `style="background-color: ${colorPalette[1]}"` : `style="background-color: ${colorPalette[0]}"`}>
-                                        <div class="bodyProfileListTableRowName">${profile.name}</div>
+                                    <div class="bodyProfileListTableRow" ${index % 2 ? `style="background-color: ${colorPalette[3]}"` : `style="background-color: ${colorPalette[6]}"`}>
+                                        <div class="bodyProfileListTableRowName" data-id="${profile.userId}">${truncateString(profile.name, 29, 0)}</div>
                                         <div class="bodyProfileListTableRowInfo">
                                             <div class="bodyProfileListTableRowInfoDate">${date}</div>
                                             <div class="bodyProfileListTableRowInfoTime">${time}</div>
@@ -971,11 +981,43 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 `;
                             });
                             bodyProfileListTableBodyEl.innerHTML = bodyTableHtml;
+                            bodyProfileListEl.style.backgroundColor = colorPalette[1];
 
                             const addBodyProfileSectionEventListeners = () => {
                                 const profileSetButtonArray = document.querySelectorAll('.profileSetButton');
                                 const profileEditButtonArray = document.querySelectorAll('.profileEditButton');
                                 const profileDeleteButtonArray = document.querySelectorAll('.profileDeleteButton');
+
+                                /**
+                                 * Function to create a tooltip for long profile names.
+                                 *
+                                 * @returns {void}
+                                 */
+                                const createTooltipForLongProfileNames = () => {
+                                    const backgroundColorBrightness = checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff';
+                                    const style = {
+                                        backgroundColor: editingMainUserSettings.windows.window.backgroundColor,
+                                        color: editingMainUserSettings.windows.window.font.color,
+                                        padding: '5px',
+                                        borderRadius: '5px',
+                                        border: `1px solid ${backgroundColorBrightness}`,
+                                        fontSize: `${editingMainUserSettings.windows.window.font.fontSize}px`,
+                                        fontWeight: editingMainUserSettings.windows.window.font.fontWeight,
+                                        fontFamily: editingMainUserSettings.windows.window.font.fontFamily,
+                                        maxWidth: '400px'
+                                    }
+                                    const underlineStyle = {
+                                        textDecorationColor: editingMainUserSettings.windows.window.font.color,
+                                        textDecorationLine: 'underline',
+                                        textDecorationStyle: 'dotted',
+                                    }
+                                    idsArrayForTooltip.forEach(profile => {
+                                        const profileName = document.querySelector(`.bodyProfileListTableRowName[data-id="${profile.id}"]`);
+                                        Object.assign(profileName.style, underlineStyle);
+                                        createTooltip(profileName, 'top', profile.name, style);
+                                    });
+                                }
+                                if (idsArrayForTooltip.length > 0) { createTooltipForLongProfileNames(); }
 
                                 const setToCurrentProfile = async (event) => {
                                     event.stopPropagation();
@@ -1428,7 +1470,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             const returnBackButtonEl = document.getElementById('returnBackButton');
                             const profileNameInputFieldEl = document.getElementById('profileNameInputField');
                             const profileNameSaveButtonEl = document.getElementById('profileNameSaveButton');
-                            const nameEl = document.getElementById('name');
+                            const profileNameEl = document.getElementById('profileName');
                             const imagePickerInputFileSectionEl = document.getElementById('imagePickerInputFileSection');
                             const imagePickerInputFileEl = document.getElementById('imagePickerInputFile');
                             const profileImageDeleteButtonEl = document.getElementById('profileImageDeleteButton');
@@ -1577,8 +1619,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 selectedProfile.name = nameValue;
                                 userProfile.offline.forEach(profile => {
                                     if (profile.userId === id) {
-                                        nameEl.textContent = nameValue;
+                                        profileNameEl.innerHTML = `<div id="name">${nameValue}</div>`;
                                         profile.name = nameValue;
+                                        if (nameValue.length < 30) { return };
+                                        const status = translateUserName('profileUserName', 'name');
+                                        if (!status) {
+                                            showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                                        }
                                     }
                                 });
                                 await manageUserProfiles('save');
@@ -8243,13 +8290,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             }
                         });
                         const createInfoForTypeNames = () => {
-                            const backgroundColorBrightnees = checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff';
+                            const backgroundColorBrightness = checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff';
                             const style = {
                                 backgroundColor: editingMainUserSettings.windows.window.backgroundColor,
                                 color: editingMainUserSettings.windows.window.font.color,
                                 padding: '5px',
                                 borderRadius: '5px',
-                                border: `1px solid ${backgroundColorBrightnees}`,
+                                border: `1px solid ${backgroundColorBrightness}`,
                                 fontSize: `${editingMainUserSettings.windows.window.font.fontSize}px`,
                                 fontWeight: editingMainUserSettings.windows.window.font.fontWeight,
                                 fontFamily: editingMainUserSettings.windows.window.font.fontFamily,

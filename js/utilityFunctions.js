@@ -3001,20 +3001,81 @@ export const syncToBrowserBookmarksManager = (status, bookmarks, bookmarkId, syn
         default:
             break;
     }
-    // chrome.runtime.sendMessage({ deletedId: 'Q1oEwfYjS9PD'})
-    //     .then(response => {
-    //         // if (response) {
-    //         //     showMessageToastify('success', ``, 'Synchronization has been successfully turned off. Your folders will no longer sync automatically.', 5000, false, 'bottom', 'right', true);
-    //         // } else {
-    //         //     showMessageToastify('error', ``, 'Failed to turn off synchronization. Please try again or check your settings.', 5000, false, 'bottom', 'right', true);
-    //         // }
-    //     })
-    //     .catch(error => {
-    //         console.error("Error sending message:", error);
-    //     });
 }
 
+/**
+ * Translate the username element's text horizontally if it is wider than its parent element.
+ * This is done to create a marquee effect.
+ *
+ * @param {string|HTMLElement} parent - The parent element
+ * @param {string|HTMLElement} child - The child element
+ * @returns {boolean} - True if the translation was successful, false otherwise
+ */
+export const translateUserName = (parent, child) => {
+    try {
+        let parentElement, childElement;
 
+        if (typeof parent === 'string' || typeof child === 'string') {
+            parentElement = document.getElementById(parent);
+            childElement = document.getElementById(child);
+        } else if (parent instanceof HTMLElement && child instanceof HTMLElement) {
+            parentElement = parent;
+            childElement = child;
+        } else {
+            throw new Error('Invalid arguments. Both parent and child must be either strings or HTMLElements.');
+        }
+
+        // Check if the child element's width is greater than the parent's width
+        if (childElement.offsetWidth > parentElement.offsetWidth) {
+            const childWidth = childElement.offsetWidth;
+            let speed = 1;
+            const waitTime = 500;
+
+            // Calculate the total distance to translate
+            const totalDistance = childWidth ;
+
+            // Start translating
+            let position = 0;
+            let direction = 1;
+
+            const translate = () => {
+                // Update the position
+                position += direction * speed;
+
+                // Ensure position does not go below 0
+                if (position < 0) {
+                    position = 0; // Reset to 0 if it goes negative
+                }
+
+                // Apply the translation
+                childElement.style.transform = `translateX(-${position}px)`;
+
+                // Check if we need to change direction
+                if (position >= totalDistance) {
+                    direction = -1; // Change direction to right to left
+                } else if (position <= 0) {
+                    direction = 1; // Change direction to left to right
+                    // Wait before starting the next translation
+                    setTimeout(() => {
+                        requestAnimationFrame(translate);
+                        speed = randomIntFromInterval(1, 3);
+                    }, waitTime);
+                    return; // Exit the current frame to avoid immediate re-calling
+                }
+
+                // Continue the animation
+                requestAnimationFrame(translate);
+            };
+
+            // Start the animation
+            requestAnimationFrame(translate);
+            return true;
+        }
+    } catch (error) {
+        console.error('Error in translateUserName', error);
+        return false;
+    }
+};
 
 
 

@@ -121,8 +121,6 @@ const indexedDBManipulation = async (status, key, data) => {
                 }
                 return false;
             }).catch((err) => {
-                // This code runs if there were any errors
-                console.log(err);
             });
         }
 
@@ -133,8 +131,6 @@ const indexedDBManipulation = async (status, key, data) => {
                 }
                 return false;
             }).catch((err) => {
-                // This code runs if there were any errors
-                console.log(err);
             });
         }
 
@@ -142,7 +138,6 @@ const indexedDBManipulation = async (status, key, data) => {
             return localforage.removeItem(key).then(() => {
                 return true;
             }).catch((err) => {
-                console.log(err);
                 return false;
             });
         }
@@ -151,8 +146,6 @@ const indexedDBManipulation = async (status, key, data) => {
             return localforage.keys().then((value) => {
                 return value;
             }).catch((err) => {
-                // This code runs if there were any errors
-                console.log(err);
             });
         }
 
@@ -297,8 +290,6 @@ const showNotification = (title, message) => {
     // Display the notification
     browser.notifications.create(notificationOptions)
         .then((id) => {
-            console.log("Notification displayed successfully.", id);
-            // Set a timeout to dismiss the notification after the specified duration
             if (!notifications.clean) {
                 return;
             }
@@ -354,7 +345,6 @@ const getTabByIdAndWindowId = async (tabId, windowId) => {
 
         // If the tab is not found, return null
         if (!tab) {
-            console.log('Tab not found.');
             isGettingTab = false; // Reset the flag before returning
             return null;
         }
@@ -598,7 +588,6 @@ class manageUserBookmarks {
             findNextIndexInParentChild();
             createdNewBookmarkObj.index = newBookmark.index === undefined ? nextKeyIndex : newBookmark.index;
             parentObject.children.push(createdNewBookmarkObj);
-            // console.log(createdNewBookmarkObj);
             const saveStatus = await this.saveUserBookmarks();
             return saveStatus;
         }
@@ -769,24 +758,20 @@ const isBookmarkInBrowserFolder = async (bookmark, folderId) => {
 };
 
 const handleCreated = async (id, bookmark) => {
-    // console.log('disabledSync', disabledSync);
     if ((!syncUserSettings.synchronizeDirection.browserToExtension && !syncUserSettings.synchronizeDirection.bothDirections)) { return; }
     if (disabledSync) { return; }
     if (!syncUserSettings.status) { return; }
     const userActiveProfileBookmarks = new manageUserBookmarks();
     isBookmarkInBrowserFolder(bookmark, syncUserSettings.browserFolderId).then(async result => {
-        console.log('result', result);
         if (!result) { return; }
         if (syncUserSettings.browserFolderId === id) { syncFromBrowserToExtensionBookmarksManager(false); return; }
         let parentId = bookmark.parentId;
         if (bookmark.parentId === syncUserSettings.browserFolderId) { parentId = syncUserSettings.extensionFolderId; }
         const createdNewUserBookmark = await userActiveProfileBookmarks.createBookmark(bookmark.type, parentId, { title: bookmark.title, id: id, url: bookmark.url !== undefined ? bookmark.url : '', index: bookmark.index });
-        console.log('Created New User Bookmark', createdNewUserBookmark);
         sendDataToMainScript();
     });
 }
 const handleChanged = async (id, changeInfo) => {
-    // console.log('disabledSync', disabledSync);
     if ((!syncUserSettings.synchronizeDirection.browserToExtension && !syncUserSettings.synchronizeDirection.bothDirections) || disabledSync) { return; }
     const parentBookmark = await getBrowserBookmarkByIdWithPromise(id).catch(() => null);
     if (!Array.isArray(parentBookmark) || parentBookmark.length === 0) {
@@ -796,22 +781,17 @@ const handleChanged = async (id, changeInfo) => {
         if (!result) { return; }
         const userActiveProfileBookmarks = new manageUserBookmarks();
         const loadNewUserBookmarks = await userActiveProfileBookmarks.loadUserBookmarks();
-        console.log('Load New User Bookmarks', loadNewUserBookmarks);
         const changedUserBookmarks = await userActiveProfileBookmarks.updateBookmarkById(id, { title: parentBookmark[0].title, id: id, url: parentBookmark[0].type === 'bookmark' ? parentBookmark[0].url : '' });
-        console.log('Changed User Bookmark', changedUserBookmarks);
         sendDataToMainScript();
     });
 }
 const handleRemoved = (id, removeInfo) => {
-    // console.log('disabledSync', disabledSync);
     if ((!syncUserSettings.synchronizeDirection.browserToExtension && !syncUserSettings.synchronizeDirection.bothDirections) || disabledSync) { return; }
     isBookmarkInBrowserFolder(removeInfo.node, syncUserSettings.browserFolderId).then(async result => {
         if (!result) { return; }
         const userActiveProfileBookmarks = new manageUserBookmarks();
         const loadNewUserBookmarks = await userActiveProfileBookmarks.loadUserBookmarks();
-        console.log('Load New User Bookmarks', loadNewUserBookmarks);
         const removeUserBookmark = await userActiveProfileBookmarks.deleteBookmarkById(id, removeInfo.parentId === syncUserSettings.browserFolderId ? syncUserSettings.extensionFolderId : removeInfo.parentId);
-        console.log('Removed User Bookmark', removeUserBookmark);
         if (syncUserSettings.browserFolderId === id) {
             const title = "⚠️ Alert";
             const message = "Your synchronization has been disabled because the selected folder in your web browser has been removed.";
@@ -822,15 +802,12 @@ const handleRemoved = (id, removeInfo) => {
     });
 }
 const handleMoved = (id, moveInfo) => {
-    // console.log('disabledSync', disabledSync);
     if ((!syncUserSettings.synchronizeDirection.browserToExtension && !syncUserSettings.synchronizeDirection.bothDirections) || disabledSync) { return; }
     isBookmarkInBrowserFolder(moveInfo, syncUserSettings.browserFolderId).then(async result => {
         if (!result) { return; }
         const userActiveProfileBookmarks = new manageUserBookmarks();
         const loadNewUserBookmarks = await userActiveProfileBookmarks.loadUserBookmarks();
-        console.log('Load New User Bookmarks', loadNewUserBookmarks);
         const movedUserBookmark = await userActiveProfileBookmarks.moveBookmarkById(id, moveInfo.oldParentId === syncUserSettings.browserFolderId ? syncUserSettings.extensionFolderId : moveInfo.oldParentId, moveInfo.parentId === syncUserSettings.browserFolderId ? syncUserSettings.extensionFolderId : moveInfo.parentId, moveInfo.index);
-        console.log('Moved User Bookmark', movedUserBookmark);
         sendDataToMainScript();
     });
 }
@@ -906,7 +883,6 @@ const syncFromExtensionToBrowserBookmarksManager = async () => {
     const tempBookmarks = await tempManager.getTempBookmarks();
     if (!tempBookmarks) {
         console.log('Temp bookmarks not found');
-        // disabledSync = false;
         return;
     }
     await tempManager.deleteTempBookmarks();
@@ -916,12 +892,10 @@ const syncFromExtensionToBrowserBookmarksManager = async () => {
     }
     if (tempBookmarkObject.id.length === 0 && tempBookmarkObject.parentId.length === 0) {
         console.log('Wrong bookmark id or parent id');
-        // disabledSync = false;
         return;
     }
     if (!['create', 'update', 'delete', 'move'].includes(tempBookmarkObject.status)) {
         console.log('Wrong status', tempBookmarkObject.status);
-        // disabledSync = false;
         return;
     }
 
@@ -929,21 +903,17 @@ const syncFromExtensionToBrowserBookmarksManager = async () => {
     await userActiveProfileBookmarks.loadUserBookmarks();
     if (!syncUserSettings.synchronizeDirection.bothDirections && !syncUserSettings.synchronizeDirection.extensionToBrowser) {
         console.log('Sync to browser not allowed');
-        // disabledSync = false;
         return;
     }
     if (!Array.isArray(userActiveProfile.currentUserBookmarks) && userActiveProfile.currentUserBookmarks.length === 0) {
         console.log('User bookmarks not found');
-        // disabledSync = false;
         return;
     }
     // check if the bookmarkId in the syncRootFolderId
     const statusFolder = isBookmarkInExtensionFolder(userActiveProfile.currentUserBookmarks, tempBookmarkObject.parentId === syncUserSettings.browserFolderId ? syncUserSettings.extensionFolderId : tempBookmarkObject.parentId, tempBookmarkObject.id);
     if (!statusFolder && tempBookmarkObject.status !== 'delete') {
-        console.log('BookmarkId not found in the specified folder');
     } else {
         disabledSync = true;
-        // console.log('BookmarkId found in the specified folder');
         const browserBookmark = new manageBrowserBookmarks();
         switch (tempBookmarkObject.status) {
             case 'create':
@@ -953,10 +923,8 @@ const syncFromExtensionToBrowserBookmarksManager = async () => {
                     parentId: tempBookmarkObject.parentId
                 };
                 const createBrowserBookmark = await browserBookmark.createBrowserBookmark(bookmarkDetails);
-                console.log('Create Bookmark', createBrowserBookmark);
                 try {
                     const changeIdForNewUserBookmarks = await userActiveProfileBookmarks.replaceBookmarkId(tempBookmarkObject.id, createBrowserBookmark.id);
-                    console.log('changeIdForNewUserBookmarks', changeIdForNewUserBookmarks);
                 } catch (error) {
                     console.error('changeIdForNewUserBookmarks', error);
                 }
@@ -969,7 +937,6 @@ const syncFromExtensionToBrowserBookmarksManager = async () => {
                 };
                 try {
                     const updateBrowserBookmark = await browserBookmark.updateBrowserBookmark(tempBookmarkObject.id, updateDetails);
-                    console.log('updateBrowserBookmark', updateBrowserBookmark);
                 } catch (error) {
                     console.error("Error editing bookmark:", error);
                 }
@@ -988,12 +955,10 @@ const syncFromExtensionToBrowserBookmarksManager = async () => {
                             }
                             // Remove the bookmark or empty folder
                             await browser.bookmarks.remove(child.id);
-                            console.log(`Removed: ${child.title} (ID: ${child.id})`);
                         }
 
                         // Step 3: Remove the empty folder itself
                         await browser.bookmarks.remove(folderId);
-                        console.log(`Removed folder with ID: ${folderId}`);
                     } catch (error) {
                         console.error('Error removing folder:', error);
                     }
@@ -1007,7 +972,6 @@ const syncFromExtensionToBrowserBookmarksManager = async () => {
                 };
                 try {
                     const moveBrowserBookmark = await browserBookmark.moveBrowserBookmark(tempBookmarkObject.id, moveDetails);
-                    console.log('moveBrowserBookmark', moveBrowserBookmark);
                 } catch (error) {
                     console.error("Error moving bookmark:", error);
                 }
@@ -1024,7 +988,6 @@ const firstSync = async () => {
     const userProfile = await profile.getActiveProfile();
     const userBookmark = new manageUserBookmarks();
     userActiveProfile = userProfile;
-    // console.log(userActiveProfile);
     syncUserSettings = userProfile.mainUserSettings?.main?.synchronizationToBrowser;
     if (syncUserSettings === undefined || syncUserSettings.status === undefined) {
         console.error('Path not found');
@@ -1125,27 +1088,19 @@ const firstSync = async () => {
                         await checkingNewBookmarkFromExtensionToBrowser(bookmark.children); // Recursively process children
                     }
                 } catch (error) {
-                    console.log('Error creating bookmark:', bookmark);
                     console.error('Create new bookmark error:', error);
                 }
             } else {
-                // console.log('Bookmark already exists:', isPresentBookmark);
             }
         }
     };
 
     if (status && syncUserSettings.status && syncUserSettings.browserFolderId.length > 0 && syncUserSettings.extensionFolderId.length > 0 && isAnyValueTrue(syncUserSettings.synchronizeDirection)) {
-        // console.log(syncUserSettings);
         disabledSync = true;
-        // const browserBookmark = new manageBrowserBookmarks();
         const getBrowserBrowserTree = await browserBookmark.getBrowserTreeBookmarks();
-        // console.log('Browser Bookmark', getBrowserBrowserTree);
         const parentBrowserBookmarks = findBookmarkByKey(getBrowserBrowserTree, syncUserSettings.browserFolderId);
-        // console.log('Browser Bookmark', parentBrowserBookmarks);
         const parentExtensionBookmarks = findBookmarkByKey(userActiveProfile.currentUserBookmarks, syncUserSettings.extensionFolderId);
-        // console.log('Extension Bookmark', parentExtensionBookmarks);
         if (Array.isArray(parentExtensionBookmarks.children) && Array.isArray(parentExtensionBookmarks.children)) {
-            // await creatingNewBookmarkInExtension(parentBrowserBookmarks.children, parentExtensionBookmarks.children);
             if (syncUserSettings.synchronizeDirection.bothDirections || syncUserSettings.synchronizeDirection.browserToExtension) {
                 await checkingNewBookmarkFromBrowserToExtension(parentBrowserBookmarks.children);
                 await correctIndexesInExtensionBookmarks(userActiveProfile.currentUserBookmarks);
@@ -1224,7 +1179,6 @@ class RadioManager {
 
     playError() {
         this.sound.on('playerror', (e)=>{
-            console.log('playerror', e);
             this.stop();
             this._sendMessage({ failedToPlay: true });
         });
@@ -1232,7 +1186,6 @@ class RadioManager {
 
     loadError() {
         this.sound.on('loaderror', (e)=>{
-            console.log('loaderror', e);
             this.stop();
             this._sendMessage({ failedToPlay: true });
         });
@@ -1240,7 +1193,6 @@ class RadioManager {
 
     async _saveStatus() {
         const result = await indexedDBManipulation('save', 'userSelectedOnlineStation', userSelectedStationObject);
-        console.log('Save radio status', result);
     }
 
     _detectIfSeekNotChanged(status) {
@@ -1273,17 +1225,13 @@ const loadUserSavedOnlineRadio = async () => {
     if (!isObjectEmpty(userSelectedStationObject)) { return; }
     const ifExist = await indexedDBManipulation('has', 'userSelectedOnlineStation');
     if (!ifExist) {
-        console.log('User not select any station');
     } else {
         const userSelectedOnlineStation = await indexedDBManipulation('get', 'userSelectedOnlineStation');
         if (!isObjectEmpty(userSelectedOnlineStation)) {
             userSelectedStationObject = userSelectedOnlineStation;
-            // console.log(userSelectedStationObject);
             userSelectedOnlineRadioManager = new RadioManager(userSelectedStationObject.url_resolved);
             userSelectedStationObject.playingStatus = false;
             await indexedDBManipulation('save', 'userSelectedOnlineStation', userSelectedStationObject);
-            // console.log(userSelectedOnlineRadioManager);
-            // currentLiveRadioTextEl.innerHTML = `<svg id="currentStationIconSVG" xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 100 100'><text id="currentStationIconText" x='50' y='57' fill='#ffffff'>${getInitialLetters(userSelectedOnlineStation.name, 2)}</text></svg>`;
         }
     }
 }
@@ -1291,7 +1239,6 @@ const loadUserSavedOnlineRadio = async () => {
 const messageListener = async (message, sender, sendResponse) => {
     const messageObj = message;
     let response = '';
-    console.log(message);
     if (messageObj.userCreateFirstProfile) {
         init();
     }
@@ -1364,7 +1311,6 @@ const init = async () => {
 
         // Function to handle context menu item clicks
         const handleContextMenuClick = (menu, tab) => {
-            // console.log("Context menu item clicked:", menu.menuItemId);
             switch (menu.menuItemId) {
                 case 'saveTab':
                     if (!isStringAllowed(menu.pageUrl, forbiddenStringArray)) { break };
@@ -1537,7 +1483,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const keepAlive = () => {
         // Perform a lightweight task to keep the background script active
         browser.runtime.getPlatformInfo().then(info => {
-            console.log("Platform info retrieved:", info);
         }).catch(error => {
             console.error("Error retrieving platform info:", error);
         });

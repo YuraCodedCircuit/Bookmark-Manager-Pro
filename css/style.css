@@ -324,31 +324,17 @@ body>#profileMenu>#profileMenuHeader>#profileUserName {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    width: 150px;
+    width: 140px;
     white-space: nowrap;
     height: auto;
     left: 0;
     padding-left: 5px;
-    --blinkColor: #000000;
+    overflow: hidden;
 }
 
-.blink::after {
-    content: "";
-    display: flex;
-    position: absolute;
-    right: -10px;
-    bottom: 2.5px;
-    width: 10px;
-    height: 4px;
-    border-bottom: 1px solid var(--blinkColor);
-    background-color: #00000000;
-    animation: blinker .8s linear infinite;
-}
-
-@keyframes blinker {
-    50% {
-        opacity: 0;
-    }
+body>#profileMenu>#profileMenuHeader>#profileUserName>#userName {
+    display: inline-block;
+    white-space: nowrap;
 }
 
 body>#profileMenu>#profileMenuBody {
@@ -2064,11 +2050,11 @@ body>#settingsBody>#settingsWindow>#settingsWindowRightSection>#editProfileSecti
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-left: 30px;
     width: auto;
     height: auto;
     font-size: 24px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 body>#settingsBody>#settingsWindow>#settingsWindowRightSection>#editProfileSection>#headerProfileSection>#profileLogo {
@@ -2392,6 +2378,9 @@ body>#settingsBody>#settingsWindow>#settingsWindowRightSection>#editProfileSecti
     padding-left: 5px;
     width: 210px;
     height: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 body>#settingsBody>#settingsWindow>#settingsWindowRightSection>#editProfileSection>#bodyProfileSection>#bodyProfileList>#bodyProfileListTable>#bodyProfileListTableBody>.bodyProfileListTableRow>.bodyProfileListTableRowInfo {

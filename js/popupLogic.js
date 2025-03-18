@@ -1098,6 +1098,7 @@ const createPopupWindow = (status) => {
             }
             browser.runtime.sendMessage(message)
                 .then(async response => {
+                    console.log(response);
                 })
                 .catch(error => {
                     console.error("Error sending message:", error);
