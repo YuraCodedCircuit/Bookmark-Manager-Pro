@@ -7130,136 +7130,275 @@ body>#otherBody::before {
     transform: translate3d(0, 0, 0);
 }
 
-body>#otherBody>#searchWindow {
+body>#uiElementsContainer {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    z-index: 50;
+    background-color: #00000090;
+}
+
+body>#uiElementsContainer::before {
+    content: '';
+    display: flex;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(10px);
+    transform: translate3d(0, 0, 0);
+}
+
+body>#uiElementsContainer>#searchWindow {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     flex-direction: column;
-    width: 700px;
-    height: 500px;
+    width: 900px;
+    height: 700px;
     border-radius: 10px;
 }
 
-body>#otherBody>#searchWindow>#searchWindowCloseButton {
+body>#uiElementsContainer>#searchWindow>#searchWindowHeader {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+    padding: 10px 5px 10px 5px;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowHeader>#searchWindowHeaderSearchInput {
     display: flex;
     justify-content: center;
     align-items: center;
-    position: absolute;
-    top: -15px;
-    right: -15px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background-color: #00000080;
-    z-index: 1;
-}
-
-body>#otherBody>#searchWindow>#searchWindowCloseButton:active {
-    top: -13px;
-}
-
-body>#otherBody>#searchWindow>#searchWindowTopSection {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    flex-direction: row;
-    width: 100%;
-    height: 100px;
-}
-
-body>#otherBody>#searchWindow>#searchWindowTopSection>#searchInputSection {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    flex-direction: row;
-    position: absolute;
-    left: 10px;
+    padding: 0px 5px 0px 5px;
     width: 100%;
     height: 100%;
 }
 
-body>#otherBody>#searchWindow>#searchWindowTopSection>#searchInputSection>#searchIcon {
-    display: flex;
-    width: 35px;
-    height: 35px;
-    position: absolute;
-    left: 4px;
-    z-index: 1;
-}
-
-body>#otherBody>#searchWindow>#searchWindowTopSection>#searchInputSection>input {
-    padding: 0px 0px 0px 38px;
-    width: calc(100% - 20px);
-    height: 40px;
-    font-size: 16px;
-    color: inherit;
-    border: none;
-    border-radius: 5px;
-    --backgroundColorSearch: #195070;
-    --borderColorSearch: 80, 50, 0;
-    background: radial-gradient(circle at 100% 100%, var(--backgroundColorSearch) 0, var(--backgroundColorSearch) 3px, transparent 3px) 0% 0%/6px 6px no-repeat,
-        radial-gradient(circle at 0 100%, var(--backgroundColorSearch) 0, var(--backgroundColorSearch) 3px, transparent 3px) 100% 0%/6px 6px no-repeat,
-        radial-gradient(circle at 100% 0, var(--backgroundColorSearch) 0, var(--backgroundColorSearch) 3px, transparent 3px) 0% 100%/6px 6px no-repeat,
-        radial-gradient(circle at 0 0, var(--backgroundColorSearch) 0, var(--backgroundColorSearch) 3px, transparent 3px) 100% 100%/6px 6px no-repeat,
-        linear-gradient(var(--backgroundColorSearch), var(--backgroundColorSearch)) 50% 50%/calc(100% - 6px) calc(100% - 12px) no-repeat,
-        linear-gradient(var(--backgroundColorSearch), var(--backgroundColorSearch)) 50% 50%/calc(100% - 12px) calc(100% - 6px) no-repeat,
-        conic-gradient(from 279deg, rgba(var(--borderColorSearch), 0.5) 0%, rgb(var(--borderColorSearch), 0.7) 10%, rgb(var(--borderColorSearch), 0.9) 20%, rgb(var(--borderColorSearch), 0.95) 25%, rgb(var(--borderColorSearch), 1) 95%, rgba(var(--borderColorSearch), 0.941) 98%, rgba(var(--borderColorSearch), 0.5) 100%);
-    border-radius: 6px;
-    box-sizing: border-box;
-}
-
-body>#otherBody>#searchWindow>#searchWindowMiddleSection {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody {
     display: flex;
     justify-content: flex-start;
-    align-items: center;
-    flex-direction: column;
-    width: 100%;
-    height: 400px;
-    padding: 0px 10px 0px 10px;
-    overflow: scroll;
-    scroll-behavior: smooth;
-}
-
-body>#otherBody>#searchWindow>#searchWindowMiddleSection>.resultElement {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
+    align-items: flex-start;
     flex-direction: row;
     width: 100%;
-    height: 30px;
-    border-radius: 5px;
-    margin-bottom: 4px;
+    flex: 1;
+    overflow: hidden;
 }
 
-body>#otherBody>#searchWindow>#searchWindowMiddleSection>.resultElement:active {
-    top: 2px;
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: 280px;
+    height: 100%;
 }
 
-body>#otherBody>#searchWindow>#searchWindowMiddleSection>.resultElement>.resultElementTitle {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeBrowserBookmarks {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    width: 400px;
-    height: 30px;
+    padding: 0px 5px 0px 5px;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeBrowserBookmarks>#searchWindowBodyLeftSearchFiltersContentIncludeBrowserBookmarksToggleLabel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateStarted {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: row;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateStarted>#searchWindowBodyLeftSearchFiltersContentDateStartedTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
     padding: 0px 0px 0px 5px;
+    width: 160px;
+    height: 40px;
 }
 
-body>#otherBody>#searchWindow>#searchWindowMiddleSection>.resultElement>.resultElementType {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateStarted>#searchWindowBodyLeftSearchFiltersContentDateStartedContent {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 120px;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateStarted>#searchWindowBodyLeftSearchFiltersContentDateStartedContent>#searchWindowBodyLeftSearchFiltersContentDateStartedContentInput {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateEnded {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: row;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateEnded>#searchWindowBodyLeftSearchFiltersContentDateEndedTitle {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    width: 100px;
-    height: 30px;
+    padding: 0px 0px 0px 5px;
+    width: 160px;
+    height: 40px;
 }
 
-body>#otherBody>#searchWindow>#searchWindowMiddleSection>.resultElement>.resultElementUrl {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateEnded>#searchWindowBodyLeftSearchFiltersContentDateEndedContent {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateEnded>#searchWindowBodyLeftSearchFiltersContentDateEndedContent>#searchWindowBodyLeftSearchFiltersContentDateEndedContentInput {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeBookmarks {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 5px 0px 5px;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeBookmarks>#searchWindowBodyLeftSearchFiltersContentIncludeBookmarksToggleLabel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeFolders {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 5px 0px 5px;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeFolders>#searchWindowBodyLeftSearchFiltersContentIncludeFoldersToggleLabel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentResultView {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0px 15px 0px 5px;
+    width: 275px;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentResultView>#searchWindowBodyLeftSearchFiltersContentResultViewTitle {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     width: 180px;
-    height: 30px;
+    height: 40px;
 }
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentResultView>#searchWindowBodyLeftSearchFiltersContentResultViewToggleButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 56px;
+    height: 30px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000060;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentResultView>#searchWindowBodyLeftSearchFiltersContentResultViewToggleButton:active {
+    top: 2px;
+}
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex: 1;
+    height: 100%;
+    background-color: #820f01;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+}
+
+
 
 body>#otherBody>#particlesJs {
     display: flex;

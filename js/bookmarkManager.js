@@ -119,7 +119,6 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
 
     const userColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
     colorPalette = generateColorPalette(userColor);
-    console.log(userProfileExport.mainUserSettings);
 
     const updateBookmarkBoxSize = (folderId) => {
         let obj = findBookmarkByKey(userProfileExport.currentUserBookmarks, folderId);
