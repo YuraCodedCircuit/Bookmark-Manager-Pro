@@ -37,8 +37,9 @@
  */
 
 "use strict";
-import { createContextMenu, userProfileExport, showProfileMenu, userSearchWindow, userActiveProfile } from './main.js';
+import { createContextMenu, userProfileExport, showProfileMenu, userActiveProfile } from './main.js';
 import { createAndEditBookmarksWindow } from './bookmarkManager.js';
+import { searchManager } from './searchManager.js';
 import { openCloseSettingWindow } from './settingsManager.js';
 import { getRandomColor, randomIntFromInterval, indexedDBManipulation, countTo } from './utilityFunctions.js';
 import { step2ImageBase64, step3ImageBase64 } from './interactiveGuideImages.js';
@@ -643,7 +644,7 @@ export const interactiveGuide = async (status) => {
                     updateMiddlePosition();
                     break;
                 case 27:
-                    userSearchWindow('close');
+                    searchManager('close');
                     showProfileMenu();
                     await waitForAnimation('profileMenu', 200, 240).then(() => {
                         createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);

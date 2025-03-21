@@ -39,6 +39,7 @@
 "use strict";
 import { openCloseSettingWindow } from './settingsManager.js';
 import { createAndEditBookmarksWindow } from './bookmarkManager.js';
+import { searchManager } from './searchManager.js';
 import { findBookmarkByKey, indexedDBManipulation, pSBC, returnRandomElementFromArray, getRandomHexColorByType, randomIntFromInterval, checkIfColorBrightness, findPathToRoot, getRandomColor, hexToRGB, isObjectEmpty, truncateString, showMessageToastify, sortFolderByChildrenIndex, getNextMaxIndex, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, getBrowserAndOSInfo, calculateGradientPercentages, changeBase64ImageColor, generateColorPalette, createTooltip, truncateTextIfOverflow, translateUserName } from './utilityFunctions.js';
 import { interactiveGuide } from './interactiveGuide.js';
 
@@ -1692,7 +1693,7 @@ const mainFunction = () => {
                     showMessageToastify('warning', '', `Please close the current window before opening a new one to continue.`, 4000, false, 'bottom', 'right', true, false);
                     return;
                 }
-                userSearchWindow('open');
+                searchManager('open');
                 return false;
             };
 
@@ -1704,7 +1705,7 @@ const mainFunction = () => {
                     createAndEditBookmarksWindow('close');
                 }
                 if (searchExistElements.includes('searchWindow')) {
-                    userSearchWindow('close');
+                    searchManager('close');
                 }
                 if (searchExistElements.includes('mainWindowDeleteBody')) {
                     $('#contextMenuWindow').css('display', 'none').html('');
@@ -2771,139 +2772,6 @@ export const manageUserProfiles = async (status, active = true, data = { userNam
 }
 
 /**
- * Manages the display and functionality of the user search window.
- * @param {string} status - The status of the search window, either 'open' or 'close'.
- */
-export const userSearchWindow = (status) => {
-    const otherBodyEl = document.getElementById('otherBody');
-
-    if (status == 'open') {
-        let html = `
-            <div id="searchWindow">
-                <button id="searchWindowCloseButton">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -960 960 960"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224z"/></svg>
-                </button>
-                <div id="searchWindowTopSection">
-                    <div id="searchInputSection">
-                        <svg id="searchIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.7955 15.8111L21 21M18 10.5C18 14.6421 14.6421 18 10.5 18C6.35786 18 3 14.6421 3 10.5C3 6.35786 6.35786 3 10.5 3C14.6421 3 18 6.35786 18 10.5Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <input type="text" id="searchInput">
-                    </div>
-                </div>
-                <div id="searchWindowMiddleSection"></div>
-            </div>
-        `;
-        otherBodyEl.style.display = 'flex';
-        otherBodyEl.innerHTML = html;
-        const searchWindowCloseButtonEl = document.getElementById('searchWindowCloseButton');
-        const searchWindowEl = document.getElementById('searchWindow');
-        const searchInputEl = document.getElementById('searchInput');
-        const searchWindowMiddleSectionEl = document.getElementById('searchWindowMiddleSection');
-        searchInputEl.focus({ focusVisible: true });
-        searchWindowCloseButtonEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
-        searchWindowEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
-        searchInputEl.setAttribute('style', `--backgroundColorSearch: ${userProfileExport.mainUserSettings.windows.window.backgroundColor};--borderColorSearch: ${hexToRGB(getRandomColor())}`);
-
-        /**
-         * Checks the input value and performs a search on the bookmarks.
-         * Updates the search results in the search window.
-         */
-        const checkInput = () => {
-            const value = searchInputEl.value;
-            if (value.length > 0) {
-
-                /**
-                 * Searches bookmarks for a given query.
-                 * @param {Array} bookmarks - The list of bookmarks to search through.
-                 * @param {string} query - The search query.
-                 * @returns {Array} - The search results.
-                 */
-                const searchBookmarks = (bookmarks, query) => {
-                    const results = [];
-                    const searchNode = (node) => {
-                        if (node.title.includes(query) || (node.url && node.url.includes(query)) && node.id !== 'root') {
-                            results.push({ id: node.id, title: node.title, type: node.type, url: node.url });
-                        }
-                        if (node.children && node.children.length > 0) {
-                            node.children.forEach(child => searchNode(child));
-                        }
-                    };
-                    bookmarks.forEach(bookmark => searchNode(bookmark));
-                    return results;
-                };
-
-                const results = searchBookmarks(userProfileExport.currentUserBookmarks, value);
-
-                /**
-                 * Creates the HTML for the search results and updates the search window.
-                 * @param {Array} result - The search results.
-                 */
-                const createResultHtml = (result) => {
-                    if (result.length > 0) {
-                        let resultHtml = ``;
-                        result.forEach(element => {
-                            resultHtml += `
-                                <div class='resultElement' data-id="${element.id}" data-type="${element.type}" style="background-color: ${pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? -0.50 : 0.50, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true)}">
-                                    <div class='resultElementTitle' data-id="${element.id}" data-type="${element.type}">${truncateString(element.title, 45, 0)}</div>
-                                    <div class='resultElementType' data-id="${element.id}" data-type="${element.type}">${capitalizeString(element.type)}</div>
-                                    <div class='resultElementUrl' data-id="${element.id}" data-type="${element.type}">${element.url != undefined ? truncateString(element.url, 20, 0) : ''}</div>
-                                </div>
-                            `;
-                        });
-                        searchWindowMiddleSectionEl.innerHTML = resultHtml;
-
-                        const resultElement = document.querySelectorAll('.resultElement');
-
-                        /**
-                         * Opens the selected search result.
-                         * @param {Event} el - The event object.
-                         */
-                        const openResult = (el) => {
-                            try {
-                                const id = el.target.dataset.id;
-                                const type = el.target.dataset.type;
-                                if (id != undefined && type != undefined) {
-                                    if (type === 'folder') {
-                                        currentFolderId = id;
-                                        createCurrentBookmarkFolder();
-                                    }
-                                    if (type === 'bookmark') {
-                                        console.info('open URL');
-                                    }
-                                    userSearchWindow('close');
-                                } else {
-                                    throw Error('No id or type');
-                                }
-                            } catch (error) {
-                                console.error(error);
-                            }
-                        }
-
-                        resultElement.forEach(element => {
-                            element.addEventListener('click', openResult);
-                        });
-                    } else {
-                        searchWindowMiddleSectionEl.innerHTML = '';
-                    }
-                }
-                createResultHtml(results);
-            } else {
-                searchWindowMiddleSectionEl.innerHTML = '';
-            }
-        }
-
-        const closeUserSearchWindow = () => {
-            userSearchWindow('close');
-        }
-
-        searchWindowCloseButtonEl.addEventListener('click', closeUserSearchWindow);
-        searchInputEl.addEventListener('input', checkInput);
-    } else if (status == 'close') {
-        otherBodyEl.style.display = 'none';
-        otherBodyEl.innerHTML = '';
-    }
-}
-
-/**
  * Toggles the visibility of the profile menu and animates its elements.
  * Uses the GSAP library for animations.
  *
@@ -3021,7 +2889,7 @@ export const showProfileMenu = async () => {
                         showProfileMenu();
                         break;
                     case 'search':
-                        userSearchWindow('open');
+                        searchManager('open');
                         showProfileMenu();
                         break;
                     case 'folderSettings':
@@ -3169,7 +3037,7 @@ export const createContextMenu = async (create = false, type = '', setMousePosit
                 return;
             }
             if (type == 'default' && menuType == 'search') {
-                userSearchWindow('open');
+                searchManager('open');
                 return;
             }
             if ((type == 'default' && menuType == 'newBookmark') || (type == 'default' && menuType == 'newFolder')) {
@@ -4240,6 +4108,7 @@ $(document).ready(async () => {
                 await indexedDBManipulation('remove', 'openSettingsAfterReload');
             }
             addScrollListener();
+            // searchManager('open');
         }
 
         browser.runtime.onMessage.addListener(async (request, sender, sendResponse) =>{
