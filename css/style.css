@@ -7220,8 +7220,8 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     justify-content: flex-start;
     align-items: flex-start;
     flex-direction: column;
+    flex: 1;
     width: 100%;
-    height: 100%;
     overflow: scroll;
 }
 
@@ -7242,13 +7242,30 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     height: 40px;
 }
 
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeSearchInUrls {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 5px 0px 5px;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeSearchInUrls>#searchWindowBodyLeftSearchFiltersContentIncludeSearchInUrlsToggleLabel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+}
+
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateStarted {
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
-    flex-direction: row;
+    flex-direction: column;
     width: 100%;
-    height: 40px;
+    height: 80px;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateStarted>#searchWindowBodyLeftSearchFiltersContentDateStartedTitle {
@@ -7256,23 +7273,34 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     justify-content: flex-start;
     align-items: center;
     padding: 0px 0px 0px 5px;
-    width: 160px;
+    width: 100%;
     height: 40px;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateStarted>#searchWindowBodyLeftSearchFiltersContentDateStartedContent {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
-    width: 120px;
+    padding: 0px 10px 0px 15px;
+    width: 100%;
     height: 40px;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateStarted>#searchWindowBodyLeftSearchFiltersContentDateStartedContent>#searchWindowBodyLeftSearchFiltersContentDateStartedContentInput {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateStarted>#searchWindowBodyLeftSearchFiltersContentDateStartedContent>#searchWindowBodyLeftSearchFiltersContentDateStartedContentInputDate {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
+    width: 130px;
+    height: 40px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateStarted>#searchWindowBodyLeftSearchFiltersContentDateStartedContent>#searchWindowBodyLeftSearchFiltersContentDateStartedContentInputTime {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
     height: 40px;
     border: 0px solid #00000000;
     background-color: #00000000;
@@ -7282,9 +7310,9 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
-    flex-direction: row;
+    flex-direction: column;
     width: 100%;
-    height: 40px;
+    height: 80px;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateEnded>#searchWindowBodyLeftSearchFiltersContentDateEndedTitle {
@@ -7298,17 +7326,28 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateEnded>#searchWindowBodyLeftSearchFiltersContentDateEndedContent {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    width: 120px;
+    padding: 0px 10px 0px 15px;
+    width: 100%;
     height: 40px;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateEnded>#searchWindowBodyLeftSearchFiltersContentDateEndedContent>#searchWindowBodyLeftSearchFiltersContentDateEndedContentInput {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateEnded>#searchWindowBodyLeftSearchFiltersContentDateEndedContent>#searchWindowBodyLeftSearchFiltersContentDateEndedContentInputDate {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
+    width: 130px;
+    height: 40px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentDateEnded>#searchWindowBodyLeftSearchFiltersContentDateEndedContent>#searchWindowBodyLeftSearchFiltersContentDateEndedContentInputTime {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
     height: 40px;
     border: 0px solid #00000000;
     background-color: #00000000;
@@ -7390,15 +7429,157 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults {
     display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    width: 100%;
+    height: 100%;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList {
+    display: flex;
     justify-content: flex-start;
-    align-items: flex-start;
+    align-items: center;
     flex-direction: column;
     width: 100%;
     height: 100%;
     overflow: scroll;
 }
 
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin-bottom: 5px;
+    width: 580px;
+    height: 70px;
+    background-color: #4dd271;
+}
 
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 70px;
+    height: 70px;
+    background-position: center center;
+    background-size: cover;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListDetails {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 520px;
+    height: 70px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-left: 5px;
+    width: 100%;
+    height: 35px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+    margin-left: 5px;
+    width: 100%;
+    height: 35px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsType {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 35px;
+    flex: 1;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsAdded {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 35px;
+    flex: 2;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    margin: 5px;
+    width: 185px;
+    height: 230px;
+    overflow: hidden;
+    background-color: #4dd271;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact>.bookmarkElementCompactIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 120px;
+    background-position: center center;
+    background-size: cover;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact>.bookmarkElementCompactDetails {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+    flex: 1;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact>.bookmarkElementCompactDetails>.bookmarkElementCompactTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-left: 5px;
+    width: 100%;
+    height: 35px;
+    white-space: nowrap;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact>.bookmarkElementCompactDetails>.bookmarkElementCompactDetailsInfo {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    margin-left: 5px;
+    width: 100%;
+    flex: 1;
+    /* height: 35px; */
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact>.bookmarkElementCompactDetails>.bookmarkElementCompactDetailsInfo>.bookmarkElementCompactDetailsType {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    height: 35px;
+}
 
 body>#otherBody>#particlesJs {
     display: flex;
