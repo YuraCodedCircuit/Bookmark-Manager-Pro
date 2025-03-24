@@ -2,6 +2,63 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.8]
+
+Implemented: Enhanced Search Functionality:
+- The search functionality for bookmarks and folders has been fully implemented with a redesigned user interface.
+- The search UI features:
+  - An input field at the top for entering search keywords.
+  - A left-side panel with the following filters:
+    - **'Browser Bookmarks'**: A toggle to include all browser bookmarks in the search results.
+    - **'Selected Created After'**: Date and time input fields to filter items created after a specific date and time.
+    - **'Selected Created Before'**: Date and time input fields to filter items created before a specific date and time.
+    - **'Search In URLs'**: A toggle to include bookmark URLs in the search.
+    - **'Include Bookmarks'**: A toggle to include all extension bookmarks in the search.
+    - **'Include Folders'**: A toggle to include all extension folders in the search.
+    - **'Choose Compact View' / 'Choose List View'**: A button that toggles the display of search results between a compact tile view and a detailed list view.
+  - A 'Close' button at the bottom to exit the search UI.
+- The right-side panel displays the search results.
+- When the 'Browser Bookmarks' toggle is enabled, extension bookmarks are shown first, followed by browser bookmarks. Each section has a title indicating the number of items found (e.g., '1 bookmark found in Bookmark Manager Pro matching your search.', '10 bookmarks found in your Firefox browser matching your search.').
+Added: Utility Functions in 'utilityFunctions.js':
+- Implemented 'openUrl(url, ctrlPressed)' function to open a URL in a new tab (if `ctrlPressed` is true or middle mouse click) or the same tab.
+- Implemented 'escapeHtml(unsafe)' function to prevent XSS attacks by escaping HTML special characters.
+Added: Localization for Search Manager UI:
+- All titles and labels for the search manager UI have been added to the 'en-US.lang' file in American English.
+Security: Implemented 'escapeHtml' for XSS Prevention:
+- The 'escapeHtml' function has been implemented in 'main.js' to sanitize:
+  - Bookmark titles displayed in the main view.
+  - Navigation bar titles.
+  - The username displayed in the user menu.
+- The 'escapeHtml' function has been implemented in 'bookmarkManager.js' to sanitize:
+  - Folder names in the folders tree.
+  - Content displayed in the bookmark preview.
+- The 'escapeHtml' function has been implemented in 'settingsManager.js' to sanitize:
+  - The user profile name in the 'Offline Profile' menu.
+  - Profile names and bookmark titles displayed in the 'My Activity' menu.
+Fixed: User Menu Visibility:
+- The username in the user menu now correctly hides when the user closes the menu.
+Fixed: Bookmark Manager Variable Names:
+- Improved code readability in 'bookmarkManager.js' by updating variable names for better understanding.
+Fixed: New Folder URL Auto-Addition:
+- When creating a new folder in the Bookmark Manager, the extension no longer automatically adds 'HTTP://' or 'HTTPS://' to the folder's URL.
+Fixed: Parent Folder Selection:
+- In the Bookmark Manager, when editing a folder, that folder will no longer appear as an option to select as its own parent in the 'Select Folder' area.
+Improved: Settings 'Info' Buttons Behavior:
+- In the 'Info' menu of the Settings Manager, the behavior of the Firefox, X/Twitter, GitHub, and Buy Me A Coffee buttons has been updated:
+  - **Left Mouse Click (without CTRL):** Opens the link in the same tab.
+  - **Left Mouse Click (with CTRL) or Middle Mouse Click:** Opens the link in a new tab.
+  - **Right Mouse Click:** Copies the URL to the system clipboard (this behavior remains unchanged).
+Fixed: Font Styles in Extension Popup:
+- All user-defined font styles (color, family, size, style, weight) are now correctly applied to the extension's popup window.
+Updated: Manifest Homepage URL:
+- The 'homepage_url' in the 'manifest.json' file has been updated to 'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro'.
+Updated: README Installation Instructions:
+- The installation instructions in 'README.md' have been updated to provide more detailed steps on how to download the extension from the Firefox Add-ons website, including searching by name and using a direct URL.
+Updated: Extension Screenshots:
+- New extension screenshots have been added, and outdated screenshots have been removed.
+Updated: README Screenshots:
+- The extension screenshots displayed in the 'README.md' file have been updated
+
 ## [0.2.7]
 
 - Improved: Bookmark Manager UI Style Customization:

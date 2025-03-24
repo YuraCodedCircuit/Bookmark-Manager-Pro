@@ -1930,6 +1930,8 @@ export const ensureHttps = (url) => {
         throw new Error('Input must be a string');
     }
 
+    if (url.length === 0) { return '' };
+
     // Trim whitespace from the URL
     url = url.trim();
 
@@ -3078,8 +3080,51 @@ export const translateUserName = (parent, child) => {
 };
 
 
+/**
+ * Opens a URL in a new tab or the same tab based on the CTRL parameter.
+ * @param {string} url - The URL to open.
+ * @param {boolean} CTRL - If true, open the URL in a new tab; if false, open in the same tab.
+ */
+export const openUrl = (url, CTRL) => {
+    // Check if the URL is valid
+    if (typeof url === 'string' && url.trim() !== '') {
+        if (CTRL) {
+            // Open in a new tab
+            browser.tabs.create({ url: url }, (tab) => {
+                if (browser.runtime.lastError) {
+                    console.error('Error creating tab:', browser.runtime.lastError);
+                }
+            });
+        } else {
+            // Open in the same tab
+            browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs.length > 0) {
+                    browser.tabs.update(tabs[0].id, { url: url }, (tab) => {
+                        if (browser.runtime.lastError) {
+                            console.error('Error updating tab:', browser.runtime.lastError);
+                        }
+                    });
+                }
+            });
+        }
+    } else {
+        console.error('Invalid URL provided:', url);
+    }
+};
 
-
+/**
+ * Escapes a string to prevent XSS attacks by replacing special characters with their corresponding HTML entities.
+ * @param {string} unsafe - The string to escape.
+ * @returns {string} The escaped string.
+ */
+export const escapeHtml = (unsafe) => {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
 
 
 

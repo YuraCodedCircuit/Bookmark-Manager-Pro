@@ -795,7 +795,7 @@ const isStringAllowed = (inputString, forbiddenArray) => {
 
 const createPopupWindow = (status) => {
     const contentEl = document.getElementById('content');
-    const forbiddenStringArray = ['about:', 'chrome:'];
+    const forbiddenStringArray = ['about:', 'moz-extension', 'chrome:'];
     let liveRadioPlayListIsOpenStatus = false;
     let liveRadioServer = 'https://de1.api.radio-browser.info';
     let liveRadioServerConfig = {};
@@ -994,6 +994,11 @@ const createPopupWindow = (status) => {
 
         bodyEl.style.backgroundColor = userColor;
         popupMainWindowEl.style.backgroundColor = userColor;
+        popupMainWindowEl.style.color = userActiveProfile.mainUserSettings.windows.window.font.color;
+        popupMainWindowEl.style.fontFamily = userActiveProfile.mainUserSettings.windows.window.font.fontFamily;
+        popupMainWindowEl.style.fontSize = `${userActiveProfile.mainUserSettings.windows.window.font.fontSize}px`;
+        popupMainWindowEl.style.fontStyle = userActiveProfile.mainUserSettings.windows.window.font.fontStyle;
+        popupMainWindowEl.style.fontWeight = userActiveProfile.mainUserSettings.windows.window.font.fontWeight;
         popupMainWindowTopEl.style.backgroundColor = colorPalette[1];
         currentUserNameAndImageEl.style.backgroundColor = colorPalette[0];
         popupMainWindowMiddleEl.style.backgroundColor = colorPalette[1];
