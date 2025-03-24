@@ -468,6 +468,51 @@
             "message": "Thank you for following this guide! We hope it has helped you navigate and make the most of the Bookmark Manager PRO extension. Your experience is important to us, and we wish you the best as you explore all its features. Enjoy organizing your bookmarks, and feel free to reach out with any feedback or questions!"
         }
     },
+    "_searchManagerUI": {
+        "typeToSearch": "Type to search...",
+        "_allFilters": {
+            "filters": "Filters",
+            "browserBookmarks": "Browser Bookmarks",
+            "selectCreatedAfter": "Select Created After",
+            "selectCreatedBefore": "Select Created Before",
+            "searchInURLs": "Search In URLs",
+            "includeBookmarks": "Include Bookmarks",
+            "includeFolders": "Include Folders",
+            "chooseCompactView": "Choose Compact View",
+            "chooseListView": "Choose List View"
+        },
+        "_messages": {
+            "_beginSearching": {
+                "_title": "Looking for a bookmark?",
+                "_message": "Start typing to quickly find your saved links!"
+            },
+            "_noResultsFound": {
+                "_title": "No bookmarks found matching your search.",
+                "_message": "Try different keywords or adjust your filters!"
+            }
+        },
+        "_bookmarkTypes": {
+            "bookmark": "Bookmark",
+            "folder": "Folder"
+        },
+        "_bookmarkAdditionalInformation": {
+            "created": "Created",
+            "edited": "Edited",
+            "url": "URL",
+            "parentFolder": "Parent Folder"
+        },
+        "_searchTitleResultSeparation": {
+            "_extension": {
+                "_singularForm": "bookmark found in Bookmark Manager Pro matching your search.",
+                "_pluralForm": "bookmarks found in Bookmark Manager Pro matching your search."
+            },
+            "_browser": {
+                "_singularForm": "bookmark found in your Firefox browser matching your search.",
+                "_pluralForm": "bookmarks found in your Firefox browser matching your search."
+            }
+        },
+        "close": "Close"
+    },
     "_contextMenu": {
         "create": "Create"
     },

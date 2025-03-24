@@ -7166,7 +7166,7 @@ body>#uiElementsContainer>#searchWindow>#searchWindowHeader {
     justify-content: flex-start;
     align-items: center;
     flex-direction: row;
-    padding: 10px 5px 10px 5px;
+    padding: 8px 5px 8px 5px;
     width: 100%;
     height: 50px;
 }
@@ -7178,6 +7178,13 @@ body>#uiElementsContainer>#searchWindow>#searchWindowHeader>#searchWindowHeaderS
     padding: 0px 5px 0px 5px;
     width: 100%;
     height: 100%;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+    --placeholderColor: #00000000;
+}
+
+#searchWindowHeaderSearchInput::placeholder {
+    color: var(--placeholderColor);
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody {
@@ -7203,8 +7210,10 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     justify-content: flex-start;
     align-items: flex-start;
     flex-direction: column;
+    border-radius: 0px 5px 0px 0px;
     width: 100%;
     height: 100%;
+    overflow-y: scroll;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersTitle {
@@ -7231,7 +7240,7 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     align-items: center;
     padding: 0px 5px 0px 5px;
     width: 100%;
-    height: 40px;
+    height: 55px;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeBrowserBookmarks>#searchWindowBodyLeftSearchFiltersContentIncludeBrowserBookmarksToggleLabel {
@@ -7248,7 +7257,7 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     align-items: center;
     padding: 0px 5px 0px 5px;
     width: 100%;
-    height: 40px;
+    height: 55px;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeSearchInUrls>#searchWindowBodyLeftSearchFiltersContentIncludeSearchInUrlsToggleLabel {
@@ -7359,7 +7368,7 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     align-items: center;
     padding: 0px 5px 0px 5px;
     width: 100%;
-    height: 40px;
+    height: 55px;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeBookmarks>#searchWindowBodyLeftSearchFiltersContentIncludeBookmarksToggleLabel {
@@ -7376,7 +7385,7 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     align-items: center;
     padding: 0px 5px 0px 5px;
     width: 100%;
-    height: 40px;
+    height: 55px;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentIncludeFolders>#searchWindowBodyLeftSearchFiltersContentIncludeFoldersToggleLabel {
@@ -7392,8 +7401,8 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     justify-content: space-between;
     align-items: center;
     padding: 0px 15px 0px 5px;
-    width: 275px;
-    height: 40px;
+    width: 100%;
+    height: 55px;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentResultView>#searchWindowBodyLeftSearchFiltersContentResultViewTitle {
@@ -7409,31 +7418,96 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>
     justify-content: center;
     align-items: center;
     width: 56px;
-    height: 30px;
+    height: 35px;
     border-radius: 5px;
     border: 0px solid #00000000;
-    background-color: #00000060;
+    background-color: #00000000;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent>#searchWindowBodyLeftSearchFiltersContentResultView>#searchWindowBodyLeftSearchFiltersContentResultViewToggleButton:active {
     top: 2px;
 }
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersContent .searchWindowBodyLeftSearchFilters{
+    margin-bottom: 5px;
+    min-height: 55px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersFooter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 45px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersFooter>#searchWindowBodyLeftSearchFiltersFooterCloseButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 35px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyLeft>#searchWindowBodyLeftSearchFilters>#searchWindowBodyLeftSearchFiltersFooter>#searchWindowBodyLeftSearchFiltersFooterCloseButton:active {
+    top: 2px;
+}
+
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight {
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
     flex: 1;
     height: 100%;
-    background-color: #820f01;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 5px;
+    justify-content: flex-start;
+    align-items: flex-start;
     width: 100%;
     height: 100%;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults #messageBox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 600px;
+    height: 630px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults #messageBox>#messageSearching {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 10px;
+    width: 520px;
+    height: 120px;
+    border-width: 1px;
+    border-style: solid;
+    font-family: Arial, sans-serif;
+    font-size: 22px;
+    text-align: justify;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 1);
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults #messageBox>#messageSearching>#messageSearchingTitle {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults #messageBox>#messageSearching>#messageSearchingText {
+    font-size: 18px;
+    margin-bottom: 10px;
 }
 
 body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList {
@@ -7441,22 +7515,75 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight
     justify-content: flex-start;
     align-items: center;
     flex-direction: column;
-    width: 100%;
-    height: 100%;
+    width: 600px;
+    height: 620px;
     overflow: scroll;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>#searchWindowBodyRightResultsExtensionList {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 600px;
+    height: auto;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>#searchWindowBodyRightResultsExtensionList>#searchWindowBodyRightResultsExtensionListTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>#searchWindowBodyRightResultsExtensionList>#searchWindowBodyRightResultsExtensionListBookmarks {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 600px;
+    height: auto;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>#searchWindowBodyRightResultsBrowserList {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 600px;
+    height: auto;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>#searchWindowBodyRightResultsBrowserList>#searchWindowBodyRightResultsBrowserListTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>#searchWindowBodyRightResultsBrowserList>#searchWindowBodyRightResultsBrowserListBookmarks {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 600px;
+    height: auto;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList {
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
     margin-bottom: 5px;
+    border-radius: 5px;
     width: 580px;
     height: 70px;
-    background-color: #4dd271;
+    overflow: hidden;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListIcon {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListIcon {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -7466,25 +7593,27 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight
     background-size: cover;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListDetails {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListDetails {
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
     flex-direction: column;
-    width: 520px;
+    width: 510px;
     height: 70px;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListTitle {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListTitle {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     margin-left: 5px;
-    width: 100%;
+    width: 470px;
     height: 35px;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo {
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -7494,15 +7623,58 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight
     height: 35px;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsType {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsType{
     display: flex;
     justify-content: flex-start;
     align-items: center;
+    width: 130px;
     height: 35px;
-    flex: 1;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList>.bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsAdded {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsType>.bookmarkElementListDetailsTypeIcon {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 30px;
+    height: 35px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsType>.bookmarkElementListDetailsTypeTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100px;
+    height: 35px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsUrl{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 470px;
+    height: 35px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsUrl>.bookmarkElementListDetailsUrlTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 40px;
+    height: 35px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsUrl>.bookmarkElementListDetailsUrlLink {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: 10px;
+    width: 300px;
+    height: 35px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlList .bookmarkElementList>.bookmarkElementListDetails>.bookmarkElementListDetailsInfo>.bookmarkElementListDetailsAdded {
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -7514,26 +7686,77 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: 100%;
-    height: 100%;
-    overflow: scroll;
+    flex-direction: column;
+    width: 600px;
+    height: 625px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>#searchWindowBodyRightResultsExtensionCompact {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 600px;
+    height: auto;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>#searchWindowBodyRightResultsExtensionCompact>#searchWindowBodyRightResultsExtensionCompactTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>#searchWindowBodyRightResultsExtensionCompact>#searchWindowBodyRightResultsExtensionCompactBookmarks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 200px);
+    grid-auto-rows: 205px;
+    gap: 0;
+    width: 100%;
+    height: auto;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>#searchWindowBodyRightResultsBrowserCompact {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 600px;
+    height: auto;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>#searchWindowBodyRightResultsBrowserCompact>#searchWindowBodyRightResultsBrowserCompactTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>#searchWindowBodyRightResultsBrowserCompact>#searchWindowBodyRightResultsBrowserCompactBookmarks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 200px);
+    grid-auto-rows: 205px;
+    gap: 0;
+    width: 100%;
+    height: auto;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact .bookmarkElementCompact {
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
     flex-direction: column;
     margin: 5px;
     width: 185px;
-    height: 230px;
+    height: 190px;
     overflow: hidden;
-    background-color: #4dd271;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact>.bookmarkElementCompactIcon {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact .bookmarkElementCompact>.bookmarkElementCompactIcon {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -7543,7 +7766,7 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight
     background-size: cover;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact>.bookmarkElementCompactDetails {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact .bookmarkElementCompact>.bookmarkElementCompactDetails {
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
@@ -7552,33 +7775,100 @@ body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight
     flex: 1;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact>.bookmarkElementCompactDetails>.bookmarkElementCompactTitle {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact .bookmarkElementCompact>.bookmarkElementCompactDetails>.bookmarkElementCompactTitle {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    margin-left: 5px;
-    width: 100%;
+    margin: 0px 5px 0px 5px;
+    width: 170px;
     height: 35px;
     white-space: nowrap;
+    overflow: hidden;
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact>.bookmarkElementCompactDetails>.bookmarkElementCompactDetailsInfo {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact .bookmarkElementCompact>.bookmarkElementCompactDetails>.bookmarkElementCompactDetailsInfo {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    flex-direction: column;
+    flex-direction: row;
     margin-left: 5px;
     width: 100%;
     flex: 1;
-    /* height: 35px; */
 }
 
-body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact>.bookmarkElementCompact>.bookmarkElementCompactDetails>.bookmarkElementCompactDetailsInfo>.bookmarkElementCompactDetailsType {
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact .bookmarkElementCompact>.bookmarkElementCompactDetails>.bookmarkElementCompactDetailsInfo>.bookmarkElementCompactDetailsTypeIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 35px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults>#searchWindowBodyRightResultsHtmlCompact .bookmarkElementCompact>.bookmarkElementCompactDetails>.bookmarkElementCompactDetailsInfo>.bookmarkElementCompactDetailsTypeTitle {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     width: 100%;
     height: 35px;
+}
+
+body>#uiElementsContainer>#searchWindow>#searchWindowBody>#searchWindowBodyRight>#searchWindowBodyRightResults .bookmarkMoreDetails {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
+
+body>.moreDetails {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 4px 4px 0px 4px;
+    flex-direction: column;
+    width: 350px;
+    height: auto;
+    z-index: 999999;
+    border-radius: 5px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+body>.moreDetails>.moreDetailsItems {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0px 0px 4px 0px;
+    width: 100%;
+    height: 30px;
+}
+
+body>.moreDetails>.moreDetailsItems>.moreDetailsItemsTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: 5px;
+    width: 140px;
+    height: 30px;
+}
+
+body>.moreDetails>.moreDetailsItems>.moreDetailsItemsInfo {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 202px;
+    height: 30px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+body>.moreDetails>.moreDetailsItems>.moreDetailsItemsDate {
+    justify-content: flex-start;
+    padding-right: 5px;
 }
 
 body>#otherBody>#particlesJs {

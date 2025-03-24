@@ -38,7 +38,7 @@
 
 "use strict";
 import { settingMainMenu, defaultUserBookmarks, defaultBookmarkStyle, defaultFolderStyle, defaultMainUserSettings, settingWindowOpen, currentFolderId, folderNamesForAddressBarPreview, exportFileExtensionName, browserAndOSInfo, currentLanguage, userProfileExport, backgroundImageExample, symbolArray, userActivityRegister, userProfile, userActiveProfile, exportType, defaultProfileImageBase64, manageUserProfiles, createCurrentBookmarkFolder, firefoxLogoSVG, chromeLogoSVG, extensionLogoSVG } from './main.js';
-import { indexedDBManipulation, generateColorPalette, showEmojiPicker, getInfoFromVersion, updateIdsAndParentIds, findBookmarkByKey, animateElement, getElementPosition, debounce, createTooltip, truncateTextIfOverflow, checkIfColorBrightness, randomIntFromInterval, getRandomColor, inputHexValid, invertHexColor, rgbToHex, hexToRGB, hexToRGBA, isObjectEmpty, resizeImageBase64, truncateString, translateUserName, checkIfAllowedToCreateScreenshotFromURL, changeBase64ImageColor, showMessageToastify, getSupportedFontFamilies, sortFolderByChildrenIndex, applyStylesToElement, getNextMaxIndex, generateRandomIdForObj, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, countTo, moveElementsInArray, getType, fetchImageAsBase64, getBrowserAndOSInfo, removeAllNestingFromObj, calculateGradientPercentages, formatBytes, isValidDate, checkIfImageBase64, updateInputRangeAndOutput, updateColorisInputValue } from './utilityFunctions.js';
+import { indexedDBManipulation, generateColorPalette, showEmojiPicker, getInfoFromVersion, updateIdsAndParentIds, findBookmarkByKey, animateElement, getElementPosition, debounce, createTooltip, truncateTextIfOverflow, checkIfColorBrightness, randomIntFromInterval, getRandomColor, inputHexValid, invertHexColor, rgbToHex, hexToRGB, hexToRGBA, isObjectEmpty, resizeImageBase64, truncateString, translateUserName, checkIfAllowedToCreateScreenshotFromURL, changeBase64ImageColor, showMessageToastify, getSupportedFontFamilies, sortFolderByChildrenIndex, applyStylesToElement, getNextMaxIndex, generateRandomIdForObj, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, countTo, moveElementsInArray, getType, fetchImageAsBase64, escapeHtml, removeAllNestingFromObj, calculateGradientPercentages, formatBytes, isValidDate, checkIfImageBase64, updateInputRangeAndOutput, updateColorisInputValue } from './utilityFunctions.js';
 import { importValidation } from './importValidation.js';
 
 /**
@@ -639,7 +639,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             logoImgEl.src = defaultProfileImageBase64;
                         }
                         if (userActiveProfile.name.trim().length > 0) {
-                            nameEl.textContent = userActiveProfile.name;
+                            nameEl.textContent = escapeHtml(userActiveProfile.name);
                             if (userActiveProfile.name.length < 30) { return };
                             const status = translateUserName('profileUserName', 'name');
                             if (!status) {
@@ -961,7 +961,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 }
                                 bodyTableHtml += `
                                     <div class="bodyProfileListTableRow" ${index % 2 ? `style="background-color: ${colorPalette[3]}"` : `style="background-color: ${colorPalette[6]}"`}>
-                                        <div class="bodyProfileListTableRowName" data-id="${profile.userId}">${truncateString(profile.name, 29, 0)}</div>
+                                        <div class="bodyProfileListTableRowName" data-id="${profile.userId}">${truncateString(escapeHtml(profile.name), 29, 0)}</div>
                                         <div class="bodyProfileListTableRowInfo">
                                             <div class="bodyProfileListTableRowInfoDate">${date}</div>
                                             <div class="bodyProfileListTableRowInfoTime">${time}</div>
@@ -1619,7 +1619,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 selectedProfile.name = nameValue;
                                 userProfile.offline.forEach(profile => {
                                     if (profile.userId === id) {
-                                        profileNameEl.innerHTML = `<div id="name">${nameValue}</div>`;
+                                        profileNameEl.innerHTML = `<div id="name">${escapeHtml(nameValue)}</div>`;
                                         profile.name = nameValue;
                                         if (nameValue.length < 30) { return };
                                         const status = translateUserName('profileUserName', 'name');
@@ -1967,7 +1967,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     const [name, extension] = file.name.split(/\.(?=[^\.]+$)/);
                                     // Truncates the middle file name and appends the file extension.
                                     const fileName = `${truncateString(name, 27, 3)}.${extension}`;
-                                    imagePickerInputFileNameEl.innerHTML = fileName;
+                                    imagePickerInputFileNameEl.innerText = fileName;
                                 }
                                 // Creates a FileReader to read the selected image file.
                                 const reader = new FileReader();
@@ -5754,7 +5754,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                             <div class="action">${languageObject._activity._myActivity._activityListTitles[action.action]}</div>
                                             <div class="actionDetail">
                                                 <div class="detail">
-                                                    <div class="detailProfile" title="${action.details.profileName}">${truncateString(action.details.profileName, 26, 0)}</div>
+                                                    <div class="detailProfile" title="${action.details.profileName}">${truncateString(escapeHtml(action.details.profileName), 26, 0)}</div>
                                                     <div class="detailOsAndBrowser">
                                                         <div class="os">${action.details.os}</div>
                                                         <div class="browser">${action.details.browser.name} ${action.details.browser.version}</div>
@@ -5816,7 +5816,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                             <div class="action">${languageObject._activity._myActivity._activityListTitles[action.action]}</div>
                                             <div class="actionDetail">
                                                 <div class="detail">
-                                                    <div class="detailProfile" title="${action.action == 'createBookmark' ? action.details.bookmark.title : action.details.folder.title}">${action.action == 'createBookmark' ? truncateString(action.details.bookmark.title, 33, 0) : truncateString(action.details.folder.title, 33, 0)}</div>
+                                                    <div class="detailProfile" title="${action.action == 'createBookmark' ? escapeHtml(action.details.bookmark.title) : escapeHtml(action.details.folder.title)}">${action.action == 'createBookmark' ? truncateString(escapeHtml(action.details.bookmark.title), 33, 0) : truncateString(escapeHtml(action.details.folder.title), 33, 0)}</div>
                                                     <div class="detailOsAndBrowser">
                                                         <div class="os">${action.details.os}</div>
                                                         <div class="browser">${action.details.browser.name} ${action.details.browser.version}</div>
@@ -5847,7 +5847,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                             <div class="action">${languageObject._activity._myActivity._activityListTitles[action.action]}</div>
                                             <div class="actionDetail">
                                                 <div class="detail">
-                                                    <div class="detailProfile" title="${action.action == 'deleteBookmark' ? action.details.bookmark.title : action.details.folder.title}">${action.action == 'deleteBookmark' ? truncateString(action.details.bookmark.title, 33, 0) : truncateString(action.details.folder.title, 33, 0)}</div>
+                                                    <div class="detailProfile" title="${action.action == 'deleteBookmark' ? escapeHtml(action.details.bookmark.title) : escapeHtml(action.details.folder.title)}">${action.action == 'deleteBookmark' ? truncateString(escapeHtml(action.details.bookmark.title), 33, 0) : truncateString(escapeHtml(action.details.folder.title), 33, 0)}</div>
                                                     <div class="detailOsAndBrowser">
                                                         <div class="os">${action.details.os}</div>
                                                         <div class="browser">${action.details.browser.name} ${action.details.browser.version}</div>
@@ -9298,9 +9298,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 showMessageToastify('error', ``, `Failed to get URL. Please try again.`, 4000, false, 'bottom', 'right', true);
                                 return;
                             }
-                            if (event.button === 0) {
+                            if (event.button === 0 && !event.ctrlKey) {
                                 window.open(url, '_self');
-                            } else if (event.button === 1) {
+                            } else if (event.button === 1 || (event.button === 0 && event.ctrlKey)) {
                                 browser.tabs.create({ url: url });
                             } else if (event.button === 2) {
                                 copyTextToClipboard(url);
@@ -9397,9 +9397,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 showMessageToastify('error', ``, `Failed to get URL. Please try again.`, 4000, false, 'bottom', 'right', true);
                                 return;
                             }
-                            if (event.button === 0) {
+                            if (event.button === 0 && !event.ctrlKey) {
                                 window.open(url, '_self');
-                            } else if (event.button === 1) {
+                            } else if (event.button === 1 || (event.button === 0 && event.ctrlKey)) {
                                 browser.tabs.create({ url: url });
                             } else if (event.button === 2) {
                                 copyTextToClipboard(url);
@@ -9553,9 +9553,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 showMessageToastify('error', ``, `Failed to get URL. Please try again.`, 4000, false, 'bottom', 'right', true);
                                 return;
                             }
-                            if (event.button === 0) {
+                            if (event.button === 0 && !event.ctrlKey) {
                                 window.open(url, '_self');
-                            } else if (event.button === 1) {
+                            } else if (event.button === 1 || (event.button === 0 && event.ctrlKey)) {
                                 browser.tabs.create({ url: url });
                             } else if (event.button === 2) {
                                 copyTextToClipboard(url);
@@ -9707,9 +9707,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 showMessageToastify('error', ``, `Failed to get URL. Please try again.`, 4000, false, 'bottom', 'right', true);
                                 return;
                             }
-                            if (event.button === 0) {
+                            if (event.button === 0 && !event.ctrlKey) {
                                 window.open(url, '_self');
-                            } else if (event.button === 1) {
+                            } else if (event.button === 1 || (event.button === 0 && event.ctrlKey)) {
                                 browser.tabs.create({ url: url });
                             } else if (event.button === 2) {
                                 copyTextToClipboard(url);

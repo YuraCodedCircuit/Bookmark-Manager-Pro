@@ -1,26 +1,27 @@
 # Organize, Customize, Access: Bookmark Manager Pro - The Ultimate Free Bookmark Manager for Your Browser.
 
 | <img src="/documentation-screenshots/Screenshot_from_2025-03-11_1.png" alt="Screenshot #1" style="width: auto; height: auto;"> | <img src="/documentation-screenshots/Screenshot_from_2025-03-11_2.png" alt="Screenshot #2" style="width: auto; height: auto;"> | <img src="/documentation-screenshots/Screenshot_from_2025-03-11_3.png" alt="Screenshot #3" style="width: auto; height: auto;"> |
-|-------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| <img src="/documentation-screenshots/Screenshot_from_2025-03-11_4.png" alt="Screenshot #4" style="width: auto; height: auto;"> | <img src="/documentation-screenshots/Screenshot_from_2025-03-11_5.png" alt="Screenshot #5" style="width: auto; height: auto;"> | <img src="/documentation-screenshots/Screenshot_from_2025-03-11_6.png" alt="Screenshot #6" style="width: auto; height: auto;"> |
+|--------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| <img src="/documentation-screenshots/Screenshot from 2025-03-24_13.png" alt="Screenshot #4" style="width: auto; height: auto;"> | <img src="/documentation-screenshots/Screenshot_from_2025-03-11_5.png" alt="Screenshot #5" style="width: auto; height: auto;"> | <img src="/documentation-screenshots/Screenshot_from_2025-03-11_6.png" alt="Screenshot #6" style="width: auto; height: auto;"> |
 
-1. [Unleash the Power of Pro-Level Bookmark Management - Completely Free](#unleash-the-power-of-pro-level-bookmark-management---completely-free)
-   1. [Core Features Designed for Productivity and Personalization](#core-features-designed-for-productivity-and-personalization)
-      1. [Core Features Designed for Productivity and Personalization](#revolutionary-organization)
-      2. [Limitless Customization Options](#limitless-customization-options)
-      3. [Multi-Profile Support for Contextual Bookmarking](#multi-profile-support-for-contextual-bookmarking)
-      4. [Blazing-Fast Access & Keyboard Efficiency](#blazing-fast-access--keyboard-efficiency)
-      5. [Robust Security and Data Management](#robust-security-and-data-management)
-      6. [Bonus Integrated Features](#bonus-integrated-features)
-      7. [Browser Bookmark Synchronization](#browser-bookmark-synchronization)
-      8. [Open-Source Transparency & Community](#open-source-transparency--community)
-   2. [Permissions Explained](#permissions-explained-user-trust-is-key)
-   3. [Who is Bookmark Manager Pro For?](#who-is-bookmark-manager-pro-for)
-2. [Installation Instructions for Bookmark Manager Pro](#installation-instructions-for-bookmark-manager-pro)
-   1. [Prerequisites](#prerequisites)
-   2. [Installation Steps](#installation-steps)
-      1. [For Firefox](#for-firefox)
-   3. [Troubleshooting](#troubleshooting)
+- [Organize, Customize, Access: Bookmark Manager Pro - The Ultimate Free Bookmark Manager for Your Browser.](#organize-customize-access-bookmark-manager-pro---the-ultimate-free-bookmark-manager-for-your-browser)
+  - [Unleash the Power of Pro-Level Bookmark Management - Completely Free!](#unleash-the-power-of-pro-level-bookmark-management---completely-free)
+    - [Core Features Designed for Productivity and Personalization:](#core-features-designed-for-productivity-and-personalization)
+      - [**Revolutionary Organization:**](#revolutionary-organization)
+      - [**Limitless Customization Options:**](#limitless-customization-options)
+      - [**Multi-Profile Support for Contextual Bookmarking:**](#multi-profile-support-for-contextual-bookmarking)
+      - [**Blazing-Fast Access \& Keyboard Efficiency:**](#blazing-fast-access--keyboard-efficiency)
+      - [**Robust Security and Data Management:**](#robust-security-and-data-management)
+      - [**Bonus Integrated Features:**](#bonus-integrated-features)
+      - [**Browser Bookmark Synchronization:**](#browser-bookmark-synchronization)
+      - [**Open-Source Transparency \& Community:**](#open-source-transparency--community)
+    - [Permissions Explained (User Trust is Key):](#permissions-explained-user-trust-is-key)
+    - [Who is Bookmark Manager Pro For?](#who-is-bookmark-manager-pro-for)
+  - [Installation Instructions for Bookmark Manager Pro](#installation-instructions-for-bookmark-manager-pro)
+    - [Prerequisites](#prerequisites)
+    - [Installation Steps](#installation-steps)
+      - [For Firefox:](#for-firefox)
+    - [Troubleshooting](#troubleshooting)
 
 ## Unleash the Power of Pro-Level Bookmark Management - Completely Free!
 
@@ -114,8 +115,10 @@ Before installing the Bookmark Manager Pro extension, ensure you have the follow
 #### For Firefox:
 
 1. **Download the Extension**:
-   - Visit the [Firefox Add-ons](https://addons.mozilla.org).
-   - Click on the "Add to Firefox" button.
+   - You can find the Bookmark Manager Pro extension on the Firefox Add-ons website in two ways:
+     - **Search by Name:** Visit the [Firefox Add-ons](https://addons.mozilla.org) and search for **'Bookmark Manager Pro'**.
+     - **Visit by URL:** Alternatively, you can directly access the extension page by visiting the following URL: [https://addons.mozilla.org/en-US/firefox/addon/bookmark-manager-pro/](https://addons.mozilla.org/en-US/firefox/addon/bookmark-manager-pro/)
+   - Once you find the extension, click on the "Add to Firefox" button.
 
 2. **Enable Extension**:
    - Go to `about:addons`.

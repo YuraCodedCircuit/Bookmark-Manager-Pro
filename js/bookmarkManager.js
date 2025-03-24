@@ -37,8 +37,8 @@
  */
 
 "use strict";
-import { userProfileExport, defaultUserBookmarks, defaultBookmarkStyle, defaultFolderStyle, currentFolderId, userActiveProfile, currentLanguageTextObj, manageUserProfiles, userActivityRegister, createCurrentBookmarkFolder} from './main.js';
-import { isObjectEmpty, findBookmarkByKey, checkIfColorBrightness, pSBC, truncateString, invertHexColor, getNextMaxIndex, generateRandomIdForObj, indexedDBManipulation, showMessageToastify, capitalizeString, actionForArray, updateInputRangeAndOutput, updateColorisInputValue, checkIfAllowedToCreateScreenshotFromURL, getSupportedFontFamilies, getRandomColor, ensureHttps, resizeImageBase64, inputHexValid, generateColorPalette, truncateTextIfOverflow, createTooltip } from './utilityFunctions.js';
+import { userProfileExport, defaultUserBookmarks, currentFolderId, userActiveProfile, currentLanguageTextObj, manageUserProfiles, userActivityRegister, createCurrentBookmarkFolder} from './main.js';
+import { isObjectEmpty, findBookmarkByKey, checkIfColorBrightness, pSBC, truncateString, invertHexColor, getNextMaxIndex, generateRandomIdForObj, indexedDBManipulation, showMessageToastify, capitalizeString, actionForArray, updateInputRangeAndOutput, updateColorisInputValue, checkIfAllowedToCreateScreenshotFromURL, getSupportedFontFamilies, getRandomColor, ensureHttps, resizeImageBase64, inputHexValid, generateColorPalette, truncateTextIfOverflow, createTooltip, escapeHtml } from './utilityFunctions.js';
 
 /**
  * Creates a new bookmark or folder object with default properties.
@@ -76,10 +76,10 @@ export const createNewBookmarkOrFolderObj = async (type) => {
  * folder selection, and style customization options. The function also initializes or retrieves necessary styles and language
  * settings to populate the UI elements appropriately.
  *
- * @param {string} type - The type of item to create or edit, such as 'default', 'bookmark','folder' or 'close'.
- * @param {string} string - The ID of the item to edit. A value of 0 indicates a new item is being created.
+ * @param {string} menuType - The type of menu, such as 'default', 'bookmark' or 'close'.
+ * @param {string} menuItem - The item type of the menu to create or edit, such as 'newBookmark', 'newFolder' or 'edit'.
  */
-export const createAndEditBookmarksWindow = async (type, menuType = '') => {
+export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
     let createEditWindowHtml = ``;
     // Select the context menu window element for manipulation.
     const contextMenuWindowEl = $('#contextMenuWindow');
@@ -93,13 +93,13 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
     let bookmarkBoxSize = { width: '200px', height: '200px' };
     let colorPalette = [];
 
-    if (type == 'close') {
+    if (menuType == 'close') {
         contextMenuWindowEl.css('display', 'none').html(``);
         userProfileExport.currentIdToEdit = null;
         return;
     }
 
-    if (type == 'bookmark' && menuType == 'edit') {
+    if (menuType == 'bookmark' && menuItem == 'edit') {
         const currentDate = new Date().getTime();
         currentEditingObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentIdToEdit);
         editingObjBookmarkStyle = structuredClone(currentEditingObj.style.bookmark);
@@ -107,10 +107,10 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         selectedFolderId = currentEditingObj.parentId;
         currentEditingObj.lastEdited = currentDate;
     }
-    if ((type == 'default' && menuType == 'newBookmark') || (type == 'default' && menuType == 'newFolder')) {
+    if ((menuType == 'default' && menuItem == 'newBookmark') || (menuType == 'default' && menuItem == 'newFolder')) {
         userProfileExport.currentIdToEdit == null;
-        if (menuType == 'newBookmark') { objType = 'bookmark' }
-        if (menuType == 'newFolder') { objType = 'folder' }
+        if (menuItem == 'newBookmark') { objType = 'bookmark' }
+        if (menuItem == 'newFolder') { objType = 'folder' }
         currentEditingObj = await createNewBookmarkOrFolderObj(objType);
         selectedFolderId = currentFolderId;
         currentEditingObj.parentId = selectedFolderId;
@@ -136,12 +136,12 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
     }
 
     // Validate the type of bookmark window to be created. Exit if the type is not recognized.
-    if (type != 'default' && type != 'bookmark') {
+    if (menuType != 'default' && menuType != 'bookmark') {
         contextMenuWindowEl.css('display', 'none').html(``);
         return;
     }
 
-    switch (menuType) {
+    switch (menuItem) {
         case 'newBookmark':
         case 'newFolder':
         case 'edit':
@@ -255,13 +255,13 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         if (currentTitleEditorInputListener) {
             titleEditorInputEl.removeEventListener('input', currentTitleEditorInputListener);
         }
-        bookmarkTextPreviewEl.innerHTML = currentEditingObj.title;
-        titleEditorInputEl.value = currentEditingObj.title;
+        bookmarkTextPreviewEl.innerHTML = escapeHtml(currentEditingObj.title);
+        titleEditorInputEl.value = escapeHtml(currentEditingObj.title);
         // Define a new event listener that updates the preview and editing object's title on input change.
         const handleTitleInputChange = () => {
             // Update the preview element's innerHTML and the editing object's title with the input's value.
-            bookmarkTextPreviewEl.innerHTML = titleEditorInputEl.value;
-            currentEditingObj.title = titleEditorInputEl.value;
+            bookmarkTextPreviewEl.innerHTML = escapeHtml(titleEditorInputEl.value);
+            currentEditingObj.title = escapeHtml(titleEditorInputEl.value);
         }
         // Store the new event listener for potential future removal.
         currentTitleEditorInputListener = handleTitleInputChange;
@@ -317,7 +317,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
         urlEditorInputEl.addEventListener('input', currentUrlEditorInputListener);
     };
     // Call the function to update the object's URL and manage the screenshot button.
-    if ((type == 'bookmark' && menuType == 'edit') || (type == 'default' && menuType == 'newBookmark')) { updateObjUrl(); }
+    if ((menuType == 'bookmark' && menuItem == 'edit') || (menuType == 'default' && menuItem == 'newBookmark')) { updateObjUrl(); }
 
     const createAndUpdateSelectFolderSection = () => {
         const listToSelectFolderEl = document.getElementById('listToSelectFolder');
@@ -331,9 +331,9 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             const buildFolderTreeHTML = (bookmarks) => {
                 let html = '<ul>'; // Start with an unordered list
                 bookmarks.forEach(bookmark => {
-                    if (bookmark.type === 'folder') {
+                    if (bookmark.type === 'folder' && bookmark.id !== currentEditingObj.id) {
                         // Create the list item for the current bookmark
-                        html += `<li data-id="${bookmark.id}"><div class="folder"><div class="check" data-id="${bookmark.id}"></div><span class="folderName" data-id="${bookmark.id}">${bookmark.title}</span></div>`;
+                        html += `<li data-id="${bookmark.id}"><div class="folder"><div class="check" data-id="${bookmark.id}"></div><span class="folderName" data-id="${bookmark.id}">${escapeHtml(bookmark.title)}</span></div>`;
                         // If there are children, recursively build their HTML
                         if (bookmark.children && bookmark.children.length > 0) {
                             html += buildFolderTreeHTML(bookmark.children); // Recursively build children
@@ -542,7 +542,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             }
 
             // If creating a default type object, find the bookmark by key, set properties, and add it to its parent.
-            if (type == 'default') {
+            if (menuType == 'default') {
                 parentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, selectedFolderId);
                 currentEditingObj.title = titleEditorInputEl.value.trim();
                 currentEditingObj.url = ensureHttps(urlEditorInputEl.value.trim());
@@ -556,7 +556,7 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
                     id: currentEditingObj.id,
                     parentId: parentObj.id === userProfileExport.mainUserSettings.main.synchronizationToBrowser.extensionFolderId ? userProfileExport.mainUserSettings.main.synchronizationToBrowser.browserFolderId : parentObj.id,
                 };
-            } else if (type == 'bookmark') {
+            } else if (menuType == 'bookmark') {
                 parentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentIdToEdit);
                 parentObj.title = titleEditorInputEl.value.trim();
                 parentObj.url = ensureHttps(urlEditorInputEl.value.trim());
@@ -600,10 +600,10 @@ export const createAndEditBookmarksWindow = async (type, menuType = '') => {
             } else {
                 showMessageToastify('error', '', `Failed to create ${objType}`, 2000, false, 'bottom', 'right', true);
             }
-            if (type == 'default' && menuType == 'newBookmark') {
+            if (menuType == 'default' && menuItem == 'newBookmark') {
                 userActivityRegister('save', 'createBookmark', { id: currentEditingObj.id, title: currentEditingObj.title });
             }
-            if (type == 'default' && menuType == 'newFolder') {
+            if (menuType == 'default' && menuItem == 'newFolder') {
                 userActivityRegister('save', 'createFolder', { id: currentEditingObj.id, title: currentEditingObj.title });
             }
             // Refresh the current bookmark folder display.

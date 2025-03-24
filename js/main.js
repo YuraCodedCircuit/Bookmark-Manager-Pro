@@ -40,7 +40,7 @@
 import { openCloseSettingWindow } from './settingsManager.js';
 import { createAndEditBookmarksWindow } from './bookmarkManager.js';
 import { searchManager } from './searchManager.js';
-import { findBookmarkByKey, indexedDBManipulation, pSBC, returnRandomElementFromArray, getRandomHexColorByType, randomIntFromInterval, checkIfColorBrightness, findPathToRoot, getRandomColor, hexToRGB, isObjectEmpty, truncateString, showMessageToastify, sortFolderByChildrenIndex, getNextMaxIndex, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, getBrowserAndOSInfo, calculateGradientPercentages, changeBase64ImageColor, generateColorPalette, createTooltip, truncateTextIfOverflow, translateUserName } from './utilityFunctions.js';
+import { findBookmarkByKey, indexedDBManipulation, pSBC, returnRandomElementFromArray, getRandomHexColorByType, randomIntFromInterval, checkIfColorBrightness, findPathToRoot, getRandomColor, escapeHtml, isObjectEmpty, openUrl, showMessageToastify, sortFolderByChildrenIndex, getNextMaxIndex, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, getBrowserAndOSInfo, calculateGradientPercentages, changeBase64ImageColor, generateColorPalette, createTooltip, truncateTextIfOverflow, translateUserName } from './utilityFunctions.js';
 import { interactiveGuide } from './interactiveGuide.js';
 
 export let firstLoadStatus = false;
@@ -540,6 +540,7 @@ export const userProfileExport = {
     currentUserBookmarks: [],
     mainUserSettings: {},
     currentIdToEdit: null,
+    currentFolderId: currentFolderId,
 };
 export let userProfile = {};
 export let userActiveProfile = {};
@@ -960,6 +961,66 @@ export const backgroundImageExample = [
     },
 ];
 export const changelog = [
+    {
+        "id": 9,
+        "version": "0.2.8",
+        "log": [
+            "Implemented: Enhanced Search Functionality:",
+            "&ensp;- The search functionality for bookmarks and folders has been fully implemented with a redesigned user interface.",
+            "&ensp;- The search UI features:",
+            "&ensp;&ensp;- An input field at the top for entering search keywords.",
+            "&ensp;&ensp;- A left-side panel with the following filters:",
+            "&ensp;&ensp;&ensp;- 'Browser Bookmarks': A toggle to include all browser bookmarks in the search results.",
+            "&ensp;&ensp;&ensp;- 'Selected Created After': Date and time input fields to filter items created after a specific date and time.",
+            "&ensp;&ensp;&ensp;- 'Selected Created Before': Date and time input fields to filter items created before a specific date and time.",
+            "&ensp;&ensp;&ensp;- 'Search In URLs': A toggle to include bookmark URLs in the search.",
+            "&ensp;&ensp;&ensp;- 'Include Bookmarks': A toggle to include all extension bookmarks in the search.",
+            "&ensp;&ensp;&ensp;- 'Include Folders': A toggle to include all extension folders in the search.",
+            "&ensp;&ensp;&ensp;- 'Choose Compact View' / 'Choose List View': A button that toggles the display of search results between a compact tile view and a detailed list view.",
+            "&ensp;&ensp;- A 'Close' button at the bottom to exit the search UI.",
+            "&ensp;- The right-side panel displays the search results.",
+            "&ensp;- When the 'Browser Bookmarks' toggle is enabled, extension bookmarks are shown first, followed by browser bookmarks. Each section has a title indicating the number of items found (e.g., '1 bookmark found in Bookmark Manager Pro matching your search.', '10 bookmarks found in your Firefox browser matching your search.').",
+            "Added: Utility Functions in 'utilityFunctions.js':",
+            "&ensp;- Implemented 'openUrl(url, ctrlPressed)' function to open a URL in a new tab (if `ctrlPressed` is true or middle mouse click) or the same tab.",
+            "&ensp;- Implemented 'escapeHtml(unsafe)' function to prevent XSS attacks by escaping HTML special characters.",
+            "Added: Localization for Search Manager UI:",
+            "&ensp;- All titles and labels for the search manager UI have been added to the 'en-US.lang' file in American English.",
+            "Security: Implemented 'escapeHtml' for XSS Prevention:",
+            "&ensp;- The 'escapeHtml' function has been implemented in 'main.js' to sanitize:",
+            "&ensp;&ensp;- Bookmark titles displayed in the main view.",
+            "&ensp;&ensp;- Navigation bar titles.",
+            "&ensp;&ensp;- The username displayed in the user menu.",
+            "&ensp;- The 'escapeHtml' function has been implemented in 'bookmarkManager.js' to sanitize:",
+            "&ensp;&ensp;- Folder names in the folders tree.",
+            "&ensp;&ensp;- Content displayed in the bookmark preview.",
+            "&ensp;- The 'escapeHtml' function has been implemented in 'settingsManager.js' to sanitize:",
+            "&ensp;&ensp;- The user profile name in the 'Offline Profile' menu.",
+            "&ensp;&ensp;- Profile names and bookmark titles displayed in the 'My Activity' menu.",
+            "Fixed: User Menu Visibility:",
+            "&ensp;- The username in the user menu now correctly hides when the user closes the menu.",
+            "Fixed: Bookmark Manager Variable Names:",
+            "&ensp;- Improved code readability in 'bookmarkManager.js' by updating variable names for better understanding.",
+            "Fixed: New Folder URL Auto-Addition:",
+            "&ensp;- When creating a new folder in the Bookmark Manager, the extension no longer automatically adds 'HTTP://' or 'HTTPS://' to the folder's URL.",
+            "Fixed: Parent Folder Selection:",
+            "&ensp;- In the Bookmark Manager, when editing a folder, that folder will no longer appear as an option to select as its own parent in the 'Select Folder' area.",
+            "Improved: Settings 'Info' Buttons Behavior:",
+            "&ensp;- In the 'Info' menu of the Settings Manager, the behavior of the Firefox, X/Twitter, GitHub, and Buy Me A Coffee buttons has been updated:",
+            "&ensp;&ensp;- Left Mouse Click (without CTRL): Opens the link in the same tab.",
+            "&ensp;&ensp;- Left Mouse Click (with CTRL) or Middle Mouse Click: Opens the link in a new tab.",
+            "&ensp;&ensp;- Right Mouse Click: Copies the URL to the system clipboard (this behavior remains unchanged).",
+            "Fixed: Font Styles in Extension Popup:",
+            "&ensp;- All user-defined font styles (color, family, size, style, weight) are now correctly applied to the extension's popup window.",
+            "Updated: Manifest Homepage URL:",
+            "&ensp;- The 'homepage_url' in the 'manifest.json' file has been updated to 'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro'.",
+            "Updated: README Installation Instructions:",
+            "&ensp;- The installation instructions in 'README.md' have been updated to provide more detailed steps on how to download the extension from the Firefox Add-ons website, including searching by name and using a direct URL.",
+            "Updated: Extension Screenshots:",
+            "&ensp;- New extension screenshots have been added, and outdated screenshots have been removed.",
+            "Updated: README Screenshots:",
+            "&ensp;- The extension screenshots displayed in the 'README.md' file have been updated."
+        ]
+    },
     {
         "id": 8,
         "version": "0.2.7",
@@ -1584,46 +1645,15 @@ const mainFunction = () => {
             e.preventDefault(); // Prevent the default action
             e.stopPropagation(); // Stop the event from propagating further
             createContextMenu(false, 'clean');
-            currentFolderId = e.target.dataset.id;
-            if (currentFolderId.length === 0) { console.error('Error to get folder ID'); return; }
-            currentObject = findBookmarkByKey(userProfileExport.currentUserBookmarks, currentFolderId);
+            userProfileExport.currentFolderId = e.target.dataset.id;
+            if (userProfileExport.currentFolderId.length === 0) { console.error('Error to get folder ID'); return; }
+            currentObject = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId);
             if (currentObject == null) { console.error('Error to get folder Obj'); return; }
             if (currentObject.type == 'folder') {
                 createCurrentBookmarkFolder();
             } else if (currentObject.type == 'bookmark' && currentObject.url.length > 0) {
-                /**
-                 * Opens a URL in a new tab or the same tab based on the CTRL parameter.
-                 * @param {string} url - The URL to open.
-                 * @param {boolean} CTRL - If true, open the URL in a new tab; if false, open in the same tab.
-                 */
-                const openUrl = (url, CTRL) => {
-                    // Check if the URL is valid
-                    if (typeof url === 'string' && url.trim() !== '') {
-                        if (CTRL) {
-                            // Open in a new tab
-                            browser.tabs.create({ url: url }, (tab) => {
-                                if (browser.runtime.lastError) {
-                                    console.error('Error creating tab:', browser.runtime.lastError);
-                                }
-                            });
-                        } else {
-                            // Open in the same tab
-                            browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                                if (tabs.length > 0) {
-                                    browser.tabs.update(tabs[0].id, { url: url }, (tab) => {
-                                        if (browser.runtime.lastError) {
-                                            console.error('Error updating tab:', browser.runtime.lastError);
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    } else {
-                        console.error('Invalid URL provided:', url);
-                    }
-                };
                 openUrl(currentObject.url, e.ctrlKey);
-                currentFolderId = currentObject.parentId;
+                userProfileExport.currentFolderId = currentObject.parentId;
             }
             return false;
         }
@@ -1639,7 +1669,7 @@ const mainFunction = () => {
         if (interactiveGuideEl !== null) { return; }
         createContextMenu(false, 'clean');
         if (showProfileMenuStatus) {
-            // showProfileMenu();
+            showProfileMenu();
         }
     });
 
@@ -2819,6 +2849,7 @@ export const showProfileMenu = async () => {
                             }
                         });
                         profileMenuBodyEl.style.display = 'none';
+                        profileUserNameEl.innerHTML = '';
                     }
                 }
             });
@@ -2836,7 +2867,7 @@ export const showProfileMenu = async () => {
             `;
         });
         profileMenuBodyEl.innerHTML = html;
-        profileUserNameEl.innerHTML = `<span id="userName" style="color:${userActiveProfile.mainUserSettings.windows.window.font.color}">${userActiveProfile.name}</span>`;
+        profileUserNameEl.innerHTML = `<span id="userName" style="color:${userActiveProfile.mainUserSettings.windows.window.font.color}">${escapeHtml(userActiveProfile.name)}</span>`;
         const profileMenuItem = document.querySelectorAll('.profileMenuItem[data-type]'); // All profile menu items
 
         gsap.to(profileMenuEl, {
@@ -2945,7 +2976,7 @@ export const createContextMenu = async (create = false, type = '', setMousePosit
         const contextMenuItemImgBodyStyle = `padding:0 5px 0 2px;width: 36px;height: 30px;`;
         // Defines the styling for the titles within context menu items.
         const contextMenuItemTitleBodyStyle = `color:${userProfileExport.mainUserSettings.windows.window.font.color};padding:0px 5px 0px 0px;text-wrap: nowrap;`;
-        const pathToRoot = await findPathToRoot(userProfileExport.currentUserBookmarks, currentFolderId, false);
+        const pathToRoot = await findPathToRoot(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId, false);
         let lastObjectInClipboard;
         if (clipboard.length > 0) {
             lastObjectInClipboard = clipboard[clipboard.length - 1];
@@ -3161,7 +3192,7 @@ const updateUserClipboard = async (status) => {
 
             // Create an object representing the item to be copied or cut
             const copiedObj = {
-                currentParentFolderId: currentFolderId,
+                currentParentFolderId: userProfileExport.currentFolderId,
                 currentIdToEdit: userProfileExport.currentIdToEdit,
                 status: status
             }
@@ -3169,17 +3200,17 @@ const updateUserClipboard = async (status) => {
 
             // Handle 'paste' status
         } else if (status === 'paste') {
-            if (clipboard.length > 0 && currentFolderId != clipboard[0].currentIdToEdit) {
+            if (clipboard.length > 0 && userProfileExport.currentFolderId != clipboard[0].currentIdToEdit) {
                 if (clipboard[0].status == 'copy') {
-                    const saveStatus = await actionForArray(userProfileExport.currentUserBookmarks, 'copy', clipboard[0].currentIdToEdit, currentFolderId);
+                    const saveStatus = await actionForArray(userProfileExport.currentUserBookmarks, 'copy', clipboard[0].currentIdToEdit, userProfileExport.currentFolderId);
                     clipboard[0].currentIdToEdit = saveStatus.id;
                     if (!saveStatus.status) { throw new Error('Failed to copy object'); }
                 } else if (clipboard[0].status == 'cut') {
-                    const saveStatus = await actionForArray(userProfileExport.currentUserBookmarks, 'cut', clipboard[0].currentIdToEdit, currentFolderId);
+                    const saveStatus = await actionForArray(userProfileExport.currentUserBookmarks, 'cut', clipboard[0].currentIdToEdit, userProfileExport.currentFolderId);
                     if (!saveStatus.status) { throw new Error('Failed to cut object'); }
                 }
 
-                clipboard[0].folderIdTo = currentFolderId;
+                clipboard[0].folderIdTo = userProfileExport.currentFolderId;
                 clipboardHistory.push(clipboard[0]);
                 const saveStatus = await manageUserProfiles('save');
                 if (!saveStatus) {
@@ -3209,7 +3240,7 @@ const updateUserClipboard = async (status) => {
                 status = true;
             }
             if (lastObjectFromHistory.status === 'deleted' && !isObjectEmpty(lastObjectFromHistory.object)) {
-                const currentFolderObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, currentFolderId);
+                const currentFolderObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId);
                 currentFolderObj.children.push(lastObjectFromHistory.object);
                 const saveStatus = await manageUserProfiles('save');
                 if (!saveStatus) { throw new Error('Failed to restore deleted object object'); }
@@ -3442,7 +3473,7 @@ const deleteBookmarkOrFolder = () => {
          */
         const handleDeleteClick = async () => {
             try {
-                const currentFolderObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, currentFolderId);
+                const currentFolderObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId);
                 const index = currentFolderObj.children.findIndex(x => x.id === objInfo.id);
                 const object = currentFolderObj.children[index];
 
@@ -3469,7 +3500,7 @@ const deleteBookmarkOrFolder = () => {
                 currentFolderObj.children.splice(index, 1);
                 userActiveProfile.currentUserBookmarks = userProfileExport.currentUserBookmarks;
                 const copiedObj = {
-                    currentFolderId: currentFolderId,
+                    currentFolderId: userProfileExport.currentFolderId,
                     status: 'deleted',
                     object: object,
                 }
@@ -3560,11 +3591,11 @@ const updateAddressBarForFolder = async () => {
         await manageUserProfiles('get');
     }
     // Default to root if currentFolderId is empty
-    currentFolderId = currentFolderId || 'root';
+    userProfileExport.currentFolderId = userProfileExport.currentFolderId || 'root';
     // Find current folder object if not already set
-    currentObject = isObjectEmpty(currentObject) ? await findBookmarkByKey(userProfileExport.currentUserBookmarks, currentFolderId) : currentObject;
+    currentObject = isObjectEmpty(currentObject) ? await findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId) : currentObject;
     // Find path to root from the current folder
-    pathToRoot = await findPathToRoot(userProfileExport.currentUserBookmarks, currentFolderId).then(path => { return path; });
+    pathToRoot = await findPathToRoot(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId).then(path => { return path; });
     // Early return if path to root is not found or empty
     if (!pathToRoot || pathToRoot.length === 0) {
         console.error('Failed to find path to root.');
@@ -3578,7 +3609,7 @@ const updateAddressBarForFolder = async () => {
         addressBarHtml += `
         <div class="addressBarSection" data-id="${el.id}">
             <div class="addressBarSymbol" data-id="${el.id}" style="${addressBarSymbolStyle}">${symbol}</div>
-            <div class="addressBarTitle" data-id="${el.id}" style="${addressBarTitleStyle}">${el.title}</div>
+            <div class="addressBarTitle" data-id="${el.id}" style="${addressBarTitleStyle}">${escapeHtml(el.title)}</div>
             <div class="addressBarBox" data-id="${el.id}"></div>
         </div>`;
     });
@@ -3598,8 +3629,8 @@ const updateAddressBarForFolder = async () => {
             return;
         }
         // Update current folder and refresh the bookmark folder view if the ID has changed
-        if (currentFolderId !== id) {
-            currentFolderId = id;
+        if (userProfileExport.currentFolderId !== id) {
+            userProfileExport.currentFolderId = id;
             createCurrentBookmarkFolder();
         }
     };
@@ -3814,7 +3845,7 @@ const dragAndDropEvents = () => {
             currentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, e.target.dataset.id);
             if (currentObj == null) { return; }
             e.target.style.backgroundColor = '#00000090';
-            parentCurrentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, currentFolderId);
+            parentCurrentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId);
             boxWidth = parseFloat(parentCurrentObj.style.folder.bookmarksBox.width);
             // Set styles for temporary element
             let bookmarkBodyStyle = `display:flex;width:${parentCurrentObj.style.folder.bookmarksBox.width || '200px'};height:${parentCurrentObj.style.folder.bookmarksBox.height || '200px'};overflow:hidden;border-left:${currentObj.style.bookmark.border.left.width}px ${currentObj.style.bookmark.border.left.style} ${currentObj.style.bookmark.border.left.color};border-top:${currentObj.style.bookmark.border.top.width}px ${currentObj.style.bookmark.border.top.style} ${currentObj.style.bookmark.border.top.color};border-right:${currentObj.style.bookmark.border.right.width}px ${currentObj.style.bookmark.border.right.style} ${currentObj.style.bookmark.border.right.color};border-bottom:${currentObj.style.bookmark.border.bottom.width}px ${currentObj.style.bookmark.border.bottom.style} ${currentObj.style.bookmark.border.bottom.color};border-radius:${currentObj.style.bookmark.border.left.radius}px ${currentObj.style.bookmark.border.top.radius}px ${currentObj.style.bookmark.border.right.radius}px ${currentObj.style.bookmark.border.bottom.radius}px;`;
@@ -3911,11 +3942,11 @@ const updateBookmarksBodyForFolder = () => {
         // Clear the bookmarks body element
         bookmarksBodyEl.innerHTML = '';
 
-        // Default to root if currentFolderId is empty
-        currentFolderId = (currentFolderId !== undefined && currentFolderId !== null) ? currentFolderId : 'root';
-        const currentObject = findBookmarkByKey(userProfileExport.currentUserBookmarks, currentFolderId);
+        // Default to root if userProfileExport.currentFolderId is empty
+        userProfileExport.currentFolderId = (userProfileExport.currentFolderId !== undefined && userProfileExport.currentFolderId !== null) ? userProfileExport.currentFolderId : 'root';
+        const currentObject = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId);
         if (currentObject && currentObject.type !== 'folder') {
-            currentFolderId = currentObject.parentId;
+            userProfileExport.currentFolderId = currentObject.parentId;
         }
 
         // Validate currentFolderObj
@@ -4029,7 +4060,7 @@ const buildHtmlForBookmark = (id, bookmarksBox) => {
         bookmarkHtml = `
             <div id='bookmarkBody' data-id=${obj.id} style='${bookmarkBodyStyle}'>
                 <div id='bookmarkImage' data-id=${obj.id} style='${bookmarkImageStyle}'></div>
-                <div id='bookmarkText' data-id=${obj.id} style='${bookmarkTextStyle}'>${obj.title}</div>
+                <div id='bookmarkText' data-id=${obj.id} style='${bookmarkTextStyle}'>${escapeHtml(obj.title)}</div>
                 <div id='bookmarkActiveBox' data-id=${obj.id} style='${bookmarkActiveBoxStyle}'></div>
             </div>
         `;
@@ -4048,11 +4079,11 @@ const buildHtmlForBookmark = (id, bookmarksBox) => {
  */
 export const createCurrentBookmarkFolder = async () => {
     try {
-        // Set currentFolderId to 'root' if it is undefined or null
-        currentFolderId = (currentFolderId !== undefined && currentFolderId !== null) ? currentFolderId : 'root';
-        const currentObject = findBookmarkByKey(userProfileExport.currentUserBookmarks, currentFolderId);
+        // Set userProfileExport.currentFolderId to 'root' if it is undefined or null
+        userProfileExport.currentFolderId = (userProfileExport.currentFolderId !== undefined && userProfileExport.currentFolderId !== null) ? userProfileExport.currentFolderId : 'root';
+        const currentObject = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId);
         if (currentObject && currentObject.type !== 'folder') {
-            currentFolderId = currentObject.parentId;
+            userProfileExport.currentFolderId = currentObject.parentId;
         }
 
         await manageUserProfiles('get'); // Manage user profiles by getting the current profile
@@ -4061,9 +4092,9 @@ export const createCurrentBookmarkFolder = async () => {
         await updateBookmarksBodyForFolder(); // Update the bookmarks body for the folder
     } catch (error) {
         // Log any errors that occur during the process
-        console.error(`Error creating current bookmark folder ID ${currentFolderId}:`, error);
+        console.error(`Error creating current bookmark folder ID ${userProfileExport.currentFolderId}:`, error);
         showMessageToastify('error', '', `Error loading current bookmark folder. Login again the root folder.`, 5000, false, 'bottom', 'right', true);
-        currentFolderId = 'root';
+        userProfileExport.currentFolderId = 'root';
         await createMainElementForFolder(); // Create the main element for the folder
         await updateAddressBarForFolder(); // Update the address bar for the folder
         await updateBookmarksBodyForFolder(); // Update the bookmarks body for the folder
@@ -4098,7 +4129,7 @@ $(document).ready(async () => {
             const ifOpenFolderExist = await indexedDBManipulation('has', 'openFolder');
             if (ifOpenFolderExist) {
                 const parentFolderObject = await indexedDBManipulation('get', 'openFolder');
-                currentFolderId = parentFolderObject.parentFolderId;
+                userProfileExport.currentFolderId = parentFolderObject.parentFolderId;
                 await indexedDBManipulation('remove', 'openFolder');
             }
             await createCurrentBookmarkFolder(); // Create the current bookmark folder
@@ -4108,7 +4139,6 @@ $(document).ready(async () => {
                 await indexedDBManipulation('remove', 'openSettingsAfterReload');
             }
             addScrollListener();
-            // searchManager('open');
         }
 
         browser.runtime.onMessage.addListener(async (request, sender, sendResponse) =>{
