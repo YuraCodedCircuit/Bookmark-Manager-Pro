@@ -1581,7 +1581,13 @@ export const userActivityRegister = async (status, action, data, profileName = '
     }
 }
 
-const mainFunction = () => {
+/**
+ * A function that handles user activities and profile management.
+ * It logs various actions performed by the user (e.g., edit and delete)
+ * and updates the user's activity log in their profile.
+ * Throws an error if the action is invalid or if the profile save fails.
+ */
+const manageUserProfileActivity = () => {
     /**
     * Initializes and assigns a mousemove event listener to the document.
     * This event listener updates the `currentMousePos` object with the current mouse
@@ -1688,7 +1694,7 @@ const mainFunction = () => {
             const { keyCode, shiftKey, ctrlKey, altKey, key } = event;
             const isShiftDown = shiftKey;
             const isCtrlDown = ctrlKey;
-            const arrayOfId = ['searchWindow', 'mainWindowBody', 'mainWindowDeleteBody'];
+            const arrayOfId = ['searchWindow', 'mainWindowBody', 'mainWindowDeleteBody', 'undoManager', 'settingsWindow'];
 
             const allElementsExistById = (ids, returnExistingIds = false) => {
                 // Create an array to hold existing IDs if returnExistingIds is true
@@ -1724,7 +1730,7 @@ const mainFunction = () => {
             if (isCtrlDown && keyCode === 70) {
                 event.preventDefault();
                 if (allElementsExistById(arrayOfId)) {
-                    showMessageToastify('warning', '', `Please close the current window before opening a new one to continue.`, 4000, false, 'bottom', 'right', true, false);
+                    showMessageToastify('warning', '', `Please close the currently open window before proceeding to open a new one.`, 4000, false, 'bottom', 'right', true, false);
                     return;
                 }
                 searchManager('open');
@@ -1742,7 +1748,7 @@ const mainFunction = () => {
                     searchManager('close');
                 }
                 if (searchExistElements.includes('mainWindowDeleteBody')) {
-                    $('#contextMenuWindow').css('display', 'none').html('');
+                    $('#uiElementsContainer').css('display', 'none').html('');
                 }
                 if (showProfileMenuStatus) {
                     showProfileMenu();
@@ -1751,6 +1757,9 @@ const mainFunction = () => {
                     openCloseSettingWindow('close');
                     settingWindowOpen.status = false;
                 }
+                if (searchExistElements.includes('undoManager')) {
+                    undoManager('closeUndoManagerUi');
+                }
                 return false;
             }
 
@@ -1758,7 +1767,7 @@ const mainFunction = () => {
             if (isCtrlDown && isShiftDown && keyCode === 66) {
                 event.preventDefault();
                 if (allElementsExistById(arrayOfId)) {
-                    showMessageToastify('warning', '', `Please close the current window before opening a new one to continue.`, 4000, false, 'bottom', 'right', true, false);
+                    showMessageToastify('warning', '', `Please close the currently open window before proceeding to open a new one.`, 4000, false, 'bottom', 'right', true, false);
                     return;
                 }
                 createAndEditBookmarksWindow('default', 'newBookmark');
@@ -1772,7 +1781,7 @@ const mainFunction = () => {
             if (isCtrlDown && isShiftDown && keyCode === 78) {
                 event.preventDefault();
                 if (allElementsExistById(arrayOfId)) {
-                    showMessageToastify('warning', '', `Please close the current window before opening a new one to continue.`, 4000, false, 'bottom', 'right', true, false);
+                    showMessageToastify('warning', '', `Please close the currently open window before proceeding to open a new one.`, 4000, false, 'bottom', 'right', true, false);
                     return;
                 }
                 createAndEditBookmarksWindow('default', 'newFolder');
@@ -1786,7 +1795,7 @@ const mainFunction = () => {
             if (isCtrlDown && keyCode === 80) {
                 event.preventDefault();
                 if (allElementsExistById(arrayOfId)) {
-                    showMessageToastify('warning', '', `Please close the current window before opening a new one to continue.`, 4000, false, 'bottom', 'right', true, false);
+                    showMessageToastify('warning', '', `Please close the currently open window before proceeding to open a new one.`, 4000, false, 'bottom', 'right', true, false);
                     return;
                 }
                 settingWindowOpen.status ? openCloseSettingWindow('close') : openCloseSettingWindow('open', 'default');
@@ -1796,12 +1805,14 @@ const mainFunction = () => {
                 return false;
             }
 
-            // check for Ctrl + Z to start updateUserClipboard('undo')
+            // check for Ctrl + Shift + Z to show the Undo Manager
             if (isCtrlDown && isShiftDown && keyCode === 90) {
                 event.preventDefault();
+                if (allElementsExistById(arrayOfId)) {
+                    showMessageToastify('warning', '', `Please close the currently open window before proceeding to open a new one.`, 4000, false, 'bottom', 'right', true, false);
+                    return;
+                }
                 undoManager('showUndoManagerUi');
-                // if (allElementsExistById(arrayOfId)) { return; }
-                // updateUserClipboard('undo');
             }
 
             // Allow other keys
@@ -1904,11 +1915,11 @@ const addScrollListener = () => {
 }
 
 const firstLoadWelcomeWindow = () => {
-    const otherBodyEl = document.getElementById('otherBody');
+    const uiElementsContainerEl = document.getElementById('uiElementsContainer');
     const checkImage = `<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAtElEQVR4nO2VQQ6CMBBF34ob2HgWPZ+gx3JlDLqBhRegXqOGZEhIQwc7aFzIS2bV4b8OJAOsZFIAJ+AJhMzyQCUZSY6G4BBVqQm8NO1yRwf2o0mSDLewEuae/y+BA+7A+RsCB7TSe10iuAA3CZwKb6OzbEEdBWnhJoGLArVwk6BnAzSjswewZRrzR3byuurEzRcL3uX3Ai8N/eKyLrtOa6o+sK4PmqAQyTBJyKhOwtUfzgoxLwfakVQhcKR+AAAAAElFTkSuQmCC"></img>`;
     let allowAnimation = true;
     let allowGuide = true;
-    let otherBodyElHtml = `
+    let uiElementsContainerElHtml = `
         <div id="particlesJs"></div>
         <div id="firstLoadWelcomeWindow">
             <div id="windowHeaderSection">
@@ -2027,8 +2038,8 @@ const firstLoadWelcomeWindow = () => {
             </svg>
         </div>
     `;
-    otherBodyEl.style.display = 'flex';
-    otherBodyEl.innerHTML = otherBodyElHtml;
+    uiElementsContainerEl.style.display = 'flex';
+    uiElementsContainerEl.innerHTML = uiElementsContainerElHtml;
 
     const createParticles = (status) => {
         try {
@@ -2152,7 +2163,7 @@ const firstLoadWelcomeWindow = () => {
                 retina_detect: true
             });
 
-            gsap.fromTo('#otherBody', {
+            gsap.fromTo('#uiElementsContainer', {
                 backgroundColor: getRandomHexColorByType('dark', 85),
             }, {
                 backgroundColor: getRandomHexColorByType('dark', 80),
@@ -2365,7 +2376,7 @@ const firstLoadWelcomeWindow = () => {
     setDefaultValuesToWelcomeUI();
 
     const eventListenerWelcomeUI = async () => {
-        const otherBodyEl = document.getElementById('otherBody');
+        const uiElementsContainerEl = document.getElementById('uiElementsContainer');
         const userNameInputEl = document.getElementById('userNameInput');
         const languageButton = document.querySelectorAll('.languageButton');
         const selectIcon = document.querySelectorAll('.selectIcon');
@@ -2373,7 +2384,7 @@ const firstLoadWelcomeWindow = () => {
         const disableGuideEl = document.getElementById('disableGuide');
         const continueBtnEl = document.getElementById('continueBtn');
 
-        gsap.fromTo(otherBodyEl, {
+        gsap.fromTo(uiElementsContainerEl, {
             backgroundColor: getRandomHexColorByType('dark', 85),
         }, {
             backgroundColor: getRandomHexColorByType('dark', 80),
@@ -2452,8 +2463,8 @@ const firstLoadWelcomeWindow = () => {
                     opacity: 0,
                     ease: 'power2.inOut',
                     onComplete: async () => {
-                        otherBodyEl.style.display = 'none';
-                        otherBodyEl.innerHTML = '';
+                        uiElementsContainerEl.style.display = 'none';
+                        uiElementsContainerEl.innerHTML = '';
                         createCurrentBookmarkFolder();
                         const ifAllowGuideExist = await indexedDBManipulation('has', 'allowGuide');
                         if (ifAllowGuideExist) {
@@ -2463,8 +2474,8 @@ const firstLoadWelcomeWindow = () => {
                     }
                 });
                 // Remove animation
-                gsap.set('#otherBody', { clearProps: 'all' });
-                gsap.killTweensOf('#otherBody');
+                gsap.set('#uiElementsContainer', { clearProps: 'all' });
+                gsap.killTweensOf('#uiElementsContainer');
                 try {
                     browser.runtime.sendMessage({userCreateFirstProfile: true })
                         .then(async response => {
@@ -3327,7 +3338,7 @@ const deleteBookmarkOrFolder = () => {
             </div>
         </div>
     `;
-    $('#contextMenuWindow').css('display', 'flex').html(deleteHtml);
+    $('#uiElementsContainer').css('display', 'flex').html(deleteHtml);
 
     const createTooltipForFolderObjectTitleAndUrl = () => {
         const style = {
@@ -3466,7 +3477,7 @@ const deleteBookmarkOrFolder = () => {
          * Hides the context menu and clears its content.
          */
         const handleCancelClick = () => {
-            $('#contextMenuWindow').css('display', 'none').html('');
+            $('#uiElementsContainer').css('display', 'none').html('');
         };
 
         /**
@@ -3523,7 +3534,7 @@ const deleteBookmarkOrFolder = () => {
                 await userActivityRegister('save', objInfo.type === 'bookmark' ? 'deleteBookmark' : 'deleteFolder', { id: objInfo.id, title: objInfo.title });
                 createCurrentBookmarkFolder();
                 userProfileExport.currentIdToEdit = null;
-                $('#contextMenuWindow').css('display', 'none').html('');
+                $('#uiElementsContainer').css('display', 'none').html('');
             } catch (error) {
                 console.error('Error deleting bookmark/folder:', error);
             }
@@ -4134,7 +4145,7 @@ $(document).ready(async () => {
         // Must be in order.
         await getLanguage(); // Set the language
         await manageUserProfiles('get'); // Manage user profiles by getting the current profile
-        await mainFunction(); // Initialize the main functionality
+        await manageUserProfileActivity(); // Initialize the main functionality
 
         if (firstLoadStatus) {
             firstLoadWelcomeWindow(); // Perform first load actions
@@ -4153,7 +4164,6 @@ $(document).ready(async () => {
                 await indexedDBManipulation('remove', 'openSettingsAfterReload');
             }
             addScrollListener();
-            undoManager('showUndoManagerUi');
         }
 
         browser.runtime.onMessage.addListener(async (request, sender, sendResponse) =>{

@@ -83,7 +83,7 @@ export const createNewBookmarkOrFolderObj = async (type) => {
 export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
     let createEditWindowHtml = ``;
     // Select the context menu window element for manipulation.
-    const contextMenuWindowEl = $('#contextMenuWindow');
+    const uiElementsContainerEl = $('#uiElementsContainer');
     let currentStyleMenuTab = '';
     let currentTitleEditorInputListener = null;
     let currentUrlEditorInputListener = null;
@@ -96,7 +96,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
     let colorPalette = [];
 
     if (menuType == 'close') {
-        contextMenuWindowEl.css('display', 'none').html(``);
+        uiElementsContainerEl.css('display', 'none').html(``);
         userProfileExport.currentIdToEdit = null;
         return;
     }
@@ -143,7 +143,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
 
     // Validate the type of bookmark window to be created. Exit if the type is not recognized.
     if (menuType != 'default' && menuType != 'bookmark') {
-        contextMenuWindowEl.css('display', 'none').html(``);
+        uiElementsContainerEl.css('display', 'none').html(``);
         return;
     }
 
@@ -151,7 +151,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         case 'newBookmark':
         case 'newFolder':
         case 'edit':
-            contextMenuWindowEl.css('display', 'flex');
+            uiElementsContainerEl.css('display', 'flex');
             createEditWindowHtml = `
             <div id="mainWindowBody" data-listenerAdded="false">
                 <div id="leftPanel">
@@ -211,10 +211,10 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         `;
             break;
         default:
-            contextMenuWindowEl.html(``);
+            uiElementsContainerEl.html(``);
             break;
     }
-    contextMenuWindowEl.html(createEditWindowHtml);
+    uiElementsContainerEl.html(createEditWindowHtml);
 
     /**
      * Set default styles to the title, URL, and folder tree input fields in the context menu window.
@@ -645,7 +645,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             // Reset the current ID being edited to null.
             userProfileExport.currentIdToEdit = null;
             // Hide the context menu window and clear its contents.
-            contextMenuWindowEl.css('display', 'none').html(``);
+            uiElementsContainerEl.css('display', 'none').html(``);
         }
 
         // Define the event handler function

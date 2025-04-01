@@ -135,6 +135,12 @@ export const undoManager = async (status, information) => {
     ];
     let actionsArray = [];
 
+    /**
+     * Load or save actions data to IndexedDB.
+     * @param {string} status - The action to perform. Can be 'load' or 'save'.
+     * @param {Array} data - The array of actions to save. Required only for the 'save' action.
+     * @returns {Promise<boolean>} - Returns true if data is successfully saved or loaded, false otherwise.
+     */
     const loadSaveActions = async (status, data) => {
         if (status === 'load') {
             const ifExist = await indexedDBManipulation('has', 'undoActions');
@@ -143,12 +149,14 @@ export const undoManager = async (status, information) => {
                 if (!Array.isArray(actionsArray)) {
                     actionsArray = [];
                 }
+                return actionsArray.length > 0;
             }
         } else if (status === 'save') {
             const saveStatus = await indexedDBManipulation('save', 'undoActions', data);
             if (!saveStatus) {
                 showMessageToastify('error', '', `Failed to save information for undo`, 3000, false, 'bottom', 'right', true);
             }
+            return saveStatus;
         }
     }
 
@@ -180,6 +188,11 @@ export const undoManager = async (status, information) => {
         return array;
     };
 
+    /**
+     * Adds an action to the undo manager.
+     * @param {Object} item - The object that contains information about the action.
+     * @returns {Promise<boolean>} - Returns true if the action is successfully added, false otherwise.
+     */
     const addAction = async (item) => {
         if (isObjectEmpty(item)) {
             console.error('Object item must not be empty', item);
@@ -202,14 +215,27 @@ export const undoManager = async (status, information) => {
 
         await loadSaveActions('load');
         actionsArray = modifyArray(actionsArray, item, userProfileExport.mainUserSettings.main.undoManager.maxLength);
-        await loadSaveActions('save', actionsArray);
+        const status = await loadSaveActions('save', actionsArray);
+        return status;
     }
 
+    /**
+     * Deletes an action by its ID from the actions array and saves the updated array.
+     * @param {string} id - The ID of the action to be deleted.
+     * @returns {Promise<void>} - A promise that resolves when the action is deleted and saved.
+     */
     const deleteActionById = async (id) => {
         actionsArray = actionsArray.filter(item => item.id !== id);
-        await loadSaveActions('save', actionsArray);
+        const status = await loadSaveActions('save', actionsArray);
+        return status;
     }
 
+    /**
+     * Sorts the array of actions by timestamp or bookmark ID.
+     * @param {Array} array - The array of actions to sort.
+     * @param {string} sortBy - The type of sorting. Can be 'timestamp' or 'bookmark'.
+     * @returns {Array} - The sorted array of actions.
+     */
     const sortActionsInArray = (array, sortBy) => {
         const timestampSortedEvents = [...array].sort((a, b) => b.timestamp - a.timestamp);
         const updatedEventsMap = new Map();
@@ -266,6 +292,13 @@ export const undoManager = async (status, information) => {
         });
     }
 
+    /**
+     * Handles undo and redo actions for the given event ID.
+     * @param {string} eventId - The ID of the event to handle.
+     * @param {string} action - The action to perform: 'undo' or 'redo'.
+     * @param {Array<Object>} events - The array of events.
+     * @returns {Array<Object>} The updated array of events.
+     */
     const handleUndoRedo = (eventId, action, events) => {
         const eventToHandle = events.find(e => e.id === eventId);
         if (!eventToHandle) {
@@ -356,6 +389,10 @@ export const undoManager = async (status, information) => {
         return finalEvents;
     }
 
+    /**
+     * Highlights the latest allowed undo item in the UI.
+     * @param {string|Event} data - The ID of the item to highlight, or an event object.
+     */
     const highlightLatestAllowedUndoItem = (data) => {
         let id;
         if (typeof data === 'string') {
@@ -380,6 +417,10 @@ export const undoManager = async (status, information) => {
         });
     }
 
+    /**
+     * Highlights the allowed redo item in the UI.
+     * @param {string} actionId - The ID of the action to highlight.
+     */
     const highlightAllowedRedoItem = (actionId) => {
         const actionItem = actionsArray.find(item => item.id === actionId);
         const foundItem = actionsArray.find(item => item.item.id === actionItem.item.id && !item.disabledRedo);
@@ -406,12 +447,21 @@ export const undoManager = async (status, information) => {
         });
     }
 
+    /**
+     * Closes the Undo Manager UI.
+     * This function hides the UI elements and clears their HTML content, effectively closing the UI.
+     */
     const closeUndoManagerUi = () => {
-        // Hide the UI elements
-        uiElementsContainerEl.style.display = 'none';
+        uiElementsContainerEl.style.display = 'none'; // Hide the UI elements
         uiElementsContainerEl.innerHTML = '';
     }
 
+    /**
+     * Shows the warning before turning off the Undo Manager.
+     * This function creates a dialog box with a title and a message, asking the user if they are sure they want to turn off the Undo Manager.
+     * If the user clicks yes, the undoManagerLeftSectionMiddleTurnUndoOffToggleEl is unchecked, the Undo Manager status is set to false, and the warningBeforeTurnOffEl is hidden.
+     * If the user clicks no, the warningBeforeTurnOffEl is hidden.
+     */
     const showWarningBeforeTurnOff = () => {
         const warningBeforeTurnOffEl = document.getElementById('warningBeforeTurnOff');
         const dialogTitleObject = {
@@ -438,6 +488,10 @@ export const undoManager = async (status, information) => {
         `;
         warningBeforeTurnOffEl.innerHTML = warningBeforeDeleteAllActionsElHtml;
 
+        /**
+         * Sets the default styles for the warning before turning off the Undo Manager.
+         * @private
+         */
         const setDefaultStylesToWarningBeforeTurnOff = () => {
             const confirmationDoNotTurnOffEl = document.getElementById('confirmationDoNotTurnOff');
             const confirmationTurnOffEl = document.getElementById('confirmationTurnOff');
@@ -453,6 +507,11 @@ export const undoManager = async (status, information) => {
         }
         setDefaultStylesToWarningBeforeTurnOff();
 
+        /**
+         * Adds event listeners to the warning before turning off the Undo Manager.
+         * @function addEventListenersToWarningBeforeTurnOff
+         * @private
+         */
         const addEventListenersToWarningBeforeTurnOff = () => {
             const undoManagerLeftSectionMiddleTurnUndoOffToggleEl = document.getElementById('undoManagerLeftSectionMiddleTurnUndoOffToggle');
             const confirmationDoNotTurnOffEl = document.getElementById('confirmationDoNotTurnOff');
@@ -500,9 +559,14 @@ export const undoManager = async (status, information) => {
             confirmationTurnOffEl.addEventListener('mouseleave', turnOffHandleMouseLeave);
         }
         addEventListenersToWarningBeforeTurnOff();
-
     }
 
+    /**
+     * Shows the warning before deleting all actions.
+     * This function creates a dialog box with a title and a message, asking the user if they are sure they want to delete all actions.
+     * If the user clicks yes, the actionsArray is cleared, the actionsArray is saved using loadSaveActions, and the warningBeforeDeleteAllActionsEl is hidden.
+     * If the user clicks no, the warningBeforeDeleteAllActionsEl is hidden.
+     */
     const showWarningBeforeDeleteAllActions = () => {
         const warningBeforeDeleteAllActionsEl = document.getElementById('warningBeforeDeleteAllActions');
         const dialogTitleObject = {
@@ -529,6 +593,10 @@ export const undoManager = async (status, information) => {
         `;
         warningBeforeDeleteAllActionsEl.innerHTML = warningBeforeDeleteAllActionsElHtml;
 
+        /**
+         * Sets the default styles for the warning dialog shown before deleting all actions.
+         * This function applies styles for the dialog and its buttons according to the user's settings.
+         */
         const setDefaultStylesToWarningBeforeDeleteAllActions = () => {
             const confirmationDoNotDeleteActionsEl = document.getElementById('confirmationDoNotDeleteActions');
             const confirmationDeleteActionsEl = document.getElementById('confirmationDeleteActions');
@@ -544,24 +612,47 @@ export const undoManager = async (status, information) => {
         }
         setDefaultStylesToWarningBeforeDeleteAllActions();
 
+        /**
+         * Adds event listeners to the "Do not delete all actions" and "Delete all actions" buttons.
+         * These buttons are displayed in the warning dialog shown before deleting all actions.
+         */
         const addEventListenersToWarningBeforeDeleteAllActions = () => {
             const undoManagerLeftSectionMiddleClearAllActionsButtonEl = document.getElementById('undoManagerLeftSectionMiddleClearAllActionsButton');
             const confirmationDoNotDeleteActionsEl = document.getElementById('confirmationDoNotDeleteActions');
             const confirmationDeleteActionsEl = document.getElementById('confirmationDeleteActions');
 
+            /**
+             * Handles the click event of the "Do not delete all actions" button.
+             * This function hides the warning dialog and resets its content.
+             */
             const doNotDeleteActionsHandle = () => {
                 warningBeforeDeleteAllActionsEl.style.display = 'none';
                 warningBeforeDeleteAllActionsEl.innerHTML = '';
             }
 
+            /**
+             * Handles the mouse enter event for the "Do not delete all actions" button.
+             * This function sets the button's background color to the success hover color.
+             * @param {MouseEvent} el - The mouse event object.
+             */
             const doNotDeleteActionsHandleMouseEnter = (el) => {
                 el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.success.hoverBackgroundColor;
             }
 
+            /**
+             * Handles the mouse leave event for the "Do not delete all actions" button.
+             * This function sets the button's background color to the success color.
+             * @param {MouseEvent} el - The mouse event object.
+             */
             const doNotDeleteActionsHandleMouseLeave = (el) => {
                 el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.success.backgroundColor;
             }
 
+            /**
+             * Handles the click event of the "Delete all actions" button.
+             * This function clears the actions array, saves the changes and updates the undo manager UI.
+             * It also hides the warning dialog and resets its content.
+             */
             const deleteAllActionsHandle = async () => {
                 actionsArray = [];
                 await loadSaveActions('save', actionsArray);
@@ -571,10 +662,20 @@ export const undoManager = async (status, information) => {
                 undoManagerLeftSectionMiddleClearAllActionsButtonEl.innerHTML = deleteAllActionNoActionsIconSVG;
             }
 
+            /**
+             * Handles the mouse enter event for the "Delete all actions" button.
+             * This function sets the button's background color to the danger hover color.
+             * @param {MouseEvent} el - The mouse event object.
+             */
             const deleteAllActionsHandleMouseEnter = (el) => {
                 el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.danger.hoverBackgroundColor;
             }
 
+            /**
+             * Handles the mouse leave event for the "Delete all actions" button.
+             * This function sets the button's background color to the danger color.
+             * @param {MouseEvent} el - The mouse event object.
+             */
             const deleteAllActionsHandleMouseLeave = (el) => {
                 el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.danger.backgroundColor;
             }
@@ -588,15 +689,26 @@ export const undoManager = async (status, information) => {
             confirmationDeleteActionsEl.addEventListener('mouseleave', deleteAllActionsHandleMouseLeave);
         }
         addEventListenersToWarningBeforeDeleteAllActions();
-
     }
 
-    const removeAllActionByKey = async () => {
+    /**
+     * Deletes all actions marked for deletion and updates the actions array in IndexedDB.
+     * @returns {Promise<void>} - A promise that resolves when the actions have been filtered and saved.
+     */
+    const deleteAllActionByKey = async () => {
         await loadSaveActions('load');
         actionsArray = actionsArray.filter(action => !action.delete);
-        await loadSaveActions('save', actionsArray);
+        const status = await loadSaveActions('save', actionsArray);
+        return status;
     }
 
+    /**
+     * Updates the status of all the undo buttons in the undo manager UI.
+     * For each action in the actions array, this function checks if the action is disabled for undo or redo.
+     * If the action is disabled, it sets the button's content to the forbidden icon and sets its background color to the color palette's 9th color.
+     * If the action is not disabled, it sets the button's content to the undo or redo icon and sets its background color to the user's setting for the primary or success button.
+     * @returns {void}
+     */
     const updateUndoButtonsStatus = () => {
         actionsArray.forEach(item => {
             const undoActionEl = document.querySelector(`.undoAction[data-id="${item.id}"]`);
@@ -622,6 +734,11 @@ export const undoManager = async (status, information) => {
         });
     }
 
+    /**
+     * Handles the redo action for the specified id.
+     * @param {string} id - The id of the action to redo.
+     * @returns {Promise<void>} - A promise that resolves when the action has been redone.
+     */
     const redoAction = async (id) => {
         const item = actionsArray.find(item => item.id === id);
 
@@ -654,16 +771,18 @@ export const undoManager = async (status, information) => {
 
         actionsArray = handleUndoRedo(item.id, 'redo', actionsArray);
         updateUndoButtonsStatus();
-
         await loadSaveActions('save', actionsArray);
-
         // Save the current user bookmarks to local storage and show a success or error message.
         await manageUserProfiles('save');
         // Refresh the current bookmark folder display.
         createCurrentBookmarkFolder();
-        // showUndoManagerUi();
     }
 
+    /**
+     * Handles the undo action for the specified id.
+     * @param {string} id - The id of the action to undo.
+     * @returns {Promise<void>} - A promise that resolves when the action has been undone.
+     */
     const undoAction = async (id) => {
         const item = actionsArray.find(item => item.id === id);
 
@@ -697,18 +816,20 @@ export const undoManager = async (status, information) => {
 
         actionsArray = handleUndoRedo(item.id, 'undo', actionsArray);
         updateUndoButtonsStatus();
-
         await loadSaveActions('save', actionsArray);
-
         // Save the current user bookmarks to local storage and show a success or error message.
         await manageUserProfiles('save');
         // Refresh the current bookmark folder display.
         createCurrentBookmarkFolder();
     }
 
+    /**
+     * Shows the undo manager user interface.
+     * @returns {Promise<void>} - A promise that resolves when the user interface has been shown.
+     */
     const showUndoManagerUi = async () => {
-        await removeAllActionByKey();
-
+        await deleteAllActionByKey();
+        // Create the undo manager user interface.
         const uiElementsContainerElHtml = `
             <div id="undoManager">
                 <div id="undoManagerLeftSection">
@@ -841,7 +962,6 @@ export const undoManager = async (status, information) => {
             Object.assign(undoManagerLeftSectionBottomCloseButtonEl.style, userProfileExport.mainUserSettings.windows.button.secondary.font);
         }
         setStylesToUndoManagerUi();
-        console.log(currentLanguageTextObj._undoManager);
 
         /**
          * Updates the text content of the search manager UI elements based on the current language settings.
@@ -913,6 +1033,11 @@ export const undoManager = async (status, information) => {
         }
         updateUndoManagerTitlesUI();
 
+        /**
+         * Sets the default values for the Undo Manager UI elements.
+         * This function updates the UI toggle for enabling/disabling the Undo Manager
+         * based on the user's settings and updates the title text accordingly.
+         */
         const setDefaultValuesToUndoManagerUi = () => {
             const undoManagerLeftSectionMiddleTurnUndoOffToggleTitleEl = document.getElementById('undoManagerLeftSectionMiddleTurnUndoOffToggleTitle');
             const undoManagerLeftSectionMiddleTurnUndoOffToggleEl = document.getElementById('undoManagerLeftSectionMiddleTurnUndoOffToggle');
@@ -927,9 +1052,13 @@ export const undoManager = async (status, information) => {
         }
         setDefaultValuesToUndoManagerUi();
 
+        /**
+         * Creates toggle elements for filter actions in the Undo Manager UI.
+         * This function dynamically generates toggle switches for each action
+         * and updates the UI with the corresponding HTML content.
+         */
         const createTogglesElementsForFilterActions = () => {
             const undoManagerLeftSectionMiddleFilterActionsTriggerContentEl = document.getElementById('undoManagerLeftSectionMiddleFilterActionsTriggerContent');
-
             let undoManagerLeftSectionMiddleFilterActionsTriggerContentElHtml = ``;
 
             arrayOfActions.forEach(action => {
@@ -957,6 +1086,11 @@ export const undoManager = async (status, information) => {
             undoManagerLeftSectionMiddleFilterActionsTriggerContentEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
             undoManagerLeftSectionMiddleFilterActionsTriggerContentEl.innerHTML = undoManagerLeftSectionMiddleFilterActionsTriggerContentElHtml;
 
+            /**
+             * Sets alternating styles to filter action toggle elements.
+             * This function updates the background color of each filter action toggle
+             * element based on its index to create an alternating pattern.
+             */
             const setStyleToFilterActionsToggles = () => {
                 const undoManagerLeftSectionMiddleFilterActionsTriggerContentFiltersElArray = document.querySelectorAll('.undoManagerLeftSectionMiddleFilterActionsTriggerContentFilters');
 
@@ -970,6 +1104,11 @@ export const undoManager = async (status, information) => {
             }
             setStyleToFilterActionsToggles();
 
+            /**
+             * Adds event listeners to toggle elements for filter actions.
+             * This function attaches 'change' event listeners to each toggle element,
+             * allowing the user to filter actions based on their toggle status.
+             */
             const addEventListenerToTogglesForFilterActions = () => {
                 const undoManagerLeftSectionFilterActionsElArray = document.querySelectorAll('.undoManagerLeftSectionFilterActions');
 
@@ -988,6 +1127,12 @@ export const undoManager = async (status, information) => {
         }
         createTogglesElementsForFilterActions();
 
+        /**
+         * Creates and displays the user action list in the undo manager UI.
+         * This function sorts the actions array, filters actions based on user settings,
+         * and generates HTML content to display the actions list.
+         * @returns {void}
+         */
         const createUserActionList = () => {
             const undoManagerRightSectionActionsListEl = document.getElementById('undoManagerRightSectionActionsList');
             let undoManagerRightSectionActionsListHtml = ``;
@@ -1072,6 +1217,11 @@ export const undoManager = async (status, information) => {
             });
             undoManagerRightSectionActionsListEl.innerHTML = undoManagerRightSectionActionsListHtml;
 
+            /**
+             * @function setStylesToUserActionList
+             * @description Sets the button styles to the buttons in the Undo Manager window based on the user's settings.
+             * @private
+             */
             const setStylesToUserActionList = () => {
                 const undoActionElArray = document.querySelectorAll('.undoAction');
                 const deleteActionElArray = document.querySelectorAll('.deleteAction');
@@ -1114,6 +1264,10 @@ export const undoManager = async (status, information) => {
             }
             setStylesToUserActionList();
 
+            /**
+            * Truncates text of action item titles if they overflow and applies styles.
+            * Adds tooltips to titles if they are truncated.
+            */
             const createTruncateTextIfOverflowForItemsTitle = () => {
                 const actionItemBoxTitleElArray = document.querySelectorAll('.actionItemBoxTitle');
                 const style = {
@@ -1144,10 +1298,14 @@ export const undoManager = async (status, information) => {
                         createTooltip(el, 'top', item.item.title, style);
                     }
                 });
-
             }
             createTruncateTextIfOverflowForItemsTitle();
 
+            /**
+             * Adds event listeners to undo and delete action buttons on the user action list.
+             * Listens for clicks on the buttons and calls the corresponding functions.
+             * @function addEventListenerToUserActionList
+             */
             const addEventListenerToUserActionList = () => {
                 const undoActionElArray = document.querySelectorAll('.undoAction');
                 const actionItemUndoButtonNotAllowedElArray = document.querySelectorAll('.actionItemUndoButtonNotAllowed');
@@ -1306,6 +1464,10 @@ export const undoManager = async (status, information) => {
         }
         createUserActionList();
 
+        /**
+         * Adds event listeners to all the UI elements in the Undo Manager.
+         * This includes the list of actions, the button to turn off the Undo Manager, the toggle for filter actions in the dropdown menu, and the toggle for showing bookmarks.
+         */
         const addEventListenerToUndoManagerUi = () => {
             const undoManagerLeftSectionMiddleTurnUndoOffToggleEl = document.getElementById('undoManagerLeftSectionMiddleTurnUndoOffToggle');
             const undoManagerLeftSectionMiddleTurnUndoOffToggleTitleEl = document.getElementById('undoManagerLeftSectionMiddleTurnUndoOffToggleTitle');
@@ -1319,6 +1481,7 @@ export const undoManager = async (status, information) => {
             const undoManagerLeftSectionMiddleClearAllActionsButtonEl = document.getElementById('undoManagerLeftSectionMiddleClearAllActionsButton');
             const undoManagerLeftSectionBottomCloseButtonEl = document.getElementById('undoManagerLeftSectionBottomCloseButton');
 
+            // Function to show a warning before turning off the Undo Manager
             const showWarningBeforeTurnOffToggle = async () => {
                 if (!undoManagerLeftSectionMiddleTurnUndoOffToggleEl.checked) {
                     showWarningBeforeTurnOff();
@@ -1334,6 +1497,7 @@ export const undoManager = async (status, information) => {
                 }
             }
 
+            // Function to show or hide the toggle in the dropdown menu for filter actions
             const showFilterActionsToggleElements = () => {
                 if (undoManagerLeftSectionMiddleFilterActionsTriggerContentEl.style.display === 'flex') {
                     undoManagerLeftSectionMiddleFilterActionsTriggerContentEl.style.display = 'none';
@@ -1354,6 +1518,7 @@ export const undoManager = async (status, information) => {
                 undoManagerLeftSectionMiddleFilterActionsTriggerContentEl.style.display = 'none';
             }
 
+            // Function to change the toggle for showing bookmarks
             const changeToggleToShowBookmarks = (el) => {
                 const toggleStatus = el.target.checked;
                 if (toggleStatus) {
@@ -1365,6 +1530,7 @@ export const undoManager = async (status, information) => {
                 createUserActionList();
             }
 
+            // Function to change the toggle for showing folders
             const changeToggleToShowFolders = (el) => {
                 const toggleStatus = el.target.checked;
                 if (toggleStatus) {
@@ -1376,6 +1542,7 @@ export const undoManager = async (status, information) => {
                 createUserActionList();
             }
 
+            // Function to change the sorting of the actions
             const changeActionsSorting = async () => {
                 filtersForActions.groupSameId = !filtersForActions.groupSameId;
                 await showUndoManagerUi();
@@ -1389,6 +1556,7 @@ export const undoManager = async (status, information) => {
                 el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
             }
 
+            // Function to clear all actions
             const clearAllActions = () => {
                 if (actionsArray.length === 0) {
                     showMessageToastify('info', '', `It looks like your list of actions is currently empty. To add more actions, please interact with your bookmarks or folders.`, 4000, false, 'bottom', 'right', true);
@@ -1405,9 +1573,10 @@ export const undoManager = async (status, information) => {
                 el.target.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.danger.backgroundColor;
             }
 
+            // Function to close the undo manager UI
             const closeUndoManagerUI = () => {
                 undoManager('closeUndoManagerUi');
-                removeAllActionByKey();
+                deleteAllActionByKey();
             }
 
             const closeUndoManagerUIButtonMouseEnter = (el) => {
@@ -1439,21 +1608,25 @@ export const undoManager = async (status, information) => {
         addEventListenerToUndoManagerUi();
     }
 
+    // if the status is 'addAction' then add the action from the information object to the actions array
     if (status === 'addAction') {
         await addAction(information);
         return;
     }
 
+    // if the status is 'deleteAction' then delete all actions from the actions array
     if (status === 'deleteAction') {
-        await deleteActionById();
+        await deleteAllActionByKey();
         return;
     }
 
+    // if the status is 'closeUndoManagerUi' then close the undo manager UI
     if (status === 'closeUndoManagerUi') {
         closeUndoManagerUi();
         return;
     }
 
+    // if the status is 'showUndoManagerUi' then show the undo manager UI
     if (status === 'showUndoManagerUi') {
         await showUndoManagerUi();
     }

@@ -61,10 +61,10 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
             console.error('%c%s', '', 'Invalid status', status);
             return;
         }
-        const settingsBodyEl = $('#settingsBody');
+        const uiElementsContainerEl = $('#uiElementsContainer');
         if (status == 'close') {
             settingWindowOpen.status = false;
-            settingsBodyEl.css('display', 'none').html('');
+            uiElementsContainerEl.css('display', 'none').html('');
             return;
         }
         let currentMenu = settingMainMenu[type][0].submenu[0].data;
@@ -119,7 +119,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                 </div>
             </div>
         `;
-        settingsBodyEl.css('display', 'flex').html(settingsBodyHtml);
+        uiElementsContainerEl.css('display', 'flex').html(settingsBodyHtml);
 
         /**
          * Adds event listeners to the footer buttons of the settings window.
