@@ -38,7 +38,8 @@
 
 "use strict";
 import { userProfileExport, defaultUserBookmarks, currentFolderId, userActiveProfile, currentLanguageTextObj, manageUserProfiles, userActivityRegister, createCurrentBookmarkFolder} from './main.js';
-import { isObjectEmpty, findBookmarkByKey, checkIfColorBrightness, pSBC, truncateString, invertHexColor, getNextMaxIndex, generateRandomIdForObj, indexedDBManipulation, showMessageToastify, capitalizeString, actionForArray, updateInputRangeAndOutput, updateColorisInputValue, checkIfAllowedToCreateScreenshotFromURL, getSupportedFontFamilies, getRandomColor, ensureHttps, resizeImageBase64, inputHexValid, generateColorPalette, truncateTextIfOverflow, createTooltip, escapeHtml } from './utilityFunctions.js';
+import { isObjectEmpty, findBookmarkByKey, checkIfColorBrightness, pSBC, truncateString, invertHexColor, getNextMaxIndex, generateRandomIdForObj, indexedDBManipulation, showMessageToastify, capitalizeString, actionForArray, updateInputRangeAndOutput, updateColorisInputValue, checkIfAllowedToCreateScreenshotFromURL, getSupportedFontFamilies, getRandomColor, ensureHttps, resizeImageBase64, inputHexValid, generateColorPalette, truncateTextIfOverflow, createTooltip, escapeHtml, updateDateGroupModified } from './utilityFunctions.js';
+import { undoManager } from './undoManager.js';
 
 /**
  * Creates a new bookmark or folder object with default properties.
@@ -87,6 +88,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
     let currentTitleEditorInputListener = null;
     let currentUrlEditorInputListener = null;
     let currentEditingObj = {};
+    let originalObj = {};
     let selectedFolderId = null;
     let objType = '';
     let editingObjBookmarkStyle = {};
@@ -106,15 +108,19 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         objType = currentEditingObj.type;
         selectedFolderId = currentEditingObj.parentId;
         currentEditingObj.lastEdited = currentDate;
+        const tempObj = structuredClone(currentEditingObj);
+        originalObj.title = tempObj.title;
+        originalObj.style = tempObj.style;
+        originalObj.url = tempObj.url;
     }
     if ((menuType == 'default' && menuItem == 'newBookmark') || (menuType == 'default' && menuItem == 'newFolder')) {
         userProfileExport.currentIdToEdit == null;
         if (menuItem == 'newBookmark') { objType = 'bookmark' }
         if (menuItem == 'newFolder') { objType = 'folder' }
         currentEditingObj = await createNewBookmarkOrFolderObj(objType);
-        selectedFolderId = currentFolderId;
+        selectedFolderId = userProfileExport.currentFolderId;
         currentEditingObj.parentId = selectedFolderId;
-        editingObjBookmarkStyle = window.structuredClone(currentEditingObj.style.bookmark);
+        editingObjBookmarkStyle = structuredClone(currentEditingObj.style.bookmark);
     }
 
     const userColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
@@ -128,7 +134,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             bookmarkBoxSize = obj.style.folder.bookmarksBox;
         }
     }
-    updateBookmarkBoxSize(currentFolderId);
+    updateBookmarkBoxSize(userProfileExport.currentFolderId);
 
     // Check if the language object is empty, indicating a failure to retrieve language settings.
     if (isObjectEmpty(currentLanguageTextObj)) {
@@ -527,6 +533,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         const titleEditorInputEl = document.getElementById('titleEditorInput');
         const urlEditorInputEl = document.getElementById('urlEditorInput');
         let parentObj = {};
+        const dateTime = new Date().getTime();
 
         const saveCurrentEditingObj = async () => {
             let syncObject = {};
@@ -545,8 +552,10 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             if (menuType == 'default') {
                 parentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, selectedFolderId);
                 currentEditingObj.title = titleEditorInputEl.value.trim();
-                currentEditingObj.url = ensureHttps(urlEditorInputEl.value.trim());
+                currentEditingObj.url = currentEditingObj.type === 'bookmark' ? ensureHttps(urlEditorInputEl.value.trim()) : '';
                 currentEditingObj.index = getNextMaxIndex(parentObj.children);
+                currentEditingObj.dateAdded = dateTime;
+                currentEditingObj.dateGroupModified = dateTime;
                 currentEditingObj.style.bookmark = editingObjBookmarkStyle;
                 parentObj.children.push(currentEditingObj);
                 syncObject = {
@@ -556,21 +565,46 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                     id: currentEditingObj.id,
                     parentId: parentObj.id === userProfileExport.mainUserSettings.main.synchronizationToBrowser.extensionFolderId ? userProfileExport.mainUserSettings.main.synchronizationToBrowser.browserFolderId : parentObj.id,
                 };
+                const undoObject = {
+                    type: 'created',
+                    delete: false,
+                    disabledRedo: true,
+                    disabledUndo: false,
+                    id: generateRandomIdForObj(),
+                    timestamp: currentEditingObj.dateAdded,
+                    item: currentEditingObj,
+                };
+                undoManager('addAction', undoObject);
+                updateDateGroupModified(userProfileExport.currentUserBookmarks, currentEditingObj.id, dateTime);
             } else if (menuType == 'bookmark') {
-                parentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentIdToEdit);
-                parentObj.title = titleEditorInputEl.value.trim();
-                parentObj.url = ensureHttps(urlEditorInputEl.value.trim());
-                parentObj.style.bookmark = editingObjBookmarkStyle;
+                const currentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentIdToEdit);
+                currentObj.title = titleEditorInputEl.value.trim();
+                currentObj.url = currentEditingObj.type === 'bookmark' ? ensureHttps(urlEditorInputEl.value.trim()) : '';
+                currentObj.dateAdded = dateTime;
+                currentObj.dateGroupModified = dateTime;
+                currentObj.style.bookmark = editingObjBookmarkStyle;
+                const undoObject = {
+                    type: 'edited',
+                    delete: false,
+                    disabledRedo: true,
+                    disabledUndo: false,
+                    id: generateRandomIdForObj(),
+                    timestamp: dateTime,
+                    originalItem: originalObj,
+                    item: currentObj,
+                };
+                undoManager('addAction', undoObject);
                 if (currentEditingObj.parentId !== selectedFolderId) {
                     actionForArray(userProfileExport.currentUserBookmarks, 'cut', userProfileExport.currentIdToEdit, selectedFolderId);
                 }
                 syncObject = {
                     status: 'update',
-                    title: parentObj.title,
-                    url: parentObj.url.trim().length > 0 ? ensureHttps(parentObj.url) : null,
-                    id: parentObj.id,
+                    title: currentObj.title,
+                    url: currentObj.url.trim().length > 0 ? ensureHttps(currentObj.url) : null,
+                    id: currentObj.id,
                     parentId: selectedFolderId === userProfileExport.mainUserSettings.main.synchronizationToBrowser.extensionFolderId ? userProfileExport.mainUserSettings.main.synchronizationToBrowser.browserFolderId : selectedFolderId,
                 };
+                updateDateGroupModified(userProfileExport.currentUserBookmarks, currentObj.id, dateTime);
             }
 
             userActiveProfile.currentUserBookmarks = userProfileExport.currentUserBookmarks;

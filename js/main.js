@@ -40,8 +40,9 @@
 import { openCloseSettingWindow } from './settingsManager.js';
 import { createAndEditBookmarksWindow } from './bookmarkManager.js';
 import { searchManager } from './searchManager.js';
-import { findBookmarkByKey, indexedDBManipulation, pSBC, returnRandomElementFromArray, getRandomHexColorByType, randomIntFromInterval, checkIfColorBrightness, findPathToRoot, getRandomColor, escapeHtml, isObjectEmpty, openUrl, showMessageToastify, sortFolderByChildrenIndex, getNextMaxIndex, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, getBrowserAndOSInfo, calculateGradientPercentages, changeBase64ImageColor, generateColorPalette, createTooltip, truncateTextIfOverflow, translateUserName } from './utilityFunctions.js';
+import { findBookmarkByKey, indexedDBManipulation, pSBC, returnRandomElementFromArray, getRandomHexColorByType, randomIntFromInterval, checkIfColorBrightness, findPathToRoot, getRandomColor, escapeHtml, isObjectEmpty, openUrl, showMessageToastify, sortFolderByChildrenIndex, getNextMaxIndex, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, getBrowserAndOSInfo, calculateGradientPercentages, changeBase64ImageColor, generateColorPalette, createTooltip, truncateTextIfOverflow, translateUserName, generateRandomIdForObj, getAllChildIds } from './utilityFunctions.js';
 import { interactiveGuide } from './interactiveGuide.js';
+import { undoManager } from './undoManager.js';
 
 export let firstLoadStatus = false;
 export let currentLanguage = 'en-US';
@@ -61,7 +62,6 @@ export let settingWindowOpen = { status: false };
 export let showProfileMenuStatus = false;
 export let connectionStatus = false;
 export let clipboard = [];
-export let clipboardHistory = [];
 export let colorPalette = [];
 export let currentFolderId = 'root';
 export let currentObject = {};
@@ -349,6 +349,10 @@ export const defaultMainUserSettings = {
             },
             extensionFolderId: '',
             browserFolderId: '',
+        },
+        undoManager: {
+            status: true,
+            maxLength: 10
         }
     },
     windows: {
@@ -1793,10 +1797,11 @@ const mainFunction = () => {
             }
 
             // check for Ctrl + Z to start updateUserClipboard('undo')
-            if (isCtrlDown && keyCode === 90 && clipboardHistory.length > 0) {
+            if (isCtrlDown && isShiftDown && keyCode === 90) {
                 event.preventDefault();
-                if (allElementsExistById(arrayOfId)) { return; }
-                updateUserClipboard('undo');
+                undoManager('showUndoManagerUi');
+                // if (allElementsExistById(arrayOfId)) { return; }
+                // updateUserClipboard('undo');
             }
 
             // Allow other keys
@@ -2976,10 +2981,12 @@ export const createContextMenu = async (create = false, type = '', setMousePosit
         const contextMenuItemImgBodyStyle = `padding:0 5px 0 2px;width: 36px;height: 30px;`;
         // Defines the styling for the titles within context menu items.
         const contextMenuItemTitleBodyStyle = `color:${userProfileExport.mainUserSettings.windows.window.font.color};padding:0px 5px 0px 0px;text-wrap: nowrap;`;
-        const pathToRoot = await findPathToRoot(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId, false);
-        let lastObjectInClipboard;
+        let allChildIds = [];
+        let sameChildrenFolder = true;
         if (clipboard.length > 0) {
-            lastObjectInClipboard = clipboard[clipboard.length - 1];
+            const object = findBookmarkByKey(userProfileExport.currentUserBookmarks, clipboard[0].currentIdToEdit);
+            allChildIds = getAllChildIds(object, clipboard[0].currentIdToEdit);
+            sameChildrenFolder = allChildIds.includes(userProfileExport.currentFolderId);
         }
         switch (type) {
             case 'default':
@@ -2987,9 +2994,9 @@ export const createContextMenu = async (create = false, type = '', setMousePosit
                 getMinVH = viewportHeight - 170;
                 for await (const item of contextMenuItems.default) { item.icon = await changeBase64ImageColor(item.icon, userProfileExport.mainUserSettings.windows.window.font.color); }
                 contextMenuItems.default.forEach(v => {
-                    if (v.id == 3 && (clipboard.length == 0 || (clipboard.length > 0 && pathToRoot.includes(lastObjectInClipboard.currentIdToEdit)))) { return; }
+                    if (v.id === 3 && sameChildrenFolder) { return; }
                     contextMenuItemsBodyHtml += `
-                        <button type="button" class='contextMenuItemBody' data-type='${v.data}' style='${contextMenuItemBodyStyle};${v.data == 'paste' ? 'border-top:1px solid #000000;border-bottom:1px solid #000000;' : ''}'>
+                        <button type="button" class='contextMenuItemBody' data-type='${v.data}' style='${contextMenuItemBodyStyle};${v.data == 'paste' ? `border-top:1px solid ${userProfileExport.mainUserSettings.windows.window.font.color};border-bottom:1px solid ${userProfileExport.mainUserSettings.windows.window.font.color};` : ''}'>
                             <img src='${v.icon}' style='${contextMenuItemImgBodyStyle}'></img>
                             <div id='contextMenuItemTitle' style='${contextMenuItemTitleBodyStyle}'>${v.title}</div>
                         </button>`;
@@ -3012,7 +3019,7 @@ export const createContextMenu = async (create = false, type = '', setMousePosit
                 break;
         }
         // Defines the base styling for the context menu container.
-        const htmlBoxStyle = `display: flex;justify-content: space-between;align-items: flex-start;flex-direction: column;flex-wrap: nowrap;position: fixed;min-width: 180px;padding: 10px 10px 10px 10px;border: 1px solid #424242;border-radius: 10px;background-color: ${userProfileExport.mainUserSettings.windows.window.backgroundColor};box-shadow: 8px 10px 23px 0px #262626db;left: ${setMousePosition != null ? setMousePosition.x : currentMousePos.x >= getMinVW ? getMinVW : currentMousePos.x}px;top: ${setMousePosition != null ? setMousePosition.y : currentMousePos.y >= getMinVH ? getMinVH : currentMousePos.y}px;`;
+        const htmlBoxStyle = `display: flex;justify-content: space-between;align-items: flex-start;flex-direction: column;flex-wrap: nowrap;position: fixed;min-width: 180px;padding: 10px 10px 10px 10px;border: 1px solid ${userProfileExport.mainUserSettings.windows.window.font.color};border-radius: 10px;background-color: ${userProfileExport.mainUserSettings.windows.window.backgroundColor};box-shadow: 8px 10px 23px 0px ${userProfileExport.mainUserSettings.windows.window.font.color}30;left: ${setMousePosition != null ? setMousePosition.x : currentMousePos.x >= getMinVW ? getMinVW : currentMousePos.x}px;top: ${setMousePosition != null ? setMousePosition.y : currentMousePos.y >= getMinVH ? getMinVH : currentMousePos.y}px;`;
         contextMenuBodyHtml = `<div style='${htmlBoxStyle}' id="contextMenuBody">${contextMenuItemsBodyHtml}</div>`;
         $('#contextMenu').html(contextMenuBodyHtml);
 
@@ -3201,17 +3208,42 @@ const updateUserClipboard = async (status) => {
             // Handle 'paste' status
         } else if (status === 'paste') {
             if (clipboard.length > 0 && userProfileExport.currentFolderId != clipboard[0].currentIdToEdit) {
+                let saveClipboardStatus, undoObject;
+                const oldObject = findBookmarkByKey(userProfileExport.currentUserBookmarks, clipboard[0].currentIdToEdit);
+                const parentId = oldObject.parentId;
+                let newObject;
                 if (clipboard[0].status == 'copy') {
-                    const saveStatus = await actionForArray(userProfileExport.currentUserBookmarks, 'copy', clipboard[0].currentIdToEdit, userProfileExport.currentFolderId);
-                    clipboard[0].currentIdToEdit = saveStatus.id;
-                    if (!saveStatus.status) { throw new Error('Failed to copy object'); }
+                    saveClipboardStatus = await actionForArray(userProfileExport.currentUserBookmarks, 'copy', clipboard[0].currentIdToEdit, userProfileExport.currentFolderId);
+                    clipboard[0].currentIdToEdit = saveClipboardStatus.id;
+                    if (!saveClipboardStatus.status) { throw new Error('Failed to copy object'); }
+                    newObject = findBookmarkByKey(userProfileExport.currentUserBookmarks, saveClipboardStatus.id);
+                    undoObject = {
+                        type: 'duplicated',
+                        delete: false,
+                        disabledRedo: true,
+                        disabledUndo: false,
+                        id: generateRandomIdForObj(),
+                        timestamp: new Date().getTime(),
+                        oldItemId: oldObject.id,
+                        oldObjectParentId: parentId,
+                        item: newObject,
+                    };
                 } else if (clipboard[0].status == 'cut') {
-                    const saveStatus = await actionForArray(userProfileExport.currentUserBookmarks, 'cut', clipboard[0].currentIdToEdit, userProfileExport.currentFolderId);
-                    if (!saveStatus.status) { throw new Error('Failed to cut object'); }
+                    saveClipboardStatus = await actionForArray(userProfileExport.currentUserBookmarks, 'cut', clipboard[0].currentIdToEdit, userProfileExport.currentFolderId);
+                    if (!saveClipboardStatus.status) { throw new Error('Failed to cut object'); }
+                    newObject = findBookmarkByKey(userProfileExport.currentUserBookmarks, saveClipboardStatus.id);
+                    undoObject = {
+                        type: 'moved',
+                        delete: false,
+                        disabledRedo: true,
+                        disabledUndo: false,
+                        id: generateRandomIdForObj(),
+                        timestamp: new Date().getTime(),
+                        oldObjectParentId: parentId,
+                        item: newObject,
+                    };
                 }
-
-                clipboard[0].folderIdTo = userProfileExport.currentFolderId;
-                clipboardHistory.push(clipboard[0]);
+                undoManager('addAction', undoObject);
                 const saveStatus = await manageUserProfiles('save');
                 if (!saveStatus) {
                     showMessageToastify('success', '', `Failed to ${clipboard[0].status == 'copy' ? 'copy' : 'cut'}`, 2000, false, 'bottom', 'right', true, false);
@@ -3221,36 +3253,6 @@ const updateUserClipboard = async (status) => {
                 }
                 createCurrentBookmarkFolder();
                 clipboard = [];
-            }
-        } else if (status === 'undo') {
-            if (clipboardHistory.length === 0) { throw new Error('No item to undo'); }
-            let status = false;
-            const lastObjectFromHistory = clipboardHistory.pop();
-            console.log(clipboardHistory, lastObjectFromHistory);
-            const lastObject = findBookmarkByKey(userProfileExport.currentUserBookmarks, lastObjectFromHistory.currentIdToEdit);
-            if (lastObjectFromHistory.status === 'cut' && lastObject !== null) {
-                const saveStatus = await actionForArray(userProfileExport.currentUserBookmarks, 'cut', lastObjectFromHistory.currentIdToEdit, lastObjectFromHistory.currentParentFolderId);
-                console.log(saveStatus);
-                if (!saveStatus.status) { throw new Error('Failed to cut object'); }
-                status = saveStatus.status;
-            }
-            if (lastObjectFromHistory.status === 'copy' && lastObject !== null) {
-                userProfileExport.currentIdToEdit = lastObjectFromHistory.currentIdToEdit;
-                deleteBookmarkOrFolder();
-                status = true;
-            }
-            if (lastObjectFromHistory.status === 'deleted' && !isObjectEmpty(lastObjectFromHistory.object)) {
-                const currentFolderObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentFolderId);
-                currentFolderObj.children.push(lastObjectFromHistory.object);
-                const saveStatus = await manageUserProfiles('save');
-                if (!saveStatus) { throw new Error('Failed to restore deleted object object'); }
-                status = saveStatus;
-            }
-            if (status) {
-                showMessageToastify('success', '', `Last operation undone successfully.`, 2000, false, 'bottom', 'right', true, false);
-                createCurrentBookmarkFolder();
-            } else {
-                showMessageToastify('error', '', `Undo operation failed.`, 2000, false, 'bottom', 'right', true, false);
             }
         }
     } catch (error) {
@@ -3499,12 +3501,24 @@ const deleteBookmarkOrFolder = () => {
 
                 currentFolderObj.children.splice(index, 1);
                 userActiveProfile.currentUserBookmarks = userProfileExport.currentUserBookmarks;
-                const copiedObj = {
-                    currentFolderId: userProfileExport.currentFolderId,
-                    status: 'deleted',
-                    object: object,
-                }
-                clipboardHistory.push(copiedObj);
+                // const copiedObj = {
+                //     currentFolderId: userProfileExport.currentFolderId,
+                //     status: 'deleted',
+                //     object: object,
+                // }
+                // clipboardHistory.push(copiedObj);
+                const undoObject = {
+                    type: 'deleted',
+                    delete: false,
+                    disabled: false,
+                    dialog: {
+                        delete: false,
+                    },
+                    id: generateRandomIdForObj(),
+                    timestamp: new Date().getTime(),
+                    item: object
+                };
+                undoManager('addAction', undoObject);
                 showMessageToastify('success', '', `${capitalizeString(objInfo.type, 1, false)} deleted successfully`, 2000, false, 'bottom', 'right', true);
                 await userActivityRegister('save', objInfo.type === 'bookmark' ? 'deleteBookmark' : 'deleteFolder', { id: objInfo.id, title: objInfo.title });
                 createCurrentBookmarkFolder();
@@ -4139,6 +4153,7 @@ $(document).ready(async () => {
                 await indexedDBManipulation('remove', 'openSettingsAfterReload');
             }
             addScrollListener();
+            undoManager('showUndoManagerUi');
         }
 
         browser.runtime.onMessage.addListener(async (request, sender, sendResponse) =>{

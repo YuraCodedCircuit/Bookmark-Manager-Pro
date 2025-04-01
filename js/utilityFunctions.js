@@ -38,6 +38,7 @@
 
 "use strict";
 import { changelog, currentLanguage, messageStyle, allowAlphabetCharactersAndNumbers, userProfileExport, userActiveProfile, manageUserProfiles, browserAndOSInfo } from './main.js';
+import { undoManager } from './undoManager.js';
 
 /**
  * Retrieves information from the changelog based on the specified type.
@@ -1421,6 +1422,7 @@ export const actionForArray = async (arr, action, id, newParentId) => {
                 id: obj.id,
                 parentId: obj.parentId === userProfileExport.mainUserSettings.main.synchronizationToBrowser.extensionFolderId ? userProfileExport.mainUserSettings.main.synchronizationToBrowser.browserFolderId : obj.parentId,
             };
+            newObj.id = obj.id;
         } else if (action == 'copy') { // Copy the object
             newObj = structuredClone(obj);
             try {
@@ -1450,7 +1452,7 @@ export const actionForArray = async (arr, action, id, newParentId) => {
         }
         const status = await indexedDBManipulation('save', 'tempBookmarkObject', syncObject);
         if (status) {
-            chrome.runtime.sendMessage({ sync: { savedNewObject: true } })
+            browser.runtime.sendMessage({ sync: { savedNewObject: true } })
                 .then(response => {})
                 .catch(error => {
                     console.error("Error sending message:", error);
@@ -2955,7 +2957,7 @@ export const syncToBrowserBookmarksManager = (status, bookmarks, bookmarkId, syn
                 parentId: objectDetail.parentId // Optional: specify the parent folder ID
             };
 
-            chrome.bookmarks.create(bookmarkDetails)
+            browser.bookmarks.create(bookmarkDetails)
                 .then((newBookmark) => {
                     console.log(`Bookmark created: ${newBookmark.title} (${newBookmark.url})`);
                 })
@@ -2969,7 +2971,7 @@ export const syncToBrowserBookmarksManager = (status, bookmarks, bookmarkId, syn
                 url: objectDetail.newUrl // Optional: you can update the URL as well
             };
 
-            chrome.bookmarks.update(bookmarkId, updateDetails)
+            browser.bookmarks.update(bookmarkId, updateDetails)
                 .then((updatedBookmark) => {
                     console.log(`Bookmark updated: ${updatedBookmark.title} (${updatedBookmark.url})`);
                 })
@@ -2978,7 +2980,7 @@ export const syncToBrowserBookmarksManager = (status, bookmarks, bookmarkId, syn
                 });
             break;
         case 'delete':
-            chrome.bookmarks.remove(bookmarkId)
+            browser.bookmarks.remove(bookmarkId)
                 .then(() => {
                     console.log(`Bookmark with ID ${bookmarkId} has been deleted.`);
                 })
@@ -2992,7 +2994,7 @@ export const syncToBrowserBookmarksManager = (status, bookmarks, bookmarkId, syn
                 index: objectDetail.newIndex // Optional: specify the new index (position) within the parent
             };
 
-            chrome.bookmarks.move(bookmarkId, moveDetails)
+            browser.bookmarks.move(bookmarkId, moveDetails)
                 .then((movedBookmark) => {
                     console.log(`Bookmark moved: ${movedBookmark.title} to new parent ID ${newParentId}`);
                 })
@@ -3126,6 +3128,36 @@ export const escapeHtml = (unsafe) => {
         .replace(/'/g, "&#039;");
 };
 
+// Function to get all children's IDs starting with a given ID
+export const getAllChildIds = (object) => {
+    // Initialize an array to hold the IDs
+    let ids = [];
+
+    // Recursive function to traverse the tree
+    const traverse = (node) => {
+        // Add the current node's ID to the list
+        ids.push(node.id);
+
+        // If the current node has children, traverse them
+        if (node.children && node.children.length > 0) {
+            node.children.forEach(child => {
+                // Add the child's ID to the list
+                ids.push(child.id);
+                // Recursively traverse the child's children
+                traverse(child);
+            });
+        }
+    };
+
+    // Add the current object's ID to the list
+    ids.push(object.id);
+    if (object.children && object.children.length > 0) {
+        // Start traversing from the root of the data
+        object.children.forEach(node => traverse(node));
+    }
+
+    return ids;
+};
 
 
 

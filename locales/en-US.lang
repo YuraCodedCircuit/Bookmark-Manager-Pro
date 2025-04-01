@@ -513,6 +513,62 @@
         },
         "close": "Close"
     },
+    "_undoManager": {
+        "filters": "Filters",
+        "undoManagerIsEnabled": "Undo Manager Is Enabled",
+        "undoManagerIsDisabled": "Undo Manager Is Disabled",
+        "chooseActionVisibility": "Choose Action Visibility",
+        "_actionsVisibilityTitle": {
+            "created": "Created",
+            "edited": "Edited",
+            "deleted": "Deleted",
+            "duplicated": "Duplicated",
+            "moved": "Moved"
+        },
+        "bookmarksHidden": "Bookmarks Hidden",
+        "bookmarksVisible": "Bookmarks Visible",
+        "foldersHidden": "Folders Hidden",
+        "foldersVisible": "Folders Visible",
+        "chooseSortByItem": "Choose Sort By Item",
+        "chooseSortByTime": "Choose Sort By Time",
+        "deleteAllActions": "Delete All Actions",
+        "close": "Close",
+        "_itemsTitles": {
+            "action": "Action",
+            "type": "Type",
+            "date": "Date",
+            "folder": "Folder",
+            "bookmark": "Bookmark"
+        },
+        "_deleteAllActionsDialog": {
+            "title": "Are you sure you want to delete all actions?",
+            "message": "It cannot be restored.",
+            "_buttons": {
+                "yes": "Yes",
+                "no": "No"
+            }
+        },
+        "_turnOffUndoManagerDialog": {
+            "title": "Are you sure you want to turn off?",
+            "message": "Press 'Yes' to save your settings. Press 'No' to keep your current settings.",
+            "_buttons": {
+                "yes": "Yes",
+                "no": "No"
+            }
+        },
+        "_deleteActionDialog": {
+            "title": "Are you sure you want to delete this action?",
+            "message": "It cannot be restored.",
+            "_buttons": {
+                "yes": "Yes",
+                "no": "No"
+            }
+        },
+        "_undoRedoActionDialog": {
+            "title": "You have undone this action. You can redo it now.",
+            "message": "This action will be removed after the UI is closed."
+        }
+    },
     "_contextMenu": {
         "create": "Create"
     },

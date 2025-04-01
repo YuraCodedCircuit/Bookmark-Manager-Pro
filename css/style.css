@@ -7871,6 +7871,719 @@ body>.moreDetails>.moreDetailsItems>.moreDetailsItemsDate {
     padding-right: 5px;
 }
 
+
+
+
+
+body>#uiElementsContainer>#undoManager {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 700px;
+    height: 600px;
+    overflow: hidden;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 250px;
+    height: 100%;
+    /* background-color: #21a3cb; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionTop {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionTop>#undoManagerLeftSectionTopTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    height: 50px;
+    /* background-color: #020420; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 4px 2px 0px 2px;
+    width: 100%;
+    flex: 1;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>.undoManagerLeftSectionMiddleElements {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+    margin: 0px 0px 4px 0px;
+    padding: 0px 5px 0px 5px;
+    width: 100%;
+    height: 60px;
+    /* background-color: #364cfa; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>.undoManagerLeftSectionMiddleElements .toggleTrack {
+    margin: 0px 0px 0px 12px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>.undoManagerLeftSectionMiddleElements .undoManagerLeftSectionMiddleElementsLabel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleFilterActions {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 5px 0px 5px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleFilterActions>#undoManagerLeftSectionMiddleFilterActionsTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+    width: 200px;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleFilterActions>#undoManagerLeftSectionMiddleFilterActionsTrigger {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    width: 60px;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleFilterActions>#undoManagerLeftSectionMiddleFilterActionsTrigger>#undoManagerLeftSectionMiddleFilterActionsTriggerButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 35px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleFilterActions>#undoManagerLeftSectionMiddleFilterActionsTrigger>#undoManagerLeftSectionMiddleFilterActionsTriggerButton:active {
+    top: 2px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleFilterActions>#undoManagerLeftSectionMiddleFilterActionsTrigger>#undoManagerLeftSectionMiddleFilterActionsTriggerContent {
+    display: none;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    padding: 4px 4px 0px 4px;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 200px;
+    height: auto;
+    border-radius: 5px;
+    z-index: 1;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleFilterActions>#undoManagerLeftSectionMiddleFilterActionsTrigger>#undoManagerLeftSectionMiddleFilterActionsTriggerContent>.undoManagerLeftSectionMiddleFilterActionsTriggerContentFilters {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    padding: 0px 4px 0px 4px;
+    margin: 0px 0px 5px 0px;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleFilterActions>#undoManagerLeftSectionMiddleFilterActionsTrigger>#undoManagerLeftSectionMiddleFilterActionsTriggerContent>.undoManagerLeftSectionMiddleFilterActionsTriggerContentFilters>.toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    height: 40px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleToggleChangeSorting>#undoManagerLeftSectionMiddleToggleChangeSortingButtons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 100%;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleToggleChangeSorting>#undoManagerLeftSectionMiddleToggleChangeSortingButtons>#undoManagerLeftSectionMiddleToggleChangeSortingButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 35px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleToggleChangeSorting>#undoManagerLeftSectionMiddleToggleChangeSortingButtons>#undoManagerLeftSectionMiddleToggleChangeSortingButton:active {
+    top: 2px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleClearAllActions>#undoManagerLeftSectionMiddleClearAllActionsButtons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 100%;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleClearAllActions>#undoManagerLeftSectionMiddleClearAllActionsButtons>#undoManagerLeftSectionMiddleClearAllActionsButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 35px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>#undoManagerLeftSectionMiddleClearAllActions>#undoManagerLeftSectionMiddleClearAllActionsButtons>#undoManagerLeftSectionMiddleClearAllActionsButton:active {
+    top: 2px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionBottom {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    height: 50px;
+    /* background-color: #93400f; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionBottom>#undoManagerLeftSectionBottomClose {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionBottom>#undoManagerLeftSectionBottomClose>#undoManagerLeftSectionBottomCloseButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 70px;
+    height: 35px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionBottom>#undoManagerLeftSectionBottomClose>#undoManagerLeftSectionBottomCloseButton:active {
+    top: 2px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 0px 0px 0px 8px;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    /* background-color: #c33e8f; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 8px 8px 4px 0px;
+    width: 100%;
+    height: auto;
+    overflow: auto;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin: 0px 0px 4px 0px;
+    width: 100%;
+    height: 120px;
+    min-height: 120px;
+    border-radius: 5px;
+    /* background-color: #30e813; */
+    overflow: hidden;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox.removeAnimation {
+    opacity: 0;
+    height: 0;
+    transition: opacity 0.7s ease, height 0.5s ease;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 350px;
+    height: 120px;
+    /* background-color: #00fdb1; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemBoxAction {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 350px;
+    height: 30px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemBoxAction>.actionItemBoxActionTitle{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 0px 0px 5px;
+    width: 100px;
+    height: 100%;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemBoxAction>.actionItemBoxActionType{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex: 1;
+    height: 100%;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: row;
+    width: 350px;
+    height: 90px;
+    /* background-color: #4606a5; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemImage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
+    height: 90px;
+    /* background-color: #609e5d; */
+    background-position: center center;
+    background-size: cover;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemInfo {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 250px;
+    height: auto;
+    /* background-color: #0d2b7e30; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemInfo>.actionItemBoxAction {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 2px 0px 2px;
+    width: 250px;
+    height: 30px;
+    /* background-color: #46b8e7; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemInfo>.actionItemBoxAction>.actionItemBoxActionTitle{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100px;
+    height: 100%;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemInfo>.actionItemBoxTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 2px 0px 2px;
+    width: 250px;
+    height: 30px;
+    white-space: nowrap;
+    overflow: hidden;
+    /* background-color: #934822; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemInfo>.actionItemBoxType {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 2px 0px 2px;
+    width: 250px;
+    height: 30px;
+    /* background-color: #a22b47; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemInfo>.actionItemBoxType>.actionItemBoxTypeTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 80px;
+    height: 100%;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemInfo>.actionItemBoxType>.actionItemBoxTypeValue {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex: 1;
+    height: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemInfo>.actionItemBoxTimestamp {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 2px 0px 2px;
+    width: 250px;
+    height: 30px;
+    /* background-color: #7ca502; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemInfo>.actionItemBoxTimestamp>.actionItemBoxTimestampTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 80px;
+    height: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemContainer>.actionItemDetail>.actionItemInfo>.actionItemBoxTimestamp>.actionItemBoxTimestampDate {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex: 1;
+    height: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemButtons {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    flex: 1;
+    height: 120px;
+    /* background-color: #ea955a; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemButtons>.actionItemUndoButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    flex: 1;
+    /* background-color: #ea955a; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemButtons>.actionItemUndoButton>.actionItemUndoButtonNotAllowed {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemButtons>.actionItemDeleteButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    flex: 1;
+    /* background-color: #741f1f; */
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemButtons button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 55px;
+    height: 35px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.actionItemButtons button:active {
+    top: 2px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.confirmationAction {
+    display: none;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.confirmationAction>.confirmationActionMessage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 0px 5px 0px 5px;
+    width: 100%;
+    height: 70px;
+    font-size: 17px;
+    white-space: wrap;
+    text-align: justify;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.confirmationAction>.confirmationActionButtons {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.confirmationAction>.confirmationActionButtons button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 40px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#undoManagerRightSectionActionsList>.actionItemBox>.confirmationAction>.confirmationActionButtons button:active {
+    top: 2px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeDeleteAllActions {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeDeleteAllActions>#confirmationToDeleteAllActionsBox {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 410px;
+    height: 160px;
+    border-radius: 10px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeDeleteAllActions>#confirmationToDeleteAllActionsBox>#confirmationDeleteAllActionsMessage {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeDeleteAllActions>#confirmationToDeleteAllActionsBox>#confirmationDeleteAllActionsMessage>#confirmationDeleteMessageTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+    white-space: wrap;
+    text-align: justify;
+    font-size: 19px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeDeleteAllActions>#confirmationToDeleteAllActionsBox>#confirmationDeleteAllActionsMessage>#confirmationDeleteMessageText {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+    white-space: wrap;
+    text-align: justify;
+    font-size: 17px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeDeleteAllActions>#confirmationToDeleteAllActionsBox>#confirmationDeleteAllActionsButtons {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 100%;
+    height: 100px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeDeleteAllActions>#confirmationToDeleteAllActionsBox>#confirmationDeleteAllActionsButtons button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 35px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeTurnOff {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeTurnOff>#confirmationToTurnOffBox {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 410px;
+    height: 160px;
+    border-radius: 10px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeTurnOff>#confirmationToTurnOffBox>#confirmationTurnOffMessage {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeTurnOff>#confirmationToTurnOffBox>#confirmationTurnOffMessage>#confirmationTurnOffMessageTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+    white-space: wrap;
+    text-align: justify;
+    font-size: 19px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeTurnOff>#confirmationToTurnOffBox>#confirmationTurnOffMessage>#confirmationTurnOffMessageText {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px 0px 10px;
+    width: 100%;
+    height: 50px;
+    white-space: wrap;
+    text-align: justify;
+    font-size: 17px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeTurnOff>#confirmationToTurnOffBox>#confirmationTurnOffButtons {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 100%;
+    height: 100px;
+}
+
+body>#uiElementsContainer>#undoManager>#undoManagerRightSection>#warningBeforeTurnOff>#confirmationToTurnOffBox>#confirmationTurnOffButtons button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 35px;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 body>#otherBody>#particlesJs {
     display: flex;
     position: absolute;
