@@ -52,6 +52,7 @@ export const undoManager = async (status, information) => {
     const colorPalette = generateColorPalette(userBackgroundColor);
     const backgroundColorBrightness = checkIfColorBrightness(userBackgroundColor, 120) ? '#000000' : '#ffffff';
     const undoActionForbiddenIconSVG = `
+        <!--Icon by contributors from https://lucide.dev/icons/redo-dot, licensed under https://lucide.dev/license. Modified by YuraCodedCircuit-->
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-undo-dot-icon lucide-undo-dot"><path d="M 21 17 a 9 9 0 0 0 -15 -6.7 L 3 13"/><path d="M3 7v6h6"/><path stroke-width="4" stroke="${userProfileExport.mainUserSettings.windows.button.danger.backgroundColor}" d="M 0 1 L 30 24"/><circle cx="12" cy="17" r="1"/></svg>
     `;
     const undoActionIconSVG = `
@@ -180,6 +181,7 @@ export const undoManager = async (status, information) => {
         while (array.length >= length) {
             array.pop(); // Remove the last item
         }
+        console.log(array.length);
 
         // Add the new item at the beginning of the array
         array.unshift(item);
@@ -209,8 +211,14 @@ export const undoManager = async (status, information) => {
             return false;
         }
 
+        if (userProfileExport.mainUserSettings.main.undoManager.maxLength === 0) {
+            actionsArray = [];
+            await loadSaveActions('save', actionsArray);
+            return false;
+        }
+
         if (!userProfileExport.mainUserSettings.main.undoManager.status) {
-            return;
+            return false;
         }
 
         await loadSaveActions('load');

@@ -814,6 +814,21 @@ export const settingMainMenu = {
         {
             index: 5,
             icon: '',
+            data: 'preferences',
+            title: 'Preferences',
+            submenu: [
+                {
+                    index: 0,
+                    icon: '',
+                    data: 'undoManager',
+                    title: 'Undo Manager',
+                    submenu: []
+                },
+            ]
+        },
+        {
+            index: 6,
+            icon: '',
             data: 'exportImportOptions',
             title: 'Export/Import Options',
             submenu: [
@@ -834,7 +849,7 @@ export const settingMainMenu = {
             ]
         },
         {
-            index: 6,
+            index: 7,
             icon: '',
             data: 'syncBackup',
             title: 'Sync & Backup',
@@ -849,7 +864,7 @@ export const settingMainMenu = {
             ]
         },
         {
-            index: 7,
+            index: 8,
             icon: '',
             data: 'about',
             title: 'About',
@@ -1813,6 +1828,9 @@ const manageUserProfileActivity = () => {
                     return;
                 }
                 undoManager('showUndoManagerUi');
+                if (showProfileMenuStatus) {
+                    showProfileMenu();
+                }
             }
 
             // Allow other keys

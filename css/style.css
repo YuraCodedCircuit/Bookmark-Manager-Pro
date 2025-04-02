@@ -5226,6 +5226,183 @@ body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#userActiv
     background-color: #00000000;
 }
 
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 10px 0px 10px 10px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionStatusBox {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionStatusBox>#undoManagerSectionStatusToggleAndTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 520px;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionStatusBox>#undoManagerSectionStatusToggleAndTitle>#undoManagerSectionStatusToggleLabel {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 520px;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionStatusBox>#undoManagerSectionStatusToggleAndTitle>#undoManagerSectionStatusToggleLabel>#undoManagerSectionStatusToggleTitleAndIcon {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: auto;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionStatusBox>#undoManagerSectionStatusToggleAndTitle>#undoManagerSectionStatusToggleLabel>#undoManagerSectionStatusToggleTitleAndIcon>#undoManagerSectionStatusToggleTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: auto;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection .undoManagerSectionIcon {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    position: absolute;
+    right: -25px;
+    top: 0px;
+    opacity: 1;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    --undoManagerSectionIconColor: #00000000;
+    transition: display 0s 0.5s;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection .undoManagerSectionIcon::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 15px solid var(--undoManagerSectionIconColor);
+    position: absolute;
+    top: -10px;
+    left: 0px;
+    z-index: -1;
+    transform: translateY(21px) translateX(-2px) rotate(105deg);
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection #undoManagerSectionLengthInputInfoIcon {
+    right: -6px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection .undoManagerSectionShowIcon {
+    z-index: 20;
+    animation: showUndoManagerSectionElement 1s forwards;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection .undoManagerSectionHideIcon {
+    animation: hideUndoManagerSectionElement 1s forwards;
+}
+
+@keyframes showUndoManagerSectionElement {
+    0% {
+        bottom: 0px;
+        opacity: 0;
+        z-index: -20;
+    }
+
+    100% {
+        top: -10px;
+        opacity: 1;
+        z-index: 10;
+    }
+}
+
+@keyframes hideUndoManagerSectionElement {
+    0% {
+        top: -10px;
+        opacity: 1;
+        z-index: 10;
+    }
+
+    100% {
+        top: 0px;
+        opacity: 0;
+        z-index: -20;
+    }
+
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionLengthBox {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionLengthBox>#undoManagerSectionLengthInputAndTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionLengthBox>#undoManagerSectionLengthInputAndTitle>#undoManagerSectionLengthInputAndIcon {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: auto;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionLengthBox>#undoManagerSectionLengthInputAndTitle>#undoManagerSectionLengthInputAndIcon>#undoManagerSectionLengthInput {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 5px;
+    margin: 0px 12px 0px 12px;
+    width: 60px;
+    height: 25px;
+    text-align: center;
+    border-radius: 5px;
+    border: 0px solid #00000000;
+    background-color: #00000000;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionLengthBox>#undoManagerSectionLengthInputAndTitle>#undoManagerSectionLengthTitleAndIcon {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: auto;
+    height: 50px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#undoManagerSection>#undoManagerSectionLengthBox>#undoManagerSectionLengthInputAndTitle>#undoManagerSectionLengthTitleAndIcon>#undoManagerSectionLengthTitle {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: auto;
+    height: 35px;
+}
+
 body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#exportProfileSection {
     display: flex;
     justify-content: flex-start;

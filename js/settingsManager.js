@@ -412,11 +412,14 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     let nestedListHtml = generateNestedListHtml(item.submenu || []);
                     let listItemHtml = ``;
                     let listMenuToLanguageTitle = findObject(languageObject, `_${item.data}`);
+                    if (!listMenuToLanguageTitle) {
+                        console.warn('Failed to load the menu title from the language file. Defaulting to:', item.title);
+                    }
                     listItemHtml = `
                         <li>
                             <div data-id="${item.data}">
                                 <button class="leftMenuListSubmenu buttonList" data-data="${item.data}">
-                                    <div class="leftMenuListText" data-data="${item.data}">${listMenuToLanguageTitle._data ?? item.title}</div>
+                                    <div class="leftMenuListText" data-data="${item.data}">${listMenuToLanguageTitle?._data ?? item.title}</div>
                                 </button>
                             </div>
                         </li>
@@ -6347,6 +6350,250 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         userActivityExportToCsvBtn.addEventListener('mouseleave', mouseleaveExportToCsvFile);
                     }
                     addEventListenersMyActivity();
+                    break;
+                case 'undoManager':
+                    const userBackgroundColor = editingMainUserSettings.windows.window.backgroundColor;
+                    const backgroundColorBrightness = checkIfColorBrightness(userBackgroundColor, 120) ? '#000000' : '#ffffff';
+                    const undoManagerLengthIconSVG = `
+                        <!--Icon by contributors from https://lucide.dev/icons/undo-dot, licensed under https://lucide.dev/license-->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${userProfileExport.mainUserSettings.windows.button.info.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle-question-icon lucide-message-circle-question"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                    `;
+                    const maxLengthOfActions = 10;
+
+                    settingsWindowRightSectionHtml = `
+                        <div id="undoManagerSection">
+                            <div id="undoManagerSectionStatusBox">
+                                <div id="undoManagerSectionStatusToggleAndTitle">
+                                    <label class="toggle" id="undoManagerSectionStatusToggleLabel" for="undoManagerSectionStatusToggle">
+                                        <input type="checkbox" class="toggleInput" id="undoManagerSectionStatusToggle" checked />
+                                        <span class="toggleTrack">
+                                            <span class="toggleIndicator">
+                                                <span class="checkMark">
+                                                    <svg viewBox="0 0 24 24" id="ghq-svg-check" role="presentation" aria-hidden="true">
+                                                        <path d="M9.86 18a1 1 0 01-.73-.32l-4.86-5.17a1.001 1.001 0 011.46-1.37l4.12 4.39 8.41-9.2a1 1 0 111.48 1.34l-9.14 10a1 1 0 01-.73.33h-.01z"></path>
+                                                    </svg>
+                                                </span>
+                                            </span>
+                                        </span>
+                                        <div id="undoManagerSectionStatusToggleTitleAndIcon">
+                                            <div id="undoManagerSectionStatusToggleTitle">Undo Manager Is Enabled</div>
+                                            <div id="undoManagerSectionStatusToggleIcon" class="undoManagerSectionIcon undoManagerSectionHideIcon"></div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="undoManagerSectionLengthBox">
+                                <div id="undoManagerSectionLengthInputAndTitle">
+                                    <div id="undoManagerSectionLengthInputAndIcon">
+                                        <input type="text" id="undoManagerSectionLengthInput" />
+                                        <div id="undoManagerSectionLengthInputInfoIcon" class="undoManagerSectionIcon undoManagerSectionHideIcon"></div>
+                                    </div>
+                                    <div id="undoManagerSectionLengthTitleAndIcon">
+                                        <div id="undoManagerSectionLengthTitle">Number of Actions to Save</div>
+                                        <div id="undoManagerSectionLengthTitleInfoIcon" class="undoManagerSectionIcon undoManagerSectionHideIcon"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+
+                    const updateWindowStyleUndoManagerSettingsTitlesUI = () => {
+                        /**
+                        * Helper function to update the text content of a given element.
+                        * @param {HTMLElement} element - The DOM element whose text content needs to be updated.
+                        * @param {string} text - The new text content to be set for the element.
+                        */
+                        const updateTextContent = (element, text) => {
+                            if (element && text !== undefined) {
+                                element.innerText = text;
+                            } else {
+                                console.error('Invalid arguments passed to updateTextContent()', { element: element, text: text });
+                            }
+                        };
+
+                        // Mapping of element IDs to their corresponding text values
+                        const titlesToUpdate = {
+                            undoManagerSectionLengthTitle: {
+                                id: 'undoManagerSectionLengthTitle',
+                                text: languageObject._preferences._undoManager.numberOfActionsToSave,
+                                classNames: []
+                            },
+                            undoManagerSectionStatusToggleTitle: {
+                                id: 'undoManagerSectionStatusToggleTitle',
+                                text: editingMainUserSettings.main.undoManager.status ? languageObject._preferences._undoManager.undoManagerIsEnabled : languageObject._preferences._undoManager.undoManagerIsDisabled,
+                                classNames: []
+                            },
+                        };
+
+                        // Update the text content and class of each UI element
+                        Object.entries(titlesToUpdate).forEach(([elementType, { id, text, classNames }]) => {
+                            let element;
+                            if (id.length > 0) {
+                                element = document.getElementById(id); // Try to get by ID
+                            } else if (classNames.length === 1) {
+                                element = document.getElementsByClassName(classNames[0]); // Try to get by class name
+                            } else if (classNames.length > 1) {
+                                classNames.forEach(className => {
+                                    element.push(document.getElementsByClassName(className));
+                                });
+                            }
+                            if (Array.isArray(element)) {
+                                element.forEach(element => {
+                                    updateTextContent(element, text);
+                                });
+                            } else {
+                                updateTextContent(element, text);
+                            }
+                        });
+                    }
+                    updateWindowStyleUndoManagerSettingsTitlesUI();
+
+                    const setDefaultStylesToUndoManagerSection = () => {
+                        const undoManagerSectionLengthInputEl = document.getElementById('undoManagerSectionLengthInput');
+
+                        undoManagerSectionLengthInputEl.style.backgroundColor = colorPalette[7];
+                        undoManagerSectionLengthInputEl.style.border = `1px solid ${backgroundColorBrightness}`;
+                    }
+                    setDefaultStylesToUndoManagerSection();
+
+                    const setDefaultValuesToUndoManagerSection = () => {
+                        const undoManagerSectionStatusToggleEl = document.getElementById('undoManagerSectionStatusToggle');
+                        const undoManagerSectionLengthInputAndTitleEl = document.getElementById('undoManagerSectionLengthInputAndTitle');
+                        const undoManagerSectionLengthInputEl = document.getElementById('undoManagerSectionLengthInput');
+
+                        undoManagerSectionStatusToggleEl.checked = editingMainUserSettings.main.undoManager.status;
+                        undoManagerSectionLengthInputEl.value = editingMainUserSettings.main.undoManager.maxLength;
+                        if (editingMainUserSettings.main.undoManager.status) {
+                            undoManagerSectionLengthInputAndTitleEl.style.opacity = 1;
+                            undoManagerSectionLengthInputEl.disabled = false;
+                            if (editingMainUserSettings.main.undoManager.maxLength === 0) {
+                                undoManagerSectionLengthInputEl.value = defaultMainUserSettings.main.undoManager.maxLength;
+                            }
+                        } else {
+                            undoManagerSectionLengthInputAndTitleEl.style.opacity = 0;
+                            undoManagerSectionLengthInputEl.disabled = true;
+                        }
+                    }
+                    setDefaultValuesToUndoManagerSection();
+
+                    const showUndoManagerSectionLengthInfoIcon = (iconStatus, type) => {
+                        const undoManagerSectionLengthTitleInfoIconEl = document.getElementById('undoManagerSectionLengthTitleInfoIcon');
+                        const undoManagerSectionLengthInputEl = document.getElementById('undoManagerSectionLengthInput');
+                        const backgroundColor = userProfileExport.mainUserSettings.windows.button.info.backgroundColor;
+
+                        const showHideElement = (id, position, message) => {
+                            const element = document.getElementById(id);
+                            if (iconStatus === 'hide') {
+                                element.classList.remove('undoManagerSectionShowIcon');
+                                element.classList.add('undoManagerSectionHideIcon');
+                                return;
+                            }
+                            if (iconStatus === 'show') {
+                                element.innerHTML = undoManagerLengthIconSVG;
+                                element.classList.remove('undoManagerSectionHideIcon');
+                                element.classList.add('undoManagerSectionShowIcon');
+                                element.setAttribute('style', `--undoManagerSectionIconColor: ${backgroundColor}; background-color: ${backgroundColor};`);
+
+                                const style = {
+                                    backgroundColor: editingMainUserSettings.windows.window.backgroundColor,
+                                    color: editingMainUserSettings.windows.window.font.color,
+                                    padding: '5px',
+                                    borderRadius: '5px',
+                                    border: `1px solid ${backgroundColorBrightness}`,
+                                    fontSize: `${editingMainUserSettings.windows.window.font.fontSize}px`,
+                                    fontWeight: editingMainUserSettings.windows.window.font.fontWeight,
+                                    fontFamily: editingMainUserSettings.windows.window.font.fontFamily,
+                                    maxWidth: '400px'
+                                }
+                                createTooltip(element, position, message, style);
+                            }
+                        }
+
+                        if (type === 'lengthTitle') {
+                            showHideElement('undoManagerSectionLengthTitleInfoIcon', 'top', languageObject._preferences._undoManager.messages.messageForLength);
+
+                            undoManagerSectionLengthTitleInfoIconEl.addEventListener('mouseenter', () => { undoManagerSectionLengthInputEl.blur(); });
+                        }
+                        if (type === 'lengthInput') {
+                            showHideElement('undoManagerSectionLengthInputInfoIcon', 'top', languageObject._preferences._undoManager.messages.messageForMaxLength);
+                        }
+                        if (type === 'turnOff') {
+                            showHideElement('undoManagerSectionStatusToggleIcon', 'bottom', languageObject._preferences._undoManager.messages.messageForManagerOff);
+                        }
+                    }
+
+                    const addEventListenersToUndoManagerSection = () => {
+                        const undoManagerSectionStatusToggleEl = document.getElementById('undoManagerSectionStatusToggle');
+                        const undoManagerSectionStatusToggleTitleEl = document.getElementById('undoManagerSectionStatusToggleTitle');
+                        const undoManagerSectionLengthInputAndTitleEl = document.getElementById('undoManagerSectionLengthInputAndTitle');
+                        const undoManagerSectionLengthInputEl = document.getElementById('undoManagerSectionLengthInput');
+
+                        const updateUndoManagerStatus = () => {
+                            const status = undoManagerSectionStatusToggleEl.checked;
+                            editingMainUserSettings.main.undoManager.status = status;
+                            if (status) {
+                                undoManagerSectionLengthInputEl.disabled = false;
+                                undoManagerSectionStatusToggleTitleEl.innerText = languageObject._preferences._undoManager.undoManagerIsEnabled;
+                                const value = undoManagerSectionLengthInputEl.value;
+                                const onlyNumbersInValue = value.replace(/[^0-9]/g, '');
+                                const valueAsNumber = parseInt(onlyNumbersInValue);
+                                if (valueAsNumber === 0) {
+                                    undoManagerSectionLengthInputEl.value = defaultMainUserSettings.main.undoManager.maxLength;
+                                }
+                                showUndoManagerSectionLengthInfoIcon('hide', 'turnOff');
+                                if (valueAsNumber > maxLengthOfActions && valueAsNumber > userProfileExport.mainUserSettings.main.undoManager.maxLength) {
+                                    showUndoManagerSectionLengthInfoIcon('show', 'lengthInput');
+                                }
+                                if (valueAsNumber < userProfileExport.mainUserSettings.main.undoManager.maxLength) {
+                                    showUndoManagerSectionLengthInfoIcon('show', 'lengthTitle');
+                                }
+                            } else {
+                                undoManagerSectionLengthInputEl.disabled = true;
+                                undoManagerSectionStatusToggleTitleEl.innerText = languageObject._preferences._undoManager.undoManagerIsDisabled;
+                                showUndoManagerSectionLengthInfoIcon('show', 'turnOff');
+                                showUndoManagerSectionLengthInfoIcon('hide', 'lengthTitle');
+                                showUndoManagerSectionLengthInfoIcon('hide', 'lengthInput');
+                            }
+                            gsap.to(undoManagerSectionLengthInputAndTitleEl, {
+                                duration: 1,
+                                opacity: status ? 1 : 0,
+                                onComplete: () => {
+                                }
+                            });
+                        }
+
+                        const updateUndoManagerActionsLength = () => {
+                            const value = undoManagerSectionLengthInputEl.value;
+                            if (/[^0-9]/.test(value)) {
+                                showMessageToastify('warning', '', `Please enter a valid number. Only numeric values are accepted.`, 2000, false, 'bottom', 'right', true, false);
+                            }
+                            const onlyNumbersInValue = value.replace(/[^0-9]/g, '');
+                            const valueAsNumber = parseInt(onlyNumbersInValue);
+                            undoManagerSectionLengthInputEl.value = onlyNumbersInValue;
+                            editingMainUserSettings.main.undoManager.maxLength = valueAsNumber;
+                            if (valueAsNumber === 0) {
+                                undoManagerSectionStatusToggleEl.checked = false;
+                                editingMainUserSettings.main.undoManager.status = false;
+                                undoManagerSectionStatusToggleTitleEl.innerText = languageObject._preferences._undoManager.undoManagerIsDisabled;
+                                undoManagerSectionLengthInputEl.disabled = true;
+                            }
+                            if (valueAsNumber < userProfileExport.mainUserSettings.main.undoManager.maxLength) {
+                                showUndoManagerSectionLengthInfoIcon('show', 'lengthTitle');
+                            } else {
+                                showUndoManagerSectionLengthInfoIcon('hide', 'lengthTitle');
+                            }
+                            if (valueAsNumber > maxLengthOfActions && valueAsNumber > userProfileExport.mainUserSettings.main.undoManager.maxLength) {
+                                showUndoManagerSectionLengthInfoIcon('show', 'lengthInput');
+                            } else {
+                                showUndoManagerSectionLengthInfoIcon('hide', 'lengthInput');
+                            }
+                        }
+
+                        undoManagerSectionStatusToggleEl.addEventListener('change', updateUndoManagerStatus);
+                        undoManagerSectionLengthInputEl.addEventListener('input', updateUndoManagerActionsLength);
+                    }
+                    addEventListenersToUndoManagerSection();
                     break;
                 case 'exportProfile':
                     let allowToSetPasswordToggle = false;

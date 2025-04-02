@@ -515,8 +515,8 @@
     },
     "_undoManager": {
         "filters": "Filters",
-        "undoManagerIsEnabled": "Undo Manager Is Enabled",
-        "undoManagerIsDisabled": "Undo Manager Is Disabled",
+        "undoManagerIsEnabled": "Undo Manager Enabled",
+        "undoManagerIsDisabled": "Undo Manager Disabled",
         "chooseActionVisibility": "Choose Action Visibility",
         "_actionsVisibilityTitle": {
             "created": "Created",
@@ -1040,6 +1040,20 @@
                             "action": "Action",
                             "detail": "Detail",
                             "delete": "Delete"
+                        }
+                    }
+                },
+                "_preferences": {
+                    "_data": "Preferences",
+                    "_undoManager": {
+                        "_data": "Undo Manager",
+                        "undoManagerIsEnabled": "Undo Manager Is Enabled",
+                        "undoManagerIsDisabled": "Undo Manager Is Disabled",
+                        "numberOfActionsToSave": "Number of Actions to Save",
+                        "messages": {
+                            "messageForLength": "The length for the Undo Manager will be saved once you save these settings. Please note that any actions performed after this point will remove previous actions to maintain the specified number of undo actions. You can view these actions before they are deleted by opening the Undo Manager with 'CTRL + SHIFT + Z' or by accessing it from the user profile menu.",
+                            "messageForMaxLength": "Please note that saving a large number of actions in the Undo Manager can impact browser performance. The default setting is 10 saved actions. Consider adjusting this number to optimize performance.",
+                            "messageForManagerOff": "The Undo Manager is currently disabled, and new actions will not be saved. Please be aware that if you have any previously saved actions, they will be deleted once you perform any new actions from this point forward. You can view these actions before they are deleted by opening the Undo Manager with 'CTRL + SHIFT + Z' or by accessing it from the user profile menu."
                         }
                     }
                 },
