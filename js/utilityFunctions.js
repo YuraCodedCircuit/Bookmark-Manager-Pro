@@ -31,6 +31,8 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ * - Marked (MIT License)
+ * - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
@@ -1852,38 +1854,6 @@ export const getSupportedFontFamilies = () => {
 };
 
 /**
- * Flattens an array of nested objects by removing all nesting and concatenating keys.
- * The function processes each object in the array, flattening its structure and concatenating nested keys.
- *
- * @param {Array} arrayOfObj - The array of objects to be flattened.
- * @returns {Array} A new array with each object flattened, where nested keys are concatenated.
- */
-export const removeAllNestingFromObj = (arrayOfObj) => {
-    const flattenObject = (obj, parentKey = '', res = {}) => {
-        for (let key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                // Constructs a property name by concatenating a parent key and a child key, with the first letter of each capitalized.
-                const propName = parentKey ? `${capitalizeString(parentKey, 1, false)}${capitalizeString(key, 1, false)}` : capitalizeString(key, 1, false);
-                if (obj.action) {
-                    userProfileExport.mainUserSettings.main.allowUserActivity.forEach(action => {
-                        action.action == obj.action ? obj.action = action.title : '';
-                    });
-                }
-                if (typeof obj[key] === 'object' && obj[key] !== null) {
-                    flattenObject(obj[key], propName, res);
-                } else {
-                    res[propName] = obj[key];
-                }
-            }
-        }
-        return res;
-    };
-
-    const flattenArray = (arr) => arr.map(item => flattenObject(item));
-    return flattenArray(arrayOfObj);
-}
-
-/**
  * Calculates gradient percentages for an array of colors.
  *
  * @param {Array} colors - The array of color strings.
@@ -2055,14 +2025,14 @@ export const updateInputRangeAndOutput = (inputElementId, outputElementId, setVa
         const setValueToOutput = () => {
             if (loadFirstTime) {
                 outputElement.style.left = `0px`;
-                outputElement.innerHTML = `&#8734;`; // Sets a default or placeholder value on the first load.
+                outputElement.innerHTML = DOMPurify.sanitize(`&#8734;`); // Sets a default or placeholder value on the first load.
             }
             // Calculate the percentage position of the input's current value within its range.
             let value = Number((inputElement.value - inputElement.min) * 100 / (inputElement.max - inputElement.min));
             // Calculate the adjustment needed for the output element's position to align with the input's thumb.
             let positionOutputElement = 0 - (value * 0.338);
             // Update the output element's content with the input's current value.
-            outputElement.innerHTML = inputElement.value;
+            outputElement.innerHTML = DOMPurify.sanitize(inputElement.value);
             // Adjust the output element's position based on the calculated percentage.
             outputElement.style.left = `calc(${value}% + (${positionOutputElement}px))`;
         };
@@ -2497,21 +2467,21 @@ export const showEmojiPicker = async (element) => {
                  */
                 onEmojiSelect: (emoji) => {
                     const selectedEmojiObject = emoji;
-                    el.innerHTML = '';
+                    el.innerHTML = DOMPurify.sanitize('');
                     resolve(selectedEmojiObject); // Resolve the promise with the selected emoji
                 },
                 /**
                  * The function called when the user clicks outside the emoji picker.
                  */
                 onClickOutside: () => {
-                    el.innerHTML = '';
+                    el.innerHTML = DOMPurify.sanitize('');
                     resolve(false); // Resolve with false if clicked outside
                 },
                 /**
                  * The function called when the user adds a custom emoji.
                  */
                 onAddCustomEmoji: () => {
-                    el.innerHTML = '';
+                    el.innerHTML = DOMPurify.sanitize('');
                     resolve(false); // Resolve with false if custom emoji added
                 },
                 autoFocus: false,
@@ -2735,6 +2705,8 @@ export const createTooltip = (hoverElement, position, text, customStyles) => {
             position: 'absolute',
             pointerEvents: 'none', // Prevent the tooltip from interfering with mouse events
             zIndex: 9000,
+            textAlign: 'justify',
+            whiteSpace: 'wrap',
             ...customStyles // Apply custom styles
         });
         document.body.appendChild(tooltip);
@@ -3159,6 +3131,24 @@ export const getAllChildIds = (object) => {
     return ids;
 };
 
+
+export const readLocalFile = (location, mineType = 'application/text') => {
+    return new Promise((resolve, reject) => {
+        const rawFile = new XMLHttpRequest();
+        rawFile.overrideMimeType(mineType);
+        rawFile.open("GET", location, true);
+        rawFile.onreadystatechange = () => {
+            if (rawFile.readyState === 4) {
+                if (rawFile.status === 200) {
+                    resolve(rawFile.responseText);
+                } else {
+                    reject(new Error(`Failed to load file: ${location}`));
+                }
+            }
+        };
+        rawFile.send(null);
+    });
+};
 
 
 

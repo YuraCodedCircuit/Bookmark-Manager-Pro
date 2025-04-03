@@ -31,6 +31,8 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ *  - Marked (MIT License)
+ *  - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
@@ -54,6 +56,12 @@ export const filesLocationFromThis = {
     css: '../css/',
     html: '../html/',
     libraries: './libraries/',
+    manifest: '../manifest.json',
+    changelog: './CHANGELOG.md',
+    termsOfUse: './TERMS_OF_USE.md',
+    license: './LICENSE.md',
+    privacyPolicy: './PRIVACY_POLICY.md',
+    security: './SECURITY.md',
 };
 export let currentMousePos = { x: 0, y: 0 };
 export let viewportHeight = 0;
@@ -879,8 +887,36 @@ export const settingMainMenu = {
                 {
                     index: 1,
                     icon: '',
-                    data: 'aboutChangelog',
+                    data: 'changelog',
                     title: 'Changelog',
+                    submenu: []
+                },
+                {
+                    index: 2,
+                    icon: '',
+                    data: 'termsOfUse',
+                    title: 'Terms Of Use',
+                    submenu: []
+                },
+                {
+                    index: 4,
+                    icon: '',
+                    data: 'license',
+                    title: 'License',
+                    submenu: []
+                },
+                {
+                    index: 5,
+                    icon: '',
+                    data: 'privacyPolicy',
+                    title: 'Privacy Policy',
+                    submenu: []
+                },
+                {
+                    index: 6,
+                    icon: '',
+                    data: 'security',
+                    title: 'Security',
                     submenu: []
                 },
             ]
@@ -2057,14 +2093,14 @@ const firstLoadWelcomeWindow = () => {
         </div>
     `;
     uiElementsContainerEl.style.display = 'flex';
-    uiElementsContainerEl.innerHTML = uiElementsContainerElHtml;
+    uiElementsContainerEl.innerHTML = DOMPurify.sanitize(uiElementsContainerElHtml);
 
     const createParticles = (status) => {
         try {
             if (![true, false].includes(status)) throw Error('Wrong status. Only true or false');
             if (!status) {
                 const particlesJsEl = document.getElementById('particlesJs');
-                particlesJsEl.innerHTML = '';
+                particlesJsEl.innerHTML = DOMPurify.sanitize('');
                 return;
             }
             const moveDirectionArray = ["top", "top-right", "right", "bottom-right", "bottom", "bottom-left", "left", "top-left"];
@@ -2228,7 +2264,7 @@ const firstLoadWelcomeWindow = () => {
         */
         const updateTextContent = (element, text) => {
             if (element && text !== undefined) {
-                element.innerHTML = text;
+                element.innerText = text;
             } else {
                 console.error('Invalid arguments passed to updateTextContent()', { element: element, text: text });
             }
@@ -2349,7 +2385,7 @@ const firstLoadWelcomeWindow = () => {
         availableLanguages.forEach(item => {
             htmlLang += `<button class="languageButton" data-language="${item.id}" style="background-color: ${defaultMainUserSettings.windows.button.primary.backgroundColor}"><span class="languageName" data-language="${item.id}">${item.name}</span><span class="selectIcon" data-language="${item.id}">${item.id == currentLanguage ? checkImage : ''}</span></button>`;
         });
-        languageEl.innerHTML = htmlLang;
+        languageEl.innerHTML = DOMPurify.sanitize(htmlLang);
     }
     createLanguageButtons();
 
@@ -2419,9 +2455,9 @@ const firstLoadWelcomeWindow = () => {
                 currentLanguage = languageObj.id;
                 selectIcon.forEach(icon => {
                     if (buttonLanguage == icon.dataset.language) {
-                        icon.innerHTML = checkImage;
+                        icon.innerHTML = DOMPurify.sanitize(checkImage);
                     } else {
-                        icon.innerHTML = '';
+                        icon.innerHTML = DOMPurify.sanitize('');
                     }
                 });
                 await getLanguage();
@@ -2482,7 +2518,7 @@ const firstLoadWelcomeWindow = () => {
                     ease: 'power2.inOut',
                     onComplete: async () => {
                         uiElementsContainerEl.style.display = 'none';
-                        uiElementsContainerEl.innerHTML = '';
+                        uiElementsContainerEl.innerHTML = DOMPurify.sanitize('');
                         createCurrentBookmarkFolder();
                         const ifAllowGuideExist = await indexedDBManipulation('has', 'allowGuide');
                         if (ifAllowGuideExist) {
@@ -2883,7 +2919,7 @@ export const showProfileMenu = async () => {
                             }
                         });
                         profileMenuBodyEl.style.display = 'none';
-                        profileUserNameEl.innerHTML = '';
+                        profileUserNameEl.innerHTML = DOMPurify.sanitize('');
                     }
                 }
             });
@@ -2900,8 +2936,8 @@ export const showProfileMenu = async () => {
                 </button>
             `;
         });
-        profileMenuBodyEl.innerHTML = html;
-        profileUserNameEl.innerHTML = `<span id="userName" style="color:${userActiveProfile.mainUserSettings.windows.window.font.color}">${escapeHtml(userActiveProfile.name)}</span>`;
+        profileMenuBodyEl.innerHTML = DOMPurify.sanitize(html);
+        profileUserNameEl.innerHTML = DOMPurify.sanitize(`<span id="userName" style="color:${userActiveProfile.mainUserSettings.windows.window.font.color}">${escapeHtml(userActiveProfile.name)}</span>`);
         const profileMenuItem = document.querySelectorAll('.profileMenuItem[data-type]'); // All profile menu items
 
         gsap.to(profileMenuEl, {
@@ -3419,7 +3455,7 @@ const deleteBookmarkOrFolder = () => {
          */
         const updateTextContent = (element, text) => {
             if (element && text !== undefined) {
-                element.innerHTML = text;
+                element.innerText = text;
             } else {
                 console.error('Invalid arguments passed to updateTextContent()', { element: element, text: text });
             }
@@ -3597,7 +3633,7 @@ const deleteBookmarkOrFolder = () => {
 const createMainElementForFolder = () => {
     // Get the 'mainBody' element from the document
     const mainBodyEl = document.getElementById('mainBody');
-    mainBodyEl.innerHTML = '';
+    mainBodyEl.innerHTML = DOMPurify.sanitize('');
     // Initialize a variable to hold the HTML structure
     let elementHtml = ``;
     // Check if 'mainBodyEl' is null, undefined, or empty
@@ -3610,7 +3646,7 @@ const createMainElementForFolder = () => {
     // Define the HTML structure for 'addressBarBody' and 'bookmarksBody' div.
     elementHtml = `<div id='addressBarBody'></div><div id='bookmarksBody'></div>`;
     // Set the innerHTML of 'mainBodyEl' to the defined HTML structure
-    mainBodyEl.innerHTML = elementHtml;
+    mainBodyEl.innerHTML = DOMPurify.sanitize(elementHtml);
 }
 
 /**
@@ -3657,7 +3693,7 @@ const updateAddressBarForFolder = async () => {
         </div>`;
     });
     // Update the address bar's HTML
-    addressBarBody.innerHTML = addressBarHtml;
+    addressBarBody.innerHTML = DOMPurify.sanitize(addressBarHtml);
     addressBarBody.style.backgroundColor = currentObject.style.folder.addressBar.background.backgroundColor;
 
     /**
@@ -3983,7 +4019,7 @@ const updateBookmarksBodyForFolder = () => {
         }
 
         // Clear the bookmarks body element
-        bookmarksBodyEl.innerHTML = '';
+        bookmarksBodyEl.innerHTML = DOMPurify.sanitize('');
 
         // Default to root if userProfileExport.currentFolderId is empty
         userProfileExport.currentFolderId = (userProfileExport.currentFolderId !== undefined && userProfileExport.currentFolderId !== null) ? userProfileExport.currentFolderId : 'root';
@@ -4021,7 +4057,7 @@ const updateBookmarksBodyForFolder = () => {
 
         // Apply styles to the bookmarks body element
         Object.assign(bookmarksBodyEl.style, styles);
-        bookmarksBodyEl.innerHTML = bookmarksBodyHtml;
+        bookmarksBodyEl.innerHTML = DOMPurify.sanitize(bookmarksBodyHtml);
 
         // Get folder style
         let folderStyle = currentObject.style.folder;

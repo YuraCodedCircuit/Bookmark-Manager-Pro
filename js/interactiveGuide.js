@@ -31,6 +31,8 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ * - Marked (MIT License)
+ * - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
@@ -277,7 +279,7 @@ export const interactiveGuide = async (status) => {
             const interactiveGuideEl = document.getElementById('interactiveGuide');
             if (!interactiveGuideEl) throw new Error('No interactive guide element found');
 
-            interactiveGuideEl.innerHTML = `
+            interactiveGuideEl.innerHTML = DOMPurify.sanitize(`
                 <div id="guideStep" style="background-color: ${backgroundColor}">
                     <div id="guideStepTitle" style="color: ${color}">${title}</div>
                     <div id="guideStepText" style="color: ${color}">${text}</div>
@@ -289,7 +291,7 @@ export const interactiveGuide = async (status) => {
                         <button id="guideStepButtonNext">Next</button>
                     </div>
                 </div>
-            `;
+            `);
             const guideStepButtonCloseButton = document.getElementById('guideStepButtonClose');
             const guideStepButtonNextButton = document.getElementById('guideStepButtonNext');
 
@@ -1120,7 +1122,7 @@ export const interactiveGuide = async (status) => {
                 case 88:
                     const importFileInfoTopEl = document.getElementById('importFileInfoTop');
                     importFileInfoTopEl.style.opacity = 1;
-                    importFileInfoTopEl.innerHTML = `<div id="importFileInfoTopTitle">Information About File</div><div id="importFileInfoDetail"><div id="importFileInfoInclude">Current Bookmarks, Default Folder Style</div><div id="importFileInfoSizeAndDate"><div id="importFileInfoDate"><div id="importFileDateTitle">Date</div><div id="importFileDate">0/00/0000</div></div><div id="importFileInfoSize"><div id="importFileSizeTitle">Size</div><div id="importFileSize">00.00 KB</div></div></div></div>`;
+                    importFileInfoTopEl.innerHTML = DOMPurify.sanitize(`<div id="importFileInfoTopTitle">Information About File</div><div id="importFileInfoDetail"><div id="importFileInfoInclude">Current Bookmarks, Default Folder Style</div><div id="importFileInfoSizeAndDate"><div id="importFileInfoDate"><div id="importFileDateTitle">Date</div><div id="importFileDate">0/00/0000</div></div><div id="importFileInfoSize"><div id="importFileSizeTitle">Size</div><div id="importFileSize">00.00 KB</div></div></div></div>`);
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoTop`;
@@ -1128,7 +1130,7 @@ export const interactiveGuide = async (status) => {
                     break;
                 case 89:
                     const importFileInfoMiddleDetailEl = document.getElementById('importFileInfoMiddleDetail');
-                    importFileInfoMiddleDetailEl.innerHTML = `<div id="importFileInfoMiddleDetailBox"><div id="decryptionBox"><div id="passwordBox"><title for="importFilePasswordInput" id="importFilePasswordInputTitle">File Password</title><div id="passwordAndIcon"><input type="password" id="importFilePasswordInput" ><button id="passwordShowHideIcon"><svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16.01C14.2091 16.01 16 14.2191 16 12.01C16 9.80087 14.2091 8.01001 12 8.01001C9.79086 8.01001 8 9.80087 8 12.01C8 14.2191 9.79086 16.01 12 16.01Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11.98C8.09 1.31996 15.91 1.32996 22 11.98" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 12.01C15.91 22.67 8.09 22.66 2 12.01" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div><button id="decryptButton">Decrypt</button></div></div>`;
+                    importFileInfoMiddleDetailEl.innerHTML = DOMPurify.sanitize(`<div id="importFileInfoMiddleDetailBox"><div id="decryptionBox"><div id="passwordBox"><title for="importFilePasswordInput" id="importFilePasswordInputTitle">File Password</title><div id="passwordAndIcon"><input type="password" id="importFilePasswordInput" ><button id="passwordShowHideIcon"><svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16.01C14.2091 16.01 16 14.2191 16 12.01C16 9.80087 14.2091 8.01001 12 8.01001C9.79086 8.01001 8 9.80087 8 12.01C8 14.2191 9.79086 16.01 12 16.01Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11.98C8.09 1.31996 15.91 1.32996 22 11.98" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 12.01C15.91 22.67 8.09 22.66 2 12.01" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div><button id="decryptButton">Decrypt</button></div></div>`);
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoMiddle`;
@@ -1136,7 +1138,7 @@ export const interactiveGuide = async (status) => {
                     break;
                 case 90:
                     const importFileInfoMiddleDetailElement = document.getElementById('importFileInfoMiddleDetail');
-                    importFileInfoMiddleDetailElement.innerHTML = `<div id="importDataDetailExtension" style="background-color: #1AEEEE;"><div id="importDataDetailExtensionTitle">Extension Version</div><div id="importDataDetailExtensionDetail">0.0.0</div></div><div id="importDataDetailBrowser" style="background-color: #27FBFB;"><div id="importDataDetailBrowserTitle">Browser Information</div><div id="importDataDetailBrowserDetail">Firefox, v. 134.0</div></div><div id="importDataDetailOS" style="background-color: #1AEEEE;"><div id="importDataDetailOSTitle">OS Type</div><div id="importDataDetailOSDetail">Linux</div></div><div id="importDataDetailTimestamp" style="background-color: #27FBFB;"><div id="importDataDetailTimestampTitle">Created At</div><div id="importDataDetailTimestampDetail">0/00/0000, 0:00:00 AM</div></div><div id="importDataDetailProfile" style="background-color: #1AEEEE;"><div id="resultTableHeaderCurrentProfile">Profile Name</div><div id="importDataDetailProfileDetail"><div id="importDataDetailProfileDetailBox"><div id="profileDetailImage" style="background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAABbElEQVR4nO2XS0oDQRRFTwZG0C24ADFxAboCnTnTDWQsLiSaYDAzHfsZaiZ+NhHFeZyFgDEx4CChpOEFJJDGqorpp74DF4qmu+ve4lJdDYZhGH+NdaAKPALvomRcAYooZhE4AUaAm6IhUAPyKDT/kGJ8UvfaQtQ9zI91jKLOp9UmrU4FFFANMD/WIQp4igjQRAH9iAA9FNCLCPCGAn59hSoRAcoooChbYsg2uoYSagEBku1XDcmx4M7D/C2wgDLycjxIq9NQVl6d+a8U5AvblG9EX8ZlTZ03DMPQQ062xxJwBDSAZ6ANfIjacq0h95TkmVxWppeBXeAK6EQc5jrApbxraR7GV4EzYBBhepoGwKnMMXNWgIvAn3dfjYBzmXMm7ETWJFRdYC/W/EEGxt2E9kPNb86pMu4bldoICXCjwLwTXYcE6Cow7kSvIQGcMnmTtWH37wO8KFh1J2r5Fwi2QUWIFrAVEsAwDIMf5xMzFG7a+AMMkQAAAABJRU5ErkJggg==) center center / cover no-repeat;"></div><div id="profileDetailName">${userActiveProfile.name}</div></div>`;
+                    importFileInfoMiddleDetailElement.innerHTML = DOMPurify.sanitize(`<div id="importDataDetailExtension" style="background-color: #1AEEEE;"><div id="importDataDetailExtensionTitle">Extension Version</div><div id="importDataDetailExtensionDetail">0.0.0</div></div><div id="importDataDetailBrowser" style="background-color: #27FBFB;"><div id="importDataDetailBrowserTitle">Browser Information</div><div id="importDataDetailBrowserDetail">Firefox, v. 134.0</div></div><div id="importDataDetailOS" style="background-color: #1AEEEE;"><div id="importDataDetailOSTitle">OS Type</div><div id="importDataDetailOSDetail">Linux</div></div><div id="importDataDetailTimestamp" style="background-color: #27FBFB;"><div id="importDataDetailTimestampTitle">Created At</div><div id="importDataDetailTimestampDetail">0/00/0000, 0:00:00 AM</div></div><div id="importDataDetailProfile" style="background-color: #1AEEEE;"><div id="resultTableHeaderCurrentProfile">Profile Name</div><div id="importDataDetailProfileDetail"><div id="importDataDetailProfileDetailBox"><div id="profileDetailImage" style="background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAABbElEQVR4nO2XS0oDQRRFTwZG0C24ADFxAboCnTnTDWQsLiSaYDAzHfsZaiZ+NhHFeZyFgDEx4CChpOEFJJDGqorpp74DF4qmu+ve4lJdDYZhGH+NdaAKPALvomRcAYooZhE4AUaAm6IhUAPyKDT/kGJ8UvfaQtQ9zI91jKLOp9UmrU4FFFANMD/WIQp4igjQRAH9iAA9FNCLCPCGAn59hSoRAcoooChbYsg2uoYSagEBku1XDcmx4M7D/C2wgDLycjxIq9NQVl6d+a8U5AvblG9EX8ZlTZ03DMPQQ062xxJwBDSAZ6ANfIjacq0h95TkmVxWppeBXeAK6EQc5jrApbxraR7GV4EzYBBhepoGwKnMMXNWgIvAn3dfjYBzmXMm7ETWJFRdYC/W/EEGxt2E9kPNb86pMu4bldoICXCjwLwTXYcE6Cow7kSvIQGcMnmTtWH37wO8KFh1J2r5Fwi2QUWIFrAVEsAwDIMf5xMzFG7a+AMMkQAAAABJRU5ErkJggg==) center center / cover no-repeat;"></div><div id="profileDetailName">${userActiveProfile.name}</div></div>`);
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoMiddle`;
@@ -1151,8 +1153,8 @@ export const interactiveGuide = async (status) => {
                     updateMiddlePosition();
                     break;
                 case 92:
-                    const importFileInfoMiddleDetailElVerificationHtml = document.getElementById('importFileInfoMiddleDetail');
-                    importFileInfoMiddleDetailElVerificationHtml.innerHTML = `
+                    const importFileInfoMiddleDetailElVerificationEl = document.getElementById('importFileInfoMiddleDetail');
+                    const importFileInfoMiddleDetailElVerificationHtml = `
                         <div id="importFileVerificationContainer">
                             <div id="importFileVerificationStatus" style="background-color:#1aeeee">
                                 <div id="importFileVerificationStatusSuccess">
@@ -1422,6 +1424,7 @@ export const interactiveGuide = async (status) => {
                             </div>
                         </div>
                     `;
+                    importFileInfoMiddleDetailElVerificationEl.innerHTML = DOMPurify.sanitize(importFileInfoMiddleDetailElVerificationHtml);
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoMiddleDetail`;
@@ -1565,7 +1568,7 @@ export const interactiveGuide = async (status) => {
                         for (let i = 0; i < 9; i++) {
                             synchronizeVisualArrowTopHtml += `<svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="green" stroke="#000" stroke-width="1" class="arrowRight"><path d="m0,99.85741l0,-99.85741l100,49.92871l-100,49.92871z"/></svg>`;
                         }
-                        synchronizeVisualArrowTopEl.innerHTML = synchronizeVisualArrowTopHtml;
+                        synchronizeVisualArrowTopEl.innerHTML = DOMPurify.sanitize(synchronizeVisualArrowTopHtml);
                         const arrowRightEl = document.querySelectorAll('.arrowRight');
                         for (let i = 0; i < arrowRightEl.length; i++) {
                             gsap.fromTo(arrowRightEl[i], {
@@ -1589,7 +1592,7 @@ export const interactiveGuide = async (status) => {
                         for (let i = 0; i < 9; i++) {
                             synchronizeVisualArrowBottomHtml += `<svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="green" stroke="#000" stroke-width="1" class="arrowLeft"><path d="m99.42575,99.0906l-99.22305,-49.5453l99.22305,-49.5453l0,99.0906z"/></svg>`;
                         }
-                        synchronizeVisualArrowBottomEl.innerHTML = synchronizeVisualArrowBottomHtml;
+                        synchronizeVisualArrowBottomEl.innerHTML = DOMPurify.sanitize(synchronizeVisualArrowBottomHtml);
                         const arrowLeftEl = document.querySelectorAll('.arrowLeft');
                         for (let i = arrowLeftEl.length - 1; i >= 0; i--) {
                             gsap.fromTo(arrowLeftEl[i], {

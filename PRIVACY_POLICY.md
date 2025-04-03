@@ -1,6 +1,6 @@
 # Privacy Policy
 
-_Last updated: February 25, 2025_
+*Last updated: February 25, 2025*
 
 This Privacy Policy describes our policies and procedures regarding the handling of user data when using the Bookmark Manager Pro browser extension.
 

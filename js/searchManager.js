@@ -31,6 +31,8 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ * - Marked (MIT License)
+ * - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
@@ -94,7 +96,7 @@ export const searchManager = (status) => {
     // Close the search window
     if (status === 'close') {
         uiElementsContainerEl.style.display = 'none';
-        uiElementsContainerEl.innerHTML = '';
+        uiElementsContainerEl.innerHTML = DOMPurify.sanitize('');
         return;
     }
 
@@ -215,7 +217,7 @@ export const searchManager = (status) => {
 
     // Display the UI elements
     uiElementsContainerEl.style.display = 'flex';
-    uiElementsContainerEl.innerHTML = otherBodyHTML;
+    uiElementsContainerEl.innerHTML = DOMPurify.sanitize(otherBodyHTML);
 
     /**
      * Updates the text content of the search manager UI elements based on the current language settings.
@@ -377,10 +379,10 @@ export const searchManager = (status) => {
         searchObject.view = 'list';
         if (searchObject.view === 'list') {
             searchWindowBodyLeftSearchFiltersContentResultViewTitleEl.innerText = currentLanguageTextObj._searchManagerUI._allFilters.chooseCompactView;
-            searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = viewAsCompactIconSVG;
+            searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = DOMPurify.sanitize(viewAsCompactIconSVG);
         } else if (searchObject.view === 'compact') {
             searchWindowBodyLeftSearchFiltersContentResultViewTitleEl.innerText = currentLanguageTextObj._searchManagerUI._allFilters.chooseListView;
-            searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = viewAsListIconSVG;
+            searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = DOMPurify.sanitize(viewAsListIconSVG);
         }
     }
     setDefaultValuesToSearchManager();
@@ -422,7 +424,7 @@ export const searchManager = (status) => {
                     </div>
                 </div>
             `;
-            searchWindowBodyRightResultsEl.innerHTML = messageHtml;
+            searchWindowBodyRightResultsEl.innerHTML = DOMPurify.sanitize(messageHtml);
         }
 
         // Display a message when there are no bookmarks and a search term is entered
@@ -435,7 +437,7 @@ export const searchManager = (status) => {
                     </div>
                 </div>
             `;
-            searchWindowBodyRightResultsEl.innerHTML = messageHtml;
+            searchWindowBodyRightResultsEl.innerHTML = DOMPurify.sanitize(messageHtml);
         }
 
         // Add each extension bookmark to the List view results
@@ -520,7 +522,7 @@ export const searchManager = (status) => {
             }
 
             // Builds the HTML for the search results in the list view.
-            searchWindowBodyRightResultsEl.innerHTML = `
+            searchWindowBodyRightResultsEl.innerHTML = DOMPurify.sanitize(`
                 <div id="searchWindowBodyRightResultsHtmlList">
                     <div id="searchWindowBodyRightResultsExtensionList">
                         <div id="searchWindowBodyRightResultsExtensionListTitle" style="display: ${searchObject.includedBrowserBookmarks ? searchObject.searchText.trim().length > 0 ? 'flex' : 'none' : 'none'}">${filteredExtensionBookmarks.length} &nbsp;<div id="searchWindowBodyRightResultsExtensionListTitle">${filteredExtensionBookmarks.length === 1 ? currentLanguageTextObj._searchManagerUI._searchTitleResultSeparation._extension._singularForm : currentLanguageTextObj._searchManagerUI._searchTitleResultSeparation._extension._pluralForm}</div></div>
@@ -531,7 +533,7 @@ export const searchManager = (status) => {
                         <div id="searchWindowBodyRightResultsBrowserListBookmarks">${searchWindowBodyRightResultsHtmlBrowser}</div>
                     </div>
                 </div>
-            `;
+            `);
 
             /**
              * Adds event listeners to each bookmark element in the list view.
@@ -659,7 +661,7 @@ export const searchManager = (status) => {
             }
 
             // Create the HTML for the results
-            searchWindowBodyRightResultsEl.innerHTML = `
+            searchWindowBodyRightResultsEl.innerHTML = DOMPurify.sanitize(`
                 <div id="searchWindowBodyRightResultsHtmlCompact">
                     <div id="searchWindowBodyRightResultsExtensionCompact">
                         <div id="searchWindowBodyRightResultsExtensionCompactTitle" style="display: ${searchObject.includedBrowserBookmarks ? searchObject.searchText.trim().length > 0 ? 'flex' : 'none' : 'none'}">${filteredExtensionBookmarks.length} &nbsp;<div id="searchWindowBodyRightResultsExtensionCompactTitle">${filteredExtensionBookmarks.length === 1 ? currentLanguageTextObj._searchManagerUI._searchTitleResultSeparation._extension._singularForm : currentLanguageTextObj._searchManagerUI._searchTitleResultSeparation._extension._pluralForm}</div></div>
@@ -670,7 +672,7 @@ export const searchManager = (status) => {
                         <div id="searchWindowBodyRightResultsBrowserCompactBookmarks">${searchWindowBodyRightResultsHtmlBrowser}</div>
                     </div>
                 </div>
-            `;
+            `);
 
             /**
              * Adds event listeners to all bookmark elements in the compact view.
@@ -814,7 +816,7 @@ export const searchManager = (status) => {
             detailsElement.style.fontWeight = userProfileExport.mainUserSettings.windows.window.font.fontWeight;
             detailsElement.style.fontFamily = userProfileExport.mainUserSettings.windows.window.font.fontFamily;
             detailsElement.style.fontStyle = userProfileExport.mainUserSettings.windows.window.font.fontStyle;
-            detailsElement.innerHTML = `
+            detailsElement.innerHTML = DOMPurify.sanitize(`
                 <div class="moreDetailsItems">
                     <div class="moreDetailsItemsTitle">${currentLanguageTextObj._searchManagerUI._bookmarkAdditionalInformation.created}</div>
                     <div class="moreDetailsItemsInfo moreDetailsItemsDate">${formatDateTime(findBookmarkById.dateAdded, currentLanguage, 'dateAndTime')}</div>
@@ -835,7 +837,7 @@ export const searchManager = (status) => {
                         <div class="moreDetailsItemsInfoFolder">${findBookmarkParentById.title}</div>
                     </div>
                 </div>
-            `;
+            `);
             document.body.appendChild(detailsElement); // Append to body for positioning
 
             /**
@@ -1117,11 +1119,11 @@ export const searchManager = (status) => {
         const updateValueToggleView = () => {
             if (searchObject.view === 'compact') {
                 searchWindowBodyLeftSearchFiltersContentResultViewTitleEl.innerText = currentLanguageTextObj._searchManagerUI._allFilters.chooseCompactView;
-                searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = viewAsCompactIconSVG;
+                searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = DOMPurify.sanitize(viewAsCompactIconSVG);
                 searchObject.view = 'list';
             } else {
                 searchWindowBodyLeftSearchFiltersContentResultViewTitleEl.innerText = currentLanguageTextObj._searchManagerUI._allFilters.chooseListView;
-                searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = viewAsListIconSVG;
+                searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = DOMPurify.sanitize(viewAsListIconSVG);
                 searchObject.view = 'compact';
             }
             showSearchResultToUi();

@@ -31,6 +31,8 @@
     - Emoji Mart (MIT License)
     - jQuery Knob (MIT License)
     - Howler (MIT License)
+    - Marked (MIT License)
+    - DOMPurify (Apache License Version 2.0)
 
     All third-party libraries are included under their respective licenses.
     For more information, please refer to the documentation of each library.
@@ -48,7 +50,6 @@
     color: inherit;
     letter-spacing: inherit;
     word-spacing: inherit;
-    list-style-type: none;
 }
 
 *:focus {
@@ -1906,7 +1907,7 @@ body>#uiElementsContainer>#settingsWindow>#settingsWindowLeftSection>#leftMenuHe
     justify-content: flex-start;
     align-items: center;
     width: 100%;
-    height: 10px;
+    height: 0px;
 }
 
 body>#uiElementsContainer>#settingsWindow>#settingsWindowLeftSection>#leftMenuBody {
@@ -1916,7 +1917,6 @@ body>#uiElementsContainer>#settingsWindow>#settingsWindowLeftSection>#leftMenuBo
     flex-direction: column;
     width: 100%;
     height: 680px;
-    padding: 0px 5px 0px 5px;
     overflow: scroll;
 }
 
@@ -1925,6 +1925,7 @@ body>#uiElementsContainer>#settingsWindow>#settingsWindowLeftSection>#leftMenuBo
     justify-content: flex-start;
     align-items: flex-start;
     flex-direction: column;
+    margin: 4px 0px 0px 0px;
     width: 100%;
     height: auto;
 }
@@ -1951,10 +1952,13 @@ body>#uiElementsContainer>#settingsWindow>#settingsWindowLeftSection>#leftMenuBo
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    padding: 2px 0px 2px 0px;
+    padding: 1px 0px 1px 2px;
+    margin: 1px 10px 1px 2px;
     width: 100%;
     height: auto;
+    text-align: left;
     border: 0px solid #00000000;
+    border-radius: 5px;
     background-color: #00000000;
 }
 
@@ -1978,6 +1982,14 @@ body>#uiElementsContainer>#settingsWindow>#settingsWindowLeftSection>#leftMenuFo
     align-items: center;
     width: 100%;
     height: 50px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowLeftSection>#leftMenuFooter>#extensionVersion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
 }
 
 body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection {
@@ -2025,13 +2037,13 @@ body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#editProfi
     height: 100%;
 }
 
-body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#editProfileSection>#headerProfileSection>#profileName>#name {
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#editProfileSection>#headerProfileSection>#profileName>#userName {
     display: flex;
     justify-content: center;
     align-items: center;
     width: auto;
     height: auto;
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: 600;
     white-space: nowrap;
 }
@@ -6800,6 +6812,7 @@ body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#synchroni
 
 .tree ul {
     list-style: none;
+    list-style-type: none;
 }
 
 .tree ul li {
@@ -7180,7 +7193,7 @@ body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#infoMainS
     opacity: 0;
 }
 
-body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#changeLogSection {
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations {
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
@@ -7191,42 +7204,109 @@ body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#changeLog
     overflow: hidden;
 }
 
-body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#changeLogSection>#changeLog {
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown {
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
     flex-direction: column;
-    padding: 0px 0px 10px 0px;
+    padding: 0px 10px 10px 0px;
     width: 100%;
     height: 100%;
-    list-style-position: inside;
-    overflow: scroll;
-    white-space: nowrap;
-    text-align: justify;
+    overflow-y: scroll;
 }
 
-body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#changeLogSection>#changeLog h2 {
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown h1 {
     display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    font-size: 24px;
+    width: 100%;
+    border-bottom: 1px solid var(--fontColor);
+    font-size: 1.5rem;
     font-weight: 600;
 }
 
-body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#changeLogSection>#changeLog ul {
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown h2 {
     display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 0px 0px 0px 15px;
-    font-size: 13px;
     width: 100%;
-    height: 100%;
+    border-bottom: 1px solid var(--fontColor);
+    margin: 10px 0px 0px 0px;
+    font-size: 1.2rem;
+    font-weight: 600;
 }
 
-body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>#changeLogSection>#changeLog ul li {
-    font-size: 13px;
-    padding: 0px 10px 0px 0px;
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown h1,
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown h2,
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown h3,
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown h4,
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown h5,
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown h6 {
+    margin: 10px 0px 10px 0px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown em {
+    font-style: italic;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown p {
+    margin: 10px 0;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown ul {
+    margin: 10px 0;
+    padding-left: 14px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown>ul {
+    padding-left: 20px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown ol {
+    margin: 10px 0;
+    padding-left: 10px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown>ol {
+    padding-left: 20px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown>ul>li {
+    list-style-type: decimal-leading-zero;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown li {
+    margin: 0px 0px 5px 5px;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown a {
+    text-decoration: none;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown a:hover {
+    text-decoration: underline;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown blockquote {
+    border-left: 4px solid var(--highlightColor8);
+    padding: 10px 20px;
+    margin: 10px 0;
+    background-color: var(--highlightColor5);
+    color: var(--fontColor);
+    font-style: italic;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown pre {
+    background-color: var(--highlightColor5);
+    border: 1px solid var(--highlightColor8);
+    padding: 10px;
+    overflow-x: auto;
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown code {
+    border-radius: 4px;
+    padding: 2px 4px;
+    background-color: var(--highlightColor5);
+}
+
+body>#uiElementsContainer>#settingsWindow>#settingsWindowRightSection>.aboutDocumentations>.documentationsMarkdown strong {
+    font-weight: 800;
 }
 
 body>#uiElementsContainer>#settingsWindow>#settingsWindowFooterSection {

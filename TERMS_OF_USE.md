@@ -1,8 +1,8 @@
-### TERMS OF USE
+# TERMS OF USE
 
-_Last updated March 13, 2025_
+*Last updated March 13, 2025*
 
-### AGREEMENT TO OUR LEGAL TERMS
+## AGREEMENT TO OUR LEGAL TERMS
 
 We are Bookmark Manager Pro ("we," "us," "our"), a free, open-source browser extension designed to manage bookmarks efficiently, similar to an OS file manager.
 
@@ -126,6 +126,16 @@ This extension uses the following third-party libraries, each distributed under 
     - Version: Latest
     - License: MIT
     - URL: [https://github.com/goldfire/howler.js](https://github.com/goldfire/howler.js)
+
+12. **Marked**
+    - Version: Latest
+    - License: MIT
+    - URL: [https://github.com/markedjs/marked](https://github.com/markedjs/marked)
+
+13. **DOMPurify**
+    - Version: Latest
+    - License: Apache License Version 2.0
+    - URL: [https://github.com/cure53/DOMPurify](https://github.com/cure53/DOMPurify)
 
 ## PRIVACY POLICY
 

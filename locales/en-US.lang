@@ -1145,8 +1145,20 @@
                     "_aboutInfo": {
                         "_data": "Info"
                     },
-                    "_aboutChangelog": {
+                    "_changelog": {
                         "_data": "Changelog"
+                    },
+                    "_termsOfUse": {
+                        "_data": "Terms Of Use"
+                    },
+                    "_license": {
+                        "_data": "License"
+                    },
+                    "_privacyPolicy": {
+                        "_data": "Privacy Policy"
+                    },
+                    "_security": {
+                        "_data": "Security"
                     }
                 }
             },

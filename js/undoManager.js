@@ -31,13 +31,15 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ * - Marked (MIT License)
+ * - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
  */
 
 import { userProfileExport, currentLanguage, manageUserProfiles, createCurrentBookmarkFolder, currentLanguageTextObj } from './main.js';
-import { indexedDBManipulation, isObjectEmpty, showMessageToastify, formatDateTime, capitalizeString, generateColorPalette, truncateTextIfOverflow, createTooltip, checkIfColorBrightness, findBookmarkByKey } from './utilityFunctions.js';
+import { indexedDBManipulation, isObjectEmpty, showMessageToastify, formatDateTime, capitalizeString, generateColorPalette, truncateTextIfOverflow, createTooltip, checkIfColorBrightness, findBookmarkByKey, escapeHtml } from './utilityFunctions.js';
 
 /**
  * Undo manager. Handles the undo manager UI and the actions it triggers.
@@ -181,7 +183,6 @@ export const undoManager = async (status, information) => {
         while (array.length >= length) {
             array.pop(); // Remove the last item
         }
-        console.log(array.length);
 
         // Add the new item at the beginning of the array
         array.unshift(item);
@@ -461,7 +462,7 @@ export const undoManager = async (status, information) => {
      */
     const closeUndoManagerUi = () => {
         uiElementsContainerEl.style.display = 'none'; // Hide the UI elements
-        uiElementsContainerEl.innerHTML = '';
+        uiElementsContainerEl.innerHTML = DOMPurify.sanitize('');
     }
 
     /**
@@ -494,7 +495,7 @@ export const undoManager = async (status, information) => {
                 </div>
             </div>
         `;
-        warningBeforeTurnOffEl.innerHTML = warningBeforeDeleteAllActionsElHtml;
+        warningBeforeTurnOffEl.innerHTML = DOMPurify.sanitize(warningBeforeDeleteAllActionsElHtml);
 
         /**
          * Sets the default styles for the warning before turning off the Undo Manager.
@@ -529,7 +530,7 @@ export const undoManager = async (status, information) => {
                 undoManagerLeftSectionMiddleTurnUndoOffToggleEl.checked = true;
                 userProfileExport.mainUserSettings.main.undoManager.status = true;
                 warningBeforeTurnOffEl.style.display = 'none';
-                warningBeforeTurnOffEl.innerHTML = '';
+                warningBeforeTurnOffEl.innerHTML = DOMPurify.sanitize('');
             }
 
             const doNotTurnOffMouseEnter = (el) => {
@@ -599,7 +600,7 @@ export const undoManager = async (status, information) => {
                 </div>
             </div>
         `;
-        warningBeforeDeleteAllActionsEl.innerHTML = warningBeforeDeleteAllActionsElHtml;
+        warningBeforeDeleteAllActionsEl.innerHTML = DOMPurify.sanitize(warningBeforeDeleteAllActionsElHtml);
 
         /**
          * Sets the default styles for the warning dialog shown before deleting all actions.
@@ -635,7 +636,7 @@ export const undoManager = async (status, information) => {
              */
             const doNotDeleteActionsHandle = () => {
                 warningBeforeDeleteAllActionsEl.style.display = 'none';
-                warningBeforeDeleteAllActionsEl.innerHTML = '';
+                warningBeforeDeleteAllActionsEl.innerHTML = DOMPurify.sanitize('');
             }
 
             /**
@@ -666,8 +667,8 @@ export const undoManager = async (status, information) => {
                 await loadSaveActions('save', actionsArray);
                 await showUndoManagerUi();
                 warningBeforeDeleteAllActionsEl.style.display = 'none';
-                warningBeforeDeleteAllActionsEl.innerHTML = '';
-                undoManagerLeftSectionMiddleClearAllActionsButtonEl.innerHTML = deleteAllActionNoActionsIconSVG;
+                warningBeforeDeleteAllActionsEl.innerHTML = DOMPurify.sanitize('');
+                undoManagerLeftSectionMiddleClearAllActionsButtonEl.innerHTML = DOMPurify.sanitize(deleteAllActionNoActionsIconSVG);
             }
 
             /**
@@ -724,18 +725,18 @@ export const undoManager = async (status, information) => {
             const confirmationRedoActionEl = document.querySelector(`.confirmationRedoAction[data-id="${item.id}"]`);
 
             if (item.disabledRedo) {
-                confirmationRedoActionEl.innerHTML = redoActionForbiddenIconSVG;
+                confirmationRedoActionEl.innerHTML = DOMPurify.sanitize(redoActionForbiddenIconSVG);
                 confirmationRedoActionEl.style.backgroundColor = colorPalette[9];
             } else {
-                confirmationRedoActionEl.innerHTML = redoActionIconSVG;
+                confirmationRedoActionEl.innerHTML = DOMPurify.sanitize(redoActionIconSVG);
                 confirmationRedoActionEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.success.backgroundColor;
             }
             if (item.disabledUndo) {
-                undoActionEl.innerHTML = undoActionForbiddenIconSVG;
+                undoActionEl.innerHTML = DOMPurify.sanitize(undoActionForbiddenIconSVG);
                 undoActionEl.style.backgroundColor = colorPalette[9];
                 actionItemUndoButtonNotAllowedEl.style.display = 'flex';
             } else {
-                undoActionEl.innerHTML = undoActionIconSVG;
+                undoActionEl.innerHTML = DOMPurify.sanitize(undoActionIconSVG);
                 undoActionEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
                 actionItemUndoButtonNotAllowedEl.style.display = 'none';
             }
@@ -925,7 +926,7 @@ export const undoManager = async (status, information) => {
         `;
         // Display the UI elements
         uiElementsContainerEl.style.display = 'flex';
-        uiElementsContainerEl.innerHTML = uiElementsContainerElHtml;
+        uiElementsContainerEl.innerHTML = DOMPurify.sanitize(uiElementsContainerElHtml);
 
         /**
          * Sets the styles of the undo manager UI based on the user's settings.
@@ -1092,7 +1093,7 @@ export const undoManager = async (status, information) => {
             });
 
             undoManagerLeftSectionMiddleFilterActionsTriggerContentEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
-            undoManagerLeftSectionMiddleFilterActionsTriggerContentEl.innerHTML = undoManagerLeftSectionMiddleFilterActionsTriggerContentElHtml;
+            undoManagerLeftSectionMiddleFilterActionsTriggerContentEl.innerHTML = DOMPurify.sanitize(undoManagerLeftSectionMiddleFilterActionsTriggerContentElHtml);
 
             /**
              * Sets alternating styles to filter action toggle elements.
@@ -1178,7 +1179,7 @@ export const undoManager = async (status, information) => {
                                 <div class="actionItemDetail" style="background-color: ${action.item.style.bookmark.text.backgroundColor};color: ${action.item.style.bookmark.font.color};">
                                     <div class="actionItemImage" style="${backgroundStyle}"></div>
                                     <div class="actionItemInfo">
-                                        <div class="actionItemBoxTitle" data-id="${action.id}">${action.item.title}</div>
+                                        <div class="actionItemBoxTitle" data-id="${action.id}">${escapeHtml(action.item.title)}</div>
                                         <div class="actionItemBoxType">
                                             <div class="actionItemBoxTypeTitle">${currentLanguageTextObj._undoManager._itemsTitles.type}</div>
                                             <div class="actionItemBoxTypeValue">${itemTypeTitle}</div>
@@ -1223,7 +1224,7 @@ export const undoManager = async (status, information) => {
                     `;
                 }
             });
-            undoManagerRightSectionActionsListEl.innerHTML = undoManagerRightSectionActionsListHtml;
+            undoManagerRightSectionActionsListEl.innerHTML = DOMPurify.sanitize(undoManagerRightSectionActionsListHtml);
 
             /**
              * @function setStylesToUserActionList
@@ -1498,7 +1499,7 @@ export const undoManager = async (status, information) => {
                     const warningBeforeTurnOffEl = document.getElementById('warningBeforeTurnOff');
                     undoManagerLeftSectionMiddleTurnUndoOffToggleTitleEl.innerText = currentLanguageTextObj._undoManager.undoManagerIsEnabled;
                     warningBeforeTurnOffEl.style.display = 'none';
-                    warningBeforeTurnOffEl.innerHTML = '';
+                    warningBeforeTurnOffEl.innerHTML = DOMPurify.sanitize('');
                     userProfileExport.mainUserSettings.main.undoManager.status = true;
                     // Save the current user bookmarks to local storage and show a success or error message.
                     await manageUserProfiles('save');
