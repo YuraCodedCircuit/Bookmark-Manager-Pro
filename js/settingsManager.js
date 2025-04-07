@@ -458,6 +458,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
             // Set the inner HTML of the left menu body element to the generated HTML.
             // Add event listeners to the left menu items.
             addEventListenersToLeftMenuList();
+            leftMenuBodyEl.scrollTop = 0;
         }
         // Create the menu list using the settingMainMenu array for the specified type.
         createMenuList(settingMainMenu[type]);
@@ -626,7 +627,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         <div id="editProfileSection">
                             <div id="headerProfileSection">
                                 <div id="profileName">
-                                    <div id="userName"></div>
+                                    <div id="userNameOfflineProfile"></div>
                                 </div>
                                 <div id="profileLogo">
                                     <div id="logo">
@@ -649,23 +650,28 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     setStyleToHeaderProfileSection();
 
                     const setCurrentProfileToHeader = () => {
-                        const userNameEl = document.getElementById('userName');
+                        const profileNameEl = document.getElementById('profileName');
+                        const userNameOfflineProfileEl = document.getElementById('userNameOfflineProfile');
                         const logoImgEl = document.getElementById('logoImg');
-                        if (isObjectEmpty(userActiveProfile) || isObjectEmpty(userProfile)) return;
+                        if (isObjectEmpty(userActiveProfile) || isObjectEmpty(userProfile)) {
+                            console.log('Object is empty');
+                            return;
+                        }
                         if (checkIfImageBase64(userActiveProfile.image)) {
                             logoImgEl.src = userActiveProfile.image;
                         } else {
                             logoImgEl.src = defaultProfileImageBase64;
                         }
                         if (userActiveProfile.name.trim().length > 0) {
-                            userNameEl.textContent = DOMPurify.sanitize(escapeHtml(userActiveProfile.name));
-                            if (userActiveProfile.name.length < 30) { return };
-                            const status = translateUserName('profileUserName', 'userName');
-                            if (!status) {
-                                showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                            userNameOfflineProfileEl.innerText = DOMPurify.sanitize(escapeHtml(userActiveProfile.name));
+                            if (profileNameEl.scrollHeight > profileNameEl.clientHeight || profileNameEl.scrollWidth > profileNameEl.clientWidth) {
+                                const status = translateUserName('profileUserName', 'userNameOfflineProfile');
+                                if (!status) {
+                                    showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                                }
                             }
                         } else {
-                            userNameEl.textContent = `Not set`;
+                            userNameOfflineProfileEl.innerText = DOMPurify.sanitize(`Not set`);
                         }
                     }
                     setCurrentProfileToHeader();
@@ -938,7 +944,6 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             const bodyProfileListEl = document.getElementById('bodyProfileList');
                             const bodyProfileListTableBodyEl = document.getElementById('bodyProfileListTableBody');
                             let bodyTableHtml = ``;
-                            let idsArrayForTooltip = [];
                             const selectedSvg = `
                                 <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M8 12.5L11 15.5L16 9.5" stroke="${editingMainUserSettings.windows.button.success.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -961,8 +966,8 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     <path d="M4 6H20L18.4199 20.2209C18.3074 21.2337 17.4512 22 16.4321 22H7.56786C6.54876 22 5.69264 21.2337 5.5801 20.2209L4 6Z" stroke="${editingMainUserSettings.windows.button.danger.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path d="M7.34491 3.14716C7.67506 2.44685 8.37973 2 9.15396 2H14.846C15.6203 2 16.3249 2.44685 16.6551 3.14716L18 6H6L7.34491 3.14716Z" stroke="${editingMainUserSettings.windows.button.danger.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path d="M2 6H22" stroke="${editingMainUserSettings.windows.button.danger.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M10 11V16" stroke="${editingMainUserSettings.windows.button.secondary.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M14 11V16" stroke="${editingMainUserSettings.windows.button.secondary.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10 11V16" stroke="${editingMainUserSettings.windows.button.danger.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M14 11V16" stroke="${editingMainUserSettings.windows.button.danger.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             `;
 
@@ -975,12 +980,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     date = formatDateTime(profile.timestampCreation, currentLanguage, 'date');
                                     time = formatDateTime(profile.timestampCreation, currentLanguage, 'time');
                                 }
-                                if (profile.name.length >= 29) {
-                                    idsArrayForTooltip.push({ id: profile.userId, name: profile.name });
-                                }
                                 bodyTableHtml += `
                                     <div class="bodyProfileListTableRow" ${index % 2 ? `style="background-color: ${colorPalette[3]}"` : `style="background-color: ${colorPalette[6]}"`}>
-                                        <div class="bodyProfileListTableRowName" data-id="${profile.userId}">${truncateString(escapeHtml(profile.name), 29, 0)}</div>
+                                        <div class="bodyProfileListTableRowName" data-id="${profile.userId}">${escapeHtml(profile.name)}</div>
                                         <div class="bodyProfileListTableRowInfo">
                                             <div class="bodyProfileListTableRowInfoDate">${date}</div>
                                             <div class="bodyProfileListTableRowInfoTime">${time}</div>
@@ -1013,6 +1015,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                  * @returns {void}
                                  */
                                 const createTooltipForLongProfileNames = () => {
+                                    const bodyProfileListTableRowNameElArray = document.querySelectorAll('.bodyProfileListTableRowName');
                                     const backgroundColorBrightness = checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff';
                                     const style = {
                                         backgroundColor: editingMainUserSettings.windows.window.backgroundColor,
@@ -1023,6 +1026,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                         fontSize: `${editingMainUserSettings.windows.window.font.fontSize}px`,
                                         fontWeight: editingMainUserSettings.windows.window.font.fontWeight,
                                         fontFamily: editingMainUserSettings.windows.window.font.fontFamily,
+                                        wordWrap:'break-word',
                                         maxWidth: '400px'
                                     }
                                     const underlineStyle = {
@@ -1030,13 +1034,16 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                         textDecorationLine: 'underline',
                                         textDecorationStyle: 'dotted',
                                     }
-                                    idsArrayForTooltip.forEach(profile => {
-                                        const profileName = document.querySelector(`.bodyProfileListTableRowName[data-id="${profile.id}"]`);
-                                        Object.assign(profileName.style, underlineStyle);
-                                        createTooltip(profileName, 'top', profile.name, style);
+                                    bodyProfileListTableRowNameElArray.forEach(el => {
+                                        const fullProfileName = el.innerText;
+                                        const textLength = truncateTextIfOverflow(el, fullProfileName);
+                                        if (fullProfileName.length > textLength) {
+                                            Object.assign(el.style, underlineStyle);
+                                            createTooltip(el, 'top', fullProfileName, style);
+                                        }
                                     });
                                 }
-                                if (idsArrayForTooltip.length > 0) { createTooltipForLongProfileNames(); }
+                                createTooltipForLongProfileNames();
 
                                 const setToCurrentProfile = async (event) => {
                                     event.stopPropagation();
@@ -1638,12 +1645,14 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 selectedProfile.name = nameValue;
                                 userProfile.offline.forEach(profile => {
                                     if (profile.userId === id) {
-                                        profileNameEl.innerHTML = DOMPurify.sanitize(`<div id="name">${escapeHtml(nameValue)}</div>`);
+                                        profileNameEl.innerHTML = DOMPurify.sanitize(`<div id="userNameOfflineProfile">${escapeHtml(nameValue)}</div>`);
                                         profile.name = nameValue;
-                                        if (nameValue.length < 30) { return };
-                                        const status = translateUserName('profileUserName', 'name');
-                                        if (!status) {
-                                            showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                                        if (profileNameEl.scrollHeight > profileNameEl.clientHeight || profileNameEl.scrollWidth > profileNameEl.clientWidth) {
+                                            const status = translateUserName('profileUserName', 'userNameOfflineProfile');
+                                            if (!status) {
+                                                console.error('Failed to translate username');
+                                                showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                                            }
                                         }
                                     }
                                 });
@@ -6786,9 +6795,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         const progressContainerEl = document.getElementById('progressContainer');
                         const exportButtonEl = document.getElementById('exportButton');
 
-                        exportFileTitleInputEl.style.backgroundColor = colorPalette[1];
-                        exportFilePasswordInputEl.style.backgroundColor = colorPalette[1];
-                        progressContainerEl.style.backgroundColor = colorPalette[1];
+                        exportFileTitleInputEl.style.backgroundColor = colorPalette[4];
+                        exportFilePasswordInputEl.style.backgroundColor = colorPalette[4];
+                        progressContainerEl.style.backgroundColor = colorPalette[4];
                         exportButtonEl.style.backgroundColor = editingMainUserSettings.windows.button.primary.backgroundColor;
                     }
                     setDefaultStyleToElements();
@@ -6803,7 +6812,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             type.status = false;
                             const typeLanguageTitle = languageObject._exportImportOptions._exportProfile._exportTypes[type.type];
                             exportSelectTypeHtml += `
-                                <div class="exportTypeBox" style="background-color: ${colorPalette[1]};">
+                                <div class="exportTypeBox" style="background-color: ${colorPalette[4]};">
                                     <label class="toggle" for="${type.type}Export">
                                         <input type="checkbox" class="toggleInput exportToggleInput" id="${type.type}Export" data-type="${type.type}" ${type.status ? 'checked' : ''} />
                                         <span class="toggleTrack">
@@ -7013,12 +7022,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
 
                                 if (fileName.length <= 0) {
                                     showErrorToInputFileName();
-                                    showMessageToastify('error', ``, `Enter a file name. The maximum length does not exceed 150 characters.`, 6000, false, 'bottom', 'right', true);
-                                    throw Error('Enter a file name. The maximum length does not exceed 150 characters.');
+                                    showMessageToastify('error', ``, `Please enter a file name. Keep it under 150 characters!`, 6000, false, 'bottom', 'right', true);
+                                    throw Error('Please enter a file name. Keep it under 150 characters!');
                                 }
                                 if (!statusFilter) {
                                     const exportTypeBox = document.querySelectorAll('.exportTypeBox');
                                     exportTypeBox.forEach((el, index) => {
+                                        const elBackgroundColor = el.style.backgroundColor;
                                         // Shake the elements to indicate an error
                                         gsap.fromTo(el, 0.2, {
                                             x: -3,
@@ -7026,17 +7036,17 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                             x: 3,
                                             delay: index / .85 - index,
                                             repeat: 1,
-                                            backgroundColor: editingMainUserSettings.windows.button.danger.backgroundColor,
+                                            backgroundColor: editingMainUserSettings.windows.button.warning.backgroundColor,
                                             yoyo: true,
                                             ease: Quad.easeInOut,
                                             onComplete: () => {
                                                 gsap.set(el, { clearProps: 'all' });
                                                 gsap.killTweensOf(el);
-                                                el.style.backgroundColor = colorPalette[1];
+                                                el.style.backgroundColor = elBackgroundColor;
                                             }
                                         });
                                     });
-                                    showMessageToastify('error', ``, `Select the export type.`, 4000, false, 'bottom', 'right', true);
+                                    showMessageToastify('warning', ``, `Please choose an export type before proceeding.`, 4000, false, 'bottom', 'right', true);
                                     throw Error('Must select export type');
                                 }
 

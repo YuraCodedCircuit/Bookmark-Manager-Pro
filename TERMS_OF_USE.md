@@ -72,70 +72,75 @@ You agree and acknowledge that we do not endorse the products or services offere
 
 This extension uses the following third-party libraries, each distributed under its own license. Please refer to the links below for full license details for each library.
 
-1. **jQuery**
-   - Version: 3.7.1
+1. **Coloris**
+   - Version: 0.24.0
    - License: MIT
-   - URL: [https://jquery.com/](https://jquery.com/)
+   - URL: [https://github.com/mdbassit/Coloris](https://github.com/mdbassit/Coloris)
 
-2. **CountUp.js**
-   - Version: Latest
-   - License: MIT
-   - URL: [https://github.com/inorganik/countUp.js](https://github.com/inorganik/countUp.js)
-
-3. **Toastify**
-   - Version: Latest
-   - License: MIT
-   - URL: [https://github.com/sammyhennessy/toastify-js](https://github.com/sammyhennessy/toastify-js)
-
-4. **JavaScript Color Gradient**
-   - Version: Latest
-   - License: MIT
-   - URL: [https://github.com/DanielRosenwasser/javascript-color-gradient](https://github.com/DanielRosenwasser/javascript-color-gradient)
-
-5. **WebFont**
-   - Version: 1.6.26
-   - License: Apache 2.0
-   - URL: [https://github.com/typekit/webfontloader](https://github.com/typekit/webfontloader)
-
-6. **Coloris**
-   - Version: Latest
-   - License: MIT
-   - URL: [https://github.com/mdbrown/coloris](https://github.com/mdbrown/coloris)
-
-7. **LocalForage**
-   - Version: Latest
-   - License: MIT
-   - URL: [https://github.com/localForage/localForage](https://github.com/localForage/localForage)
-
-8. **CryptoJS**
-   - Version: Latest
+2. **CryptoJS**
+   - Version: 4.2.0
    - License: MIT
    - URL: [https://github.com/brix/crypto-js](https://github.com/brix/crypto-js)
 
-9. **GSAP (GreenSock Animation Platform)**
-   - Version: Latest
-   - License: Standard License
-   - URL: [https://greensock.com/gsap/](https://greensock.com/gsap/)
+3. **DOMPurify**
+    - Version: 3.2.4
+    - License: Apache License Version 2.0 and Mozilla Public License 2.0
+    - URL: [https://github.com/cure53/DOMPurify](https://github.com/cure53/DOMPurify)
 
-10. **tsParticles**
-    - Version: Latest
+4. **Emoji Mart**
+   - Version: 5.6.0
+   - License: MIT
+   - URL: [https://github.com/missive/emoji-mart](https://github.com/missive/emoji-mart)
+
+5. **GSAP (GreenSock Animation Platform)**
+   - Version: 3.12.7
+   - License: Standard License
+   - URL: [https://github.com/greensock/GSAP](https://github.com/greensock/GSAP)
+
+6. **HOWLER.JS**
+   - Version: 2.2.4
+   - License: MIT
+   - URL: [https://github.com/goldfire/howler.js](https://github.com/goldfire/howler.js)
+
+7. **JavaScript Color Gradient**
+   - Version: 2.5.0
+   - License: MIT
+   - URL: [https://github.com/Adrinlol/javascript-color-gradient](https://github.com/Adrinlol/javascript-color-gradient)
+
+8. **jQuery Knob**
+   - Version: 1.2.11
+   - License: MIT
+   - URL: [https://github.com/aterrien/jQuery-Knob](https://github.com/aterrien/jQuery-Knob)
+
+9. **jQuery**
+   - Version: 3.7.1
+   - License: MIT
+   - URL: [https://github.com/jquery/jquery](https://github.com/jquery/jquery)
+
+10. **LocalForage**
+   - Version: 1.10.0
+   - License: MIT
+   - URL: [https://github.com/localForage/localForage](https://github.com/localForage/localForage)
+
+11. **Marked**
+   - Version: 15.0.7
+   - License: MIT
+   - URL: [https://github.com/markedjs/marked](https://github.com/markedjs/marked)
+
+12. **particles.js**
+   - Version: 2.0.0
+   - License: MIT
+   - URL: [https://github.com/VincentGarreau/particles.js](https://github.com/VincentGarreau/particles.js)
+
+13. **Toastify**
+   - Version: 1.12.0
+   - License: MIT
+   - URL: [https://github.com/apvarun/toastify-js](https://github.com/apvarun/toastify-js)
+
+14. **tsparticles/confetti**
+    - Version: 3.8.1
     - License: MIT
     - URL: [https://github.com/matteobruni/tsparticles](https://github.com/matteobruni/tsparticles)
-
-11. **HOWLER.JS**
-    - Version: Latest
-    - License: MIT
-    - URL: [https://github.com/goldfire/howler.js](https://github.com/goldfire/howler.js)
-
-12. **Marked**
-    - Version: Latest
-    - License: MIT
-    - URL: [https://github.com/markedjs/marked](https://github.com/markedjs/marked)
-
-13. **DOMPurify**
-    - Version: Latest
-    - License: Apache License Version 2.0
-    - URL: [https://github.com/cure53/DOMPurify](https://github.com/cure53/DOMPurify)
 
 ## PRIVACY POLICY
 

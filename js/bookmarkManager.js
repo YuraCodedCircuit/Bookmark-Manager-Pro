@@ -40,7 +40,7 @@
 
 "use strict";
 import { userProfileExport, defaultUserBookmarks, currentFolderId, userActiveProfile, currentLanguageTextObj, manageUserProfiles, userActivityRegister, createCurrentBookmarkFolder} from './main.js';
-import { isObjectEmpty, findBookmarkByKey, checkIfColorBrightness, pSBC, truncateString, invertHexColor, getNextMaxIndex, generateRandomIdForObj, indexedDBManipulation, showMessageToastify, capitalizeString, actionForArray, updateInputRangeAndOutput, updateColorisInputValue, checkIfAllowedToCreateScreenshotFromURL, getSupportedFontFamilies, getRandomColor, ensureHttps, resizeImageBase64, inputHexValid, generateColorPalette, truncateTextIfOverflow, createTooltip, escapeHtml, updateDateGroupModified } from './utilityFunctions.js';
+import { isObjectEmpty, findBookmarkByKey, checkIfColorBrightness, pSBC, truncateString, invertHexColor, getNextMaxIndex, generateRandomIdForObj, indexedDBManipulation, showMessageToastify, capitalizeString, actionForArray, updateInputRangeAndOutput, updateColorisInputValue, checkIfAllowedToCreateScreenshotFromURL, getSupportedFontFamilies, getRandomColor, ensureHttps, resizeImageBase64, inputHexValid, generateColorPalette, truncateTextIfOverflow, createTooltip, escapeHtml, unescapeHtml, updateDateGroupModified } from './utilityFunctions.js';
 import { undoManager } from './undoManager.js';
 
 /**
@@ -264,7 +264,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             titleEditorInputEl.removeEventListener('input', currentTitleEditorInputListener);
         }
         bookmarkTextPreviewEl.innerHTML = DOMPurify.sanitize(escapeHtml(currentEditingObj.title));
-        titleEditorInputEl.value = DOMPurify.sanitize(escapeHtml(currentEditingObj.title));
+        titleEditorInputEl.value = DOMPurify.sanitize(unescapeHtml(currentEditingObj.title));
         // Define a new event listener that updates the preview and editing object's title on input change.
         const handleTitleInputChange = () => {
             // Update the preview element's innerHTML and the editing object's title with the input's value.

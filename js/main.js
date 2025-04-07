@@ -42,7 +42,7 @@
 import { openCloseSettingWindow } from './settingsManager.js';
 import { createAndEditBookmarksWindow } from './bookmarkManager.js';
 import { searchManager } from './searchManager.js';
-import { findBookmarkByKey, indexedDBManipulation, pSBC, returnRandomElementFromArray, getRandomHexColorByType, randomIntFromInterval, checkIfColorBrightness, findPathToRoot, getRandomColor, escapeHtml, isObjectEmpty, openUrl, showMessageToastify, sortFolderByChildrenIndex, getNextMaxIndex, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, getBrowserAndOSInfo, calculateGradientPercentages, changeBase64ImageColor, generateColorPalette, createTooltip, truncateTextIfOverflow, translateUserName, generateRandomIdForObj, getAllChildIds } from './utilityFunctions.js';
+import { findBookmarkByKey, indexedDBManipulation, pSBC, returnRandomElementFromArray, getRandomHexColorByType, randomIntFromInterval, checkIfColorBrightness, findPathToRoot, getRandomColor, escapeHtml, isObjectEmpty, openUrl, showMessageToastify, sortFolderByChildrenIndex, getNextMaxIndex, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, getBrowserAndOSInfo, calculateGradientPercentages, replaceStrokeColor, generateColorPalette, createTooltip, truncateTextIfOverflow, translateUserName, generateRandomIdForObj, getAllChildIds } from './utilityFunctions.js';
 import { interactiveGuide } from './interactiveGuide.js';
 import { undoManager } from './undoManager.js';
 
@@ -561,31 +561,37 @@ export const profileMenuItems = [
         id: 1,
         title: 'New bookmark',
         type: 'newBookmark',
-        icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACIklEQVR4nO2ZO08cMRDHf6m5pAMBScWrBNISJEDQwccBigMq+BCBKKkDUTpKjmcBFDSJeH0DDkEeQJHOaKQ5yTpt7vbh9S6S/9JIq7NvZn7rsb3rhaAgb5oDasATYDLYGdCFZ61lTLrZfvqEmNOg/4B5oCeDr0IgdjWgJJ9VdvLeIB41WLdDgE7gh15fZhzV2EFd+/IGkReAyAtEngBeIPIGyB3CJcBf9fUuoq0rr9XJJcB39bXtE8I4BBgC7hLs2CdlAxC9BTatcjItbKeMAN5lAkA6nQLHvOARMK7iBoCUMmEEVKGEUsqEElKFEkopE0pIFUoogSaBL8CFdePk+jMwQYlHYAg4iPF+sA8Mlg1gHPitMW6AKjACdKiNAkvaJn1+AWNlAegH/qj/r0ClRd/X+iZnFLivDABHVvKvYvSXPltWORUKMGOVTSXBC42MRF3/O1UkwCf1W00Rd1nb1osEuFa/wynijmrbVZEAjWP7SsSciDJps8vIqI+2etDOrg9dG37jAhxGAIiPtqpp5wXHADL8WUtIdum2mrW+kS0CvbjRhvqVTSopwIq2fYwbbDXBeaaJWcfT1jIqJdGso6ayaegNcJtkGbVHomZNvjTWnNCe/r6ZYCP75vLcNKsGgHtNaOs/I2Hf+Ubyd0keJfLWuAVR103qva5OFb1escpGkv9AyTRgfY9uZVI2pbnzUZKJLY8HsjzKXBM719UmcsI+AwNdauL73JsIAAAAAElFTkSuQmCC',
+        icon: '<!--Icon by contributors from https://lucide.dev/icons/bookmark-plus, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bookmark-plus-icon lucide-bookmark-plus"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/><line x1="12" x2="12" y1="7" y2="13"/><line x1="15" x2="9" y1="10" y2="10"/></svg>',
     },
     {
         id: 2,
         title: 'New folder',
         type: 'newFolder',
-        icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACEElEQVR4nO2ZPUtcURCGH1HSuJGUMWAji2ViioBECYRgtb/B/AtTaKxs9A+EfPwBP1oLCzXRLcTGziD2SjaYBFTQ7sjAe+GwuWvurm7OuXIeGFjunNmd98zc2btnIZFI3DseAIvACeAK2BmwDrwgEhYKJt5sl8AEEXCshF4WXP8I+KCYQ6CXwDhZO/QBR4qbooQCjLeKO6CkAvqAb8AaJRUQDS5HQL3DyXRbOwc2gVpZBTjP5m8jIBSDwDRwpZxqZROQ8U45WTuVUsBj77GllALayisJ6BIuVSAwLlUgMC5VIDAuVSAwLlUgMK4MFZgEvuh45kJ2qGtRCxgBtgv+MhuOTcAr4Lc+8wcwAzwD+mWjwKx8tqYBjMUiYMRLfgmo3LD2IbCstRYzFIOAbS/5ngLrbc2KYrZCC7AbNmubvJ3fA3ZbVKKh2LGQArLJYj3fbh7v5bP3+IszOe1Io5vYeLTPedqBgFH59vOcm3LaeUw3yTaqUvAAzXx+G9m1P3lvXJPzSucxTyIRsJMjoOUxy3yXjgfrd9xC32/aoZra6fwOBfi7+FnXZjsQMCffRwLyxhuj1hLN1JsEZwwAPxX7msB8VSLLbXyRrSpmgwioAr+U0EqLSvg7nyV/WuSh7n8x4Ylo6EvquaZTRa/nvLax5MeJjKqebf41BKxtotn5POzG/qTxaNPPzP71tGmTe8NeA3HRcf9aMTFTAAAAAElFTkSuQmCC',
+        icon: '<!--Icon by contributors from https://lucide.dev/icons/folder-plus, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-plus-icon lucide-folder-plus"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
     },
     {
         id: 3,
         title: 'Search',
         type: 'search',
-        icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAADdUlEQVRo3u2YX2jNYRjHz9kxs7FsMTRrJnMhrIk0mczahQuFlBBNbrlBlAtxQcTV7IorJUq7kFL+JGqJYYaVYX+kJMzaWP5s7Oz4PvVZ/dKv9uf83rOdOk992ur3/t7zft/3eZ73eX6hUMpSlrKUjadFApwrR8wVhczbJwZdCwjH8W6GWCcqRJnI8pmzVdSLu6JjoghIE5Vin8gXMRH1mS/M2DDcE7Xiw3gKMDc5I0pxD6OLXf4sesRrUSX6xXoxWRQgZkCcFDfGQ0CRqBFzWEi3OIi/m3v88TmpPDFDbMXdshh/UZxLZBDnivMs3hb+QBwSnRD1ecdc66f4Kh4yJhtBy8Rv0ZyoTHVBPBENolzMGmPsrBV14pl4SvA7t42iUTwWu/DneFy2hM2wOa+LdJcuZKnyrMgULeKaaI9zQ74R+KvFdFzy1VgnSxvmeSXuYv58CRHxWj+ZqpV5t8Uz2XACKvjbyOKjAbllC/dCjOw2z4WAMMdsNkn8CjCubOHPScf2/xoXAnI85cFV0RtwcujxiMl3ISDP8zzXQXb7RCzE+K3ABWQyubnSSwcCBrjMYp6TDlRAl+d5qQMBVnYvQkCPKwFDY0oI5CDtB3OGKTcCF9BPrrYfmBLvjeljG6hUzZpc3QP3GVMeT6rzsWzyf4gq1pmAO54gW0wlGYQV0TPY6d6manUioJ0fsHHVYmEAfbTl/FPMY5tzxWUpEaLx+MvYE2LFCN/zM6ur9oiZ7H5dvMXhSHazl3axirshj79v2MHRuM12sYkNsHePi++J6MjeUlovpx9Yyi62EoSDwwRsKadX5mn0Izxr4FJz/l2ogYJuFUG9RCygy3rHyQwyZyE5vprn+1msXVgvPNVnNyfc5dNTO/usYgKOssihLxMxGpU+Fmm981RPoIYZd4xvRKcp1SOc7hFE9CZCQIhLbYvYyW7GPPEw+F9s2M7eEpdFmyd51HA6NvaL2M3t3JsIAV6bz0VnnxVnE+DdlAdNNEN+ed5c7LDYwTo+igPiPUKSwiwx7KVDa+FO2Dya6jQyzgKiNPTmZiuJnWnETxv3z4QWEGKRzSy6hOSQQVLoHC47RSaIK9lJPGLxxSSGYr7oDVAZJ4XZhtbiPu1clAUOehGnZou1764diKjHvZLKMrnFTcRNT+OTVJZOuZIRSlnKUpayCWv/AJXZyhAk2cauAAAAAElFTkSuQmCC',
+        icon: '<!--Icon by contributors from https://lucide.dev/icons/search, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search-icon lucide-search"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>',
     },
     {
         id: 4,
-        title: 'Folder settings',
-        type: 'folderSettings',
-        icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACD0lEQVR4nO2ZPUscURSGH1ZJbecqibHwo7TQWEg0P2B/g/kB9lrZWegKulb+khBS7ELIYm2hCyG99mZZtdErF96BYZwv92vulXngsgxzDnPeOWfO/VgoKSl5d3wA6sAtYHKM/8Av4AuOcJQz8Oh4AL7iADcKaCOn/RRwLp+/wAQFYzTewiTwT37beCjA8l1+HTwVMAn8Bn7gqQBnMDEC2n12pkFHF2gBNV8FmNA4GERAUcwAu8CjYqr5JiBgTzHZcvJSQDW0bPFSwJviKgWMCFNmoGBMmYGCMWUGCsaUGSiYNvDH55k4Ny4IuFAM9q17KcAMEsc4BVSBn8ApUAGmgZ2IgB3ZVWTX0rUTAlqh59ly6SVsJ3uRbW3TFQGNSKB3wCGwCSzo90gbmbDdqSsCKsClnncFfEqwmwOuQ5myfk4IWAGe9OaTgg/4rEzcAx9dEXCiZ9myyUNd9vtpRkG92SONUfd5o2FrPQ/fIn7ttM5gz2NGRbTLLOX0W47xfUVNNx51HjPL8Ime9G31mYHEtdHBCI4G49J9pnu2VebhWPa2/WZSUzl1hyQg7m2tA8/qQrZVpjGvWKz9Ko5Q0R8iRn3etsqk4AO7TtY8ME4akSx11SrtN7Gomj+OqYLUmXicNENBdVQeceX3HMpA5lponFT1nQWr0bWYrDRU88FqtJm1GnUB48i+pG+CeSJzD/wCE/trU3hcxfsAAAAASUVORK5CYII=',
+        title: 'Undo Manager',
+        type: 'undoManager',
+        icon: '<!--Icon by contributors from https://lucide.dev/icons/history, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-history-icon lucide-history"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg>',
     },
     {
         id: 5,
+        title: 'Folder settings',
+        type: 'folderSettings',
+        icon: '<!--Icon by contributors from https://lucide.dev/icons/folder-cog, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-cog-icon lucide-folder-cog"><circle cx="18" cy="18" r="3" /><path d="M10.3 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v3.3" /><path d="m21.7 19.4-.9-.3" /><path d="m15.2 16.9-.9-.3" /><path d="m16.6 21.7.3-.9" /><path d="m19.1 15.2.3-.9" /><path d="m19.6 21.7-.4-1" /><path d="m16.8 15.3-.4-1" /><path d="m14.3 19.6 1-.4" /><path d="m20.7 16.8 1-.4" /></svg>',
+    },
+    {
+        id: 6,
         title: 'Settings',
         type: 'settings',
-        icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAACXBIWXMAAAsTAAALEwEAmpwYAAACTklEQVR4nO2Yz0tUURTHP4W0aSDKIKulIkn9C/0H5UKL3OYiwzExKVvpplWumtG2KW7TVbgQplobRNDGWQZC0yKhH6Il2sSB78Dl8d59943PUcgvXHicc773HOaee865A8f4j1AAeoEpYEbLvm9K11LcAf4A9YRluoFWBXMKWJfjXeADsKRl33vSrcv2wHFXDneAzhh9p3RmM5i38/PANPAUGNUxrMnZnIc3J5s1cUa1h+3V3mwwZ4D3CTnyF7jq4V5xji66PgJnswZzEnjnJGgF+ATUgN9AKWCPkmxr4laci/BGPoIxLuIe0Ed+6Neva3uPhZKshmyI9Jz8UdLe30Lr1X0Rfgac9WXgAVDWGgEupXDOAb/k415IQK9l/DLF7gmwHZO0JptI4c7L1nx5cQL4IWNrA0l47ATwBXilVXPkZpOEKdl8JwALMt4EumP0Hbo9ZrMInHZ0Bckav5TZRtGtvevyFVR/PouwCrRF9EXpNmQbx29ciuGIrk171uUjjh+L6+pTdQXg4oXkyx7+smxmI/IRpweaDw47oGIzAR25I1sISOptJ6kLnqS+kEdSZ732XxXEor4b8kcB19585VYYJ4CtmMK4lVKDMhVGw1CG1nFReVJWjxqWzIf2rK2joMZnhJAxIytmsjZXw0NnELuVYzC3mxk/0PD01jOg2RGloewZ0CpZB7SQEfaah9uT9wjrJuB0jkP+s/0M+Ulwn0FdMfqug3wGpT0U7eiqwIpW1Unalj0Uj9xTugGrITeASefPhknJWv5nwzE4LPwD0igM5/Pu1YcAAAAASUVORK5CYII=',
+        icon: `<!--Icon by contributors from https://lucide.dev/icons/settings, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>`,
     },
 ];
 export const contextMenuItems = {
@@ -594,31 +600,31 @@ export const contextMenuItems = {
             id: 1,
             data: 'newBookmark',
             title: 'New Bookmark',
-            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACIklEQVR4nO2ZO08cMRDHf6m5pAMBScWrBNISJEDQwccBigMq+BCBKKkDUTpKjmcBFDSJeH0DDkEeQJHOaKQ5yTpt7vbh9S6S/9JIq7NvZn7rsb3rhaAgb5oDasATYDLYGdCFZ61lTLrZfvqEmNOg/4B5oCeDr0IgdjWgJJ9VdvLeIB41WLdDgE7gh15fZhzV2EFd+/IGkReAyAtEngBeIPIGyB3CJcBf9fUuoq0rr9XJJcB39bXtE8I4BBgC7hLs2CdlAxC9BTatcjItbKeMAN5lAkA6nQLHvOARMK7iBoCUMmEEVKGEUsqEElKFEkopE0pIFUoogSaBL8CFdePk+jMwQYlHYAg4iPF+sA8Mlg1gHPitMW6AKjACdKiNAkvaJn1+AWNlAegH/qj/r0ClRd/X+iZnFLivDABHVvKvYvSXPltWORUKMGOVTSXBC42MRF3/O1UkwCf1W00Rd1nb1osEuFa/wynijmrbVZEAjWP7SsSciDJps8vIqI+2etDOrg9dG37jAhxGAIiPtqpp5wXHADL8WUtIdum2mrW+kS0CvbjRhvqVTSopwIq2fYwbbDXBeaaJWcfT1jIqJdGso6ayaegNcJtkGbVHomZNvjTWnNCe/r6ZYCP75vLcNKsGgHtNaOs/I2Hf+Ubyd0keJfLWuAVR103qva5OFb1escpGkv9AyTRgfY9uZVI2pbnzUZKJLY8HsjzKXBM719UmcsI+AwNdauL73JsIAAAAAElFTkSuQmCC'
+            icon: '<!--Icon by contributors from https://lucide.dev/icons/bookmark-plus, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bookmark-plus-icon lucide-bookmark-plus"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/><line x1="12" x2="12" y1="7" y2="13"/><line x1="15" x2="9" y1="10" y2="10"/></svg>',
         },
         {
             id: 2,
             data: 'newFolder',
             title: 'New Folder',
-            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACEElEQVR4nO2ZPUtcURCGH1HSuJGUMWAji2ViioBECYRgtb/B/AtTaKxs9A+EfPwBP1oLCzXRLcTGziD2SjaYBFTQ7sjAe+GwuWvurm7OuXIeGFjunNmd98zc2btnIZFI3DseAIvACeAK2BmwDrwgEhYKJt5sl8AEEXCshF4WXP8I+KCYQ6CXwDhZO/QBR4qbooQCjLeKO6CkAvqAb8AaJRUQDS5HQL3DyXRbOwc2gVpZBTjP5m8jIBSDwDRwpZxqZROQ8U45WTuVUsBj77GllALayisJ6BIuVSAwLlUgMC5VIDAuVSAwLlUgMK4MFZgEvuh45kJ2qGtRCxgBtgv+MhuOTcAr4Lc+8wcwAzwD+mWjwKx8tqYBjMUiYMRLfgmo3LD2IbCstRYzFIOAbS/5ngLrbc2KYrZCC7AbNmubvJ3fA3ZbVKKh2LGQArLJYj3fbh7v5bP3+IszOe1Io5vYeLTPedqBgFH59vOcm3LaeUw3yTaqUvAAzXx+G9m1P3lvXJPzSucxTyIRsJMjoOUxy3yXjgfrd9xC32/aoZra6fwOBfi7+FnXZjsQMCffRwLyxhuj1hLN1JsEZwwAPxX7msB8VSLLbXyRrSpmgwioAr+U0EqLSvg7nyV/WuSh7n8x4Ylo6EvquaZTRa/nvLax5MeJjKqebf41BKxtotn5POzG/qTxaNPPzP71tGmTe8NeA3HRcf9aMTFTAAAAAElFTkSuQmCC',
+            icon: '<!--Icon by contributors from https://lucide.dev/icons/folder-plus, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-plus-icon lucide-folder-plus"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
         },
         {
             id: 3,
             data: 'paste',
             title: 'Paste',
-            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAACXBIWXMAAAsTAAALEwEAmpwYAAABFklEQVR4nO2XPW7CQBCFv4YI6MIx4EgBUQWOwc8NKKMoBdAnaSk4A9RQwyWQAI00K1nWwuAFEymaTxrJ9qzfPj1v4YH7aABfwB7YAZ/AK3/EC7AGTrlaae/pdDMmJlrh/r3MjVtAB+jlaqGbbzJrt/psGVnfUa1kJPZ55JPk66BpdfXaWj8DKimGRjeIp9YwxVCI/xuoRfofVzaUXh7R+NG+aBfmqC/3L/THVwxJujH62hftwgRxOZAxqkA7cnjftBejl9F9uKEU3JCFJ2ThCVl4QhaekIUnZOEJWXhCFp5QqQlZP/kp3PWTH8YgGV3qDzAjGr+RafdmZJgra1AcpBiScXdWgplp6igdaF6Yv4pWW7Wc/8UZu9f6h4r9DL0AAAAASUVORK5CYII=',
+            icon: '<!--Icon by contributors from https://lucide.dev/icons/clipboard-paste, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-paste-icon lucide-clipboard-paste"><path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2M16 4h2a2 2 0 0 1 2 2v2M11 14h10"/><path d="m17 10 4 4-4 4"/></svg>',
         },
         {
             id: 4,
             data: 'search',
             title: 'Search',
-            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAADdUlEQVRo3u2YX2jNYRjHz9kxs7FsMTRrJnMhrIk0mczahQuFlBBNbrlBlAtxQcTV7IorJUq7kFL+JGqJYYaVYX+kJMzaWP5s7Oz4PvVZ/dKv9uf83rOdOk992ur3/t7zft/3eZ73eX6hUMpSlrKUjadFApwrR8wVhczbJwZdCwjH8W6GWCcqRJnI8pmzVdSLu6JjoghIE5Vin8gXMRH1mS/M2DDcE7Xiw3gKMDc5I0pxD6OLXf4sesRrUSX6xXoxWRQgZkCcFDfGQ0CRqBFzWEi3OIi/m3v88TmpPDFDbMXdshh/UZxLZBDnivMs3hb+QBwSnRD1ecdc66f4Kh4yJhtBy8Rv0ZyoTHVBPBENolzMGmPsrBV14pl4SvA7t42iUTwWu/DneFy2hM2wOa+LdJcuZKnyrMgULeKaaI9zQ74R+KvFdFzy1VgnSxvmeSXuYv58CRHxWj+ZqpV5t8Uz2XACKvjbyOKjAbllC/dCjOw2z4WAMMdsNkn8CjCubOHPScf2/xoXAnI85cFV0RtwcujxiMl3ISDP8zzXQXb7RCzE+K3ABWQyubnSSwcCBrjMYp6TDlRAl+d5qQMBVnYvQkCPKwFDY0oI5CDtB3OGKTcCF9BPrrYfmBLvjeljG6hUzZpc3QP3GVMeT6rzsWzyf4gq1pmAO54gW0wlGYQV0TPY6d6manUioJ0fsHHVYmEAfbTl/FPMY5tzxWUpEaLx+MvYE2LFCN/zM6ur9oiZ7H5dvMXhSHazl3axirshj79v2MHRuM12sYkNsHePi++J6MjeUlovpx9Yyi62EoSDwwRsKadX5mn0Izxr4FJz/l2ogYJuFUG9RCygy3rHyQwyZyE5vprn+1msXVgvPNVnNyfc5dNTO/usYgKOssihLxMxGpU+Fmm981RPoIYZd4xvRKcp1SOc7hFE9CZCQIhLbYvYyW7GPPEw+F9s2M7eEpdFmyd51HA6NvaL2M3t3JsIAV6bz0VnnxVnE+DdlAdNNEN+ed5c7LDYwTo+igPiPUKSwiwx7KVDa+FO2Dya6jQyzgKiNPTmZiuJnWnETxv3z4QWEGKRzSy6hOSQQVLoHC47RSaIK9lJPGLxxSSGYr7oDVAZJ4XZhtbiPu1clAUOehGnZou1764diKjHvZLKMrnFTcRNT+OTVJZOuZIRSlnKUpayCWv/AJXZyhAk2cauAAAAAElFTkSuQmCC',
+            icon: '<!--Icon by contributors from https://lucide.dev/icons/search, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search-icon lucide-search"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>',
         },
         {
             id: 5,
             data: 'folderSettings',
             title: 'Folder Settings',
-            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACD0lEQVR4nO2ZPUscURSGH1ZJbecqibHwo7TQWEg0P2B/g/kB9lrZWegKulb+khBS7ELIYm2hCyG99mZZtdErF96BYZwv92vulXngsgxzDnPeOWfO/VgoKSl5d3wA6sAtYHKM/8Av4AuOcJQz8Oh4AL7iADcKaCOn/RRwLp+/wAQFYzTewiTwT37beCjA8l1+HTwVMAn8Bn7gqQBnMDEC2n12pkFHF2gBNV8FmNA4GERAUcwAu8CjYqr5JiBgTzHZcvJSQDW0bPFSwJviKgWMCFNmoGBMmYGCMWUGCsaUGSiYNvDH55k4Ny4IuFAM9q17KcAMEsc4BVSBn8ApUAGmgZ2IgB3ZVWTX0rUTAlqh59ly6SVsJ3uRbW3TFQGNSKB3wCGwCSzo90gbmbDdqSsCKsClnncFfEqwmwOuQ5myfk4IWAGe9OaTgg/4rEzcAx9dEXCiZ9myyUNd9vtpRkG92SONUfd5o2FrPQ/fIn7ttM5gz2NGRbTLLOX0W47xfUVNNx51HjPL8Ime9G31mYHEtdHBCI4G49J9pnu2VebhWPa2/WZSUzl1hyQg7m2tA8/qQrZVpjGvWKz9Ko5Q0R8iRn3etsqk4AO7TtY8ME4akSx11SrtN7Gomj+OqYLUmXicNENBdVQeceX3HMpA5lponFT1nQWr0bWYrDRU88FqtJm1GnUB48i+pG+CeSJzD/wCE/trU3hcxfsAAAAASUVORK5CYII=',
+            icon: '<!--Icon by contributors from https://lucide.dev/icons/folder-cog, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-cog-icon lucide-folder-cog"><circle cx="18" cy="18" r="3" /><path d="M10.3 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v3.3" /><path d="m21.7 19.4-.9-.3" /><path d="m15.2 16.9-.9-.3" /><path d="m16.6 21.7.3-.9" /><path d="m19.1 15.2.3-.9" /><path d="m19.6 21.7-.4-1" /><path d="m16.8 15.3-.4-1" /><path d="m14.3 19.6 1-.4" /><path d="m20.7 16.8 1-.4" /></svg>',
         },
     ],
     bookmark: [
@@ -627,8 +633,8 @@ export const contextMenuItems = {
             data: 'edit',
             title: 'Edit',
             icon: {
-                bookmark: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAB70lEQVR4nO2Zu0oDQRSGPxAJBEFQErzVWRA7n0BbbfVJ1BeIWGhn5yMo2FkmwUuhghDQQlCxSoxFGi+F3cjACQxLotnNzLiR+eGQZCac+b/Mmd3NDAQFBfWrVaAKfAIqZbSAfWAcz9oewHS3uAOKPn95PegXsAFMp8wz8lcQNRlQmx9UpnlvEB8y2JRFgAJwK+/vB5jVRIPazuUNwhWAlhcIlwBeIFwDOIewCfAmuea69BVdXZ1sAhxLrhOfEMoiQAloJ7hjX2UNQGsWODTKSf0QlSwCeJcKAOl0DVwyxDOgbI0bAFJKhRkQhRJKKRVKSBRKKKXUfyqhSWAHOAI2gVzaRD6lJCKgEXtKvQEmkibyLSXRlNdTYA14MCBywwCgZE82L+0zBsRGVgGiHuY7Wpc+/ccocwCRUTbdzOelnHR/OWsAUR/mq9Lf6Hch+wIoGebPgLEu5ivS/wrM95vYB0DJlXkfACWX5l0DRIb52i8135TvJ9a7JHCxc1yPHXroPVKr5jGS6GcQm1qQvO3YdmLBpnmtFeOMbEvuhDYPDg/EtAlRs2W+o3KC/cxecRHL+Sjty/LZhLBq3pyJqnFmljTOjVyL0vYCjAJLMhNtV+Zta9cw2oqB1rNuXus5ZvpRylQv7KGQXqRPwJ6UU2p9A6eAVsbuFoH/AAAAAElFTkSuQmCC',
-                folder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAACXBIWXMAAAsTAAALEwEAmpwYAAABh0lEQVR4nO3XMUvDQBjG8T8VBwcVB6soruLgUCxCBgcFcROcdBD8BILi2EHr5iS4Obvp4OAnqAjiJl0EO1XURUEqQtFBIwdPIYiNaZpeguSBg/YSer/c2yN3kOYfZAiYA+abtCmgyxZmFfgA3D/aLTBhA/QAXAILPjO0BjwD10Cm0yDz9MUA963o3uWkgDJAGThKCshkAOjFImgcqAf4g4dp78A5kGsF1AMUgL0OtAOgqhWdi6pk7aZfqFJSQCb7Kl9iQEWN2TQpiHSG/JPOUNAZGkzCKnOAJ435BizGCXKAV6ACLAFXeo3MxAFyPJgRz2vkDjizDXJ+waDPpnwnNkGOD6aia5O2QHngRQOPevqHgRthDBgboHxYjMkXsBshZloD1n5gvGVqijF5BE4jBJW033G192kJY7KjWdoE+trEmIE/gW1hDOqwFYxJN3Dcxua9rsOByYb6Gt8bvxsY481syA1+QYcDdAK+V19ZmFoYTBQZU+ldle0CWAeyxJSsFseWcGmIKt+yab98TkXZ9QAAAABJRU5ErkJggg=='
+                bookmark: '<!--Icon by contributors from https://lucide.dev/icons/bookmark and https://lucide.dev/icons/pen, licensed under https://lucide.dev/license. Modified by YuraCodedCircuit--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pen-icon lucide-pen"><path d="m 19 21 l -7 -4 l -7 4 v -16 a 2 2 0 0 1 2 -2 h 10 a 2 2 0 0 1 2 2 v 16 z m -2.454 -11.11 a 1 1 0 0 0 -3.986 -3.987 l -4.091 3.98 a 2 2 0 0 0 -0.5 0.83 l -1.321 4.352 a 0.5 0.5 0 0 0 0.623 0.622 l 4.353 -1.32 a 2 2 0 0 0 0.83 -0.497 z"/></svg>',
+                folder: '<!--Icon by contributors from https://lucide.dev/icons/folder and https://lucide.dev/icons/pen, licensed under https://lucide.dev/license. Modified by YuraCodedCircuit--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M 14.625 11.608 a 1 1 0 1 0 -3.004 -3.004 l -5.01 5.012 a 2 2 0 0 0 -0.506 0.854 l -0.837 2.87 a 0.5 0.5 0 0 0 0.62 0.62 l 2.87 -0.837 a 2 2 0 0 0 0.854 -0.506 z"/></svg>',
             },
         },
         {
@@ -636,8 +642,8 @@ export const contextMenuItems = {
             data: 'cut',
             title: 'Cut',
             icon: {
-                bookmark: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAADX0lEQVRo3u2ZS2gTURSGZ2pNxFd9YKzWnVAQlPpA8LGyLopUiiItaNuVCxFUKMZKN4oPIuJb3Llzp+BCqKJgRVHwgVRrEUXq+xWjrfYRFRX0P+QPXsJkkkzuTBKYCx82k5t7zz/n3HvOvRqG3/zmt2zbatAFRsBfh3wEJ0GF18bvz8NoK3pByMs3L5P+BGEww+E4owol4honDGsYSzXeMxHDnKxSo4Bp4BH/fpKHV3OaVPdYnolwS4BnItwU4IkItwW4LkKngEGONcviu5Bbu5NOAec5VqeXInQKqAZfcsjYdzINWOZxSfIM1IBzYCiL/iPF5gHtrcwo8VbMAu6C26UcQlnN64eQL8AX4AvwBRSNgDGgFTwHT8EK3kQUvGWTUCaDDvCBZfANijgCxjucNwIOeyVgFXgD5vCzCRbRGx0O5pTfjwUB5XMStY82ATeNxP1RatsO3mc5mYTcBvCVpbac3r6B7zxDvHZTgFw9RkFdyvO9PONmmmwNeEnDoxTTDGp5JugHLRZeMnUJWAhegFfgKA3aYyQucxttftdIw/poZLPy3QnwicfQ2RbGa69Gl4ADfIMxTr7Upn8dS2Yxvls5I88ED8BnsNliJzNzeftOyun14EJ5Yhd6zO01NVxauDb62V/9Tn53H8xNs7hNtzyQ2g7RmAGwgM/kbW7h7nQdVPH5JIbfD9DOHchIEzaue0BtckF1z0hcEIvBZ8Fv0JQSSj3gIdhWsJORTTtDEVGO08DnE8FBLnRZM8edLFBdAkLMxhUMk6SL53Mxb+WC7KGxEeaNW2A5uMgsHnHDA0MUYHdfWcXFOpqfg+AS367cwk1V+q7l4v0DVir9JWP/AsfY38x1v0/XuihgRwYPBGhINRevxP2VNAZUsl6K0SsB9lnMTJxMZqbiUcet3vj/f2Tt3KetWpDFV5z9Y4x306beWUeDJVvX8Nk4ZvY4Q2qKjjDaZ1jfXYY5gYTPadYvbSwBrtILm2wWpzybzmQmfS8rYbiMNdBbeibvVs9wGlYEnAITmJjkjc9TzhlBemwwzbnDtEhwA1z0rczsDQxH8f5ON88MMvE7i+e7uAmYGUpn1RudLDHiDK1e/ht1U0ATy91aLjrJpLu522wshaNpOQu5PpYJ3dxC2zIcK/PeIv8Bxi4zB7OgwHcAAAAASUVORK5CYII=',
-                folder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAADu0lEQVRo3u2ZWUhUYRTH51q5lJltlBlmC4GVFoZUVkIZbdMCBVlJST5GRIv60ENI0gYR0kMEWfRaPbRSUkxFESijUVG0R0T7ntNiZUz/U/8LH8Md587MdcYb98AP5d773XvO951zvvOdcbkcccSR/04SwU7wAvhN0ALqQUFnMWCHScUD+Q6mdAYDnlOhQpPPp4O9HHMXdIm3AfqMhiNdwX2OW2FHA0RWctxtuxogq3AJnLarAXGRBJPPXYkwM0WLD3iAO9oViJcBKjV2dKEMUAlaqZPbrjFQRZ08djVgoFK22DYLGeqV4LK5OAY4BjgGOAb8lVSwnaW0HGrugAZQ2gGTpFm9DyTwDP0JbAQTQDGoA59BRayr5HAN6A++GSiq8Xz9CoyLQOEkkMb3yAqPBMP5txvobZUBg/n8UoN7OaCNp7VwZDq4CD6An+AH+Kro9hYss8qAJJ7EGlmzqFLMjy8y+a4+YBtd7wwN6QV6glVczZtgNts/ltVC4vcPwQ2wnMs8H9wCF6hYKJkELnN214BkXk9jjL0DB8Cgjirm8sA5ZbwE9X4wJMS4FJbLeoMsT7knrR0veBmOG0ZTjcqsredSy2pMDPH8WLrKax5cUpRZr+CsnwejYn2oz+eHxZC17FgEdjDETaSJdhVMVvJ7Djsbktk2MwPFpSshH95C1zjJWZTAywbHeH0rA1SXMhp9DRR1lrbKNNAEnoI93K2bmGHUs6/Ey0dQC/qZ2IW1WJ7I0qmYn66Rr9ybRaMegcVWlBVWGiA75kIqKSXHPM7+PWaVavAeHGa2ku72LjDMRM0T9H4LDciwoCWyTwlGTblexw3OTyN0mQoeuP41ihdE+mEPX1wZhfIzwXXwGJQEeaaEriMBO1eZ1UxwkL2gWtZaWpAZN1wFNw1o5QYTaucbqryoLws4H10lN8TYLHCINc9uKqu7XikDv5muZSqAdalxmWv3Sf4ezTFFVFqu/wJvwBEwJkQWkR9Eypk+G5X0qXFsPQ3cYLCftCtuupOvHQOq+OwMKuBhwGYpAetVijwjA/S/sk+cYtVZzd1YP29UcLc+DkZYfapL5szJy3sE3CtkObzEZDbpDtZR2QaOy2ZclLEmekL3SjXjSmZkAFfDKGvk8jwQ7s9O48FR1kL6arcFnAdKXeH6VBBp5YcKWDKoK7MaPKMbBZt9v8H/zTwgZRqsqjzzmzFmWWNgE/jC4Jdddg44QcPKTWxImkF8aAb3NKvcJlASGWhebkTSlTjLgI6066B1pMKxlHYN+AOZgFwqNXIK2gAAAABJRU5ErkJggg==',
+                bookmark: '<!--Icon by contributors from https://lucide.dev/icons/bookmark and https://lucide.dev/icons/scissors, licensed under https://lucide.dev/license. Modified by YuraCodedCircuit--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bookmark-icon lucide-bookmark"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/><circle cx="9" cy="8" r="1.5"/><path d="M 10.431 9.409 L 12.55 11.561"/><path d="M 17 7 L 11 13"/><circle cx="9.3" cy="14.5" r="1.5"/><path d="M 14.203 13.721 L 17.164 16.842"/></svg>',
+                folder: '<!--Icon by contributors from https://lucide.dev/icons/folder and https://lucide.dev/icons/scissors, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><circle cx="7.5" cy="9.5" r="1.7"/><path d="M 9 11 L 11 13"/><path d="M 16 8 L 9 15"/><circle cx="8" cy="16" r="1.7"/><path d="M 13 15 L 15.5 17.77"/></svg>',
             },
         },
         {
@@ -645,8 +651,8 @@ export const contextMenuItems = {
             data: 'copy',
             title: 'Copy',
             icon: {
-                bookmark: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAEEUlEQVRo3u2ZfWiNURzHn+fObK4JG7J5WciUyGvbSBRSsvKH8oc2/qGMSZj5w2ZpW9pf8pZ/JCHxjyYx0SbykvJSzFs0lpiRhtm7e6/vyfdpx+m5232e+zzPrtqpT/fuPveec77nnN/bmaYNtIE20CJtOaAG/AIhmzSCw2C415Mvj2LSZjwDY7xceTFoBygEqTb7iesvEbUcsNCBvuTJeyaihYONdVDAaPCU719GsauWBnW6L89EOClgEUhQ7CIF+MBQ4rmAEWArqAPdFr3Rb/Ac7ABJQLc6OT1CAeG+K/x5BcgH70EzCFoYPxHM5PtDoAx883IHttDI74FsCwtmvI5j30G+HgBDLCxu1AJeg1aw1MKO69LkprDvR+Aa35crduKqgABoA34LAnzS34aAE2AqhRgiBnkhIEQB8TbtzhBwlp/PYnATR2q/lwIG2+xbFmC02dLRLPkfBWjcibfgOyiNZQGTQCe4bHIMM8E7Pt8VjU24KUCkE9WsMfbSkA0yQAHdtAiQ2+yO46aAOLpgYbhdfUTtJjBd7cAxV2WzBZiurwUbQbqJtzIWr4mRPqZ2IOrmi+EaXK6bs0Cx3Zqkv3ZATq2LOVZWf+yAmMgKcBy8kRbkC6gC68AEk98FTWzV57URTwQ7wXZeCjyhxxF1QDKYB1aD26wJHodZ3JDy6skRGgUu8DtignkgTXouCphlTOS6WFYukJ6PlESUsp9sLwWU8fkVBiajbQaV0m9EJruHIm5Jx0neAc8FzGBl9QJMVp7d5++SlcrsKD/fxM/ipVgQVoBbRpzHouQMqFeetZp8v4MJXQNtQpPq636JAys5qapeauxuJeLW0YjnWqnZ3RKQzjRBrP5iHieDJfxOA//+Ck4xoWuUgpUeyQ645Ublm4xOrrauTCpIkV2cvK6seCgSEW4JqGcMECnxAyUFuAGW0zM1K6mDcLOfYyEXus7rkZxexkxUPhep8hwW9lqYwOXzSsBp0A5yTdyoXzFiQ0wud626l36Dds+zlTiQRBdawedXwTQWL35ehpkFsm4GsvEm43gayIzaVlzanud37oD1StI2jLZwkob8Svt7+atZERCJEbdwsFS6uUg9kHCRReAjE7r5TOYa6X2SuTPievEmr1DuunGeazip3TbrAT9X+hjvewL8nfA2F8GGMMfGsSO0Suv5H1mRklHauZnrq8g3OyH7ohEgZ5YGBRTSTgEpJhPxKcFJlzxfEifn56uu2IauiKnkuJl23WgJfXoto2YGO3zII5FjctsQlAT7SAIn187XNhY3Ie5iHJM9H/uIp+Fn0qZ+upG0fQIfeJbTGFGdQBj5QnCO6chBred/B462fHqWTmXVnUDEhh/gEq8hXWtreJy6HJx8gDt7RMlQ/2l/AOoXpGolyZVNAAAAAElFTkSuQmCC',
-                folder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAD70lEQVRo3u2ZWWxMURjH53ZaVVQpUSolEQ9E7FuChBASmkjsD7WEB2p5o16IhD4gxPLAg0iaWOJFaESEyAQhllASNGmIRC0tLa1q6Sg6/l/yv9zc3HvnzF2mHemX/DKTOWfmft/5lvOdM6FQl3RJl/x30g3sBzUgpsBXcBVM7iwG7FNU3EwrmNEZDHhPhaYpzu8DjvM7VSDc0QboK5qIpIMX/N6qVDRAZDW/V5mqBogXboLLqWpAh0ia4rzbLiuTV5pBBBR69UBHGWCkNBVDaBAoAVHqVOinAePAecXVEw/O9WDIdv5OxDyg2RhgN2YUqTZTwTnwxmFeHlgKvoBF4LULAwaCWuZEb7880AYaQDbIcqAX2MTf3MFyG2h1VJ0ocz4pPnwIuEJP5bk0YBuYHoQBqr3PbHAQ9HBpQIaV97zkgMz7zBX9DSZwhbQ4+47bKtfOkH0IXgbhgZ18iB1i5K84c+LxA1SA5UF4YDBjPciD1liwBfQERey9kpYDXkUWNBPMB/XgVrKT2E9PVLGMKzdzfoic3Nbw/FzPI2g1OMPkV9WljbmUkSwPSOmbCR6B77wEaOLO3MTdVShnbKc5hJCel8+ddPTTAFF+CRWVuRfBApDLsQKwFtwH38Bd9lhOeZBUAyaCjwyZYlOXOZ6tRoibm1wM/GTDluugfNIMyGa8S7xuNo0d4veN1zBiRJmhZ1IyIMgkXsxVlvA4ZhprtVBK8uMou845cUIo4SOlGyli63vCYizK12bT5+/ABTDGQlnLyEgP0ABJxu6sPjls5HQl9GvI3eAD39eBPeAZ2299xRPum/zKgRbOGQryFU5tNVR4pcLz/+ZAkB6oo/JymnrMbjVMJTeyfBZzTM8L8dgA9lbKl1FByQ2wDMwDD8ATw9hCvj5liOkrXsDKVG2RvDEv90JupIxe2AD6m8bChteY4f1oGlehUoHsDGg2bDZe5A64ROUPM5F1kZ35LXdfXfmRTGq9rdBM7YNmoa9lBEW4KiU+7MR9wXWWzdNgFHdZzdBZynliFsNM+qQDVFRTSGJLAwo5GOV9TL7HZm4480GfL+V0Bfv6deBU6N8/PUfoKc0UNprJA7oBtilQ6lDurnBl7QwwPzTMVd4L7oFGi/J5Daw3tMiajRFKvZDRExHGpPGBW7nDNtCAApu2VzM9NI0XW+XcvCT+X3GnnmKI6XSL3zFKDg/1LV6rzEl2mruYqJoPlUtzWAxZgH48EzcypzztA/Jn4DB2juKFykQ2oDhGxCzei64jmD81rGyeRarKWSZ8exKIstmbpHvLD7dn80oly6cVz+S519yTxXgvVMt9pFP9i6Q5fKYp3lOlpvwBCdK+KCuh8T0AAAAASUVORK5CYII=',
+                bookmark: '<!--Icon by contributors from https://lucide.dev/icons/bookmark, licensed under https://lucide.dev/license. Modified by YuraCodedCircuit--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="-1 2 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bookmark-icon lucide-bookmark"><path d="M 19 21 L 12 17 L 5 21 V 5 A 2 2 0 0 1 7 3 H 17 A 2 2 0 0 1 19 5 V 21 Z M 2.8 5 L 2.8 24.7 L 12 19.5 L 19 23.5 L 18.999 23.46 L 18.778 23.337"/></svg>',
+                folder: '<!--Icon by contributors from https://lucide.dev/icons/folders, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folders-icon lucide-folders"><path d="M20 17a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.9a2 2 0 0 1-1.69-.9l-.81-1.2a2 2 0 0 0-1.67-.9H8a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2Z"/><path d="M2 8v11a2 2 0 0 0 2 2h14"/></svg>',
             },
         },
         {
@@ -654,8 +660,8 @@ export const contextMenuItems = {
             data: 'delete',
             title: 'Delete',
             icon: {
-                bookmark: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACVklEQVR4nO2Zu24VMRCGP+psUoRDRAgVhJQktBAJIujIu3AIlwJIBQ/BRVCTIDpKDtcCKGhA3N6AoHBPkc5opFlptFrt2YvXu0j+JUuWPWfGv2c83jOGiIhgWAVGwA7gGrS3wAyBcaPhorPtfUgSq2p0F7gIzDbQ1QmJJ2pQFt8UdvHBSPxVY/s9EtgHvNP+p4ZeLW3Ut65gJNoiIAhCok0CQUi0TaB1Ej4J/FZdB3PmZtrKTj4JPFRdj0KScB4JLADbFW7s130jIJgDNkw4uYL2uI8EgsNFAvXwBnjFf+wB58tuJFATLnpAEUOoJlwMIUUMoZpwMYQUMYQq4BRwD/hoNk76d4GT9NgDC8DzEv8PngFH+kZgGfipNr4CV4BFYELbEnBV50TmB3C8LwQOA79U/30gKZCd1H9yTgkf6gOBl2bxe0rIi8ymCadOCZwxYZPu/DSwBgyMnPQv6FzqiS397UqXBO6oXon5FMNMScWWWc4ZuWs6dqtLAl9U71EztjdTF7J9mUuxpOOfuySQPlUlBWXGtNSYLe0nOiel/7H4o8KzLb07JCUIZG1P6ZzUlsZipMKX8AtxfzaEBgUhNMgJIbmlx+KseSO7DBzwROC26pVLKsVawSE+b+TWdexmWWPXK9Qzi5rk/RSnTRqV1Iju8jAnjQ7NIZbw+VYljVpPjEzs1mkvMjqf6vhGhYvsgc+6aVPMA991QZvGE3mYMovfrvIp0TaWDYktvaSOaXZKtL9uwkYWf4KeYd68R48rt/dm5/MgB1s+DyQ9ylmT9kGzTe6B/QfAK28kGTqw4AAAAABJRU5ErkJggg==',
-                folder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACPElEQVR4nO2Zz2oUQRDGf2LwYhJEF1HBi4QcTTwIQYMg4mmfQV8ha0QPmpxy0RcQ/7yAiVcPHowavXtZlODd4Ip/YCOYW0vBN1Cs4zhrXLtH+oOCobqqp76u6urZXsjIyPjvsA+4DWwBoYb0gSfAaRLBrZqBD8p3YJ4E8F4BnalpfwC4I59NYC+RESTDYAx4J79LNJCA4bL83tBQAmPAC+AxDSWQDEIJgVd/2Jl2K9vAOtBuKoHgZGU3BGLhKHAN2FFM7aYRKHBdMVk5NZLAEffZ0kgCQ8WVCYwIIWcgMkLOQGSEnIHICDkDkRFyBiIjNCEDF4EHup75JtmULmkC08BGzV9mJ1IjcA74ond+AG4AM8B+ySxwU2Nm0wPmUiEw7YJ/CIxX2E4Aq7I1n+MpENhwwe+pYW82a/J5FpuAbdiibIqVPwgsAi1nZ89XNVZkoiffuZgEis5iNV+gI10XOCzpSrfg7Jakszl+Ql+DdqUxSlh7tPecdLpDLuDuwLONFZiV/nXZxOsatPuYUaJYqMGN61fdZ8NjQmNfyyZua3BH9zHHEibQ/9XkKyO6HrQryqoSalWUUKukhN5WrVBb5bT9Fwm8dPPfl84OqQKLFZv4irNblu4uEXHBtVErCbTKnZI22nGbeBL4KN/zRMZzBbI6xEH2SD5PSQBTwGcFtOYyUYZJF/ynOh91/wrzjkRPh9QpdadxPS+7srHgz5IYpvRt87smYGWTzMqXwTb2PbVH634m9q+ndZvSDfsD7gl2N7p2F+kAAAAASUVORK5CYII=',
+                bookmark: '<!--Icon by contributors from https://lucide.dev/icons/bookmark-x, licensed under https://lucide.dev/license. Modified by YuraCodedCircuit--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bookmark-x-icon lucide-bookmark-x"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/><path d="m14.5 7.5-5 5"/><path d="m9.5 7.5 5 5"/></svg>',
+                folder: '<!--Icon by contributors from https://lucide.dev/icons/folder-x, licensed under https://lucide.dev/license--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-x-icon lucide-folder-x"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="m9.5 10.5 5 5"/><path d="m14.5 10.5-5 5"/></svg>',
             },
         },
         {
@@ -663,8 +669,8 @@ export const contextMenuItems = {
             data: 'copyTitle',
             title: 'Copy Title',
             icon: {
-                bookmark: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAYAAACw5+G7AAAACXBIWXMAAAsTAAALEwEAmpwYAAACQklEQVRYw+1XO0jEQBA1d7kk91GjB/F3tYiFjdgoInYeoliIoBbWVlYiVhZ2grWdIigInliLiIV2NiJoJQh3x6Gg4hfPzxmLeVtsSC4mxNXCaV52JrvZmX0zma2o+Jc/Kf39hPk8oWmKwYODgBzI5QinpggTCd4uSYSyTBiPE4ZCvJ6Nw2F+Xm0tYSxGGIkQqmpADrCIBLbgj0movPnz00Ktwd+hFmNEOu3xBJyoNTsrNs4TE4TZrEcHQt90zJoDmgaMguPrhMltPqcUhTCV4sds/ncD6/ii0ll+gci5mBOoqXFywCUH5FR5+8ekGAdeX30m8cuYvV5CWdQNUOIC5RF25YSw/sgysRHIKPTAFgS02n/v7c0xxC5F6pGwZDXsEtyyyLBqhQ/FewkLA4TVK9ggTrTYAezGd0ANDYFQdcK7O5/lnHEtVrTXSz38D8vKzegVknMZG12wlEf8IE1EJrKI8ROouYPxJWHdhc8k1mccqlMGDiAypQ3+vQa0ImYl1mmx34B5hg2OYwz9/jTh8x5OoM1nEheLDg7O4WELywxbkm4UD+C43M7bDVDExMmUWMTvCbdBzZYlTFjySSE3ffjYXp9M8hTR5jEuICdi9vPeN5FKKBIGyrTW7JNCrvobMWW0qsojhQ4P+S7RSaQhMQ7IcsBdKhM1K8YB1qJ4TmI3CQtqJXQ9qIsO2ujVNV6fwEkoKt+MJbrwP0ESNo3wvQ270BgGT1kWcWbPZDx2o06SPiW8VsTeB9jG+/r+r/t/Tb4AYSb4bawD/T4AAAAASUVORK5CYII=',
-                folder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAYAAACw5+G7AAAACXBIWXMAAAsTAAALEwEAmpwYAAACQklEQVRYw+1XO0jEQBA1d7kk91GjB/F3tYiFjdgoInYeoliIoBbWVlYiVhZ2grWdIigInliLiIV2NiJoJQh3x6Gg4hfPzxmLeVtsSC4mxNXCaV52JrvZmX0zma2o+Jc/Kf39hPk8oWmKwYODgBzI5QinpggTCd4uSYSyTBiPE4ZCvJ6Nw2F+Xm0tYSxGGIkQqmpADrCIBLbgj0movPnz00Ktwd+hFmNEOu3xBJyoNTsrNs4TE4TZrEcHQt90zJoDmgaMguPrhMltPqcUhTCV4sds/ncD6/ii0ll+gci5mBOoqXFywCUH5FR5+8ekGAdeX30m8cuYvV5CWdQNUOIC5RF25YSw/sgysRHIKPTAFgS02n/v7c0xxC5F6pGwZDXsEtyyyLBqhQ/FewkLA4TVK9ggTrTYAezGd0ANDYFQdcK7O5/lnHEtVrTXSz38D8vKzegVknMZG12wlEf8IE1EJrKI8ROouYPxJWHdhc8k1mccqlMGDiAypQ3+vQa0ImYl1mmx34B5hg2OYwz9/jTh8x5OoM1nEheLDg7O4WELywxbkm4UD+C43M7bDVDExMmUWMTvCbdBzZYlTFjySSE3ffjYXp9M8hTR5jEuICdi9vPeN5FKKBIGyrTW7JNCrvobMWW0qsojhQ4P+S7RSaQhMQ7IcsBdKhM1K8YB1qJ4TmI3CQtqJXQ9qIsO2ujVNV6fwEkoKt+MJbrwP0ESNo3wvQ270BgGT1kWcWbPZDx2o06SPiW8VsTeB9jG+/r+r/t/Tb4AYSb4bawD/T4AAAAASUVORK5CYII=',
+                bookmark: '<!--Icon by contributors from https://lucide.dev/icons/bookmark and https://lucide.dev/icons/type, licensed under https://lucide.dev/license. Modified by YuraCodedCircuit--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bookmark-icon lucide-bookmark"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/><polyline points="8 8 8 6 16 6 16 8"/><line x1="10" x2="14" y1="14.5" y2="14.5"/><line x1="12" x2="12" y1="7" y2="14"/></svg>',
+                folder: '<!--Icon by contributors from https://lucide.dev/icons/folder and https://lucide.dev/icons/type, licensed under https://lucide.dev/license. Modified by YuraCodedCircuit--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><polyline points="8 11 8 9 16 9 16 11"/><line x1="10" x2="14" y1="17" y2="17"/><line x1="12" x2="12" y1="9" y2="17"/></svg>',
             },
         },
         {
@@ -672,8 +678,8 @@ export const contextMenuItems = {
             data: 'copyUrl',
             title: 'Copy URL',
             icon: {
-                bookmark: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAYAAACw5+G7AAAACXBIWXMAAAsTAAALEwEAmpwYAAACD0lEQVRYw+2XMU/CUBDHoS0tAiGAyKAMDkYHwuigDuKAgRBNGHTUGAdHJ2P4FvoRDLqRqKub0TjorO7o4GBCQjCKIjjc3XCVUl5tKwO3/PKufW3v3f/uvXo8QxtIKxSAz8/ATscdXl3ZFMDTE3B3FxgK8eteL1BRgMEgUJK4n8ayzOfFYsBAAOjzATXNpgBoRWx7oGMm9b7cbuuktfo/0iJF5POCGTCSVqnk7jpvbgKrVcEApD4D09eA348cQY2fAEdPeU2pKjCZ5GOa3+/CGt6ozvd+AL3QaYtGjQIwqQElaU1qdluzabELec8MpIWBL13yMdniIm+P6TQwk+Fjaqt0H837tZCKRQnJ5e5+0qh+TNZqYeoxsIsc3r+A3W0MePMIjMf5PKMaE5aQtva31Mu4YWVXgNszwL0N4Ny5WA0ISyiy318GaEclSXx/85XtvAO/DrmmU6n+MhCJGGVA6R3Ix0d3/+cnEj+gWAQ2GuifBdZqOAED3roDHqDmy+hf1h1RJif5++p1ixkw8xcxgPYb8GUKJZPV7ei33D8+jpna4R/cugG+IxsPPMPCRWzmp+Jy2sJhwSK+vubtzbb+bNEUxeZTqtsZoH1GuI2aGRWd00Zd6O8/OniMPjrm/incYVWNt9kQblyBaeDEOu/rVJyJBJcsrThdr1QET6NGlr8Hvqru/g/Qh+dyw9/9QbMffBLnD64ZaMcAAAAASUVORK5CYII=',
-                folder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAYAAACw5+G7AAAACXBIWXMAAAsTAAALEwEAmpwYAAACD0lEQVRYw+2XMU/CUBDHoS0tAiGAyKAMDkYHwuigDuKAgRBNGHTUGAdHJ2P4FvoRDLqRqKub0TjorO7o4GBCQjCKIjjc3XCVUl5tKwO3/PKufW3v3f/uvXo8QxtIKxSAz8/ATscdXl3ZFMDTE3B3FxgK8eteL1BRgMEgUJK4n8ayzOfFYsBAAOjzATXNpgBoRWx7oGMm9b7cbuuktfo/0iJF5POCGTCSVqnk7jpvbgKrVcEApD4D09eA348cQY2fAEdPeU2pKjCZ5GOa3+/CGt6ozvd+AL3QaYtGjQIwqQElaU1qdluzabELec8MpIWBL13yMdniIm+P6TQwk+Fjaqt0H837tZCKRQnJ5e5+0qh+TNZqYeoxsIsc3r+A3W0MePMIjMf5PKMaE5aQtva31Mu4YWVXgNszwL0N4Ny5WA0ISyiy318GaEclSXx/85XtvAO/DrmmU6n+MhCJGGVA6R3Ix0d3/+cnEj+gWAQ2GuifBdZqOAED3roDHqDmy+hf1h1RJif5++p1ixkw8xcxgPYb8GUKJZPV7ei33D8+jpna4R/cugG+IxsPPMPCRWzmp+Jy2sJhwSK+vubtzbb+bNEUxeZTqtsZoH1GuI2aGRWd00Zd6O8/OniMPjrm/incYVWNt9kQblyBaeDEOu/rVJyJBJcsrThdr1QET6NGlr8Hvqru/g/Qh+dyw9/9QbMffBLnD64ZaMcAAAAASUVORK5CYII=',
+                bookmark: '<!--Icon by contributors from https://lucide.dev/icons/bookmark and https://lucide.dev/icons/link, licensed under https://lucide.dev/license. Modified by YuraCodedCircuit--><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="2.4592 0.344 19.05 26.16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bookmark-icon lucide-bookmark"><path d="M 20 25 L 12 19 L 4 25 V 4 A 2 2 0 0 1 5 1.844 H 18 A 2 2 0 0 1 20 4 V 25 Z M 10.823 11.187 A 5 5 0 0 0 16.97 12.337 L 17.711 11.529 A 5 5 0 0 0 11.306 4.546 L 9.586 6.256 M 13.499 10.789 A 5 5 0 0 0 7.294 8.511 L 6.611 9.081 A 5 5 0 0 0 13.343 16.287 L 14.581 14.83"/></svg>',
+                folder: '',
             },
         },
     ]
@@ -1659,12 +1665,16 @@ const manageUserProfileActivity = () => {
      * Otherwise, it prevents the default context menu from showing.
      */
     $(document).bind("contextmenu", (e) => {
+        const interactiveGuideEl = document.getElementById('interactiveGuide');
         if (e.target.id == '') {
             console.log('className: ', e.target.className);
         } else if (e.target.id != '') {
             console.log('ID: ', e.target.id);
         } else {
             console.log('Error get ID or ClassName of element: ', e.target);
+        }
+        if (showProfileMenuStatus && !interactiveGuideEl) {
+            showProfileMenu();
         }
         if (contextMenuActiveOnIds.default.includes(e.target.id)) {
             createContextMenu(true, 'default');
@@ -1695,8 +1705,11 @@ const manageUserProfileActivity = () => {
         const interactiveGuideEl = document.getElementById('interactiveGuide');
         if (showProfileMenuStatus && e.target.id != 'profileImage' && interactiveGuideEl === null) {
             showProfileMenu();
+            return;
         }
-        createContextMenu(false, 'clean');
+        if (interactiveGuideEl === null) {
+            createContextMenu(false, 'clean');
+        }
         if (contextMenuActiveOnIds.default.includes(e.target.id)) {
             e.preventDefault(); // Prevent the default action
             e.stopPropagation(); // Stop the event from propagating further
@@ -1730,7 +1743,7 @@ const manageUserProfileActivity = () => {
         if (interactiveGuideEl !== null) { return; }
         createContextMenu(false, 'clean');
         if (showProfileMenuStatus) {
-            showProfileMenu();
+            // showProfileMenu();
         }
     });
 
@@ -1991,8 +2004,8 @@ const firstLoadWelcomeWindow = () => {
                     </div>
                     <div id="messageMiddleOne">
                         <div id="middleOneLeft">
-                            <img src='${contextMenuItems.default[0].icon}' id="bookmark"></img>
-                            <img src='${contextMenuItems.default[1].icon}' id="folder"></img>
+                            <div id="bookmark">${contextMenuItems.default[0].icon}</div>
+                            <div id="folder">${contextMenuItems.default[1].icon}</div>
                         </div>
                         <div id="middleOneRight">Create, Edit, Delete: Seamlessly manage your bookmarks and folders with intuitive controls.</div>
                     </div>
@@ -2885,8 +2898,10 @@ export const manageUserProfiles = async (status, active = true, data = { userNam
 export const showProfileMenu = async () => {
     const profileMenuEl = document.getElementById('profileMenu'); // The profile menu element
     const profileImageEl = document.getElementById('profileImage'); // The profile image element
+    const profileMenuHeaderEl = document.getElementById('profileMenuHeader'); // The profile menu header element
     const profileUserNameEl = document.getElementById('profileUserName'); // The profile username element
     const profileMenuBodyEl = document.getElementById('profileMenuBody'); // The profile menu body element
+    let menuItemsSize = '';
 
     if (showProfileMenuStatus) {
         const profileMenuItem = document.querySelectorAll('.profileMenuItem[data-type]'); // All profile menu items
@@ -2896,6 +2911,7 @@ export const showProfileMenu = async () => {
                 duration: .4,
                 delay: index / .9 - index,
                 right: '-100%',
+                opacity: 0,
                 ease: 'sine.in',
                 onComplete: () => {
                     if (index == profileMenuItem.length - 1) {
@@ -2919,6 +2935,8 @@ export const showProfileMenu = async () => {
                             }
                         });
                         profileMenuBodyEl.style.display = 'none';
+                        profileMenuHeaderEl.style.height = '60px';
+                        profileUserNameEl.style.width = '50px';
                         profileUserNameEl.innerHTML = DOMPurify.sanitize('');
                     }
                 }
@@ -2926,24 +2944,31 @@ export const showProfileMenu = async () => {
         });
     } else {
         profileMenuBodyEl.style.display = 'flex';
+        profileMenuHeaderEl.style.height = '60px';
+        profileUserNameEl.style.width = '140px';
         let html = ``;
-        for await (const item of profileMenuItems) { item.icon = await changeBase64ImageColor(item.icon, userProfileExport.mainUserSettings.windows.window.font.color); }
+        menuItemsSize = parseInt(userProfileExport.mainUserSettings.windows.window.font.fontSize) + 10;
+        const profileMenuItemSizeStyle = `height: ${menuItemsSize}px`;
+        const profileMenuItemIconSizeStyle = `width: ${menuItemsSize}px;height: ${menuItemsSize}px`;
+        const profileMenuItemTitleStyle = `color:${userActiveProfile.mainUserSettings.windows.window.font.color};font-family:${userProfileExport.mainUserSettings.windows.window.font.fontFamily};font-size:${userProfileExport.mainUserSettings.windows.window.font.fontSize}px;font-style:${userProfileExport.mainUserSettings.windows.window.font.fontStyle};font-weight:${userProfileExport.mainUserSettings.windows.window.font.fontWeight};padding: 0px 0px 0px 5px;`;
+        for (const item of profileMenuItems) { item.icon = replaceStrokeColor(item.icon, userProfileExport.mainUserSettings.windows.window.font.color); }
         profileMenuItems.forEach(item => {
             html += `
-                <button class="profileMenuItem" data-type="${item.type}">
-                    <div class="profileMenuItemIcon" data-type="${item.type}" style="background: url(${item.icon}) center center / cover no-repeat;"></div>
-                    <div class="profileMenuItemText" data-type="${item.type}" style="color:${userActiveProfile.mainUserSettings.windows.window.font.color}">${item.title}</div>
+                <button class="profileMenuItem" data-type="${item.type}" style="${profileMenuItemSizeStyle}">
+                    <div class="profileMenuItemIcon" data-type="${item.type}" style="${profileMenuItemIconSizeStyle}">${item.icon}</div>
+                    <div class="profileMenuItemText" data-type="${item.type}" style="${profileMenuItemTitleStyle}">${item.title}</div>
                 </button>
             `;
         });
         profileMenuBodyEl.innerHTML = DOMPurify.sanitize(html);
-        profileUserNameEl.innerHTML = DOMPurify.sanitize(`<span id="userName" style="color:${userActiveProfile.mainUserSettings.windows.window.font.color}">${escapeHtml(userActiveProfile.name)}</span>`);
+        const userNameFontStyle = `color:${userActiveProfile.mainUserSettings.windows.window.font.color};font-family:${userProfileExport.mainUserSettings.windows.window.font.fontFamily};font-size:${userProfileExport.mainUserSettings.windows.window.font.fontSize}px;font-style:${userProfileExport.mainUserSettings.windows.window.font.fontStyle};font-weight:${userProfileExport.mainUserSettings.windows.window.font.fontWeight};`;
+        profileUserNameEl.innerHTML = DOMPurify.sanitize(`<span id="userName" style="${userNameFontStyle}">${escapeHtml(userActiveProfile.name)}</span>`);
         const profileMenuItem = document.querySelectorAll('.profileMenuItem[data-type]'); // All profile menu items
 
         gsap.to(profileMenuEl, {
             duration: 2,
             width: 200,
-            height: 60 + (profileMenuItems.length * 30) + (profileMenuItems.length * 6),
+            height: 60 + (profileMenuItems.length * menuItemsSize) + (profileMenuItems.length * 6),
             backgroundColor: userProfileExport.mainUserSettings.windows.window.backgroundColor,
             ease: 'elastic.out(1,0.5)',
             onComplete: () => {
@@ -2983,28 +3008,27 @@ export const showProfileMenu = async () => {
                 switch (type) {
                     case 'newBookmark':
                         createAndEditBookmarksWindow('default', 'newBookmark');
-                        showProfileMenu();
                         break;
                     case 'newFolder':
                         createAndEditBookmarksWindow('default', 'newFolder');
-                        showProfileMenu();
                         break;
                     case 'search':
                         searchManager('open');
-                        showProfileMenu();
+                        break;
+                    case 'undoManager':
+                        undoManager('showUndoManagerUi');
                         break;
                     case 'folderSettings':
                         openCloseSettingWindow('open', 'folder');
-                        showProfileMenu();
                         break;
                     case 'settings':
                         settingWindowOpen.status ? openCloseSettingWindow('close') : openCloseSettingWindow('open', 'default');
-                        showProfileMenu();
                         break;
                     default:
                         console.error('Wrong menu type', type);
-                        break;
+                        return;
                 }
+                showProfileMenu();
             });
             element.addEventListener('mouseenter', el => {
                 el.target.style.backgroundColor = pSBC(checkIfColorBrightness(userProfileExport.mainUserSettings.windows.window.backgroundColor) ? -0.50 : 0.50, userProfileExport.mainUserSettings.windows.window.backgroundColor, false, true);
@@ -3040,12 +3064,14 @@ export const createContextMenu = async (create = false, type = '', setMousePosit
         let contextMenuItemsBodyHtml = ``;
         let getMinVW = viewportWidth - 200;
         let getMinVH = viewportHeight - 220;
+        let menuItemsSize = '';
+        menuItemsSize = parseInt(userProfileExport.mainUserSettings.windows.window.font.fontSize) + 10;
         // Defines the base styling for each context menu item.
-        const contextMenuItemBodyStyle = `display: flex;justify-content: flex-start;align-items: center;flex-direction: row;width: 100%;height: 100%;margin: 1px 0 1px 0;border-radius: 0px;border: none;background-color: transparent;`;
+        let contextMenuItemBodyStyle = `display: flex;justify-content: flex-start;align-items: center;flex-direction: row;width: 100%;height: 100%;margin: 1px 0px 1px 0px;border-radius: 5px;border: none;background-color: transparent;`;
         // Defines the styling for the icons within context menu items.
-        const contextMenuItemImgBodyStyle = `padding:0 5px 0 2px;width: 36px;height: 30px;`;
+        const contextMenuItemImgBodyStyle = `display: flex;justify-content: center;align-items: center;padding:0 0px 0 0px;width: ${menuItemsSize}px;height: ${menuItemsSize}px;`;
         // Defines the styling for the titles within context menu items.
-        const contextMenuItemTitleBodyStyle = `color:${userProfileExport.mainUserSettings.windows.window.font.color};padding:0px 5px 0px 0px;text-wrap: nowrap;`;
+        const contextMenuItemTitleBodyStyle = `color:${userProfileExport.mainUserSettings.windows.window.font.color};font-family:${userProfileExport.mainUserSettings.windows.window.font.fontFamily};font-size:${userProfileExport.mainUserSettings.windows.window.font.fontSize}px;font-style:${userProfileExport.mainUserSettings.windows.window.font.fontStyle};font-weight:${userProfileExport.mainUserSettings.windows.window.font.fontWeight};padding:0px 5px 0px 5px;text-wrap: nowrap;`;
         let allChildIds = [];
         let sameChildrenFolder = true;
         if (clipboard.length > 0) {
@@ -3057,12 +3083,13 @@ export const createContextMenu = async (create = false, type = '', setMousePosit
             case 'default':
                 getMinVW = viewportWidth - 200;
                 getMinVH = viewportHeight - 170;
-                for await (const item of contextMenuItems.default) { item.icon = await changeBase64ImageColor(item.icon, userProfileExport.mainUserSettings.windows.window.font.color); }
+                for (const item of contextMenuItems.default) { item.icon = replaceStrokeColor(item.icon, userProfileExport.mainUserSettings.windows.window.font.color); }
                 contextMenuItems.default.forEach(v => {
                     if (v.id === 3 && sameChildrenFolder) { return; }
+                    if (v.id === 3 && !sameChildrenFolder) { contextMenuItemBodyStyle = `display: flex;justify-content: flex-start;align-items: center;flex-direction: row;width: 100%;height: 100%;margin: 1px 0 1px 0;border-radius: 0px;border: none;background-color: transparent;`; }
                     contextMenuItemsBodyHtml += `
-                        <button type="button" class='contextMenuItemBody' data-type='${v.data}' style='${contextMenuItemBodyStyle};${v.data == 'paste' ? `border-top:1px solid ${userProfileExport.mainUserSettings.windows.window.font.color};border-bottom:1px solid ${userProfileExport.mainUserSettings.windows.window.font.color};` : ''}'>
-                            <img src='${v.icon}' style='${contextMenuItemImgBodyStyle}'></img>
+                        <button type="button" class="contextMenuItemBody" data-type="${v.data}" style='${contextMenuItemBodyStyle};${v.data == 'paste' ? `border-top:1px solid ${userProfileExport.mainUserSettings.windows.window.font.color};border-bottom:1px solid ${userProfileExport.mainUserSettings.windows.window.font.color};` : ''}'>
+                            <div style="${contextMenuItemImgBodyStyle}">${v.icon}</div>
                             <div id='contextMenuItemTitle' style='${contextMenuItemTitleBodyStyle}'>${v.title}</div>
                         </button>`;
                 });
@@ -3072,12 +3099,12 @@ export const createContextMenu = async (create = false, type = '', setMousePosit
                 getMinVH = viewportHeight - 240;
                 let objType = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentIdToEdit)?.type;
                 if (!['folder', 'bookmark'].includes(objType)) { console.error('wrong type', objType); }
-                for await (const item of contextMenuItems.bookmark) { item.icon[objType] = await changeBase64ImageColor(item.icon[objType], userProfileExport.mainUserSettings.windows.window.font.color); }
+                for (const item of contextMenuItems.bookmark) { item.icon[objType] = replaceStrokeColor(item.icon[objType], userProfileExport.mainUserSettings.windows.window.font.color); }
                 contextMenuItems.bookmark.forEach(v => {
                     if (v.id === 6 && objType === 'folder') { return; }
                     contextMenuItemsBodyHtml += `
                     <button type="button" class='contextMenuItemBody' data-type='${v.data}' style='${contextMenuItemBodyStyle}'>
-                        <img src='${v.icon[objType]}' style='${contextMenuItemImgBodyStyle}'></img>
+                        <div style="${contextMenuItemImgBodyStyle}">${v.icon[objType]}</div>
                         <div id='contextMenuItemTitle' style='${contextMenuItemTitleBodyStyle}'>${v.title}</div>
                     </button>`;
                 });
@@ -3566,12 +3593,6 @@ const deleteBookmarkOrFolder = () => {
 
                 currentFolderObj.children.splice(index, 1);
                 userActiveProfile.currentUserBookmarks = userProfileExport.currentUserBookmarks;
-                // const copiedObj = {
-                //     currentFolderId: userProfileExport.currentFolderId,
-                //     status: 'deleted',
-                //     object: object,
-                // }
-                // clipboardHistory.push(copiedObj);
                 const undoObject = {
                     type: 'deleted',
                     delete: false,

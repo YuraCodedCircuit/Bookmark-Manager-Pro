@@ -924,6 +924,22 @@ export const changeBase64ImageColor = (base64Image, newColor) => {
 };
 
 /**
+ * Replaces the stroke color in an SVG string.
+ * @param {string} svgString - The original SVG string to modify.
+ * @param {string} newColor - The new color to replace the existing stroke color.
+ * @returns {string} The modified SVG string with the updated stroke color.
+ */
+export const replaceStrokeColor = (svgString, newColor) => {
+    if (typeof svgString !== 'string' && typeof newColor !== 'string') {
+        return '';
+    }
+    if (svgString.length === 0 || newColor.length === 0) {
+        return '';
+    }
+    return svgString.replace(/stroke="[^"]*"/, `stroke="${newColor}"`);
+};
+
+/**
  * Displays a toast notification with customizable options.
  * This function utilizes the Toastify library to display toast notifications with various customization options such as type, message, duration, and style. It supports dynamic color changes for icons based on the message type by altering the base64 image color.
  *
@@ -3098,6 +3114,19 @@ export const escapeHtml = (unsafe) => {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+};
+
+/**
+ * Unescapes HTML special characters in a string to restore the original characters.
+ * @param {string} str - The input string to unescape.
+ * @returns {string} The unescaped string with HTML entities replaced by their corresponding characters.
+ */
+export const unescapeHtml = (str) => {
+    return str.replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
 };
 
 // Function to get all children's IDs starting with a given ID
