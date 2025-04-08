@@ -31,12 +31,14 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ * - Marked (MIT License)
+ * - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
  */
 
-import { userProfileExport, currentLanguage, createCurrentBookmarkFolder, currentLanguageTextObj, firefoxLogoSVG } from './main.js';
+import { userProfileExport, currentLanguage, createCurrentBookmarkFolder, currentLanguageTextObj } from './main.js';
 import { showMessageToastify, formatDateTime, findBookmarkByKey, translateUserName, checkIfColorBrightness, generateColorPalette, createTooltip, escapeHtml } from './utilityFunctions.js';
 
 /**
@@ -64,6 +66,10 @@ export const searchManager = (status) => {
     const bookmarkIconSVG = `
         <!--Icon by contributors from https://lucide.dev/icons/bookmark, licensed under https://lucide.dev/license-->
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bookmark"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+    `;
+    const noBookmarkImageIconSVG = `
+        <!--Icon by contributors from https://lucide.dev/icons/file-image, licensed under https://lucide.dev/license-->
+        <svg xmlns="http://www.w3.org/2000/svg" width="50%" height="50%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-image-icon lucide-file-image"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="10" cy="12" r="2"/><path d="m20 17-1.296-1.296a2.41 2.41 0 0 0-3.408 0L9 22"/></svg>
     `;
     const userColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
     const colorPalette = generateColorPalette(userColor);
@@ -94,7 +100,7 @@ export const searchManager = (status) => {
     // Close the search window
     if (status === 'close') {
         uiElementsContainerEl.style.display = 'none';
-        uiElementsContainerEl.innerHTML = '';
+        uiElementsContainerEl.innerHTML = DOMPurify.sanitize('');
         return;
     }
 
@@ -215,7 +221,7 @@ export const searchManager = (status) => {
 
     // Display the UI elements
     uiElementsContainerEl.style.display = 'flex';
-    uiElementsContainerEl.innerHTML = otherBodyHTML;
+    uiElementsContainerEl.innerHTML = DOMPurify.sanitize(otherBodyHTML);
 
     /**
      * Updates the text content of the search manager UI elements based on the current language settings.
@@ -377,10 +383,10 @@ export const searchManager = (status) => {
         searchObject.view = 'list';
         if (searchObject.view === 'list') {
             searchWindowBodyLeftSearchFiltersContentResultViewTitleEl.innerText = currentLanguageTextObj._searchManagerUI._allFilters.chooseCompactView;
-            searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = viewAsCompactIconSVG;
+            searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = DOMPurify.sanitize(viewAsCompactIconSVG);
         } else if (searchObject.view === 'compact') {
             searchWindowBodyLeftSearchFiltersContentResultViewTitleEl.innerText = currentLanguageTextObj._searchManagerUI._allFilters.chooseListView;
-            searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = viewAsListIconSVG;
+            searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = DOMPurify.sanitize(viewAsListIconSVG);
         }
     }
     setDefaultValuesToSearchManager();
@@ -422,7 +428,7 @@ export const searchManager = (status) => {
                     </div>
                 </div>
             `;
-            searchWindowBodyRightResultsEl.innerHTML = messageHtml;
+            searchWindowBodyRightResultsEl.innerHTML = DOMPurify.sanitize(messageHtml);
         }
 
         // Display a message when there are no bookmarks and a search term is entered
@@ -435,7 +441,7 @@ export const searchManager = (status) => {
                     </div>
                 </div>
             `;
-            searchWindowBodyRightResultsEl.innerHTML = messageHtml;
+            searchWindowBodyRightResultsEl.innerHTML = DOMPurify.sanitize(messageHtml);
         }
 
         // Add each extension bookmark to the List view results
@@ -486,7 +492,7 @@ export const searchManager = (status) => {
                 filteredBrowserBookmarks.forEach(async (item, index) => {
                     searchWindowBodyRightResultsHtmlBrowser += `
                         <div class="bookmarkElementList" data-id="${item.id}" data-type="browser" style="background-color: ${index % 2 ? colorPalette[1] : colorPalette[2]}">
-                            <div class="bookmarkElementListIcon" style="" data-id="${item.id}" data-type="browser">${firefoxLogoSVG}</div>
+                            <div class="bookmarkElementListIcon" style="" data-id="${item.id}" data-type="browser">${noBookmarkImageIconSVG}</div>
                             <div class="bookmarkElementListDetails" data-id="${item.id}" data-type="browser" style="">
                                 <div class="bookmarkElementListTitle bookmarkTooltipTitle" data-id="${item.id}" data-type="browser">${escapeHtml(item.title)}</div>
                                 <div class="bookmarkElementListDetailsInfo" data-id="${item.id}" data-type="browser">
@@ -520,7 +526,7 @@ export const searchManager = (status) => {
             }
 
             // Builds the HTML for the search results in the list view.
-            searchWindowBodyRightResultsEl.innerHTML = `
+            searchWindowBodyRightResultsEl.innerHTML = DOMPurify.sanitize(`
                 <div id="searchWindowBodyRightResultsHtmlList">
                     <div id="searchWindowBodyRightResultsExtensionList">
                         <div id="searchWindowBodyRightResultsExtensionListTitle" style="display: ${searchObject.includedBrowserBookmarks ? searchObject.searchText.trim().length > 0 ? 'flex' : 'none' : 'none'}">${filteredExtensionBookmarks.length} &nbsp;<div id="searchWindowBodyRightResultsExtensionListTitle">${filteredExtensionBookmarks.length === 1 ? currentLanguageTextObj._searchManagerUI._searchTitleResultSeparation._extension._singularForm : currentLanguageTextObj._searchManagerUI._searchTitleResultSeparation._extension._pluralForm}</div></div>
@@ -531,7 +537,7 @@ export const searchManager = (status) => {
                         <div id="searchWindowBodyRightResultsBrowserListBookmarks">${searchWindowBodyRightResultsHtmlBrowser}</div>
                     </div>
                 </div>
-            `;
+            `);
 
             /**
              * Adds event listeners to each bookmark element in the list view.
@@ -630,7 +636,7 @@ export const searchManager = (status) => {
                 filteredBrowserBookmarks.forEach(async (item, index) => {
                     searchWindowBodyRightResultsHtmlBrowser += `
                         <div class="bookmarkElementCompact" data-id="${item.id}" data-type="browser" style="background-color: ${index % 2 ? colorPalette[1] : colorPalette[2]}">
-                            <div class="bookmarkElementCompactIcon" data-id="${item.id}" data-type="browser">${firefoxLogoSVG}</div>
+                            <div class="bookmarkElementCompactIcon" data-id="${item.id}" data-type="browser">${noBookmarkImageIconSVG}</div>
                             <div class="bookmarkElementCompactDetails" data-id="${item.id}" data-type="browser">
                                 <div class="bookmarkElementCompactTitle bookmarkTooltipTitle" data-id="${item.id}" data-type="browser">${escapeHtml(item.title)}</div>
                                 <div class="bookmarkElementCompactDetailsInfo" data-id="${item.id}" data-type="browser">
@@ -659,7 +665,7 @@ export const searchManager = (status) => {
             }
 
             // Create the HTML for the results
-            searchWindowBodyRightResultsEl.innerHTML = `
+            searchWindowBodyRightResultsEl.innerHTML = DOMPurify.sanitize(`
                 <div id="searchWindowBodyRightResultsHtmlCompact">
                     <div id="searchWindowBodyRightResultsExtensionCompact">
                         <div id="searchWindowBodyRightResultsExtensionCompactTitle" style="display: ${searchObject.includedBrowserBookmarks ? searchObject.searchText.trim().length > 0 ? 'flex' : 'none' : 'none'}">${filteredExtensionBookmarks.length} &nbsp;<div id="searchWindowBodyRightResultsExtensionCompactTitle">${filteredExtensionBookmarks.length === 1 ? currentLanguageTextObj._searchManagerUI._searchTitleResultSeparation._extension._singularForm : currentLanguageTextObj._searchManagerUI._searchTitleResultSeparation._extension._pluralForm}</div></div>
@@ -670,7 +676,7 @@ export const searchManager = (status) => {
                         <div id="searchWindowBodyRightResultsBrowserCompactBookmarks">${searchWindowBodyRightResultsHtmlBrowser}</div>
                     </div>
                 </div>
-            `;
+            `);
 
             /**
              * Adds event listeners to all bookmark elements in the compact view.
@@ -814,7 +820,7 @@ export const searchManager = (status) => {
             detailsElement.style.fontWeight = userProfileExport.mainUserSettings.windows.window.font.fontWeight;
             detailsElement.style.fontFamily = userProfileExport.mainUserSettings.windows.window.font.fontFamily;
             detailsElement.style.fontStyle = userProfileExport.mainUserSettings.windows.window.font.fontStyle;
-            detailsElement.innerHTML = `
+            detailsElement.innerHTML = DOMPurify.sanitize(`
                 <div class="moreDetailsItems">
                     <div class="moreDetailsItemsTitle">${currentLanguageTextObj._searchManagerUI._bookmarkAdditionalInformation.created}</div>
                     <div class="moreDetailsItemsInfo moreDetailsItemsDate">${formatDateTime(findBookmarkById.dateAdded, currentLanguage, 'dateAndTime')}</div>
@@ -835,7 +841,7 @@ export const searchManager = (status) => {
                         <div class="moreDetailsItemsInfoFolder">${findBookmarkParentById.title}</div>
                     </div>
                 </div>
-            `;
+            `);
             document.body.appendChild(detailsElement); // Append to body for positioning
 
             /**
@@ -1117,11 +1123,11 @@ export const searchManager = (status) => {
         const updateValueToggleView = () => {
             if (searchObject.view === 'compact') {
                 searchWindowBodyLeftSearchFiltersContentResultViewTitleEl.innerText = currentLanguageTextObj._searchManagerUI._allFilters.chooseCompactView;
-                searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = viewAsCompactIconSVG;
+                searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = DOMPurify.sanitize(viewAsCompactIconSVG);
                 searchObject.view = 'list';
             } else {
                 searchWindowBodyLeftSearchFiltersContentResultViewTitleEl.innerText = currentLanguageTextObj._searchManagerUI._allFilters.chooseListView;
-                searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = viewAsListIconSVG;
+                searchWindowBodyLeftSearchFiltersContentResultViewToggleButtonEl.innerHTML = DOMPurify.sanitize(viewAsListIconSVG);
                 searchObject.view = 'compact';
             }
             showSearchResultToUi();

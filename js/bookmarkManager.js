@@ -31,6 +31,8 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ * - Marked (MIT License)
+ * - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
@@ -38,7 +40,8 @@
 
 "use strict";
 import { userProfileExport, defaultUserBookmarks, currentFolderId, userActiveProfile, currentLanguageTextObj, manageUserProfiles, userActivityRegister, createCurrentBookmarkFolder} from './main.js';
-import { isObjectEmpty, findBookmarkByKey, checkIfColorBrightness, pSBC, truncateString, invertHexColor, getNextMaxIndex, generateRandomIdForObj, indexedDBManipulation, showMessageToastify, capitalizeString, actionForArray, updateInputRangeAndOutput, updateColorisInputValue, checkIfAllowedToCreateScreenshotFromURL, getSupportedFontFamilies, getRandomColor, ensureHttps, resizeImageBase64, inputHexValid, generateColorPalette, truncateTextIfOverflow, createTooltip, escapeHtml } from './utilityFunctions.js';
+import { isObjectEmpty, findBookmarkByKey, checkIfColorBrightness, pSBC, truncateString, invertHexColor, getNextMaxIndex, generateRandomIdForObj, indexedDBManipulation, showMessageToastify, capitalizeString, actionForArray, updateInputRangeAndOutput, updateColorisInputValue, checkIfAllowedToCreateScreenshotFromURL, getSupportedFontFamilies, getRandomColor, ensureHttps, resizeImageBase64, inputHexValid, generateColorPalette, truncateTextIfOverflow, createTooltip, escapeHtml, unescapeHtml, updateDateGroupModified } from './utilityFunctions.js';
+import { undoManager } from './undoManager.js';
 
 /**
  * Creates a new bookmark or folder object with default properties.
@@ -82,11 +85,12 @@ export const createNewBookmarkOrFolderObj = async (type) => {
 export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
     let createEditWindowHtml = ``;
     // Select the context menu window element for manipulation.
-    const contextMenuWindowEl = $('#contextMenuWindow');
+    const uiElementsContainerEl = $('#uiElementsContainer');
     let currentStyleMenuTab = '';
     let currentTitleEditorInputListener = null;
     let currentUrlEditorInputListener = null;
     let currentEditingObj = {};
+    let originalObj = {};
     let selectedFolderId = null;
     let objType = '';
     let editingObjBookmarkStyle = {};
@@ -94,7 +98,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
     let colorPalette = [];
 
     if (menuType == 'close') {
-        contextMenuWindowEl.css('display', 'none').html(``);
+        uiElementsContainerEl.css('display', 'none').html(DOMPurify.sanitize(''));
         userProfileExport.currentIdToEdit = null;
         return;
     }
@@ -106,15 +110,19 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         objType = currentEditingObj.type;
         selectedFolderId = currentEditingObj.parentId;
         currentEditingObj.lastEdited = currentDate;
+        const tempObj = structuredClone(currentEditingObj);
+        originalObj.title = tempObj.title;
+        originalObj.style = tempObj.style;
+        originalObj.url = tempObj.url;
     }
     if ((menuType == 'default' && menuItem == 'newBookmark') || (menuType == 'default' && menuItem == 'newFolder')) {
         userProfileExport.currentIdToEdit == null;
         if (menuItem == 'newBookmark') { objType = 'bookmark' }
         if (menuItem == 'newFolder') { objType = 'folder' }
         currentEditingObj = await createNewBookmarkOrFolderObj(objType);
-        selectedFolderId = currentFolderId;
+        selectedFolderId = userProfileExport.currentFolderId;
         currentEditingObj.parentId = selectedFolderId;
-        editingObjBookmarkStyle = window.structuredClone(currentEditingObj.style.bookmark);
+        editingObjBookmarkStyle = structuredClone(currentEditingObj.style.bookmark);
     }
 
     const userColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
@@ -128,7 +136,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             bookmarkBoxSize = obj.style.folder.bookmarksBox;
         }
     }
-    updateBookmarkBoxSize(currentFolderId);
+    updateBookmarkBoxSize(userProfileExport.currentFolderId);
 
     // Check if the language object is empty, indicating a failure to retrieve language settings.
     if (isObjectEmpty(currentLanguageTextObj)) {
@@ -137,7 +145,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
 
     // Validate the type of bookmark window to be created. Exit if the type is not recognized.
     if (menuType != 'default' && menuType != 'bookmark') {
-        contextMenuWindowEl.css('display', 'none').html(``);
+        uiElementsContainerEl.css('display', 'none').html(DOMPurify.sanitize(''));
         return;
     }
 
@@ -145,7 +153,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         case 'newBookmark':
         case 'newFolder':
         case 'edit':
-            contextMenuWindowEl.css('display', 'flex');
+            uiElementsContainerEl.css('display', 'flex');
             createEditWindowHtml = `
             <div id="mainWindowBody" data-listenerAdded="false">
                 <div id="leftPanel">
@@ -205,10 +213,10 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         `;
             break;
         default:
-            contextMenuWindowEl.html(``);
+            uiElementsContainerEl.html('');
             break;
     }
-    contextMenuWindowEl.html(createEditWindowHtml);
+    uiElementsContainerEl.html(DOMPurify.sanitize(createEditWindowHtml));
 
     /**
      * Set default styles to the title, URL, and folder tree input fields in the context menu window.
@@ -231,13 +239,13 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
     setDefaultStylesToTitleURLFolderTree();
 
     const linkEditorInputButtonIconEl = document.getElementById('linkEditorInputButtonIcon');
-    linkEditorInputButtonIconEl.innerHTML = `<path fill="none" d="M0 0h24v24H0z"/><path d="M3 3h2v2H3V3zm4 0h2v2H7V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm0 4h2v2h-2V7zM3 19h2v2H3v-2zm0-4h2v2H3v-2zm0-4h2v2H3v-2zm0-4h2v2H3V7zm7.667 4l1.036-1.555A1 1 0 0 1 12.535 9h2.93a1 1 0 0 1 .832.445L17.333 11H20a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h2.667zM9 19h10v-6h-2.737l-1.333-2h-1.86l-1.333 2H9v6zm5-1a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>`;
+    linkEditorInputButtonIconEl.innerHTML = DOMPurify.sanitize(`<path fill="none" d="M0 0h24v24H0z"/><path d="M3 3h2v2H3V3zm4 0h2v2H7V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm0 4h2v2h-2V7zM3 19h2v2H3v-2zm0-4h2v2H3v-2zm0-4h2v2H3v-2zm0-4h2v2H3V7zm7.667 4l1.036-1.555A1 1 0 0 1 12.535 9h2.93a1 1 0 0 1 .832.445L17.333 11H20a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h2.667zM9 19h10v-6h-2.737l-1.333-2h-1.86l-1.333 2H9v6zm5-1a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>`);
 
     linkEditorInputButtonIconEl.addEventListener('mouseenter', () => {
-        linkEditorInputButtonIconEl.innerHTML = `<path fill="#2af0f0" d="M 3 3 L 21 3 L 21 10 L 19 10 L 19 5 L 5 5 L 5 19 L 6 19 L 6 21 L 3 21 z M 3 19 v 2 z m 0 -4 v 2 H 3 v -2 z m 0 -4 v 2 H 3 v -2 m 0 -4 h 2 z m 7.667 4 l 1.036 -1.555 A 1 1 0 0 1 12.535 9 h 2.93 a 1 1 0 0 1 0.832 0.445 L 17.333 11 H 20 a 1 1 0 0 1 1 1 v 8 a 1 1 0 0 1 -1 1 H 8 a 1 1 0 0 1 -1 -1 v -8 a 1 1 0 0 1 1 -1 h 2.667 z M 9 19 h 10 v -6 h -2.737 l -1.333 -2 h -1.86 l -1.333 2 H 9 v 6 z m 5 -1 a 2 2 0 1 1 0 -4 a 2 2 0 0 1 0 4 z"/>`;
+        linkEditorInputButtonIconEl.innerHTML = DOMPurify.sanitize(`<path fill="#2af0f0" d="M 3 3 L 21 3 L 21 10 L 19 10 L 19 5 L 5 5 L 5 19 L 6 19 L 6 21 L 3 21 z M 3 19 v 2 z m 0 -4 v 2 H 3 v -2 z m 0 -4 v 2 H 3 v -2 m 0 -4 h 2 z m 7.667 4 l 1.036 -1.555 A 1 1 0 0 1 12.535 9 h 2.93 a 1 1 0 0 1 0.832 0.445 L 17.333 11 H 20 a 1 1 0 0 1 1 1 v 8 a 1 1 0 0 1 -1 1 H 8 a 1 1 0 0 1 -1 -1 v -8 a 1 1 0 0 1 1 -1 h 2.667 z M 9 19 h 10 v -6 h -2.737 l -1.333 -2 h -1.86 l -1.333 2 H 9 v 6 z m 5 -1 a 2 2 0 1 1 0 -4 a 2 2 0 0 1 0 4 z"/>`);
     });
     linkEditorInputButtonIconEl.addEventListener('mouseleave', () => {
-        linkEditorInputButtonIconEl.innerHTML = `<path fill="none" d="M0 0h24v24H0z"/><path d="M3 3h2v2H3V3zm4 0h2v2H7V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm0 4h2v2h-2V7zM3 19h2v2H3v-2zm0-4h2v2H3v-2zm0-4h2v2H3v-2zm0-4h2v2H3V7zm7.667 4l1.036-1.555A1 1 0 0 1 12.535 9h2.93a1 1 0 0 1 .832.445L17.333 11H20a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h2.667zM9 19h10v-6h-2.737l-1.333-2h-1.86l-1.333 2H9v6zm5-1a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>`;
+        linkEditorInputButtonIconEl.innerHTML = DOMPurify.sanitize(`<path fill="none" d="M0 0h24v24H0z"/><path d="M3 3h2v2H3V3zm4 0h2v2H7V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm0 4h2v2h-2V7zM3 19h2v2H3v-2zm0-4h2v2H3v-2zm0-4h2v2H3v-2zm0-4h2v2H3V7zm7.667 4l1.036-1.555A1 1 0 0 1 12.535 9h2.93a1 1 0 0 1 .832.445L17.333 11H20a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h2.667zM9 19h10v-6h-2.737l-1.333-2h-1.86l-1.333 2H9v6zm5-1a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>`);
     });
 
     /**
@@ -255,13 +263,13 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         if (currentTitleEditorInputListener) {
             titleEditorInputEl.removeEventListener('input', currentTitleEditorInputListener);
         }
-        bookmarkTextPreviewEl.innerHTML = escapeHtml(currentEditingObj.title);
-        titleEditorInputEl.value = escapeHtml(currentEditingObj.title);
+        bookmarkTextPreviewEl.innerHTML = DOMPurify.sanitize(escapeHtml(currentEditingObj.title));
+        titleEditorInputEl.value = DOMPurify.sanitize(unescapeHtml(currentEditingObj.title));
         // Define a new event listener that updates the preview and editing object's title on input change.
         const handleTitleInputChange = () => {
             // Update the preview element's innerHTML and the editing object's title with the input's value.
-            bookmarkTextPreviewEl.innerHTML = escapeHtml(titleEditorInputEl.value);
-            currentEditingObj.title = escapeHtml(titleEditorInputEl.value);
+            bookmarkTextPreviewEl.innerHTML = DOMPurify.sanitize(escapeHtml(titleEditorInputEl.value));
+            currentEditingObj.title = DOMPurify.sanitize(escapeHtml(titleEditorInputEl.value));
         }
         // Store the new event listener for potential future removal.
         currentTitleEditorInputListener = handleTitleInputChange;
@@ -333,7 +341,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                 bookmarks.forEach(bookmark => {
                     if (bookmark.type === 'folder' && bookmark.id !== currentEditingObj.id) {
                         // Create the list item for the current bookmark
-                        html += `<li data-id="${bookmark.id}"><div class="folder"><div class="check" data-id="${bookmark.id}"></div><span class="folderName" data-id="${bookmark.id}">${escapeHtml(bookmark.title)}</span></div>`;
+                        html += `<li data-id="${bookmark.id}"><div class="folder"><div class="check" data-id="${bookmark.id}"></div><span class="folderName" data-id="${bookmark.id}">${DOMPurify.sanitize(escapeHtml(bookmark.title))}</span></div>`;
                         // If there are children, recursively build their HTML
                         if (bookmark.children && bookmark.children.length > 0) {
                             html += buildFolderTreeHTML(bookmark.children); // Recursively build children
@@ -349,7 +357,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             // Return the generated HTML
             return htmlOutput;
         };
-        listToSelectFolderEl.innerHTML = generateHtmlListFromData();
+        listToSelectFolderEl.innerHTML = DOMPurify.sanitize(generateHtmlListFromData());
 
         const setCheckerToFolderTree = () => {
             const checkArray = document.querySelectorAll('.check');
@@ -359,10 +367,10 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             checkArray.forEach((check, index) => {
                 if (check.dataset.id === id && liArray[index].dataset.id === id) {
                     liArray[index].style.setProperty('--lineWidth', '5px');
-                    check.innerHTML = checkMarkSVG;
+                    check.innerHTML = DOMPurify.sanitize(checkMarkSVG);
                 } else {
                     liArray[index].style.setProperty('--lineWidth', '15px');
-                    check.innerHTML = '';
+                    check.innerHTML = DOMPurify.sanitize('');
                 }
             });
         }
@@ -404,12 +412,12 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
 
         /**
         * Helper function to update the text content of a given element.
-        * @param {HTMLElement} element - The DOM element whose text content needs to be updated.
+        * @param {string} element - The DOM element whose text content needs to be updated.
         * @param {string} text - The new text content to be set on the element.
         */
         const updateTextContent = (element, text) => {
             if (element && text !== undefined) {
-                element.innerHTML = text;
+                element.innerText = text;
             } else {
                 console.error('Invalid arguments passed to updateTextContent()', { element: element, text: text });
             }
@@ -527,6 +535,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         const titleEditorInputEl = document.getElementById('titleEditorInput');
         const urlEditorInputEl = document.getElementById('urlEditorInput');
         let parentObj = {};
+        const dateTime = new Date().getTime();
 
         const saveCurrentEditingObj = async () => {
             let syncObject = {};
@@ -545,8 +554,10 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             if (menuType == 'default') {
                 parentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, selectedFolderId);
                 currentEditingObj.title = titleEditorInputEl.value.trim();
-                currentEditingObj.url = ensureHttps(urlEditorInputEl.value.trim());
+                currentEditingObj.url = currentEditingObj.type === 'bookmark' ? ensureHttps(urlEditorInputEl.value.trim()) : '';
                 currentEditingObj.index = getNextMaxIndex(parentObj.children);
+                currentEditingObj.dateAdded = dateTime;
+                currentEditingObj.dateGroupModified = dateTime;
                 currentEditingObj.style.bookmark = editingObjBookmarkStyle;
                 parentObj.children.push(currentEditingObj);
                 syncObject = {
@@ -556,21 +567,46 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                     id: currentEditingObj.id,
                     parentId: parentObj.id === userProfileExport.mainUserSettings.main.synchronizationToBrowser.extensionFolderId ? userProfileExport.mainUserSettings.main.synchronizationToBrowser.browserFolderId : parentObj.id,
                 };
+                const undoObject = {
+                    type: 'created',
+                    delete: false,
+                    disabledRedo: true,
+                    disabledUndo: false,
+                    id: generateRandomIdForObj(),
+                    timestamp: currentEditingObj.dateAdded,
+                    item: currentEditingObj,
+                };
+                undoManager('addAction', undoObject);
+                updateDateGroupModified(userProfileExport.currentUserBookmarks, currentEditingObj.id, dateTime);
             } else if (menuType == 'bookmark') {
-                parentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentIdToEdit);
-                parentObj.title = titleEditorInputEl.value.trim();
-                parentObj.url = ensureHttps(urlEditorInputEl.value.trim());
-                parentObj.style.bookmark = editingObjBookmarkStyle;
+                const currentObj = findBookmarkByKey(userProfileExport.currentUserBookmarks, userProfileExport.currentIdToEdit);
+                currentObj.title = titleEditorInputEl.value.trim();
+                currentObj.url = currentEditingObj.type === 'bookmark' ? ensureHttps(urlEditorInputEl.value.trim()) : '';
+                currentObj.dateAdded = dateTime;
+                currentObj.dateGroupModified = dateTime;
+                currentObj.style.bookmark = editingObjBookmarkStyle;
+                const undoObject = {
+                    type: 'edited',
+                    delete: false,
+                    disabledRedo: true,
+                    disabledUndo: false,
+                    id: generateRandomIdForObj(),
+                    timestamp: dateTime,
+                    originalItem: originalObj,
+                    item: currentObj,
+                };
+                undoManager('addAction', undoObject);
                 if (currentEditingObj.parentId !== selectedFolderId) {
                     actionForArray(userProfileExport.currentUserBookmarks, 'cut', userProfileExport.currentIdToEdit, selectedFolderId);
                 }
                 syncObject = {
                     status: 'update',
-                    title: parentObj.title,
-                    url: parentObj.url.trim().length > 0 ? ensureHttps(parentObj.url) : null,
-                    id: parentObj.id,
+                    title: currentObj.title,
+                    url: currentObj.url.trim().length > 0 ? ensureHttps(currentObj.url) : null,
+                    id: currentObj.id,
                     parentId: selectedFolderId === userProfileExport.mainUserSettings.main.synchronizationToBrowser.extensionFolderId ? userProfileExport.mainUserSettings.main.synchronizationToBrowser.browserFolderId : selectedFolderId,
                 };
+                updateDateGroupModified(userProfileExport.currentUserBookmarks, currentObj.id, dateTime);
             }
 
             userActiveProfile.currentUserBookmarks = userProfileExport.currentUserBookmarks;
@@ -611,7 +647,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             // Reset the current ID being edited to null.
             userProfileExport.currentIdToEdit = null;
             // Hide the context menu window and clear its contents.
-            contextMenuWindowEl.css('display', 'none').html(``);
+            uiElementsContainerEl.css('display', 'none').html(DOMPurify.sanitize(''));
         }
 
         // Define the event handler function
@@ -913,7 +949,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                 </div>
             </div>
         `;
-        styleMenuBodyEl.html(borderHtmlBody);
+        styleMenuBodyEl.html(DOMPurify.sanitize(borderHtmlBody));
 
         /**
         * Updates the text for border width, color, and style settings in the UI based on the selected border position.
@@ -933,7 +969,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                 // Define a helper function to update the text content of the UI elements.
                 const updateTextContent = (element, text) => {
                     if (element && text !== undefined) {
-                        element.innerHTML = text;
+                        element.innerText = text;
                     } else {
                         console.error('Invalid arguments passed to updateTextContent()', { element: element, text: text });
                     }
@@ -1055,7 +1091,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                 const borderColor = checkIfColorBrightness(editingObjBookmarkStyle.border.left.color) ? '#000000' : '#ffffff';
                 borderColorInputEl.style.border = `1px solid ${borderColor}`;
                 updateButtonIconStyle(borderStyle.color);
-                styleButtonMenuTitleEl.innerHTML = borderStyle.style.charAt(0).toUpperCase() + borderStyle.style.slice(1);
+                styleButtonMenuTitleEl.innerHTML = DOMPurify.sanitize(borderStyle.style.charAt(0).toUpperCase() + borderStyle.style.slice(1));
                 updateInputRangeAndOutput('bookmarkBoxBorderRadiusRange', 'borderRadiusValue', borderStyle.radius);
             } catch (error) {
                 console.error(error);
@@ -1101,7 +1137,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
              */
             const addIconToRandomColorEl = () => {
                 addRandomColorEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
-                addRandomColorEl.innerHTML = `<svg fill="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`;
+                addRandomColorEl.innerHTML = DOMPurify.sanitize(`<svg fill="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
             };
             addIconToRandomColorEl();
 
@@ -1239,7 +1275,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                                 break;
                         }
                         title = el.target.dataset.value.charAt(0).toUpperCase() + el.target.dataset.value.slice(1);
-                        styleButtonMenuTitleEl.innerHTML = title;
+                        styleButtonMenuTitleEl.innerText = DOMPurify.sanitize(title);
                         dropDownMenuButtonEl.dataset.status = 'false';
                         updateBookmarkStylePreview();
                     };
@@ -1476,7 +1512,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                 </div>
             </div>
         `;
-        styleMenuBodyEl.html(colorHtmlBody);
+        styleMenuBodyEl.html(DOMPurify.sanitize(colorHtmlBody));
 
 
         /**
@@ -1496,12 +1532,12 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
 
             /**
              * Helper function to update the text content of a given element.
-             * @param {HTMLElement} element - The DOM element whose text content needs to be updated.
+             * @param {string} element - The DOM element whose text content needs to be updated.
              * @param {string} text - The new text content to be set for the element.
              */
             const updateTextContent = (element, text) => {
                 if (element && text !== undefined) {
-                    element.innerHTML = text;
+                    element.innerText = text;
                 } else {
                     console.error('Invalid arguments passed to updateTextContent()', { element: element, text: text });
                 }
@@ -1559,8 +1595,8 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         const setButtonIconAndStyleToRandomColorAndApply = () => {
             const randomColorButtonEl = document.getElementById('randomColor');
             const applyColorButtonEl = document.getElementById('applyColor');
-            randomColorButtonEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg>`;
-            applyColorButtonEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${userProfileExport.mainUserSettings.windows.button.success.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><path d="M20 6 9 17l-5-5"/></svg>`;
+            randomColorButtonEl.innerHTML = DOMPurify.sanitize(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg>`);
+            applyColorButtonEl.innerHTML = DOMPurify.sanitize(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${userProfileExport.mainUserSettings.windows.button.success.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><path d="M20 6 9 17l-5-5"/></svg>`);
             randomColorButtonEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
             applyColorButtonEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.success.backgroundColor;
         }
@@ -1774,7 +1810,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                 </div>
             </div>
         `;
-        styleMenuBodyEl.html(imageHtmlBody);
+        styleMenuBodyEl.html(DOMPurify.sanitize(imageHtmlBody));
 
         /**
          * Updates the text content of image settings UI elements based on the current language settings.
@@ -1794,12 +1830,12 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
 
             /**
              * Helper function to update the text content of a given element.
-             * @param {HTMLElement} element - The DOM element whose text content needs to be updated.
+             * @param {string} element - The DOM element whose text content needs to be updated.
              * @param {string} text - The new text content to be set for the element.
              */
             const updateTextContent = (element, text) => {
                 if (element && text !== undefined) {
-                    element.innerHTML = text;
+                    element.innerText = text;
                 } else {
                     console.error('Invalid arguments passed to updateTextContent()', { element: element, text: text });
                 }
@@ -1944,7 +1980,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                         // Updates newUserBookmarkStyle with the base64 string of the resized image.
                         editingObjBookmarkStyle.image.backgroundBase64 = base64Str;
                         // Show file name to UI;
-                        imagePickerInputFileNameEl.innerHTML = fileName;
+                        imagePickerInputFileNameEl.innerHTML = DOMPurify.sanitize(fileName);
                         // Calls updateBookmarkStylePreview to reflect the changes in the UI.
                         updateBookmarkStylePreview();
                     });
@@ -2051,7 +2087,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
         let currentInputPositionXRangeListener = null; // Stores the event listener for horizontal position range input changes
         let currentInputPositionYRangeListener = null; // Stores the event listener for vertical position range input changes
 
-        let textHtmlBody = `
+        let styleMenuBodyHtml = `
             <div id="bookmarkStyleTextSettings">
                 <div id="textBackgroundPickerSection">
                     <label for="backgroundColorPickerInput" id="backgroundColorPickerInputTitle">Choose Color:</label>
@@ -2096,7 +2132,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
                 </div>
             </div>
         `;
-        styleMenuBodyEl.html(textHtmlBody);
+        styleMenuBodyEl.html(DOMPurify.sanitize(styleMenuBodyHtml));
 
         /**
          * Updates the text content of text settings UI elements based on the current language settings.
@@ -2115,12 +2151,12 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
 
             /**
              * Helper function to update the text content of a given element.
-             * @param {HTMLElement} element - The DOM element whose text content needs to be updated.
+             * @param {string} element - The DOM element whose text content needs to be updated.
              * @param {string} text - The new text content to be set for the element.
              */
             const updateTextContent = (element, text) => {
                 if (element && text !== undefined) {
-                    element.innerHTML = text;
+                    element.innerText = text;
                 } else {
                     console.error('Invalid arguments passed to updateTextContent()', { element: element, text: text });
                 }
@@ -2162,7 +2198,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
              */
             const addIconToRandomColorEl = () => {
                 addRandomColorEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
-                addRandomColorEl.innerHTML = `<svg fill="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`;
+                addRandomColorEl.innerHTML = DOMPurify.sanitize(`<svg fill="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
             };
             addIconToRandomColorEl();
 
@@ -2394,7 +2430,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             </div>
         `;
 
-        styleMenuBodyEl.html(fontHtmlBody);
+        styleMenuBodyEl.html(DOMPurify.sanitize(fontHtmlBody));
         updateBookmarkStylePreview();
 
         /**
@@ -2411,7 +2447,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
             fontFamilies.forEach((fontFamily) => {
                 fontFamiliesHtml += `<li class="fontFamilySelectLi" data-id="${fontFamily.id}">${fontFamily.fontFamily}</li>`;
             });
-            fontFamilySelectUlEl.innerHTML = fontFamiliesHtml;
+            fontFamilySelectUlEl.innerHTML = DOMPurify.sanitize(fontFamiliesHtml);
         }
         createListOfFontFamily();
 
@@ -2432,12 +2468,12 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
 
             /**
             * Helper function to update the text content of a given element.
-            * @param {HTMLElement} element - The DOM element whose text content needs to be updated.
+            * @param {string} element - The DOM element whose text content needs to be updated.
             * @param {string} text - The new text content to be set for the element.
             */
             const updateTextContent = (element, text) => {
                 if (element && text !== undefined) {
-                    element.innerHTML = text;
+                    element.innerText = text;
                 } else {
                     console.error('Invalid arguments passed to updateTextContent()', { element: element, text: text });
                 }
@@ -2477,7 +2513,7 @@ export const createAndEditBookmarksWindow = async (menuType, menuItem = '') => {
              */
             const addIconToRandomColorEl = () => {
                 addRandomColorEl.style.backgroundColor = userProfileExport.mainUserSettings.windows.button.primary.backgroundColor;
-                addRandomColorEl.innerHTML = `<svg fill="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`;
+                addRandomColorEl.innerHTML = DOMPurify.sanitize(`<svg fill="${userProfileExport.mainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
             };
             addIconToRandomColorEl();
 

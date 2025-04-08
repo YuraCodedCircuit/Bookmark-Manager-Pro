@@ -2,6 +2,96 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0]
+
+###   New Feature: Undo Manager:
+
+-   The previous 'CTRL + Z' functionality, which allowed undoing only the very last action, has been replaced with a new Undo Manager.
+-   The Undo Manager allows you to revert actions such as creating, editing, deleting, duplicating, and moving bookmarks and folders.
+-   You can open the Undo Manager using 'CTRL + SHIFT + Z'.
+-   **Undo Manager Interface:**
+    -   **Left Section (Filters and Settings):**
+        -   A main toggle lets you enable or disable the Undo Manager. When it's off, no actions are recorded.
+        -   A button expands to show a collapsible list of toggles for each action type (create, edit, delete, duplicate, move), allowing you to choose which actions are displayed in the action list.
+        -   Toggles allow you to show or hide bookmark-related actions and folder-related actions.
+        -   A button changes the sorting order of actions: either by time (newest first) or grouped by bookmark/folder (newest first within each group).
+        -   A button deletes all recorded actions.
+        -   A 'Close' button exits the Undo Manager.
+    -   **Right Section (List of Actions):**
+        -   Displays a list of recorded actions based on your filters.
+        -   Each action shows:
+            -   The type of action performed.
+            -   A visual representation (either a color or an image) of the affected bookmark or folder. This represents the preview associated with the bookmark or folder at the time the action was recorded.
+            -   The title of the bookmark/folder, its type, and the date of the action.
+            -   An 'Undo' button to revert the action.
+            -   A 'Delete' button to permanently remove the action record.
+-   **Undoing Actions:**
+    -   Clicking 'Undo' reverts the action.
+    -   After undoing, a 'Redo' button appears to reapply the undone action. If you close the Undo Manager without clicking 'Redo', the undone action is permanently removed from the action history.
+-   **Action History:**
+    -   Only the most recent action can be undone for a bookmark or folder. You must undo the latest action before older actions become available.
+    -   If you try to undo an action that isn't the latest, it will be disabled, and the latest action will be highlighted.
+-   **Deleting Actions:**
+    -   Clicking 'Delete' displays a confirmation dialog asking "Are you sure you want to delete this action?".
+    -   You can delete any action record from the list.
+-   The following files have been updated to support the new Undo Manager:
+    -   'main.js'
+    -   'bookmarkManager.js'
+    -   'utilityFunctions.js'
+-   Text for the Undo Manager interface has been added to the 'en-US.lang' file.
+-   New settings related to the Undo Manager have been added.
+-   The Undo Manager interface can now be closed by pressing the ESC key.
+-   All Undo Manager functions have been documented.
+-   Additional UI elements are now located within a single container element with the ID 'uiElementsContainer'.
+-   Unnecessary elements that were direct children of the `BODY` element in 'index.html' have been removed, along with their styles.
+-   A new settings menu for the Undo Manager has been added to the 'Preferences' section.
+-   The Undo Manager settings include:
+    -   A toggle to enable or disable the Undo Manager.
+    -   An input field to set the maximum number of actions to save. Older actions are deleted from the action list when the limit is reached.
+-   Informative tooltips have been added for the Undo Manager toggle and the maximum actions input field, explaining different states (Undo Manager off, exceeding the recommended limit, setting a lower limit).
+-   The 'en-US.lang' file has been updated with text for the new 'Preferences' and 'Undo Manager' menus and settings.
+-   Styles have been added for the new 'Preferences' and 'Undo Manager' menus and their elements.
+-   The profile menu now closes automatically when the Undo Manager is opened.
+-   In the 'My Activity' section of the Settings:
+    -   The CSV export feature has been improved to ensure consistent headers ('Title') for all exported activities (bookmarks and folders). An unnecessary function was removed.
+    -   The 'Delete All Activities' button now correctly retains its 'danger' style on mouse enter and mouse leave.
+-   Markdown rendering has been implemented to display content from Markdown files.
+-   The 'Marked' library is used to render Markdown content.
+-   New submenus have been added under 'About' in Settings, loading content from Markdown files: 'Changelog' (CHANGELOG.md), 'Terms Of Use' (TERMS_OF_USE.md), 'License' (LICENSE.md), 'Privacy Policy' (PRIVACY_POLICY.md), and 'Security' (SECURITY.md).
+-   CSS styles have been added for the new Markdown content submenus.
+-   The 'DOMPurify' library has been added to sanitize HTML content.
+-   The code has been updated to use 'DOMPurify' for HTML sanitization.
+-   Instances of `innerHTML` have been replaced with `innerText` where possible.
+-   In the 'Sync Browser Bookmarks' section of the Settings, the color of the decorative line has been corrected.
+-   The current extension version is now displayed in the footer of the Settings interface.
+-   In the 'Offline Profile' submenu of the 'User Profile' menu in the Settings, usernames are now truncated to fit the available space, and a tooltip with the full username is displayed on mouse hover. `word-wrap: break-word` style has been added to the tooltip for better readability of long names.
+-   The SVG style of the delete button in the profile list has been updated to use the 'Danger' button color for the stroke.
+-   Links for dependency libraries in 'TERMS_OF_USE.md' have been corrected and updated. Information about 'particles.js' has been added, and the usage of 'confetti' from 'tsparticles' has been clarified.
+-   A new `unescapeHtml` function has been added to 'utilityFunctions.js' and used in 'bookmarkManager.js' to ensure bookmark/folder titles in input fields are displayed correctly.
+-   In the 'Export Profile' section of the Settings, the background colors of input fields for file name, export type, password, and the progress bar have been improved for better visibility.
+-   The interactive guide interface has been improved:
+    -   User settings for background color and font styles are now applied.
+    -   User font styles are now applied to guide buttons.
+    -   A bug causing premature closure of the context menu on left-click has been fixed.
+    -   Negative numbers are now prevented from being set as width or height styles for highlight elements.
+    -   A bug causing potential infinite recursion has been fixed.
+    -   31 new steps have been added to the guide for the Search Manager UI, Undo Manager, and new Settings menus.
+-   The following JavaScript libraries have been updated:
+    -   'Coloris' to version 0.24.0
+    -   'GSAP' to version 3.12.7
+    -   'JavaScript Color Gradient' to version 2.5.0
+    -   'confetti' (part of 'tsparticles') to version 3.8.1
+-   The profile menu now closes automatically when the context menu is opened using a right-click.
+-   User-defined font styles are now applied to both the user profile menu and the context menu.
+-   Unused variables and functions have been removed.
+-   JSDoc comments have been added to functions in 'settingsManager.js' and 'utilityFunctions.js'.
+-   In 'importValidation.js':
+    -   The schema now allows empty values for the 'online radio' and 'bookmarks synchronization' settings. The schema now correctly validates empty values for these settings.
+    -   New keys for the Undo Manager settings have been added to the schema.
+-   The browser's bookmarks image preview has been changed from the Firefox logo SVG to an 'image not found' SVG.
+-   Documentation screenshots have been updated in the 'documentation-screenshots' folder. Irrelevant screenshots were removed and replaced with two new screenshots of the Search Manager UI.
+-   The information in the CHANGELOG.md file has been updated for version 0.3.0.
+
 ## [0.2.8]
 
 Implemented: Enhanced Search Functionality:
@@ -82,7 +172,7 @@ Updated: README Screenshots:
   - The browser extension features a custom context menu that replaces the default browser context menu within the extension's tab. This menu has two variations: a 'default' menu appearing on right-click in empty spaces and a 'bookmark' menu for right-clicking on folders or bookmarks.
   - In the 'default' context menu, the order of options has been updated from 'New Bookmark,' 'New Folder,' 'Folder Settings,' 'Search' to 'New Bookmark,' 'New Folder,' 'Search,' 'Folder Settings'.
   - This change aligns with common user interface patterns where settings or configuration options are typically placed at the end of a menu. Each item in the context menu is also visually enhanced with an icon preceding the text. The functionalities of each item remain the same: 'New Bookmark' opens the bookmark creation UI, 'New Folder' opens the folder creation UI, 'Search' opens the search functionality, and 'Folder Settings' opens the customization options for the current folder's appearance and navigation
-- Improved: Behavior of Information Buttons in Settings:,
+- Improved: Behavior of Information Buttons in Settings:
   - In the 'Info' section of the extension's settings UI, the behavior of the four buttons (for Firefox, X/Twitter, GitHub, and Buy Me A Coffee) has been updated to provide more interaction options.
   - **Left Mouse Click:** Clicking normally on any of these buttons will now open the corresponding URL in the **current tab**.
   - **Middle Mouse Click (Mouse Wheel Click):** Clicking with the mouse wheel on any of these buttons will now open the corresponding URL in a **new tab**.

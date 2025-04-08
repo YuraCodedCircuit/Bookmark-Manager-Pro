@@ -31,14 +31,17 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ * - Marked (MIT License)
+ * - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
  */
 
 "use strict";
-import { createContextMenu, userProfileExport, showProfileMenu, userActiveProfile } from './main.js';
+import { createContextMenu, userProfileExport, showProfileMenu, userActiveProfile, defaultMainUserSettings } from './main.js';
 import { createAndEditBookmarksWindow } from './bookmarkManager.js';
+import { undoManager } from './undoManager.js';
 import { searchManager } from './searchManager.js';
 import { openCloseSettingWindow } from './settingsManager.js';
 import { getRandomColor, randomIntFromInterval, indexedDBManipulation, countTo } from './utilityFunctions.js';
@@ -46,11 +49,12 @@ import { step2ImageBase64, step3ImageBase64 } from './interactiveGuideImages.js'
 
 export const interactiveGuide = async (status) => {
     try {
+        // const settingsObject = userProfileExport?.mainUserSettings || defaultMainUserSettings;
+        const settingsObject = defaultMainUserSettings;
+        const backgroundColor = settingsObject.windows.window.backgroundColor;
+        const highlightBackgroundColor = '#1f1f1f50';
         let targetElementID = ``;
         let elementID = ``;
-        const backgroundColor = 'hsl(198, 12%, 80%)';
-        const color = 'hsl(193, 9%, 4%)';
-        const highlightBackgroundColor = '#1f1f1f50';
         let currentGuideStep = 0;
         let timeoutId = null;
         let languageAllObject = {};
@@ -91,18 +95,30 @@ export const interactiveGuide = async (status) => {
         }
         createElementInBody();
 
-        const updateMiddlePosition = () => {
-            const targetElement = document.getElementById(targetElementID);
-            const element = document.getElementById(elementID);
-            const margin = 10;
-            let position; // This should be set based on your logic (e.g., 'left', 'right', 'top', 'bottom')
+        const updateMiddlePosition = (targetId = targetElementID, elementId = elementID) => {
+            let targetElement, guideStepElement;
 
-            if (targetElement && element) {
+            if ((typeof targetId === 'string' && targetId.length > 0) || (typeof elementId === 'string' && elementId.length > 0)) {
+                targetElement = document.getElementById(targetId);
+                guideStepElement = document.getElementById(elementId);
+            } else if (targetId instanceof HTMLElement && elementId instanceof HTMLElement) {
+                targetElement = targetId;
+                guideStepElement = elementId;
+            } else {
+                console.error('Invalid arguments. Both target and element must be either strings or HTMLElements.');
+                return;
+            }
+            if (!targetElement || !guideStepElement) { return; }
+
+            const margin = 10;
+            let position;
+
+            if (targetElement && elementId) {
                 const windowWidth = window.innerWidth;
                 const windowHeight = window.innerHeight;
 
                 const targetRect = targetElement.getBoundingClientRect(); // Get the element's position and size
-                const elementRect = element.getBoundingClientRect();
+                const elementRect = guideStepElement.getBoundingClientRect();
 
                 // Get the position and size
                 const targetPosition = {
@@ -170,15 +186,16 @@ export const interactiveGuide = async (status) => {
                 };
                 calculatePosition();
 
-                element.style.position = 'absolute';
-                element.style.left = `${middleX}px`;
-                element.style.top = `${middleY}px`;
+                guideStepElement.style.position = 'absolute';
+                guideStepElement.style.left = `${middleX}px`;
+                guideStepElement.style.top = `${middleY}px`;
 
                 const createTriangle = (element, position) => {
+                    if (!element) { return; }
                     const triangle = document.createElement('div');
                     triangle.classList.add('triangle');
 
-                    const targetRect = document.getElementById(targetElementID).getBoundingClientRect();
+                    const targetRect = targetElement.getBoundingClientRect();
                     const elementRect = element.getBoundingClientRect();
 
                     // Determine the triangle's direction and size
@@ -234,7 +251,7 @@ export const interactiveGuide = async (status) => {
                     document.body.appendChild(triangle);
                 };
 
-                createTriangle(element, position);
+                createTriangle(guideStepElement, position);
 
                 // Calculate dimensions for the new highlight elements
                 const highlightTopHeight = targetRect.top; // Height from the top of the window to the top of the element
@@ -249,8 +266,8 @@ export const interactiveGuide = async (status) => {
                     highlight.style.position = 'absolute';
                     highlight.style.top = `${top}px`;
                     highlight.style.left = `${left}px`;
-                    highlight.style.width = `${width}px`;
-                    highlight.style.height = `${height}px`;
+                    highlight.style.width = `${width < 0 ? 0 : width}px`;
+                    highlight.style.height = `${height < 0 ? 0 : height}px`;
                     highlight.style.backgroundColor = highlightBackgroundColor;
                     highlight.style.backdropFilter = 'blur(10px)';
                     highlight.style.transform = 'translate3d(0, 0, 0)';
@@ -276,11 +293,12 @@ export const interactiveGuide = async (status) => {
         const createDialog = (title, text) => {
             const interactiveGuideEl = document.getElementById('interactiveGuide');
             if (!interactiveGuideEl) throw new Error('No interactive guide element found');
+            const fontStyle = `color: ${settingsObject.windows.window.font.color};font-family: ${settingsObject.windows.window.font.fontFamily};font-size: ${settingsObject.windows.window.font.fontSize}px;font-style: ${settingsObject.windows.window.font.fontStyle};font-weight: ${settingsObject.windows.window.font.fontWeight};`;
 
-            interactiveGuideEl.innerHTML = `
+            interactiveGuideEl.innerHTML = DOMPurify.sanitize(`
                 <div id="guideStep" style="background-color: ${backgroundColor}">
-                    <div id="guideStepTitle" style="color: ${color}">${title}</div>
-                    <div id="guideStepText" style="color: ${color}">${text}</div>
+                    <div id="guideStepTitle" style="${fontStyle}">${title}</div>
+                    <div id="guideStepText" style="${fontStyle}">${text}</div>
                     <div id="guideStepImage">
                         <img id="guideStepImg" src="">
                     </div>
@@ -289,12 +307,14 @@ export const interactiveGuide = async (status) => {
                         <button id="guideStepButtonNext">Next</button>
                     </div>
                 </div>
-            `;
+            `);
             const guideStepButtonCloseButton = document.getElementById('guideStepButtonClose');
             const guideStepButtonNextButton = document.getElementById('guideStepButtonNext');
 
             guideStepButtonCloseButton.style.backgroundColor = userActiveProfile.mainUserSettings.windows.button.danger.backgroundColor;
+            Object.assign(guideStepButtonCloseButton.style, settingsObject.windows.button.danger.font);
             guideStepButtonNextButton.style.backgroundColor = userActiveProfile.mainUserSettings.windows.button.success.backgroundColor;
+            Object.assign(guideStepButtonNextButton.style, settingsObject.windows.button.success.font);
 
             const closeDialog = () => {
                 interactiveGuide('close');
@@ -338,16 +358,24 @@ export const interactiveGuide = async (status) => {
         }
 
         const waitForElement = (selector) => {
-            return new Promise(resolve => {
-                const intervalId = setInterval(() => {
+            let intervalId, timeout;
+            return new Promise((resolve) => {
+                intervalId = setInterval(() => {
                     const element = document.querySelector(selector);
                     if (element) {
                         clearInterval(intervalId);
+                        clearTimeout(timeout);
                         resolve(element);
                     }
                 }, 100);
+
+                // Set a timeout to stop checking after 2 seconds
+                timeout = setTimeout(() => {
+                    clearInterval(intervalId);
+                    resolve(false); // Return false if the element is not found within 2 seconds
+                }, 2000);
             });
-        }
+        };
 
         const waitForAnimation = (elementId, targetWidth, targetHeight, timeout = 1200) => {
             return new Promise(resolve => {
@@ -621,7 +649,7 @@ export const interactiveGuide = async (status) => {
                     }
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
-                    targetElementID = `profileMenu`;
+                    targetElementID = `profileImage`;
                     updateMiddlePosition();
                     break;
                 case 25:
@@ -644,6 +672,83 @@ export const interactiveGuide = async (status) => {
                     updateMiddlePosition();
                     break;
                 case 27:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `searchWindowBodyLeftSearchFiltersContentIncludeBrowserBookmarks`;
+                    updateMiddlePosition();
+                    break;
+                case 28:
+                    const searchWindowBodyLeftSearchFiltersContentDateStartedContentInputDateEl = document.getElementById('searchWindowBodyLeftSearchFiltersContentDateStartedContentInputDate');
+                    const searchWindowBodyLeftSearchFiltersContentDateStartedContentInputTimeEl = document.getElementById('searchWindowBodyLeftSearchFiltersContentDateStartedContentInputTime');
+                    searchWindowBodyLeftSearchFiltersContentDateStartedContentInputDateEl.value = `1988-04-15`;
+                    searchWindowBodyLeftSearchFiltersContentDateStartedContentInputTimeEl.value = `16:20`;
+                    searchWindowBodyLeftSearchFiltersContentDateStartedContentInputTimeEl.style.display = 'flex';
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `searchWindowBodyLeftSearchFiltersContentDateStarted`;
+                    updateMiddlePosition();
+                    break;
+                case 29:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `searchWindowBodyLeftSearchFiltersContentDateEnded`;
+                    updateMiddlePosition();
+                    break;
+                case 30:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `searchWindowBodyLeftSearchFiltersContentIncludeSearchInUrls`;
+                    updateMiddlePosition();
+                    break;
+                case 31:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `searchWindowBodyLeftSearchFiltersContentIncludeBookmarks`;
+                    updateMiddlePosition();
+                    break;
+                case 32:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `searchWindowBodyLeftSearchFiltersContentIncludeFolders`;
+                    updateMiddlePosition();
+                    break;
+                case 33:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `searchWindowBodyLeftSearchFiltersContentResultView`;
+                    updateMiddlePosition();
+                    break;
+                case 34:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `searchWindowBodyRightResults`;
+                    updateMiddlePosition();
+                    break;
+                case 35:
+                    const searchWindowBodyRightResultsEl = document.getElementById('searchWindowBodyRightResults');
+                    const searchWindowBodyRightResultsElHtml = `
+                        <div id="searchWindowBodyRightResultsHtmlList"><div id="searchWindowBodyRightResultsExtensionList"><div style="display:flex"id="searchWindowBodyRightResultsExtensionListTitle">2  <div id="searchWindowBodyRightResultsExtensionListTitle">bookmarks found in Bookmark Manager Pro matching your search.</div></div>
+                        <div id="searchWindowBodyRightResultsExtensionListBookmarks"><div class="bookmarkElementList"data-id=""data-type="extension"style="background-color:#27fbfb"><div class="bookmarkElementListIcon"data-id=""data-type="extension"style="background-color:#b9ae2c"></div><div class="bookmarkElementListDetails"data-id=""data-type="extension"style="color:#000;background-color:#83b7e8">
+                        <div class="bookmarkElementListTitle bookmarkTooltipTitle"data-id=""data-type="extension">My first folder</div><div class="bookmarkElementListDetailsInfo"data-id=""data-type="extension"><div class="bookmarkElementListDetailsType"data-id=""data-type="extension"><div class="bookmarkElementListDetailsTypeIcon"data-id=""data-type="extension"><svg class="lucide lucide-folder"fill="none"height="24"stroke="currentColor"stroke-linecap="round"stroke-linejoin="round"stroke-width="2"viewBox="0 0 24 24"width="24"xmlns="http://www.w3.org/2000/svg"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"></path></svg></div>
+                        <div class="bookmarkElementListDetailsTypeTitle"data-id=""data-type="extension">Folder</div></div><div class="bookmarkElementListDetailsUrl"data-id=""data-type="extension"style="display:none"><div class="bookmarkElementListDetailsUrlTitle"data-id=""data-type="extension">URL:</div><div class="bookmarkElementListDetailsUrlLink bookmarkTooltipUrl"data-id=""data-type="extension"></div></div></div></div><div class="bookmarkMoreDetails"data-id=""data-type="extension"style="background-color:#1a73e8"><svg class="lucide lucide-info"fill="none"height="24"stroke="#000000"stroke-linecap="round"stroke-linejoin="round"stroke-width="2"viewBox="0 0 24 24"width="24"xmlns="http://www.w3.org/2000/svg"><circle cx="12"cy="12"r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></div></div>
+                        <div class="bookmarkElementList"data-id=""data-type="extension"style="background-color:#1aeeee"><div class="bookmarkElementListIcon"data-id=""data-type="extension"style="background-color:#72054c"></div><div class="bookmarkElementListDetails"data-id=""data-type="extension"style="color:#e00fa7;background-color:#d8e0b8"><div class="bookmarkElementListTitle bookmarkTooltipTitle"data-id=""data-type="extension">My first bookmark in a folder</div><div class="bookmarkElementListDetailsInfo"data-id=""data-type="extension"><div class="bookmarkElementListDetailsType"data-id=""data-type="extension"><div class="bookmarkElementListDetailsTypeIcon"data-id=""data-type="extension">
+                        <svg class="lucide lucide-bookmark"fill="none"height="24"stroke="currentColor"stroke-linecap="round"stroke-linejoin="round"stroke-width="2"viewBox="0 0 24 24"width="24"xmlns="http://www.w3.org/2000/svg"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg></div><div class="bookmarkElementListDetailsTypeTitle"data-id=""data-type="extension">Bookmark</div></div><div class="bookmarkElementListDetailsUrl"data-id=""data-type="extension"style="display:flex"><div class="bookmarkElementListDetailsUrlTitle"data-id=""data-type="extension">URL:</div><div class="bookmarkElementListDetailsUrlLink bookmarkTooltipUrl"data-id=""data-type="extension">https://example.com</div></div></div></div><div class="bookmarkMoreDetails"data-id=""data-type="extension"style="background-color:#1a73e8">
+                        <svg class="lucide lucide-info"fill="none"height="24"stroke="#000000"stroke-linecap="round"stroke-linejoin="round"stroke-width="2"viewBox="0 0 24 24"width="24"xmlns="http://www.w3.org/2000/svg"><circle cx="12"cy="12"r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></div></div></div></div>
+                        <div style="display:flex"id="searchWindowBodyRightResultsBrowserList"><div id="searchWindowBodyRightResultsBrowserListTitle">0  <div id="searchWindowBodyRightResultsBrowserListTitleText">bookmarks found in your Firefox browser matching your search.</div></div><div id="searchWindowBodyRightResultsBrowserListBookmarks"></div></div></div>
+                    `;
+                    searchWindowBodyRightResultsEl.innerHTML = DOMPurify.sanitize(searchWindowBodyRightResultsElHtml);
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `searchWindowBodyRightResults`;
+                    updateMiddlePosition();
+                    break;
+                case 36:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `searchWindowBodyLeftSearchFiltersFooter`;
+                    updateMiddlePosition();
+                    break;
+                case 37:
                     searchManager('close');
                     showProfileMenu();
                     await waitForAnimation('profileMenu', 200, 240).then(() => {
@@ -653,7 +758,77 @@ export const interactiveGuide = async (status) => {
                         updateMiddlePosition();
                     });
                     break;
-                case 28:
+                case 38:
+                    const profileMenuItemUndoManager = document.querySelector('.profileMenuItem[data-type="undoManager"]');
+                    if (profileMenuItemUndoManager) {
+                        profileMenuItemUndoManager.click();
+                    }
+                    await waitForElement('#undoManager').then(() => {
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        elementID = `guideStep`;
+                        targetElementID = `undoManager`;
+                        updateMiddlePosition();
+                    });
+                    break;
+                case 39:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `undoManagerLeftSectionMiddleTurnUndoOff`;
+                    updateMiddlePosition();
+                    break;
+                case 40:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `undoManagerLeftSectionMiddleFilterActions`;
+                    updateMiddlePosition();
+                    break;
+                case 41:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `undoManagerLeftSectionMiddleShowBookmarks`;
+                    updateMiddlePosition();
+                    break;
+                case 42:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `undoManagerLeftSectionMiddleShowFolders`;
+                    updateMiddlePosition();
+                    break;
+                case 43:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `undoManagerLeftSectionMiddleToggleChangeSorting`;
+                    updateMiddlePosition();
+                    break;
+                case 44:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `undoManagerLeftSectionMiddleClearAllActions`;
+                    updateMiddlePosition();
+                    break;
+                case 45:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `undoManagerRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 46:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `undoManagerLeftSectionBottom`;
+                    updateMiddlePosition();
+                    break;
+                case 47:
+                    undoManager('closeUndoManagerUi');
+                    showProfileMenu();
+                    await waitForAnimation('profileMenu', 200, 240).then(() => {
+                        createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                        elementID = `guideStep`;
+                        targetElementID = `profileMenu`;
+                        updateMiddlePosition();
+                    });
+                    break;
+                case 48:
                     const profileMenuItemFolderSettings = document.querySelector('.profileMenuItem[data-type="folderSettings"]');
                     if (profileMenuItemFolderSettings) {
                         profileMenuItemFolderSettings.click();
@@ -665,25 +840,25 @@ export const interactiveGuide = async (status) => {
                         updateMiddlePosition();
                     });
                     break;
-                case 29:
+                case 49:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `transparencyGridPreview`;
                     updateMiddlePosition();
                     break;
-                case 30:
+                case 50:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 31:
+                case 51:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
                     break;
-                case 32:
+                case 52:
                     const leftMenuListSubmenuBackgroundImage = document.querySelector('.leftMenuListSubmenu[data-data="backgroundImage"]');
                     if (leftMenuListSubmenuBackgroundImage) {
                         leftMenuListSubmenuBackgroundImage.click();
@@ -693,13 +868,13 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 33:
+                case 53:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
                     break;
-                case 34:
+                case 54:
                     const leftMenuListSubmenuBookmarksSize = document.querySelector('.leftMenuListSubmenu[data-data="bookmarksSize"]');
                     if (leftMenuListSubmenuBookmarksSize) {
                         leftMenuListSubmenuBookmarksSize.click();
@@ -709,13 +884,13 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 35:
+                case 55:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
                     break;
-                case 36:
+                case 56:
                     const leftMenuListSubmenuNavigationBarSymbol = document.querySelector('.leftMenuListSubmenu[data-data="navigationBarSymbol"]');
                     if (leftMenuListSubmenuNavigationBarSymbol) {
                         leftMenuListSubmenuNavigationBarSymbol.click();
@@ -725,13 +900,13 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 37:
+                case 57:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
                     break;
-                case 38:
+                case 58:
                     const leftMenuListSubmenuNavigationBarBackgroundColor = document.querySelector('.leftMenuListSubmenu[data-data="navigationBarBackgroundColor"]');
                     if (leftMenuListSubmenuNavigationBarBackgroundColor) {
                         leftMenuListSubmenuNavigationBarBackgroundColor.click();
@@ -741,13 +916,13 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 39:
+                case 59:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
                     break;
-                case 40:
+                case 60:
                     const leftMenuListSubmenuNavigationBarFont = document.querySelector('.leftMenuListSubmenu[data-data="navigationBarFont"]');
                     if (leftMenuListSubmenuNavigationBarFont) {
                         leftMenuListSubmenuNavigationBarFont.click();
@@ -757,19 +932,19 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 41:
+                case 61:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `rightBodySection`;
                     updateMiddlePosition();
                     break;
-                case 42:
+                case 62:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `buttonsSection`;
                     updateMiddlePosition();
                     break;
-                case 43:
+                case 63:
                     openCloseSettingWindow('close');
                     showProfileMenu();
                     await waitForAnimation('profileMenu', 200, 240).then(() => {
@@ -779,7 +954,7 @@ export const interactiveGuide = async (status) => {
                         updateMiddlePosition();
                     });
                     break;
-                case 44:
+                case 64:
                     const profileMenuItemSettings = document.querySelector('.profileMenuItem[data-type="settings"]');
                     if (profileMenuItemSettings) {
                         profileMenuItemSettings.click();
@@ -791,7 +966,7 @@ export const interactiveGuide = async (status) => {
                         updateMiddlePosition();
                     });
                     break;
-                case 45:
+                case 65:
                     const leftMenuListSubmenuOfflineProfile = document.querySelector('.leftMenuListSubmenu[data-data="offlineProfile"]');
                     if (leftMenuListSubmenuOfflineProfile) {
                         leftMenuListSubmenuOfflineProfile.click();
@@ -801,25 +976,25 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 46:
+                case 66:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
-                case 47:
+                case 67:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `headerProfile`;
                     updateMiddlePosition();
                     break;
-                case 48:
+                case 68:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `bodyProfileList`;
                     updateMiddlePosition();
                     break;
-                case 49:
+                case 69:
                     const profileEditButton = document.querySelector('.profileEditButton[data-id]');
                     if (profileEditButton) {
                         profileEditButton.click();
@@ -829,162 +1004,10 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `bodyProfileSection`;
                     updateMiddlePosition();
                     break;
-                case 50:
+                case 70:
                     const leftMenuListSubmenuOnlineProfile = document.querySelector('.leftMenuListSubmenu[data-data="onlineProfile"]');
                     if (leftMenuListSubmenuOnlineProfile) {
                         leftMenuListSubmenuOnlineProfile.click();
-                    }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowLeftSection`;
-                    updateMiddlePosition();
-                    break;
-                case 51:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowRightSection`;
-                    updateMiddlePosition();
-                    break;
-                case 52:
-                    const leftMenuListSubmenuBackgroundImageDefault = document.querySelector('.leftMenuListSubmenu[data-data="backgroundImage"]');
-                    if (leftMenuListSubmenuBackgroundImageDefault) {
-                        leftMenuListSubmenuBackgroundImageDefault.click();
-                    }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowLeftSection`;
-                    updateMiddlePosition();
-                    break;
-                case 53:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowRightSection`;
-                    updateMiddlePosition();
-                    break;
-                case 54:
-                    const leftMenuListSubmenuNavigationBarSymbolDefault = document.querySelector('.leftMenuListSubmenu[data-data="navigationBarSymbol"]');
-                    if (leftMenuListSubmenuNavigationBarSymbolDefault) {
-                        leftMenuListSubmenuNavigationBarSymbolDefault.click();
-                    }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowLeftSection`;
-                    updateMiddlePosition();
-                    break;
-                case 55:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowRightSection`;
-                    updateMiddlePosition();
-                    break;
-                case 56:
-                    const leftMenuListSubmenuWindowBackgroundColor = document.querySelector('.leftMenuListSubmenu[data-data="windowBackgroundColor"]');
-                    if (leftMenuListSubmenuWindowBackgroundColor) {
-                        leftMenuListSubmenuWindowBackgroundColor.click();
-                    }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowLeftSection`;
-                    updateMiddlePosition();
-                    break;
-                case 57:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowRightSection`;
-                    updateMiddlePosition();
-                    break;
-                case 58:
-                    const leftMenuListSubmenuWindowFont = document.querySelector('.leftMenuListSubmenu[data-data="windowFont"]');
-                    if (leftMenuListSubmenuWindowFont) {
-                        leftMenuListSubmenuWindowFont.click();
-                    }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowLeftSection`;
-                    updateMiddlePosition();
-                    break;
-                case 59:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowRightSection`;
-                    updateMiddlePosition();
-                    break;
-                case 60:
-                    const leftMenuListSubmenuWindowBorder = document.querySelector('.leftMenuListSubmenu[data-data="windowBorder"]');
-                    if (leftMenuListSubmenuWindowBorder) {
-                        leftMenuListSubmenuWindowBorder.click();
-                    }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowLeftSection`;
-                    updateMiddlePosition();
-                    break;
-                case 61:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowRightSection`;
-                    updateMiddlePosition();
-                    break;
-                case 62:
-                    const leftMenuListSubmenuWindowButtons = document.querySelector('.leftMenuListSubmenu[data-data="windowButtons"]');
-                    if (leftMenuListSubmenuWindowButtons) {
-                        leftMenuListSubmenuWindowButtons.click();
-                    }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowLeftSection`;
-                    updateMiddlePosition();
-                    break;
-                case 63:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `windowButtonsMenuSection`;
-                    updateMiddlePosition();
-                    break;
-                case 64:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowRightSection`;
-                    updateMiddlePosition();
-                    break;
-                case 65:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `windowButtonsMenuOptionsFirstSection`;
-                    updateMiddlePosition();
-                    break;
-                case 66:
-                    const leftMenuListSubmenuWindowButtonsFont = document.querySelector('.leftMenuListSubmenu[data-data="windowButtonsFont"]');
-                    if (leftMenuListSubmenuWindowButtonsFont) {
-                        leftMenuListSubmenuWindowButtonsFont.click();
-                    }
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowLeftSection`;
-                    updateMiddlePosition();
-                    break;
-                case 67:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `windowButtonsMenuSection`;
-                    updateMiddlePosition();
-                    break;
-                case 68:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `settingsWindowRightSection`;
-                    updateMiddlePosition();
-                    break;
-                case 69:
-                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
-                    elementID = `guideStep`;
-                    targetElementID = `windowButtonsMenuOptionsFirstSection`;
-                    updateMiddlePosition();
-                    break;
-                case 70:
-                    const leftMenuListSubmenuMyActivity = document.querySelector('.leftMenuListSubmenu[data-data="myActivity"]');
-                    if (leftMenuListSubmenuMyActivity) {
-                        leftMenuListSubmenuMyActivity.click();
                     }
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
@@ -998,18 +1021,170 @@ export const interactiveGuide = async (status) => {
                     updateMiddlePosition();
                     break;
                 case 72:
+                    const leftMenuListSubmenuBackgroundImageDefault = document.querySelector('.leftMenuListSubmenu[data-data="backgroundImage"]');
+                    if (leftMenuListSubmenuBackgroundImageDefault) {
+                        leftMenuListSubmenuBackgroundImageDefault.click();
+                    }
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
-                    targetElementID = `userActivityTop`;
+                    targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
                 case 73:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
-                    targetElementID = `userActivityStatus`;
+                    targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
                 case 74:
+                    const leftMenuListSubmenuNavigationBarSymbolDefault = document.querySelector('.leftMenuListSubmenu[data-data="navigationBarSymbol"]');
+                    if (leftMenuListSubmenuNavigationBarSymbolDefault) {
+                        leftMenuListSubmenuNavigationBarSymbolDefault.click();
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 75:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 76:
+                    const leftMenuListSubmenuWindowBackgroundColor = document.querySelector('.leftMenuListSubmenu[data-data="windowBackgroundColor"]');
+                    if (leftMenuListSubmenuWindowBackgroundColor) {
+                        leftMenuListSubmenuWindowBackgroundColor.click();
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 77:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 78:
+                    const leftMenuListSubmenuWindowFont = document.querySelector('.leftMenuListSubmenu[data-data="windowFont"]');
+                    if (leftMenuListSubmenuWindowFont) {
+                        leftMenuListSubmenuWindowFont.click();
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 79:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 80:
+                    const leftMenuListSubmenuWindowBorder = document.querySelector('.leftMenuListSubmenu[data-data="windowBorder"]');
+                    if (leftMenuListSubmenuWindowBorder) {9
+                        leftMenuListSubmenuWindowBorder.click();
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 81:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 82:
+                    const leftMenuListSubmenuWindowButtons = document.querySelector('.leftMenuListSubmenu[data-data="windowButtons"]');
+                    if (leftMenuListSubmenuWindowButtons) {
+                        leftMenuListSubmenuWindowButtons.click();
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 83:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `windowButtonsMenuSection`;
+                    updateMiddlePosition();
+                    break;
+                case 84:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 85:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `windowButtonsMenuOptionsFirstSection`;
+                    updateMiddlePosition();
+                    break;
+                case 86:
+                    const leftMenuListSubmenuWindowButtonsFont = document.querySelector('.leftMenuListSubmenu[data-data="windowButtonsFont"]');
+                    if (leftMenuListSubmenuWindowButtonsFont) {
+                        leftMenuListSubmenuWindowButtonsFont.click();
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 87:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `windowButtonsMenuSection`;
+                    updateMiddlePosition();
+                    break;
+                case 88:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 89:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `windowButtonsMenuOptionsFirstSection`;
+                    updateMiddlePosition();
+                    break;
+                case 90:
+                    const leftMenuListSubmenuMyActivity = document.querySelector('.leftMenuListSubmenu[data-data="myActivity"]');
+                    if (leftMenuListSubmenuMyActivity) {
+                        leftMenuListSubmenuMyActivity.click();
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 91:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 92:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `userActivityTop`;
+                    updateMiddlePosition();
+                    break;
+                case 93:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `userActivityStatus`;
+                    updateMiddlePosition();
+                    break;
+                case 94:
                     const editAllUserActivityBtn = document.getElementById('editAllUserActivityBtn');
                     if (editAllUserActivityBtn) {
                         editAllUserActivityBtn.click();
@@ -1019,7 +1194,7 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `editAllUserActivityMenuBox`;
                     updateMiddlePosition();
                     break;
-                case 75:
+                case 95:
                     const editAllUserActivityBtnClose = document.getElementById('editAllUserActivityBtn');
                     if (editAllUserActivityBtnClose) {
                         editAllUserActivityBtnClose.click();
@@ -1029,25 +1204,41 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `userActivityRightTop`;
                     updateMiddlePosition();
                     break;
-                case 76:
+                case 96:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `quantityFilterSection`;
                     updateMiddlePosition();
                     break;
-                case 77:
+                case 97:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `userActivityRightBottom`;
                     updateMiddlePosition();
                     break;
-                case 78:
+                case 98:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `userActivityMiddle`;
                     updateMiddlePosition();
                     break;
-                case 79:
+                case 99:
+                    const leftMenuListSubmenuUndoManager = document.querySelector('.leftMenuListSubmenu[data-data="undoManager"]');
+                    if (leftMenuListSubmenuUndoManager) {
+                        leftMenuListSubmenuUndoManager.click();
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 100:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 101:
                     const leftMenuListSubmenuExportProfile = document.querySelector('.leftMenuListSubmenu[data-data="exportProfile"]');
                     if (leftMenuListSubmenuExportProfile) {
                         leftMenuListSubmenuExportProfile.click();
@@ -1057,25 +1248,25 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 80:
+                case 102:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
-                case 81:
+                case 103:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `exportFileTitle`;
                     updateMiddlePosition();
                     break;
-                case 82:
+                case 104:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `exportSelectType`;
                     updateMiddlePosition();
                     break;
-                case 83:
+                case 105:
                     const showHideExportPassword = document.getElementById('showHideExportPassword');
                     if (showHideExportPassword) {
                         showHideExportPassword.click();
@@ -1087,13 +1278,13 @@ export const interactiveGuide = async (status) => {
                     const exportFilePasswordInputEl = document.getElementById('exportFilePasswordInput');
                     exportFilePasswordInputEl.focus({ focusVisible: false });
                     break;
-                case 84:
+                case 106:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `exportAnimationAndButton`;
                     updateMiddlePosition();
                     break;
-                case 85:
+                case 107:
                     const leftMenuListSubmenuImportProfile = document.querySelector('.leftMenuListSubmenu[data-data="importProfile"]');
                     if (leftMenuListSubmenuImportProfile) {
                         leftMenuListSubmenuImportProfile.click();
@@ -1103,13 +1294,13 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 86:
+                case 108:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
-                case 87:
+                case 109:
                     const filePickerInputFileNameEl = document.getElementById('filePickerInputFileName');
                     filePickerInputFileNameEl.innerText = 'Export 0-00-0000_0-00-00 AM.bme';
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
@@ -1117,32 +1308,32 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `importSelectFileSection`;
                     updateMiddlePosition();
                     break;
-                case 88:
+                case 110:
                     const importFileInfoTopEl = document.getElementById('importFileInfoTop');
                     importFileInfoTopEl.style.opacity = 1;
-                    importFileInfoTopEl.innerHTML = `<div id="importFileInfoTopTitle">Information About File</div><div id="importFileInfoDetail"><div id="importFileInfoInclude">Current Bookmarks, Default Folder Style</div><div id="importFileInfoSizeAndDate"><div id="importFileInfoDate"><div id="importFileDateTitle">Date</div><div id="importFileDate">0/00/0000</div></div><div id="importFileInfoSize"><div id="importFileSizeTitle">Size</div><div id="importFileSize">00.00 KB</div></div></div></div>`;
+                    importFileInfoTopEl.innerHTML = DOMPurify.sanitize(`<div id="importFileInfoTopTitle">Information About File</div><div id="importFileInfoDetail"><div id="importFileInfoInclude">Current Bookmarks, Default Folder Style</div><div id="importFileInfoSizeAndDate"><div id="importFileInfoDate"><div id="importFileDateTitle">Date</div><div id="importFileDate">0/00/0000</div></div><div id="importFileInfoSize"><div id="importFileSizeTitle">Size</div><div id="importFileSize">00.00 KB</div></div></div></div>`);
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoTop`;
                     updateMiddlePosition();
                     break;
-                case 89:
+                case 111:
                     const importFileInfoMiddleDetailEl = document.getElementById('importFileInfoMiddleDetail');
-                    importFileInfoMiddleDetailEl.innerHTML = `<div id="importFileInfoMiddleDetailBox"><div id="decryptionBox"><div id="passwordBox"><title for="importFilePasswordInput" id="importFilePasswordInputTitle">File Password</title><div id="passwordAndIcon"><input type="password" id="importFilePasswordInput" ><button id="passwordShowHideIcon"><svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16.01C14.2091 16.01 16 14.2191 16 12.01C16 9.80087 14.2091 8.01001 12 8.01001C9.79086 8.01001 8 9.80087 8 12.01C8 14.2191 9.79086 16.01 12 16.01Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11.98C8.09 1.31996 15.91 1.32996 22 11.98" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 12.01C15.91 22.67 8.09 22.66 2 12.01" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div><button id="decryptButton">Decrypt</button></div></div>`;
+                    importFileInfoMiddleDetailEl.innerHTML = DOMPurify.sanitize(`<div id="importFileInfoMiddleDetailBox"><div id="decryptionBox"><div id="passwordBox"><title for="importFilePasswordInput" id="importFilePasswordInputTitle">File Password</title><div id="passwordAndIcon"><input type="password" id="importFilePasswordInput" ><button id="passwordShowHideIcon"><svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16.01C14.2091 16.01 16 14.2191 16 12.01C16 9.80087 14.2091 8.01001 12 8.01001C9.79086 8.01001 8 9.80087 8 12.01C8 14.2191 9.79086 16.01 12 16.01Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11.98C8.09 1.31996 15.91 1.32996 22 11.98" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 12.01C15.91 22.67 8.09 22.66 2 12.01" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div><button id="decryptButton">Decrypt</button></div></div>`);
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoMiddle`;
                     updateMiddlePosition();
                     break;
-                case 90:
+                case 112:
                     const importFileInfoMiddleDetailElement = document.getElementById('importFileInfoMiddleDetail');
-                    importFileInfoMiddleDetailElement.innerHTML = `<div id="importDataDetailExtension" style="background-color: #1AEEEE;"><div id="importDataDetailExtensionTitle">Extension Version</div><div id="importDataDetailExtensionDetail">0.0.0</div></div><div id="importDataDetailBrowser" style="background-color: #27FBFB;"><div id="importDataDetailBrowserTitle">Browser Information</div><div id="importDataDetailBrowserDetail">Firefox, v. 134.0</div></div><div id="importDataDetailOS" style="background-color: #1AEEEE;"><div id="importDataDetailOSTitle">OS Type</div><div id="importDataDetailOSDetail">Linux</div></div><div id="importDataDetailTimestamp" style="background-color: #27FBFB;"><div id="importDataDetailTimestampTitle">Created At</div><div id="importDataDetailTimestampDetail">0/00/0000, 0:00:00 AM</div></div><div id="importDataDetailProfile" style="background-color: #1AEEEE;"><div id="resultTableHeaderCurrentProfile">Profile Name</div><div id="importDataDetailProfileDetail"><div id="importDataDetailProfileDetailBox"><div id="profileDetailImage" style="background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAABbElEQVR4nO2XS0oDQRRFTwZG0C24ADFxAboCnTnTDWQsLiSaYDAzHfsZaiZ+NhHFeZyFgDEx4CChpOEFJJDGqorpp74DF4qmu+ve4lJdDYZhGH+NdaAKPALvomRcAYooZhE4AUaAm6IhUAPyKDT/kGJ8UvfaQtQ9zI91jKLOp9UmrU4FFFANMD/WIQp4igjQRAH9iAA9FNCLCPCGAn59hSoRAcoooChbYsg2uoYSagEBku1XDcmx4M7D/C2wgDLycjxIq9NQVl6d+a8U5AvblG9EX8ZlTZ03DMPQQ062xxJwBDSAZ6ANfIjacq0h95TkmVxWppeBXeAK6EQc5jrApbxraR7GV4EzYBBhepoGwKnMMXNWgIvAn3dfjYBzmXMm7ETWJFRdYC/W/EEGxt2E9kPNb86pMu4bldoICXCjwLwTXYcE6Cow7kSvIQGcMnmTtWH37wO8KFh1J2r5Fwi2QUWIFrAVEsAwDIMf5xMzFG7a+AMMkQAAAABJRU5ErkJggg==) center center / cover no-repeat;"></div><div id="profileDetailName">${userActiveProfile.name}</div></div>`;
+                    importFileInfoMiddleDetailElement.innerHTML = DOMPurify.sanitize(`<div id="importDataDetailExtension" style="background-color: #1AEEEE;"><div id="importDataDetailExtensionTitle">Extension Version</div><div id="importDataDetailExtensionDetail">0.0.0</div></div><div id="importDataDetailBrowser" style="background-color: #27FBFB;"><div id="importDataDetailBrowserTitle">Browser Information</div><div id="importDataDetailBrowserDetail">Firefox, v. 134.0</div></div><div id="importDataDetailOS" style="background-color: #1AEEEE;"><div id="importDataDetailOSTitle">OS Type</div><div id="importDataDetailOSDetail">Linux</div></div><div id="importDataDetailTimestamp" style="background-color: #27FBFB;"><div id="importDataDetailTimestampTitle">Created At</div><div id="importDataDetailTimestampDetail">0/00/0000, 0:00:00 AM</div></div><div id="importDataDetailProfile" style="background-color: #1AEEEE;"><div id="resultTableHeaderCurrentProfile">Profile Name</div><div id="importDataDetailProfileDetail"><div id="importDataDetailProfileDetailBox"><div id="profileDetailImage" style="background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAABbElEQVR4nO2XS0oDQRRFTwZG0C24ADFxAboCnTnTDWQsLiSaYDAzHfsZaiZ+NhHFeZyFgDEx4CChpOEFJJDGqorpp74DF4qmu+ve4lJdDYZhGH+NdaAKPALvomRcAYooZhE4AUaAm6IhUAPyKDT/kGJ8UvfaQtQ9zI91jKLOp9UmrU4FFFANMD/WIQp4igjQRAH9iAA9FNCLCPCGAn59hSoRAcoooChbYsg2uoYSagEBku1XDcmx4M7D/C2wgDLycjxIq9NQVl6d+a8U5AvblG9EX8ZlTZ03DMPQQ062xxJwBDSAZ6ANfIjacq0h95TkmVxWppeBXeAK6EQc5jrApbxraR7GV4EzYBBhepoGwKnMMXNWgIvAn3dfjYBzmXMm7ETWJFRdYC/W/EEGxt2E9kPNb86pMu4bldoICXCjwLwTXYcE6Cow7kSvIQGcMnmTtWH37wO8KFh1J2r5Fwi2QUWIFrAVEsAwDIMf5xMzFG7a+AMMkQAAAABJRU5ErkJggg==) center center / cover no-repeat;"></div><div id="profileDetailName">${userActiveProfile.name}</div></div>`);
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoMiddle`;
                     updateMiddlePosition();
                     break;
-                case 91:
+                case 113:
                     const importFileContinueButtonEl = document.getElementById('importFileContinueButton');
                     importFileContinueButtonEl.style.display = 'flex';
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
@@ -1150,9 +1341,9 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `importFileButtons`;
                     updateMiddlePosition();
                     break;
-                case 92:
-                    const importFileInfoMiddleDetailElVerificationHtml = document.getElementById('importFileInfoMiddleDetail');
-                    importFileInfoMiddleDetailElVerificationHtml.innerHTML = `
+                case 114:
+                    const importFileInfoMiddleDetailElVerificationEl = document.getElementById('importFileInfoMiddleDetail');
+                    const importFileInfoMiddleDetailElVerificationHtml = `
                         <div id="importFileVerificationContainer">
                             <div id="importFileVerificationStatus" style="background-color:#1aeeee">
                                 <div id="importFileVerificationStatusSuccess">
@@ -1422,6 +1613,7 @@ export const interactiveGuide = async (status) => {
                             </div>
                         </div>
                     `;
+                    importFileInfoMiddleDetailElVerificationEl.innerHTML = DOMPurify.sanitize(importFileInfoMiddleDetailElVerificationHtml);
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileInfoMiddleDetail`;
@@ -1429,19 +1621,19 @@ export const interactiveGuide = async (status) => {
                     countTo(0, 5017, 2200, document.getElementById('importFileVerificationStatusSuccessCount'));
                     countTo(0, 1, (1000), document.getElementById('importFileVerificationStatusErrorCount'));
                     break;
-                case 93:
+                case 115:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileVerificationStatus`;
                     updateMiddlePosition();
                     break;
-                case 94:
+                case 116:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `importFileVerificationMiddle`;
                     updateMiddlePosition();
                     break;
-                case 95:
+                case 117:
                     const importFileApplyButton = document.getElementById('importFileApplyButton');
                     const importFileContinueButton = document.getElementById('importFileContinueButton');
                     importFileContinueButton.style.display = 'none';
@@ -1451,7 +1643,7 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `importFileButtons`;
                     updateMiddlePosition();
                     break;
-                case 96:
+                case 118:
                     const leftMenuListSubmenuSyncBrowserBookmarks = document.querySelector('.leftMenuListSubmenu[data-data="syncBrowserBookmarks"]');
                     if (leftMenuListSubmenuSyncBrowserBookmarks) {
                         leftMenuListSubmenuSyncBrowserBookmarks.click();
@@ -1461,31 +1653,31 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 97:
+                case 119:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeBrowserBookmarksContainerTop`;
                     updateMiddlePosition();
                     break;
-                case 98:
+                case 120:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeStatusContainer`;
                     updateMiddlePosition();
                     break;
-                case 99:
+                case 121:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeTypeContainer`;
                     updateMiddlePosition();
                     break;
-                case 100:
+                case 122:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `synchronizeVisualStatusContainer`;
                     updateMiddlePosition();
                     break;
-                case 101:
+                case 123:
                     const extensionFolderEditButtonEl = document.getElementById('extensionFolderEditButton');
                     if (extensionFolderEditButtonEl) {
                         extensionFolderEditButtonEl.click();
@@ -1499,7 +1691,7 @@ export const interactiveGuide = async (status) => {
                         allowNextStep = true;
                     }, 2000);
                     break;
-                case 102:
+                case 124:
                     const folderNameRoot = document.querySelector('.folderName[data-id="root"]');
                     if (folderNameRoot) {
                         folderNameRoot.click();
@@ -1521,7 +1713,7 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `synchronizeBrowserBookmarksContainerMiddle`;
                     updateMiddlePosition();
                     break;
-                case 103:
+                case 125:
                     const folderApplyButton = document.getElementById('folderApplyButton');
                     if (folderApplyButton) {
                         folderApplyButton.click();
@@ -1535,7 +1727,7 @@ export const interactiveGuide = async (status) => {
                         allowNextStep = true;
                     }, 2000);
                     break;
-                case 104:
+                case 126:
                     const synchronizeVisualStatusBrowserFolderIcon = document.getElementById('synchronizeVisualStatusBrowserFolderIcon');
                     const browserFolderName = document.getElementById('browserFolderName');
                     const browserFolderDeleteButton = document.getElementById('browserFolderDeleteButton');
@@ -1548,7 +1740,7 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `synchronizeVisualStatusBrowserFolder`;
                     updateMiddlePosition();
                     break;
-                case 105:
+                case 127:
                     const synchronizeStatusInput = document.getElementById('synchronizeStatusInput');
                     const synchronizeStatusInputTitle = document.getElementById('synchronizeStatusInputTitle');
                     synchronizeStatusInput.checked = true;
@@ -1558,14 +1750,14 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `synchronizeStatusContainer`;
                     updateMiddlePosition();
                     break;
-                case 106:
+                case 128:
                     const creationOfSynchronizeVisualBrowserToExtension = () => {
                         const synchronizeVisualArrowTopEl = document.getElementById('synchronizeVisualArrowTop');
                         let synchronizeVisualArrowTopHtml = ``;
                         for (let i = 0; i < 9; i++) {
                             synchronizeVisualArrowTopHtml += `<svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="green" stroke="#000" stroke-width="1" class="arrowRight"><path d="m0,99.85741l0,-99.85741l100,49.92871l-100,49.92871z"/></svg>`;
                         }
-                        synchronizeVisualArrowTopEl.innerHTML = synchronizeVisualArrowTopHtml;
+                        synchronizeVisualArrowTopEl.innerHTML = DOMPurify.sanitize(synchronizeVisualArrowTopHtml);
                         const arrowRightEl = document.querySelectorAll('.arrowRight');
                         for (let i = 0; i < arrowRightEl.length; i++) {
                             gsap.fromTo(arrowRightEl[i], {
@@ -1589,7 +1781,7 @@ export const interactiveGuide = async (status) => {
                         for (let i = 0; i < 9; i++) {
                             synchronizeVisualArrowBottomHtml += `<svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="green" stroke="#000" stroke-width="1" class="arrowLeft"><path d="m99.42575,99.0906l-99.22305,-49.5453l99.22305,-49.5453l0,99.0906z"/></svg>`;
                         }
-                        synchronizeVisualArrowBottomEl.innerHTML = synchronizeVisualArrowBottomHtml;
+                        synchronizeVisualArrowBottomEl.innerHTML = DOMPurify.sanitize(synchronizeVisualArrowBottomHtml);
                         const arrowLeftEl = document.querySelectorAll('.arrowLeft');
                         for (let i = arrowLeftEl.length - 1; i >= 0; i--) {
                             gsap.fromTo(arrowLeftEl[i], {
@@ -1614,7 +1806,7 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `synchronizeVisualStatusMiddle`;
                     updateMiddlePosition();
                     break;
-                case 107:
+                case 129:
                     const synchronizeApplyButton = document.getElementById('synchronizeApplyButton');
                     synchronizeApplyButton.style.display = 'flex';
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
@@ -1622,39 +1814,115 @@ export const interactiveGuide = async (status) => {
                     targetElementID = `synchronizeBrowserBookmarksContainerBottomButtons`;
                     updateMiddlePosition();
                     break;
-                case 108:
+                case 130:
+                    const leftMenuBodyElCase130 = document.getElementById('leftMenuBody');
                     const leftMenuListSubmenuAboutInfo = document.querySelector('.leftMenuListSubmenu[data-data="aboutInfo"]');
                     if (leftMenuListSubmenuAboutInfo) {
                         leftMenuListSubmenuAboutInfo.click();
+                        leftMenuBodyElCase130.scrollBy({ top: 70, behavior: 'smooth' });
                     }
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 109:
+                case 131:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
-                case 110:
-                    const AboutChangelog = document.querySelector('.leftMenuListSubmenu[data-data="aboutChangelog"]');
-                    if (AboutChangelog) {
-                        AboutChangelog.click();
+                case 132:
+                    const leftMenuListSubmenuChangelog = document.querySelector('.leftMenuListSubmenu[data-data="changelog"]');
+                    if (leftMenuListSubmenuChangelog) {
+                        leftMenuListSubmenuChangelog.click();
                     }
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowLeftSection`;
                     updateMiddlePosition();
                     break;
-                case 111:
+                case 133:
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
                     targetElementID = `settingsWindowRightSection`;
                     updateMiddlePosition();
                     break;
-                case 112:
+                case 134:
+                    const leftMenuBodyElCase135 = document.getElementById('leftMenuBody');
+                    const leftMenuListSubmenuTermsOfUse = document.querySelector('.leftMenuListSubmenu[data-data="termsOfUse"]');
+                    if (leftMenuListSubmenuTermsOfUse) {
+                        leftMenuListSubmenuTermsOfUse.click();
+                        leftMenuBodyElCase135.scrollBy({ top: 70, behavior: 'smooth' });
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 135:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 136:
+                    const leftMenuListSubmenuLicense = document.querySelector('.leftMenuListSubmenu[data-data="license"]');
+                    if (leftMenuListSubmenuLicense) {
+                        leftMenuListSubmenuLicense.click();
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 137:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 138:
+                    const leftMenuBodyElCase138 = document.getElementById('leftMenuBody');
+                    const leftMenuListSubmenuPrivacyPolicy = document.querySelector('.leftMenuListSubmenu[data-data="privacyPolicy"]');
+                    if (leftMenuListSubmenuPrivacyPolicy) {
+                        leftMenuListSubmenuPrivacyPolicy.click();
+                        leftMenuBodyElCase138.scrollBy({ top: 70, behavior: 'smooth' });
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 139:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 140:
+                    const leftMenuListSubmenuSecurity = document.querySelector('.leftMenuListSubmenu[data-data="security"]');
+                    if (leftMenuListSubmenuSecurity) {
+                        leftMenuListSubmenuSecurity.click();
+                    }
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowLeftSection`;
+                    updateMiddlePosition();
+                    break;
+                case 141:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `settingsWindowRightSection`;
+                    updateMiddlePosition();
+                    break;
+                case 142:
+                    createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
+                    elementID = `guideStep`;
+                    targetElementID = `buttonsSection`;
+                    updateMiddlePosition();
+                    break;
+                case 143:
                     openCloseSettingWindow('close');
                     createDialog(languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].title, languageAllObject.interactiveGuideWindow[`step${currentGuideStep}`].message);
                     elementID = `guideStep`;
@@ -1707,7 +1975,7 @@ export const interactiveGuide = async (status) => {
                     document.querySelectorAll('.highlight').forEach(el => el.remove());
                     // Clear existing triangles
                     document.querySelectorAll('.triangle').forEach(el => el.remove());
-                    currentGuideStep <= 112 ? currentGuideStep++ : '';
+                    currentGuideStep++;
                     guideSteps();
                     guideStepButtonNextButton.style.top = '0px';
                 }, 500);

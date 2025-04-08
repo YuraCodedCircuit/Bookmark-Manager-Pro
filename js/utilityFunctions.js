@@ -31,49 +31,15 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ * - Marked (MIT License)
+ * - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
  */
 
 "use strict";
-import { changelog, currentLanguage, messageStyle, allowAlphabetCharactersAndNumbers, userProfileExport, userActiveProfile, manageUserProfiles, browserAndOSInfo } from './main.js';
-
-/**
- * Retrieves information from the changelog based on the specified type.
- *
- * @param {string} type - The type of information to retrieve. Can be 'lastVersion' or 'getAllLog'.
- * @returns {string} - The requested information. If 'lastVersion', returns the highest version number.
- *                     If 'getAllLog', returns an HTML string containing all changelog entries.
- */
-export const getInfoFromVersion = (type) => {
-    let data = ``;
-    let cloneChangelogJSON = window.structuredClone(changelog);
-
-    switch (type) {
-        case 'lastVersion':
-            // Find the highest ID value in the changelog array
-            const highestAmount = Math.max(...cloneChangelogJSON.map((a) => a.id));
-            // Filter the changelog array to find the entry with the highest ID
-            const highestShots = cloneChangelogJSON.filter(changelog => changelog.id === highestAmount);
-            // Get the version of the entry with the highest ID
-            data = highestShots[0].version;
-            break;
-
-        case 'getAllLog':
-            // Sort the changelog array in descending order by ID
-            cloneChangelogJSON.sort((a, b) => (a.id < b.id))
-                // Generate HTML string for each changelog entry
-                .forEach(e => {
-                    data += `<h2>${e.version}</h2>`;
-                    e.log.forEach(b => {
-                        data += `<ul><li>${b}</li></ul>`;
-                    });
-                });
-            break;
-    }
-    return data;
-}
+import { messageStyle, allowAlphabetCharactersAndNumbers, userProfileExport, userActiveProfile, manageUserProfiles, browserAndOSInfo, filesLocationFromThis } from './main.js';
 
 /**
  * Searches for a bookmark by its ID within a nested structure of bookmarks, using a specific key to match.
@@ -921,6 +887,22 @@ export const changeBase64ImageColor = (base64Image, newColor) => {
 };
 
 /**
+ * Replaces the stroke color in an SVG string.
+ * @param {string} svgString - The original SVG string to modify.
+ * @param {string} newColor - The new color to replace the existing stroke color.
+ * @returns {string} The modified SVG string with the updated stroke color.
+ */
+export const replaceStrokeColor = (svgString, newColor) => {
+    if (typeof svgString !== 'string' && typeof newColor !== 'string') {
+        return '';
+    }
+    if (svgString.length === 0 || newColor.length === 0) {
+        return '';
+    }
+    return svgString.replace(/stroke="[^"]*"/, `stroke="${newColor}"`);
+};
+
+/**
  * Displays a toast notification with customizable options.
  * This function utilizes the Toastify library to display toast notifications with various customization options such as type, message, duration, and style. It supports dynamic color changes for icons based on the message type by altering the base64 image color.
  *
@@ -1421,6 +1403,7 @@ export const actionForArray = async (arr, action, id, newParentId) => {
                 id: obj.id,
                 parentId: obj.parentId === userProfileExport.mainUserSettings.main.synchronizationToBrowser.extensionFolderId ? userProfileExport.mainUserSettings.main.synchronizationToBrowser.browserFolderId : obj.parentId,
             };
+            newObj.id = obj.id;
         } else if (action == 'copy') { // Copy the object
             newObj = structuredClone(obj);
             try {
@@ -1450,7 +1433,7 @@ export const actionForArray = async (arr, action, id, newParentId) => {
         }
         const status = await indexedDBManipulation('save', 'tempBookmarkObject', syncObject);
         if (status) {
-            chrome.runtime.sendMessage({ sync: { savedNewObject: true } })
+            browser.runtime.sendMessage({ sync: { savedNewObject: true } })
                 .then(response => {})
                 .catch(error => {
                     console.error("Error sending message:", error);
@@ -1666,8 +1649,14 @@ export const getBrowserAndOSInfo = () => {
         };
         // Extension information
         const extension = {
-            version: getInfoFromVersion('lastVersion'),
+            version: '',
         };
+        readFile(filesLocationFromThis.manifest).then(text => {
+            const setAsJson = JSON.parse(text);
+            extension.version = setAsJson.version;
+        }).catch(error => {
+            console.error(error);
+        });
         const returnObject = { browser, os, extension };
         return returnObject; // Return the browser and OS information
     } catch (error) {
@@ -1676,6 +1665,15 @@ export const getBrowserAndOSInfo = () => {
     }
 }
 
+/**
+ * Retrieves an array of supported font families.
+ *
+ * @returns {Array} An array of objects. Each object contains the font family name and its corresponding generic font name.
+ * @returns {Object} return font family object - An object containing information about the font family.
+ * @returns {number} return.fontFamilyObject.id - A unique identifier for the font family.
+ * @returns {string} return.fontFamilyObject.fontFamily - The name of the font family.
+ * @returns {string} return.fontFamilyObject.genericFontName - The generic font name of the font family, such as serif, sans-serif, or monospace.
+ */
 export const getSupportedFontFamilies = () => {
     try {
         const osType = browserAndOSInfo.os.name;
@@ -1850,38 +1848,6 @@ export const getSupportedFontFamilies = () => {
 };
 
 /**
- * Flattens an array of nested objects by removing all nesting and concatenating keys.
- * The function processes each object in the array, flattening its structure and concatenating nested keys.
- *
- * @param {Array} arrayOfObj - The array of objects to be flattened.
- * @returns {Array} A new array with each object flattened, where nested keys are concatenated.
- */
-export const removeAllNestingFromObj = (arrayOfObj) => {
-    const flattenObject = (obj, parentKey = '', res = {}) => {
-        for (let key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                // Constructs a property name by concatenating a parent key and a child key, with the first letter of each capitalized.
-                const propName = parentKey ? `${capitalizeString(parentKey, 1, false)}${capitalizeString(key, 1, false)}` : capitalizeString(key, 1, false);
-                if (obj.action) {
-                    userProfileExport.mainUserSettings.main.allowUserActivity.forEach(action => {
-                        action.action == obj.action ? obj.action = action.title : '';
-                    });
-                }
-                if (typeof obj[key] === 'object' && obj[key] !== null) {
-                    flattenObject(obj[key], propName, res);
-                } else {
-                    res[propName] = obj[key];
-                }
-            }
-        }
-        return res;
-    };
-
-    const flattenArray = (arr) => arr.map(item => flattenObject(item));
-    return flattenArray(arrayOfObj);
-}
-
-/**
  * Calculates gradient percentages for an array of colors.
  *
  * @param {Array} colors - The array of color strings.
@@ -2053,14 +2019,14 @@ export const updateInputRangeAndOutput = (inputElementId, outputElementId, setVa
         const setValueToOutput = () => {
             if (loadFirstTime) {
                 outputElement.style.left = `0px`;
-                outputElement.innerHTML = `&#8734;`; // Sets a default or placeholder value on the first load.
+                outputElement.innerHTML = DOMPurify.sanitize(`&#8734;`); // Sets a default or placeholder value on the first load.
             }
             // Calculate the percentage position of the input's current value within its range.
             let value = Number((inputElement.value - inputElement.min) * 100 / (inputElement.max - inputElement.min));
             // Calculate the adjustment needed for the output element's position to align with the input's thumb.
             let positionOutputElement = 0 - (value * 0.338);
             // Update the output element's content with the input's current value.
-            outputElement.innerHTML = inputElement.value;
+            outputElement.innerHTML = DOMPurify.sanitize(inputElement.value);
             // Adjust the output element's position based on the calculated percentage.
             outputElement.style.left = `calc(${value}% + (${positionOutputElement}px))`;
         };
@@ -2243,75 +2209,6 @@ export const indexedDBManipulation = async (status, key, data) => {
     }
 }
 
-export const localStorageManipulation = (status, key, data) => {
-    if (status == 'save') {
-        try {
-            if (data != '' && data != null && data != undefined &&
-                key != '' && key != null && key != undefined) {
-                store.set(key, data);
-                return store.has(key);
-            } else {
-                throw Error`No "key" or "data" in parameters`;
-            }
-        } catch (error) {
-            return error;
-        }
-    } else if (status == 'get') {
-        try {
-            if (key != '' && key != null && key != undefined) {
-                if (store.has(key)) {
-                    return store.get(key);
-                } else {
-                    return false;
-                }
-            } else {
-                throw Error`no "key" in parameters`;
-            }
-        } catch (error) {
-            return error
-        }
-    } else if (status == 'has') {
-        try {
-            if (key != '' && key != null && key != undefined) {
-                if (store.has(key)) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                throw Error`no "key" in parameters`;
-            }
-        } catch (error) {
-            return error;
-        }
-    } else if (status == 'remove') {
-        try {
-            if (key != '' && key != null && key != undefined) {
-                if (store.has(key)) {
-                    store.remove(key);
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                throw Error`no "key" in parameters`;
-            }
-        } catch (error) {
-            return error;
-        }
-    } else if (status == 'getKeys') {
-        try {
-            if (store.size() > 0) {
-                return store.keys() || [];
-            } else {
-                return false;
-            }
-        } catch (error) {
-            return error;
-        }
-    }
-}
-
 /**
  * Generates a palette of colors based on the input color.
  * If the input color is light, it generates darker colors; if dark, it generates lighter colors.
@@ -2424,7 +2321,7 @@ export class returnRandomElementFromObject {
  * @returns {(string|Object|false)} The file content or the parsed JSON object if parseJson is true or false.
  * @throws {Error} If the file cannot be read or if it is not a valid JSON file.
  */
-const readFile = async (fileLocation, parseJson = false, mimeType = 'text/plain') => {
+export const readFile = async (fileLocation, parseJson = false, mimeType = 'text/plain') => {
     try {
         const response = await fetch(fileLocation, {
             headers: {
@@ -2448,7 +2345,6 @@ const readFile = async (fileLocation, parseJson = false, mimeType = 'text/plain'
         return false;
     }
 };
-
 /**
  * Shows an emoji picker in a given element.
  * The emoji picker is fetched from the EmojiMart library.
@@ -2495,21 +2391,21 @@ export const showEmojiPicker = async (element) => {
                  */
                 onEmojiSelect: (emoji) => {
                     const selectedEmojiObject = emoji;
-                    el.innerHTML = '';
+                    el.innerHTML = DOMPurify.sanitize('');
                     resolve(selectedEmojiObject); // Resolve the promise with the selected emoji
                 },
                 /**
                  * The function called when the user clicks outside the emoji picker.
                  */
                 onClickOutside: () => {
-                    el.innerHTML = '';
+                    el.innerHTML = DOMPurify.sanitize('');
                     resolve(false); // Resolve with false if clicked outside
                 },
                 /**
                  * The function called when the user adds a custom emoji.
                  */
                 onAddCustomEmoji: () => {
-                    el.innerHTML = '';
+                    el.innerHTML = DOMPurify.sanitize('');
                     resolve(false); // Resolve with false if custom emoji added
                 },
                 autoFocus: false,
@@ -2567,6 +2463,14 @@ export const showEmojiPicker = async (element) => {
     }
 }
 
+/**
+ * Animates a DOM element using the specified animation object.
+ *
+ * @param {string|HTMLElement} el - The element or the ID of the element to animate.
+ * @param {Object} animationObject - The animation configuration object.
+ * @param {boolean} animationObject.status - The status of the animation.
+ * @param {Array} animationObject.type - The types of animations to apply.
+ */
 export const animateElement = (el, animationObject) => {
     try {
         let element;
@@ -2733,6 +2637,8 @@ export const createTooltip = (hoverElement, position, text, customStyles) => {
             position: 'absolute',
             pointerEvents: 'none', // Prevent the tooltip from interfering with mouse events
             zIndex: 9000,
+            textAlign: 'justify',
+            whiteSpace: 'wrap',
             ...customStyles // Apply custom styles
         });
         document.body.appendChild(tooltip);
@@ -2929,82 +2835,6 @@ export const isBookmarkInFolder = (bookmark, specificFolderId, bookmarkId) => {
     return false;
 };
 
-export const syncToBrowserBookmarksManager = (status, bookmarks, bookmarkId, syncRootFolderId, objectDetail = {}) => {
-    console.log('syncToBrowserBookmarksManager', status, bookmarks, bookmarkId, syncRootFolderId, objectDetail);
-    if (bookmarkId.length === 0 && syncRootFolderId.length === 0) {
-        return 'Wrong bookmarkId or syncRootFolderId';
-    }
-    if (!Array.isArray(bookmarks) && bookmarks.length === 0) {
-        return 'Wrong bookmarks';
-    }
-    if (!['create', 'update', 'delete', 'move'].includes(status)) {
-        return 'Wrong status';
-    }
-    // check if the bookmarkId in the syncRootFolderId
-    if (!isBookmarkInFolder(bookmarks, syncRootFolderId, bookmarkId)) {
-        return 'BookmarkId not found in the specified folder';
-    }
-    switch (status) {
-        case 'create':
-            if (isObjectEmpty(objectDetail)) {
-                return 'ObjectDetail is empty';
-            }
-            const bookmarkDetails = {
-                title: objectDetail.title,
-                url: objectDetail.url,
-                parentId: objectDetail.parentId // Optional: specify the parent folder ID
-            };
-
-            chrome.bookmarks.create(bookmarkDetails)
-                .then((newBookmark) => {
-                    console.log(`Bookmark created: ${newBookmark.title} (${newBookmark.url})`);
-                })
-                .catch((error) => {
-                    console.error("Error creating bookmark:", error);
-                });
-            break;
-        case 'update':
-            const updateDetails = {
-                title: objectDetail.newTitle,
-                url: objectDetail.newUrl // Optional: you can update the URL as well
-            };
-
-            chrome.bookmarks.update(bookmarkId, updateDetails)
-                .then((updatedBookmark) => {
-                    console.log(`Bookmark updated: ${updatedBookmark.title} (${updatedBookmark.url})`);
-                })
-                .catch((error) => {
-                    console.error("Error updating bookmark:", error);
-                });
-            break;
-        case 'delete':
-            chrome.bookmarks.remove(bookmarkId)
-                .then(() => {
-                    console.log(`Bookmark with ID ${bookmarkId} has been deleted.`);
-                })
-                .catch((error) => {
-                    console.error(`Error deleting bookmark with ID ${bookmarkId}:`, error);
-                });
-            break;
-        case 'move':
-            const moveDetails = {
-                parentId: objectDetail.newParentId, // New parent folder ID
-                index: objectDetail.newIndex // Optional: specify the new index (position) within the parent
-            };
-
-            chrome.bookmarks.move(bookmarkId, moveDetails)
-                .then((movedBookmark) => {
-                    console.log(`Bookmark moved: ${movedBookmark.title} to new parent ID ${newParentId}`);
-                })
-                .catch((error) => {
-                    console.error("Error moving bookmark:", error);
-                });
-            break;
-        default:
-            break;
-    }
-}
-
 /**
  * Translate the username element's text horizontally if it is wider than its parent element.
  * This is done to create a marquee effect.
@@ -3079,7 +2909,6 @@ export const translateUserName = (parent, child) => {
     }
 };
 
-
 /**
  * Opens a URL in a new tab or the same tab based on the CTRL parameter.
  * @param {string} url - The URL to open.
@@ -3126,7 +2955,79 @@ export const escapeHtml = (unsafe) => {
         .replace(/'/g, "&#039;");
 };
 
+/**
+ * Unescapes HTML special characters in a string to restore the original characters.
+ * @param {string} str - The input string to unescape.
+ * @returns {string} The unescaped string with HTML entities replaced by their corresponding characters.
+ */
+export const unescapeHtml = (str) => {
+    return str.replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+};
 
+/**
+ * Recursively retrieves all child IDs of a given object.
+ * @param {Object} object - The object to traverse.
+ * @returns {string[]} An array of IDs of all children of the given object.
+ */
+export const getAllChildIds = (object) => {
+    // Initialize an array to hold the IDs
+    let ids = [];
+
+    // Recursive function to traverse the tree
+    const traverse = (node) => {
+        // Add the current node's ID to the list
+        ids.push(node.id);
+
+        // If the current node has children, traverse them
+        if (node.children && node.children.length > 0) {
+            node.children.forEach(child => {
+                // Add the child's ID to the list
+                ids.push(child.id);
+                // Recursively traverse the child's children
+                traverse(child);
+            });
+        }
+    };
+
+    // Add the current object's ID to the list
+    ids.push(object.id);
+    if (object.children && object.children.length > 0) {
+        // Start traversing from the root of the data
+        object.children.forEach(node => traverse(node));
+    }
+
+    return ids;
+};
+
+/**
+ * Reads a file from the given location and returns its content.
+ * @function readLocalFile
+ * @param {string} location - The location of the file to read.
+ * @param {string} [mineType='application/text'] - The MIME type of the file.
+ * @returns {Promise<string>} The file content.
+ * @throws {Error} If the file cannot be read.
+ */
+export const readLocalFile = (location, mineType = 'application/text') => {
+    return new Promise((resolve, reject) => {
+        const rawFile = new XMLHttpRequest();
+        rawFile.overrideMimeType(mineType);
+        rawFile.open("GET", location, true);
+        rawFile.onreadystatechange = () => {
+            if (rawFile.readyState === 4) {
+                if (rawFile.status === 200) {
+                    resolve(rawFile.responseText);
+                } else {
+                    reject(new Error(`Failed to load file: ${location}`));
+                }
+            }
+        };
+        rawFile.send(null);
+    });
+};
 
 
 

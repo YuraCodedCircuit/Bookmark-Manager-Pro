@@ -31,14 +31,16 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ * - Marked (MIT License)
+ * - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
  */
 
 "use strict";
-import { settingMainMenu, defaultUserBookmarks, defaultBookmarkStyle, defaultFolderStyle, defaultMainUserSettings, settingWindowOpen, folderNamesForAddressBarPreview, exportFileExtensionName, browserAndOSInfo, currentLanguage, userProfileExport, backgroundImageExample, symbolArray, userActivityRegister, userProfile, userActiveProfile, exportType, defaultProfileImageBase64, manageUserProfiles, createCurrentBookmarkFolder, firefoxLogoSVG, chromeLogoSVG, extensionLogoSVG } from './main.js';
-import { indexedDBManipulation, generateColorPalette, showEmojiPicker, getInfoFromVersion, updateIdsAndParentIds, findBookmarkByKey, animateElement, getElementPosition, debounce, createTooltip, truncateTextIfOverflow, checkIfColorBrightness, randomIntFromInterval, getRandomColor, inputHexValid, invertHexColor, rgbToHex, hexToRGB, hexToRGBA, isObjectEmpty, resizeImageBase64, truncateString, translateUserName, checkIfAllowedToCreateScreenshotFromURL, changeBase64ImageColor, showMessageToastify, getSupportedFontFamilies, sortFolderByChildrenIndex, applyStylesToElement, getNextMaxIndex, generateRandomIdForObj, generateRandomID, formatDateTime, capitalizeString, correctIndexes, moveObjectInParentArray, changeIds, actionForArray, countTo, moveElementsInArray, getType, fetchImageAsBase64, escapeHtml, removeAllNestingFromObj, calculateGradientPercentages, formatBytes, isValidDate, checkIfImageBase64, updateInputRangeAndOutput, updateColorisInputValue } from './utilityFunctions.js';
+import { settingMainMenu, defaultUserBookmarks, defaultBookmarkStyle, defaultFolderStyle, defaultMainUserSettings, settingWindowOpen, folderNamesForAddressBarPreview, exportFileExtensionName, browserAndOSInfo, currentLanguage, userProfileExport, backgroundImageExample, symbolArray, userActivityRegister, userProfile, userActiveProfile, exportType, defaultProfileImageBase64, manageUserProfiles, createCurrentBookmarkFolder, firefoxLogoSVG, chromeLogoSVG, extensionLogoSVG, filesLocationFromThis } from './main.js';
+import { indexedDBManipulation, generateColorPalette, showEmojiPicker, updateIdsAndParentIds, findBookmarkByKey, animateElement, getElementPosition, debounce, createTooltip, truncateTextIfOverflow, checkIfColorBrightness, randomIntFromInterval, getRandomColor, invertHexColor, hexToRGB, isObjectEmpty, resizeImageBase64, truncateString, translateUserName, showMessageToastify, getSupportedFontFamilies, getNextMaxIndex, formatDateTime, capitalizeString, countTo, moveElementsInArray, escapeHtml, calculateGradientPercentages, formatBytes, isValidDate, checkIfImageBase64, updateInputRangeAndOutput, updateColorisInputValue, readFile } from './utilityFunctions.js';
 import { importValidation } from './importValidation.js';
 
 /**
@@ -61,10 +63,10 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
             console.error('%c%s', '', 'Invalid status', status);
             return;
         }
-        const settingsBodyEl = $('#settingsBody');
+        const uiElementsContainerEl = $('#uiElementsContainer');
         if (status == 'close') {
             settingWindowOpen.status = false;
-            settingsBodyEl.css('display', 'none').html('');
+            uiElementsContainerEl.css('display', 'none').html('');
             return;
         }
         let currentMenu = settingMainMenu[type][0].submenu[0].data;
@@ -119,7 +121,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                 </div>
             </div>
         `;
-        settingsBodyEl.css('display', 'flex').html(settingsBodyHtml);
+        uiElementsContainerEl.css('display', 'flex').html(settingsBodyHtml);
 
         /**
          * Adds event listeners to the footer buttons of the settings window.
@@ -314,6 +316,27 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
             });
         }
 
+        /**
+         * Reads the manifest file and updates the version number in the footer of the left menu section.
+         *
+         * @returns {void}
+         * @description This function reads the manifest file and parses it as JSON. The version number is then
+         *              extracted and used to update the text in the footer section of the left menu section.
+         */
+        const getExtensionLatestVersion = () => {
+            const leftMenuFooterEl = document.getElementById('leftMenuFooter');
+
+            readFile(filesLocationFromThis.manifest).then(text => {
+                const setAsJson = JSON.parse(text);
+                const leftMenuFooterHtml = `<div id="extensionVersion">v. ${setAsJson.version}</div>`;
+                leftMenuFooterEl.innerHTML = DOMPurify.sanitize(leftMenuFooterHtml);
+            }).catch(error => {
+                console.error(error);
+                leftMenuFooterEl.innerHTML = DOMPurify.sanitize('');
+            });
+        }
+        getExtensionLatestVersion();
+
         const setStyleToSettingsWindow = () => {
             const settingsWindowEl = document.getElementById('settingsWindow');
             const leftMenuListEl = document.querySelectorAll('.buttonList');
@@ -412,11 +435,14 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     let nestedListHtml = generateNestedListHtml(item.submenu || []);
                     let listItemHtml = ``;
                     let listMenuToLanguageTitle = findObject(languageObject, `_${item.data}`);
+                    if (!listMenuToLanguageTitle) {
+                        console.warn('Failed to load the menu title from the language file. Defaulting to:', item.title);
+                    }
                     listItemHtml = `
                         <li>
                             <div data-id="${item.data}">
                                 <button class="leftMenuListSubmenu buttonList" data-data="${item.data}">
-                                    <div class="leftMenuListText" data-data="${item.data}">${listMenuToLanguageTitle._data ?? item.title}</div>
+                                    <div class="leftMenuListText" data-data="${item.data}">${listMenuToLanguageTitle?._data ?? item.title}</div>
                                 </button>
                             </div>
                         </li>
@@ -434,11 +460,12 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                 return dataset.length ? `<div class="menuContainer"><ul>${generateListItemsHtml(dataset)}</ul></div>` : '';
             };
             // Generate the top-level list HTML using the default dataset
-            leftMenuBodyEl.innerHTML = generateNestedListHtml(array);
+            leftMenuBodyEl.innerHTML = DOMPurify.sanitize(generateNestedListHtml(array));
 
             // Set the inner HTML of the left menu body element to the generated HTML.
             // Add event listeners to the left menu items.
             addEventListenersToLeftMenuList();
+            leftMenuBodyEl.scrollTop = 0;
         }
         // Create the menu list using the settingMainMenu array for the specified type.
         createMenuList(settingMainMenu[type]);
@@ -483,11 +510,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
             * @description This function sets the inner HTML of the settings window right section and updates its background color.
             */
             const createRightPreviewHtml = () => {
-                settingsWindowRightSectionEl.innerHTML = `
+                settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(`
                     <div id="transparencyGridPreview"></div>
                     <div id="rightHeaderSection"></div>
                     <div id="rightBodySection"></div>
-                `;
+                `);
                 rightBodySectionEl = document.getElementById('rightBodySection');
             }
 
@@ -598,7 +625,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         console.error('%c%s', '', 'No background type selected.');
                         break;
                 }
-                rightHeaderSectionEl.innerHTML = html;
+                rightHeaderSectionEl.innerHTML = DOMPurify.sanitize(html);
             }
 
             switch (data) {
@@ -607,7 +634,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         <div id="editProfileSection">
                             <div id="headerProfileSection">
                                 <div id="profileName">
-                                    <div id="name"></div>
+                                    <div id="userNameOfflineProfile"></div>
                                 </div>
                                 <div id="profileLogo">
                                     <div id="logo">
@@ -618,7 +645,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             <div id="bodyProfileSection"></div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const setStyleToHeaderProfileSection = () => {
                         const headerProfileSectionEl = document.getElementById('headerProfileSection');
@@ -630,23 +657,28 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     setStyleToHeaderProfileSection();
 
                     const setCurrentProfileToHeader = () => {
-                        const nameEl = document.getElementById('name');
+                        const profileNameEl = document.getElementById('profileName');
+                        const userNameOfflineProfileEl = document.getElementById('userNameOfflineProfile');
                         const logoImgEl = document.getElementById('logoImg');
-                        if (isObjectEmpty(userActiveProfile) || isObjectEmpty(userProfile)) return;
+                        if (isObjectEmpty(userActiveProfile) || isObjectEmpty(userProfile)) {
+                            console.log('Object is empty');
+                            return;
+                        }
                         if (checkIfImageBase64(userActiveProfile.image)) {
                             logoImgEl.src = userActiveProfile.image;
                         } else {
                             logoImgEl.src = defaultProfileImageBase64;
                         }
                         if (userActiveProfile.name.trim().length > 0) {
-                            nameEl.textContent = escapeHtml(userActiveProfile.name);
-                            if (userActiveProfile.name.length < 30) { return };
-                            const status = translateUserName('profileUserName', 'name');
-                            if (!status) {
-                                showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                            userNameOfflineProfileEl.innerText = DOMPurify.sanitize(escapeHtml(userActiveProfile.name));
+                            if (profileNameEl.scrollHeight > profileNameEl.clientHeight || profileNameEl.scrollWidth > profileNameEl.clientWidth) {
+                                const status = translateUserName('profileUserName', 'userNameOfflineProfile');
+                                if (!status) {
+                                    showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                                }
                             }
                         } else {
-                            nameEl.textContent = `Not set`;
+                            userNameOfflineProfileEl.innerText = DOMPurify.sanitize(`Not set`);
                         }
                     }
                     setCurrentProfileToHeader();
@@ -716,7 +748,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 </div>
                             </div>
                         `;
-                        bodyProfileSectionEl.innerHTML = listHtml;
+                        bodyProfileSectionEl.innerHTML = DOMPurify.sanitize(listHtml);
 
                         const setStyleToCreateNewProfile = () => {
                             const headerProfileEl = document.getElementById('headerProfile');
@@ -882,7 +914,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     </div>
                                 `;
                             });
-                            createNewProfileSettingBodyEl.innerHTML = settingBodyHtml;
+                            createNewProfileSettingBodyEl.innerHTML = DOMPurify.sanitize(settingBodyHtml);
 
                             const addNewProfileSettingBodyEventListeners = () => {
                                 const settingToggleInputArray = document.querySelectorAll('.settingToggleInput');
@@ -919,7 +951,6 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             const bodyProfileListEl = document.getElementById('bodyProfileList');
                             const bodyProfileListTableBodyEl = document.getElementById('bodyProfileListTableBody');
                             let bodyTableHtml = ``;
-                            let idsArrayForTooltip = [];
                             const selectedSvg = `
                                 <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M8 12.5L11 15.5L16 9.5" stroke="${editingMainUserSettings.windows.button.success.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -942,8 +973,8 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     <path d="M4 6H20L18.4199 20.2209C18.3074 21.2337 17.4512 22 16.4321 22H7.56786C6.54876 22 5.69264 21.2337 5.5801 20.2209L4 6Z" stroke="${editingMainUserSettings.windows.button.danger.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path d="M7.34491 3.14716C7.67506 2.44685 8.37973 2 9.15396 2H14.846C15.6203 2 16.3249 2.44685 16.6551 3.14716L18 6H6L7.34491 3.14716Z" stroke="${editingMainUserSettings.windows.button.danger.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path d="M2 6H22" stroke="${editingMainUserSettings.windows.button.danger.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M10 11V16" stroke="${editingMainUserSettings.windows.button.secondary.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M14 11V16" stroke="${editingMainUserSettings.windows.button.secondary.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10 11V16" stroke="${editingMainUserSettings.windows.button.danger.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M14 11V16" stroke="${editingMainUserSettings.windows.button.danger.backgroundColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             `;
 
@@ -956,12 +987,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     date = formatDateTime(profile.timestampCreation, currentLanguage, 'date');
                                     time = formatDateTime(profile.timestampCreation, currentLanguage, 'time');
                                 }
-                                if (profile.name.length >= 29) {
-                                    idsArrayForTooltip.push({ id: profile.userId, name: profile.name });
-                                }
                                 bodyTableHtml += `
                                     <div class="bodyProfileListTableRow" ${index % 2 ? `style="background-color: ${colorPalette[3]}"` : `style="background-color: ${colorPalette[6]}"`}>
-                                        <div class="bodyProfileListTableRowName" data-id="${profile.userId}">${truncateString(escapeHtml(profile.name), 29, 0)}</div>
+                                        <div class="bodyProfileListTableRowName" data-id="${profile.userId}">${escapeHtml(profile.name)}</div>
                                         <div class="bodyProfileListTableRowInfo">
                                             <div class="bodyProfileListTableRowInfoDate">${date}</div>
                                             <div class="bodyProfileListTableRowInfoTime">${time}</div>
@@ -980,7 +1008,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     </div>
                                 `;
                             });
-                            bodyProfileListTableBodyEl.innerHTML = bodyTableHtml;
+                            bodyProfileListTableBodyEl.innerHTML = DOMPurify.sanitize(bodyTableHtml);
                             bodyProfileListEl.style.backgroundColor = colorPalette[1];
 
                             const addBodyProfileSectionEventListeners = () => {
@@ -994,6 +1022,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                  * @returns {void}
                                  */
                                 const createTooltipForLongProfileNames = () => {
+                                    const bodyProfileListTableRowNameElArray = document.querySelectorAll('.bodyProfileListTableRowName');
                                     const backgroundColorBrightness = checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff';
                                     const style = {
                                         backgroundColor: editingMainUserSettings.windows.window.backgroundColor,
@@ -1004,6 +1033,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                         fontSize: `${editingMainUserSettings.windows.window.font.fontSize}px`,
                                         fontWeight: editingMainUserSettings.windows.window.font.fontWeight,
                                         fontFamily: editingMainUserSettings.windows.window.font.fontFamily,
+                                        wordWrap:'break-word',
                                         maxWidth: '400px'
                                     }
                                     const underlineStyle = {
@@ -1011,13 +1041,16 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                         textDecorationLine: 'underline',
                                         textDecorationStyle: 'dotted',
                                     }
-                                    idsArrayForTooltip.forEach(profile => {
-                                        const profileName = document.querySelector(`.bodyProfileListTableRowName[data-id="${profile.id}"]`);
-                                        Object.assign(profileName.style, underlineStyle);
-                                        createTooltip(profileName, 'top', profile.name, style);
+                                    bodyProfileListTableRowNameElArray.forEach(el => {
+                                        const fullProfileName = el.innerText;
+                                        const textLength = truncateTextIfOverflow(el, fullProfileName);
+                                        if (fullProfileName.length > textLength) {
+                                            Object.assign(el.style, underlineStyle);
+                                            createTooltip(el, 'top', fullProfileName, style);
+                                        }
                                     });
                                 }
-                                if (idsArrayForTooltip.length > 0) { createTooltipForLongProfileNames(); }
+                                createTooltipForLongProfileNames();
 
                                 const setToCurrentProfile = async (event) => {
                                     event.stopPropagation();
@@ -1026,9 +1059,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     if (userActiveProfile.userId !== dataId) {
                                         profileSetButtonArray.forEach(button => {
                                             if (dataId === button.dataset.id) {
-                                                button.innerHTML = selectedSvg;
+                                                button.innerHTML = DOMPurify.sanitize(selectedSvg);
                                             } else {
-                                                button.innerHTML = notSelectedSvg;
+                                                button.innerHTML = DOMPurify.sanitize(notSelectedSvg);
                                             }
                                         });
                                         userProfile.offline.forEach(profile => {
@@ -1269,7 +1302,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 </div>
                             </div>
                         `;
-                        bodyProfileSectionEl.innerHTML = profileDetailHtml;
+                        bodyProfileSectionEl.innerHTML = DOMPurify.sanitize(profileDetailHtml);
 
                         const setStyleToEditProfile = () => {
                             const headerProfileSectionEl = document.getElementById('headerProfileSection');
@@ -1619,12 +1652,14 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 selectedProfile.name = nameValue;
                                 userProfile.offline.forEach(profile => {
                                     if (profile.userId === id) {
-                                        profileNameEl.innerHTML = `<div id="name">${escapeHtml(nameValue)}</div>`;
+                                        profileNameEl.innerHTML = DOMPurify.sanitize(`<div id="userNameOfflineProfile">${escapeHtml(nameValue)}</div>`);
                                         profile.name = nameValue;
-                                        if (nameValue.length < 30) { return };
-                                        const status = translateUserName('profileUserName', 'name');
-                                        if (!status) {
-                                            showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                                        if (profileNameEl.scrollHeight > profileNameEl.clientHeight || profileNameEl.scrollWidth > profileNameEl.clientWidth) {
+                                            const status = translateUserName('profileUserName', 'userNameOfflineProfile');
+                                            if (!status) {
+                                                console.error('Failed to translate username');
+                                                showMessageToastify('error', ``, `Failed to translate username`, 4000, false, 'bottom', 'right', true);
+                                            }
                                         }
                                     }
                                 });
@@ -1749,7 +1784,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             <div id="headerProfileSection">
                                 <div id="profileName">
                                     <div id="name">Online profile </div>
-                                    <div id="part">name</div>
+                                    <div id="fallingPart">name</div>
                                 </div>
                                 <div id="profileLogo">
                                     <div id="logoBroken">
@@ -1765,10 +1800,10 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const createEffectUnderDevelopment = () => {
-                        gsap.to('#part', {
+                        gsap.to('#fallingPart', {
                             duration: 4,
                             y: 15,
                             rotation: 45,
@@ -1800,7 +1835,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    rightBodySectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    rightBodySectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
                     updateFolderStylePreview();
 
                     const createExampleImagesSectionButtons = () => {
@@ -1815,7 +1850,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 </div>
                             `;
                         });
-                        imagesSelectionEl.innerHTML = imagesSelectionHtml;
+                        imagesSelectionEl.innerHTML = DOMPurify.sanitize(imagesSelectionHtml);
                     }
                     createExampleImagesSectionButtons();
 
@@ -2072,7 +2107,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         </div>
                     </div>
                 `;
-                    rightBodySectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    rightBodySectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
                     updateFolderStylePreview();
 
                     const updateBackgroundColorSettingsTitlesUI = () => {
@@ -2158,20 +2193,20 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         addColorEl.style.display = 'none';
                         if (status == 'add') {
                             addColorEl.style.display = 'flex';
-                            addColorEl.innerHTML = `
+                            addColorEl.innerHTML = DOMPurify.sanitize(`
                             <svg width="30px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke="${editingMainUserSettings.windows.button.primary.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 12H12M12 12H16M12 12V16M12 12V8M4 16.8002V7.2002C4 6.08009 4 5.51962 4.21799 5.0918C4.40973 4.71547 4.71547 4.40973 5.0918 4.21799C5.51962 4 6.08009 4 7.2002 4H16.8002C17.9203 4 18.4801 4 18.9079 4.21799C19.2842 4.40973 19.5905 4.71547 19.7822 5.0918C20.0002 5.51962 20.0002 6.07967 20.0002 7.19978V16.7998C20.0002 17.9199 20.0002 18.48 19.7822 18.9078C19.5905 19.2841 19.2842 19.5905 18.9079 19.7822C18.4805 20 17.9215 20 16.8036 20H7.19691C6.07899 20 5.5192 20 5.0918 19.7822C4.71547 19.5905 4.40973 19.2842 4.21799 18.9079C4 18.4801 4 17.9203 4 16.8002Z"/>
                             </svg>
-                        `;
+                        `);
                         }
                         if (status == 'update') {
                             addColorEl.style.display = 'flex';
-                            addColorEl.innerHTML = `
+                            addColorEl.innerHTML = DOMPurify.sanitize(`
                             <svg width="30px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="3" y="3" width="18" height="18" rx="2" stroke="${editingMainUserSettings.windows.button.primary.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 <path d="M7 13L10 16L17 9" stroke="${editingMainUserSettings.windows.button.primary.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                        `;
+                        `);
                         }
                     }
 
@@ -2181,7 +2216,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         const addRandomColorEl = document.getElementById('addRandomColor');
                         const addIconToRandomColorEl = () => {
                             addRandomColorEl.style.backgroundColor = editingMainUserSettings.windows.button.primary.backgroundColor;
-                            addRandomColorEl.innerHTML = `<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`;
+                            addRandomColorEl.innerHTML = DOMPurify.sanitize(`<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="30px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
                         }
                         addIconToRandomColorEl();
                         // Updates the background color in newUserBookmarkStyle and the UI.
@@ -2400,7 +2435,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 </div>
                             `;
                             });
-                            colorArraySectionEl.innerHTML = html;
+                            colorArraySectionEl.innerHTML = DOMPurify.sanitize(html);
                         }
                         const createColor = () => {
                             editingDefaultUserFolderStyle.background.backgroundType = 'color';
@@ -2451,7 +2486,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         </div>
                     </div>
                 `;
-                    rightBodySectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    rightBodySectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
                     updateFolderStylePreview();
 
                     const updateBookmarkSizeSettingsTitlesUI = () => {
@@ -2618,7 +2653,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    rightBodySectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    rightBodySectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
                     updateFolderStylePreview();
 
                     const createNavigationBarSymbolTypeButtons = () => {
@@ -2627,7 +2662,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         symbolArray.forEach(e => {
                             symbolsHtml += `<button data-symbol=${e}>${e}</button>`;
                         });
-                        addressBarSymbolTypeButtonsEl.innerHTML = symbolsHtml;
+                        addressBarSymbolTypeButtonsEl.innerHTML = DOMPurify.sanitize(symbolsHtml);
                     }
                     createNavigationBarSymbolTypeButtons();
 
@@ -2798,13 +2833,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         </div>
                     </div>
                 `;
-                    rightBodySectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    rightBodySectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
                     updateFolderStylePreview();
 
                     const addIconToRandomColorEl = () => {
                         const addRandomColorEl = document.getElementById('addRandomColor');
                         addRandomColorEl.style.border = `1px solid ${checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff'}`;
-                        addRandomColorEl.innerHTML = `<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`
+                        addRandomColorEl.innerHTML = DOMPurify.sanitize(`<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
                     }
                     addIconToRandomColorEl();
 
@@ -2911,14 +2946,14 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    rightBodySectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    rightBodySectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
                     updateFolderStylePreview();
 
                     const addIconToRandomColorFontEl = () => {
                         const addRandomColorEl = document.getElementById('addRandomColor');
                         addRandomColorEl.style.border = `1px solid ${checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff'}`;
                         addRandomColorEl.style.backgroundColor = editingMainUserSettings.windows.button.primary.backgroundColor;
-                        addRandomColorEl.innerHTML = `<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`
+                        addRandomColorEl.innerHTML = DOMPurify.sanitize(`<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
                     }
                     addIconToRandomColorFontEl();
 
@@ -3032,13 +3067,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const addIconToRandomColorWindowsBackgroundColorEl = () => {
                         const addRandomColorEl = document.getElementById('addRandomColor');
                         addRandomColorEl.style.border = `1px solid ${checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff'}`;
                         addRandomColorEl.style.backgroundColor = editingMainUserSettings.windows.button.primary.backgroundColor;
-                        addRandomColorEl.innerHTML = `<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`
+                        addRandomColorEl.innerHTML = DOMPurify.sanitize(`<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
                     }
                     addIconToRandomColorWindowsBackgroundColorEl();
 
@@ -3152,13 +3187,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const addIconToRandomColorWindowsFontEl = () => {
                         const addRandomColorEl = document.getElementById('addRandomColor');
                         addRandomColorEl.style.border = `1px solid ${checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff'}`;
                         addRandomColorEl.style.backgroundColor = editingMainUserSettings.windows.button.primary.backgroundColor;
-                        addRandomColorEl.innerHTML = `<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`
+                        addRandomColorEl.innerHTML = DOMPurify.sanitize(`<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
                     }
                     addIconToRandomColorWindowsFontEl();
 
@@ -3314,12 +3349,12 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const addIconToRandomColorWindowsBorderEl = () => {
                         const windowBorderMenu = document.querySelectorAll('.windowBorderMenu');
                         const addRandomColorEl = document.getElementById('addRandomColor');
-                        addRandomColorEl.innerHTML = `<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`
+                        addRandomColorEl.innerHTML = DOMPurify.sanitize(`<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
                         addRandomColorEl.style.border = `1px solid ${checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff'}`;
                         addRandomColorEl.style.backgroundColor = editingMainUserSettings.windows.button.primary.backgroundColor;
                         windowBorderMenu.forEach(menu => {
@@ -3612,10 +3647,10 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     settingsWindowRightSectionHtml = `
                         <div id="windowButtonsSection">
                             <div id="windowButtonsMenuSection">
-                                <buttons class="windowButtonsMenu" id="windowButtonsActionsMenu" data-type="actions" data-active="true">Actions</buttons>
-                                <buttons class="windowButtonsMenu" id="windowButtonsAlertsMenu" data-type="alerts" data-active="false">Alerts</buttons>
-                                <buttons class="windowButtonsMenu" id="windowButtonsNotificationsMenu" data-type="notifications" data-active="false">Notifications</buttons>
-                                <buttons class="windowButtonsMenu" id="windowButtonsNeutralsMenu" data-type="neutrals" data-active="false">Neutrals</buttons>
+                                <button class="windowButtonsMenu" id="windowButtonsActionsMenu" data-type="actions" data-active="true">Actions</button>
+                                <button class="windowButtonsMenu" id="windowButtonsAlertsMenu" data-type="alerts" data-active="false">Alerts</button>
+                                <button class="windowButtonsMenu" id="windowButtonsNotificationsMenu" data-type="notifications" data-active="false">Notifications</button>
+                                <button class="windowButtonsMenu" id="windowButtonsNeutralsMenu" data-type="neutrals" data-active="false">Neutrals</button>
                             </div>
                             <div id="windowButtonsMenuOptionsSection">
                                 <div id="windowButtonsMenuOptionsFirstSection">
@@ -3721,7 +3756,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const updateWindowStyleButtonsSettingsTitlesUI = () => {
                         /**
@@ -3962,8 +3997,8 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     buttonTypeSecond = 'dark';
                                     break;
                             }
-                            emojiUserListFirstEl.innerHTML = createEmojiListHtml(editingMainUserSettings.windows.button[buttonTypeFirst].animation.type, 'First');
-                            emojiUserListSecondEl.innerHTML = createEmojiListHtml(editingMainUserSettings.windows.button[buttonTypeSecond].animation.type, 'Second');
+                            emojiUserListFirstEl.innerHTML = DOMPurify.sanitize(createEmojiListHtml(editingMainUserSettings.windows.button[buttonTypeFirst].animation.type, 'First'));
+                            emojiUserListSecondEl.innerHTML = DOMPurify.sanitize(createEmojiListHtml(editingMainUserSettings.windows.button[buttonTypeSecond].animation.type, 'Second'));
                             showHideCopyPasteDeleteButtons();
                         }
                         setDefaultValues();
@@ -4113,7 +4148,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         const exampleSecondButtonEl = document.getElementById('exampleSecondButton');
                         const addRandomColor = document.querySelectorAll('.addRandomColor');
                         addRandomColor.forEach(button => {
-                            button.innerHTML = `<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`
+                            button.innerHTML = DOMPurify.sanitize(`<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
                             button.style.border = `1px solid ${checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff'}`;
                             button.style.backgroundColor = editingMainUserSettings.windows.button.primary.backgroundColor;
                         });
@@ -4551,10 +4586,10 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     settingsWindowRightSectionHtml = `
                         <div id="windowButtonsSection">
                             <div id="windowButtonsMenuSection">
-                                <buttons class="windowButtonsMenu" id="windowButtonsActionsMenu" data-type="actions" data-active="true">Actions</buttons>
-                                <buttons class="windowButtonsMenu" id="windowButtonsAlertsMenu" data-type="alerts" data-active="false">Alerts</buttons>
-                                <buttons class="windowButtonsMenu" id="windowButtonsNotificationsMenu" data-type="notifications" data-active="false">Notifications</buttons>
-                                <buttons class="windowButtonsMenu" id="windowButtonsNeutralsMenu" data-type="neutrals" data-active="false">Neutrals</buttons>
+                                <button class="windowButtonsMenu" id="windowButtonsActionsMenu" data-type="actions" data-active="true">Actions</button>
+                                <button class="windowButtonsMenu" id="windowButtonsAlertsMenu" data-type="alerts" data-active="false">Alerts</button>
+                                <button class="windowButtonsMenu" id="windowButtonsNotificationsMenu" data-type="notifications" data-active="false">Notifications</button>
+                                <button class="windowButtonsMenu" id="windowButtonsNeutralsMenu" data-type="neutrals" data-active="false">Neutrals</button>
                             </div>
                             <div id="windowButtonsMenuOptionsSection">
                                 <div id="windowButtonsMenuOptionsFirstSection">
@@ -4652,7 +4687,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const updateWindowStyleButtonsFontSettingsTitlesUI = () => {
                         /**
@@ -4842,7 +4877,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 html += `<span class="fontFamilyFirst" data-family="${font.fontFamily}">${font.fontFamily}</span>`;
                             });
 
-                            buttonsFontFamilyFirstMenuEl.innerHTML = html;
+                            buttonsFontFamilyFirstMenuEl.innerHTML = DOMPurify.sanitize(html);
                             const fontFamily = document.querySelectorAll('.fontFamilyFirst');
 
                             const showButtonsFontFamilyFirstMenu = () => {
@@ -4901,7 +4936,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             fontStyleArray.forEach(font => {
                                 html += `<span class="fontStyleFirst" data-style="${font}">${font}</span>`;
                             });
-                            buttonsFontStyleFirstMenuEl.innerHTML = html;
+                            buttonsFontStyleFirstMenuEl.innerHTML = DOMPurify.sanitize(html);
                             const fontStyle = document.querySelectorAll('.fontStyleFirst');
 
                             const showButtonsFontStyleFirstMenu = () => {
@@ -4957,7 +4992,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             fontWeightArray.forEach(font => {
                                 html += `<span class="fontWeightFirst" data-weight="${font}">${font}</span>`;
                             });
-                            buttonsFontWeightFirstMenuEl.innerHTML = html;
+                            buttonsFontWeightFirstMenuEl.innerHTML = DOMPurify.sanitize(html);
                             const fontWeight = document.querySelectorAll('.fontWeightFirst');
 
                             const showButtonsFontWeightFirstMenu = () => {
@@ -5019,7 +5054,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 html += `<span class="fontFamilySecond" data-family="${font.fontFamily}">${font.fontFamily}</span>`;
                             });
 
-                            buttonsFontFamilySecondMenuEl.innerHTML = html;
+                            buttonsFontFamilySecondMenuEl.innerHTML = DOMPurify.sanitize(html);
                             const fontFamily = document.querySelectorAll('.fontFamilySecond');
 
                             const showButtonsFontFamilySecondMenu = () => {
@@ -5078,7 +5113,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             fontStyleArray.forEach(font => {
                                 html += `<span class="fontStyleSecond" data-style="${font}">${font}</span>`;
                             });
-                            buttonsFontStyleSecondMenuEl.innerHTML = html;
+                            buttonsFontStyleSecondMenuEl.innerHTML = DOMPurify.sanitize(html);
                             const fontStyle = document.querySelectorAll('.fontStyleSecond');
 
                             const showButtonsFontStyleSecondMenu = () => {
@@ -5134,7 +5169,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             fontWeightArray.forEach(font => {
                                 html += `<span class="fontWeightSecond" data-weight="${font}">${font}</span>`;
                             });
-                            buttonsFontWeightSecondMenuEl.innerHTML = html;
+                            buttonsFontWeightSecondMenuEl.innerHTML = DOMPurify.sanitize(html);
                             const fontWeight = document.querySelectorAll('.fontWeightSecond');
 
                             const showButtonsFontWeightSecondMenu = () => {
@@ -5183,7 +5218,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         const exampleSecondButtonEl = document.getElementById('exampleSecondButton');
                         const addRandomColor = document.querySelectorAll('.addRandomColor');
                         addRandomColor.forEach(button => {
-                            button.innerHTML = `<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`
+                            button.innerHTML = DOMPurify.sanitize(`<svg fill="${editingMainUserSettings.windows.button.primary.font.color}" width="25px" height="25px" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m24.983 8.539v-2.485h-4.902l-3.672 5.945-2.099 3.414-3.24 5.256c-.326.51-.889.844-1.53.845h-9.54v-3.568h8.538l3.673-5.946 2.099-3.414 3.24-5.256c.325-.509.886-.843 1.525-.845h5.904v-2.485l7.417 4.27-7.417 4.27z"/><path d="m12.902 6.316-.63 1.022-1.468 2.39-2.265-3.675h-8.538v-3.568h9.54c.641.001 1.204.335 1.526.838l.004.007 1.836 2.985z"/><path d="m24.983 24v-2.485h-5.904c-.639-.002-1.201-.336-1.521-.838l-.004-.007-1.836-2.985.63-1.022 1.468-2.39 2.264 3.675h4.902v-2.485l7.417 4.27-7.417 4.27z"/></svg>`);
                             button.style.border = `1px solid ${checkIfColorBrightness(editingMainUserSettings.windows.window.backgroundColor, 120) ? '#000000' : '#ffffff'}`;
                             button.style.backgroundColor = editingMainUserSettings.windows.button.primary.backgroundColor;
                         });
@@ -5468,7 +5503,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const updateWindowStyleActivitySettingsTitlesUI = () => {
                         /**
@@ -5629,13 +5664,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         if (editAllUserActivityMenuBoxStatus == false) {
                             editAllUserActivityMenuBoxEl.style.display = 'none';
                             editAllUserActivityMenuBoxStatus = true;
-                            editAllUserActivityMenuBoxEl.innerHTML = menuHtml;
+                            editAllUserActivityMenuBoxEl.innerHTML = DOMPurify.sanitize(menuHtml);
                             return;
                         }
                         if (filterAllUserActivityMenuBoxStatus == false) {
                             userActivityFilterMenuBoxEl.style.display = 'none';
                             filterAllUserActivityMenuBoxStatus = true;
-                            userActivityFilterMenuBoxEl.innerHTML = menuHtml;
+                            userActivityFilterMenuBoxEl.innerHTML = DOMPurify.sanitize(menuHtml);
                         }
                         editAllUserActivityMenuBoxEl.style.display = 'flex';
                         editAllUserActivityMenuBoxStatus = false;
@@ -5659,7 +5694,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 </div>
                             `;
                         });
-                        editAllUserActivityMenuBoxEl.innerHTML = menuHtml;
+                        editAllUserActivityMenuBoxEl.innerHTML = DOMPurify.sanitize(menuHtml);
 
                         const toggleInput = document.querySelectorAll('.toggleInput');
                         const changeActivity = (el) => {
@@ -5688,18 +5723,18 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         const activityHeaderActionArrowEl = document.getElementById('activityHeaderActionArrow');
 
                         if (sortStateStatus.date == 'ascending') {
-                            activityHeaderDateArrowEl.innerHTML = sortDownArrowSvg;
+                            activityHeaderDateArrowEl.innerHTML = DOMPurify.sanitize(sortDownArrowSvg);
                         } else if (sortStateStatus.date == 'descending') {
-                            activityHeaderDateArrowEl.innerHTML = sortUpArrowSvg;
+                            activityHeaderDateArrowEl.innerHTML = DOMPurify.sanitize(sortUpArrowSvg);
                         } else if (sortStateStatus.date == 'none') {
-                            activityHeaderDateArrowEl.innerHTML = sortNoneSvg;
+                            activityHeaderDateArrowEl.innerHTML = DOMPurify.sanitize(sortNoneSvg);
                         }
                         if (sortStateStatus.action == 'ascending') {
-                            activityHeaderActionArrowEl.innerHTML = sortDownArrowSvg;
+                            activityHeaderActionArrowEl.innerHTML = DOMPurify.sanitize(sortDownArrowSvg);
                         } else if (sortStateStatus.action == 'descending') {
-                            activityHeaderActionArrowEl.innerHTML = sortUpArrowSvg;
+                            activityHeaderActionArrowEl.innerHTML = DOMPurify.sanitize(sortUpArrowSvg);
                         } else if (sortStateStatus.action == 'none') {
-                            activityHeaderActionArrowEl.innerHTML = sortNoneSvg;
+                            activityHeaderActionArrowEl.innerHTML = DOMPurify.sanitize(sortNoneSvg);
                         }
                     }
                     addArrowToSortingButtons();
@@ -5754,7 +5789,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                             <div class="action">${languageObject._activity._myActivity._activityListTitles[action.action]}</div>
                                             <div class="actionDetail">
                                                 <div class="detail">
-                                                    <div class="detailProfile" title="${action.details.profileName}">${truncateString(escapeHtml(action.details.profileName), 26, 0)}</div>
+                                                    <div class="detailProfile">${truncateString(escapeHtml(action.details.profileName), 26, 0)}</div>
                                                     <div class="detailOsAndBrowser">
                                                         <div class="os">${action.details.os}</div>
                                                         <div class="browser">${action.details.browser.name} ${action.details.browser.version}</div>
@@ -5816,7 +5851,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                             <div class="action">${languageObject._activity._myActivity._activityListTitles[action.action]}</div>
                                             <div class="actionDetail">
                                                 <div class="detail">
-                                                    <div class="detailProfile" title="${action.action == 'createBookmark' ? escapeHtml(action.details.bookmark.title) : escapeHtml(action.details.folder.title)}">${action.action == 'createBookmark' ? truncateString(escapeHtml(action.details.bookmark.title), 33, 0) : truncateString(escapeHtml(action.details.folder.title), 33, 0)}</div>
+                                                    <div class="detailProfile">${action.action == 'createBookmark' ? truncateString(escapeHtml(action.details.bookmark.title), 33, 0) : truncateString(escapeHtml(action.details.folder.title), 33, 0)}</div>
                                                     <div class="detailOsAndBrowser">
                                                         <div class="os">${action.details.os}</div>
                                                         <div class="browser">${action.details.browser.name} ${action.details.browser.version}</div>
@@ -5847,7 +5882,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                             <div class="action">${languageObject._activity._myActivity._activityListTitles[action.action]}</div>
                                             <div class="actionDetail">
                                                 <div class="detail">
-                                                    <div class="detailProfile" title="${action.action == 'deleteBookmark' ? escapeHtml(action.details.bookmark.title) : escapeHtml(action.details.folder.title)}">${action.action == 'deleteBookmark' ? truncateString(escapeHtml(action.details.bookmark.title), 33, 0) : truncateString(escapeHtml(action.details.folder.title), 33, 0)}</div>
+                                                    <div class="detailProfile">${action.action == 'deleteBookmark' ? truncateString(escapeHtml(action.details.bookmark.title), 33, 0) : truncateString(escapeHtml(action.details.folder.title), 33, 0)}</div>
                                                     <div class="detailOsAndBrowser">
                                                         <div class="os">${action.details.os}</div>
                                                         <div class="browser">${action.details.browser.name} ${action.details.browser.version}</div>
@@ -5869,7 +5904,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     `;
                                 }
                             });
-                            activityListEl.innerHTML = userActivityHtml;
+                            activityListEl.innerHTML = DOMPurify.sanitize(userActivityHtml);
 
                             const setStylesToActivityItem = () => {
                                 const activityItem = document.querySelectorAll('.activityItem');
@@ -5894,6 +5929,12 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                         if (parentElement) {
                                             parentElement.remove();
                                         }
+                                    });
+                                    el.addEventListener('mouseenter', (event) => {
+                                        event.target.style.backgroundColor = editingMainUserSettings.windows.button.danger.hoverBackgroundColor;
+                                    });
+                                    el.addEventListener('mouseleave', (event) => {
+                                        event.target.style.backgroundColor = editingMainUserSettings.windows.button.danger.backgroundColor;
                                     });
                                 });
                             }
@@ -6089,13 +6130,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         if (filterAllUserActivityMenuBoxStatus == false) {
                             userActivityFilterMenuBoxEl.style.display = 'none';
                             filterAllUserActivityMenuBoxStatus = true;
-                            userActivityFilterMenuBoxEl.innerHTML = menuHtml;
+                            userActivityFilterMenuBoxEl.innerHTML = DOMPurify.sanitize(menuHtml);
                             return;
                         }
                         if (editAllUserActivityMenuBoxStatus == false) {
                             editAllUserActivityMenuBoxEl.style.display = 'none';
                             editAllUserActivityMenuBoxStatus = true;
-                            editAllUserActivityMenuBoxEl.innerHTML = menuHtml;
+                            editAllUserActivityMenuBoxEl.innerHTML = DOMPurify.sanitize(menuHtml);
                         }
                         userActivityFilterMenuBoxEl.style.display = 'flex';
                         filterAllUserActivityMenuBoxStatus = false;
@@ -6119,7 +6160,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 </div>
                             `;
                         });
-                        userActivityFilterMenuBoxEl.innerHTML = menuHtml;
+                        userActivityFilterMenuBoxEl.innerHTML = DOMPurify.sanitize(menuHtml);
 
                         const toggleInput = document.querySelectorAll('.toggleInput');
                         const changeActivity = (el) => {
@@ -6193,13 +6234,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         }
 
                         const mouseenterDeleteAllUserActivity = (el) => {
-                            el.target.style.backgroundColor = editingMainUserSettings.windows.button.secondary.hoverBackgroundColor;
-                            el.target.style.color = editingMainUserSettings.windows.button.secondary.font.color;
+                            el.target.style.backgroundColor = editingMainUserSettings.windows.button.danger.hoverBackgroundColor;
                         }
 
                         const mouseleaveDeleteAllUserActivity = (el) => {
-                            el.target.style.backgroundColor = editingMainUserSettings.windows.button.secondary.backgroundColor;
-                            el.target.style.color = editingMainUserSettings.windows.button.secondary.font.color;
+                            el.target.style.backgroundColor = editingMainUserSettings.windows.button.danger.backgroundColor;
                         }
 
                         /**
@@ -6282,22 +6321,63 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     a.click();
                                 };
 
-                                /**
-                                 * Converts a JSON array to a CSV string.
-                                 *
-                                 * @param {Object[]} json - The JSON array to be converted. Each object in the array should have the same keys.
-                                 * @returns {string} The CSV string representation of the JSON array.
-                                 */
-                                const jsonToCSV = (json) => {
-                                    const keys = Object.keys(json[0]);
-                                    const csvRows = [keys.join(',')];
-                                    json.forEach(obj => {
-                                        const values = keys.map(key => obj[key]);
-                                        csvRows.push(values.join(','));
+                                const jsonToCSV = (jsonArray) => {
+                                    // Define the CSV headers
+                                    const headers = [
+                                        'Action',
+                                        'Timestamp',
+                                        'Profile name',
+                                        'Operating System',
+                                        'Browser Name',
+                                        'Browser Version',
+                                        'Bookmark/Folder Title',
+                                        'Bookmark URL'
+                                    ];
+
+                                    // Create an array to hold the CSV rows
+                                    const csvRows = [];
+                                    // Add the headers to the CSV rows
+                                    csvRows.push(headers.join(','));
+
+                                    // Iterate over each object in the JSON array
+                                    jsonArray.forEach(item => {
+                                        const findActivityTitle = userProfileExport.mainUserSettings.main.allowUserActivity.find(activity => activity.action === item.action);
+                                        const action = capitalizeString(findActivityTitle.title, 1, true);
+                                        const timestamp = item.timestamp;
+                                        const os = item.details.os;
+                                        const browserName = item.details.browser.name;
+                                        const browserVersion = item.details.browser.version;
+
+                                        // Determine the title and URL based on whether it's a bookmark or folder
+                                        const title = item.details.bookmark?.title || item.details.folder?.title || '';
+                                        const objectId = item.details.bookmark?.id || item.details.folder?.id || null;
+                                        const profileName = item.details?.profileName || '';
+                                        let object, url;
+
+                                        if (objectId) {
+                                            object = findBookmarkByKey(userProfileExport.currentUserBookmarks, objectId);
+                                            url = object?.url || '';
+                                        }
+
+                                        // Create a row for the current item
+                                        const row = [
+                                            action,
+                                            timestamp,
+                                            profileName,
+                                            os,
+                                            browserName,
+                                            browserVersion,
+                                            title,
+                                            url
+                                        ];
+
+                                        // Add the row to the CSV rows
+                                        csvRows.push(row.join(','));
                                     });
 
+                                    // Join all rows into a single CSV string
                                     return csvRows.join('\n');
-                                };
+                                }
 
                                 /**
                                  * Exports a JSON array to a CSV file.
@@ -6314,9 +6394,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     }
                                 };
 
-                                const preparingJson = removeAllNestingFromObj(userActivity.activities);
-
-                                exportToCSV(preparingJson);
+                                exportToCSV(userActivity.activities);
                             } catch (error) {
                                 console.error('Error', error);
                             }
@@ -6347,6 +6425,276 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         userActivityExportToCsvBtn.addEventListener('mouseleave', mouseleaveExportToCsvFile);
                     }
                     addEventListenersMyActivity();
+                    break;
+                case 'undoManager':
+                    const userBackgroundColor = editingMainUserSettings.windows.window.backgroundColor;
+                    const backgroundColorBrightness = checkIfColorBrightness(userBackgroundColor, 120) ? '#000000' : '#ffffff';
+                    const undoManagerLengthIconSVG = `
+                        <!--Icon by contributors from https://lucide.dev/icons/undo-dot, licensed under https://lucide.dev/license-->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${userProfileExport.mainUserSettings.windows.button.info.font.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle-question-icon lucide-message-circle-question"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                    `;
+                    const maxLengthOfActions = 10;
+
+                    settingsWindowRightSectionHtml = `
+                        <div id="undoManagerSection">
+                            <div id="undoManagerSectionStatusBox">
+                                <div id="undoManagerSectionStatusToggleAndTitle">
+                                    <label class="toggle" id="undoManagerSectionStatusToggleLabel" for="undoManagerSectionStatusToggle">
+                                        <input type="checkbox" class="toggleInput" id="undoManagerSectionStatusToggle" checked />
+                                        <span class="toggleTrack">
+                                            <span class="toggleIndicator">
+                                                <span class="checkMark">
+                                                    <svg viewBox="0 0 24 24" id="ghq-svg-check" role="presentation" aria-hidden="true">
+                                                        <path d="M9.86 18a1 1 0 01-.73-.32l-4.86-5.17a1.001 1.001 0 011.46-1.37l4.12 4.39 8.41-9.2a1 1 0 111.48 1.34l-9.14 10a1 1 0 01-.73.33h-.01z"></path>
+                                                    </svg>
+                                                </span>
+                                            </span>
+                                        </span>
+                                        <div id="undoManagerSectionStatusToggleTitleAndIcon">
+                                            <div id="undoManagerSectionStatusToggleTitle">Undo Manager Is Enabled</div>
+                                            <div id="undoManagerSectionStatusToggleIcon" class="undoManagerSectionIcon undoManagerSectionHideIcon"></div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="undoManagerSectionLengthBox">
+                                <div id="undoManagerSectionLengthInputAndTitle">
+                                    <div id="undoManagerSectionLengthInputAndIcon">
+                                        <input type="text" id="undoManagerSectionLengthInput" />
+                                        <div id="undoManagerSectionLengthInputInfoIcon" class="undoManagerSectionIcon undoManagerSectionHideIcon"></div>
+                                    </div>
+                                    <div id="undoManagerSectionLengthTitleAndIcon">
+                                        <div id="undoManagerSectionLengthTitle">Number of Actions to Save</div>
+                                        <div id="undoManagerSectionLengthTitleInfoIcon" class="undoManagerSectionIcon undoManagerSectionHideIcon"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
+
+                    /**
+                     * Updates the text content of the UI elements in the Undo Manager section
+                     * of the Settings window based on the user's preferred language.
+                     * @private
+                     */
+                    const updateWindowStyleUndoManagerSettingsTitlesUI = () => {
+                        /**
+                        * Helper function to update the text content of a given element.
+                        * @param {HTMLElement} element - The DOM element whose text content needs to be updated.
+                        * @param {string} text - The new text content to be set for the element.
+                        */
+                        const updateTextContent = (element, text) => {
+                            if (element && text !== undefined) {
+                                element.innerText = text;
+                            } else {
+                                console.error('Invalid arguments passed to updateTextContent()', { element: element, text: text });
+                            }
+                        };
+
+                        // Mapping of element IDs to their corresponding text values
+                        const titlesToUpdate = {
+                            undoManagerSectionLengthTitle: {
+                                id: 'undoManagerSectionLengthTitle',
+                                text: languageObject._preferences._undoManager.numberOfActionsToSave,
+                                classNames: []
+                            },
+                            undoManagerSectionStatusToggleTitle: {
+                                id: 'undoManagerSectionStatusToggleTitle',
+                                text: editingMainUserSettings.main.undoManager.status ? languageObject._preferences._undoManager.undoManagerIsEnabled : languageObject._preferences._undoManager.undoManagerIsDisabled,
+                                classNames: []
+                            },
+                        };
+
+                        // Update the text content and class of each UI element
+                        Object.entries(titlesToUpdate).forEach(([elementType, { id, text, classNames }]) => {
+                            let element;
+                            if (id.length > 0) {
+                                element = document.getElementById(id); // Try to get by ID
+                            } else if (classNames.length === 1) {
+                                element = document.getElementsByClassName(classNames[0]); // Try to get by class name
+                            } else if (classNames.length > 1) {
+                                classNames.forEach(className => {
+                                    element.push(document.getElementsByClassName(className));
+                                });
+                            }
+                            if (Array.isArray(element)) {
+                                element.forEach(element => {
+                                    updateTextContent(element, text);
+                                });
+                            } else {
+                                updateTextContent(element, text);
+                            }
+                        });
+                    }
+                    updateWindowStyleUndoManagerSettingsTitlesUI();
+
+                    /**
+                     * Sets default styles for the Undo Manager section input element.
+                     * This function applies a background color and border style to the input element
+                     * for the Undo Manager section length.
+                     */
+                    const setDefaultStylesToUndoManagerSection = () => {
+                        const undoManagerSectionLengthInputEl = document.getElementById('undoManagerSectionLengthInput');
+
+                        undoManagerSectionLengthInputEl.style.backgroundColor = colorPalette[7];
+                        undoManagerSectionLengthInputEl.style.border = `1px solid ${backgroundColorBrightness}`;
+                    }
+                    setDefaultStylesToUndoManagerSection();
+
+                    /**
+                     * Sets the default values for the Undo Manager section elements.
+                     * This function initializes the toggle status and input field for the undo manager
+                     * based on the user's settings, and adjusts the UI elements' visibility and state.
+                     */
+                    const setDefaultValuesToUndoManagerSection = () => {
+                        const undoManagerSectionStatusToggleEl = document.getElementById('undoManagerSectionStatusToggle');
+                        const undoManagerSectionLengthInputAndTitleEl = document.getElementById('undoManagerSectionLengthInputAndTitle');
+                        const undoManagerSectionLengthInputEl = document.getElementById('undoManagerSectionLengthInput');
+
+                        undoManagerSectionStatusToggleEl.checked = editingMainUserSettings.main.undoManager.status;
+                        undoManagerSectionLengthInputEl.value = editingMainUserSettings.main.undoManager.maxLength;
+                        if (editingMainUserSettings.main.undoManager.status) {
+                            undoManagerSectionLengthInputAndTitleEl.style.opacity = 1;
+                            undoManagerSectionLengthInputEl.disabled = false;
+                            if (editingMainUserSettings.main.undoManager.maxLength === 0) {
+                                undoManagerSectionLengthInputEl.value = defaultMainUserSettings.main.undoManager.maxLength;
+                            }
+                        } else {
+                            undoManagerSectionLengthInputAndTitleEl.style.opacity = 0;
+                            undoManagerSectionLengthInputEl.disabled = true;
+                        }
+                    }
+                    setDefaultValuesToUndoManagerSection();
+
+                    /**
+                     * Shows or hides the Undo Manager section length info icon.
+                     * @param {string} iconStatus - The status of the icon. 'show' or 'hide'.
+                     * @param {string} type - The type of the icon. 'info' or 'warning'.
+                     */
+                    const showUndoManagerSectionLengthInfoIcon = (iconStatus, type) => {
+                        const undoManagerSectionLengthTitleInfoIconEl = document.getElementById('undoManagerSectionLengthTitleInfoIcon');
+                        const undoManagerSectionLengthInputEl = document.getElementById('undoManagerSectionLengthInput');
+                        const backgroundColor = userProfileExport.mainUserSettings.windows.button.info.backgroundColor;
+
+                        const showHideElement = (id, position, message) => {
+                            const element = document.getElementById(id);
+                            if (iconStatus === 'hide') {
+                                element.classList.remove('undoManagerSectionShowIcon');
+                                element.classList.add('undoManagerSectionHideIcon');
+                                return;
+                            }
+                            if (iconStatus === 'show') {
+                                element.innerHTML = DOMPurify.sanitize(undoManagerLengthIconSVG);
+                                element.classList.remove('undoManagerSectionHideIcon');
+                                element.classList.add('undoManagerSectionShowIcon');
+                                element.setAttribute('style', `--undoManagerSectionIconColor: ${backgroundColor}; background-color: ${backgroundColor};`);
+
+                                const style = {
+                                    backgroundColor: editingMainUserSettings.windows.window.backgroundColor,
+                                    color: editingMainUserSettings.windows.window.font.color,
+                                    padding: '5px',
+                                    borderRadius: '5px',
+                                    border: `1px solid ${backgroundColorBrightness}`,
+                                    fontSize: `${editingMainUserSettings.windows.window.font.fontSize}px`,
+                                    fontWeight: editingMainUserSettings.windows.window.font.fontWeight,
+                                    fontFamily: editingMainUserSettings.windows.window.font.fontFamily,
+                                    maxWidth: '400px'
+                                }
+                                createTooltip(element, position, message, style);
+                            }
+                        }
+
+                        if (type === 'lengthTitle') {
+                            showHideElement('undoManagerSectionLengthTitleInfoIcon', 'top', languageObject._preferences._undoManager.messages.messageForLength);
+
+                            undoManagerSectionLengthTitleInfoIconEl.addEventListener('mouseenter', () => { undoManagerSectionLengthInputEl.blur(); });
+                        }
+                        if (type === 'lengthInput') {
+                            showHideElement('undoManagerSectionLengthInputInfoIcon', 'top', languageObject._preferences._undoManager.messages.messageForMaxLength);
+                        }
+                        if (type === 'turnOff') {
+                            showHideElement('undoManagerSectionStatusToggleIcon', 'bottom', languageObject._preferences._undoManager.messages.messageForManagerOff);
+                        }
+                    }
+
+                    /**
+                     * Adds event listeners to elements in the Undo Manager section of the settings window.
+                     * The event listeners are added to the toggle button for the Undo Manager, the input field for the maximum length of the action list, and the title and information icon for these elements.
+                     * The event listeners call the corresponding functions when the elements are interacted with.
+                     * @function addEventListenersToUndoManagerSection
+                     */
+                    const addEventListenersToUndoManagerSection = () => {
+                        const undoManagerSectionStatusToggleEl = document.getElementById('undoManagerSectionStatusToggle');
+                        const undoManagerSectionStatusToggleTitleEl = document.getElementById('undoManagerSectionStatusToggleTitle');
+                        const undoManagerSectionLengthInputAndTitleEl = document.getElementById('undoManagerSectionLengthInputAndTitle');
+                        const undoManagerSectionLengthInputEl = document.getElementById('undoManagerSectionLengthInput');
+
+                        const updateUndoManagerStatus = () => {
+                            const status = undoManagerSectionStatusToggleEl.checked;
+                            editingMainUserSettings.main.undoManager.status = status;
+                            if (status) {
+                                undoManagerSectionLengthInputEl.disabled = false;
+                                undoManagerSectionStatusToggleTitleEl.innerText = languageObject._preferences._undoManager.undoManagerIsEnabled;
+                                const value = undoManagerSectionLengthInputEl.value;
+                                const onlyNumbersInValue = value.replace(/[^0-9]/g, '');
+                                const valueAsNumber = parseInt(onlyNumbersInValue);
+                                if (valueAsNumber === 0) {
+                                    undoManagerSectionLengthInputEl.value = defaultMainUserSettings.main.undoManager.maxLength;
+                                }
+                                showUndoManagerSectionLengthInfoIcon('hide', 'turnOff');
+                                if (valueAsNumber > maxLengthOfActions && valueAsNumber > userProfileExport.mainUserSettings.main.undoManager.maxLength) {
+                                    showUndoManagerSectionLengthInfoIcon('show', 'lengthInput');
+                                }
+                                if (valueAsNumber < userProfileExport.mainUserSettings.main.undoManager.maxLength) {
+                                    showUndoManagerSectionLengthInfoIcon('show', 'lengthTitle');
+                                }
+                            } else {
+                                undoManagerSectionLengthInputEl.disabled = true;
+                                undoManagerSectionStatusToggleTitleEl.innerText = languageObject._preferences._undoManager.undoManagerIsDisabled;
+                                showUndoManagerSectionLengthInfoIcon('show', 'turnOff');
+                                showUndoManagerSectionLengthInfoIcon('hide', 'lengthTitle');
+                                showUndoManagerSectionLengthInfoIcon('hide', 'lengthInput');
+                            }
+                            gsap.to(undoManagerSectionLengthInputAndTitleEl, {
+                                duration: 1,
+                                opacity: status ? 1 : 0,
+                                onComplete: () => {
+                                }
+                            });
+                        }
+
+                        const updateUndoManagerActionsLength = () => {
+                            const value = undoManagerSectionLengthInputEl.value;
+                            if (/[^0-9]/.test(value)) {
+                                showMessageToastify('warning', '', `Please enter a valid number. Only numeric values are accepted.`, 2000, false, 'bottom', 'right', true, false);
+                            }
+                            const onlyNumbersInValue = value.replace(/[^0-9]/g, '');
+                            const valueAsNumber = parseInt(onlyNumbersInValue);
+                            undoManagerSectionLengthInputEl.value = onlyNumbersInValue;
+                            editingMainUserSettings.main.undoManager.maxLength = valueAsNumber;
+                            if (valueAsNumber === 0) {
+                                undoManagerSectionStatusToggleEl.checked = false;
+                                editingMainUserSettings.main.undoManager.status = false;
+                                undoManagerSectionStatusToggleTitleEl.innerText = languageObject._preferences._undoManager.undoManagerIsDisabled;
+                                undoManagerSectionLengthInputEl.disabled = true;
+                            }
+                            if (valueAsNumber < userProfileExport.mainUserSettings.main.undoManager.maxLength) {
+                                showUndoManagerSectionLengthInfoIcon('show', 'lengthTitle');
+                            } else {
+                                showUndoManagerSectionLengthInfoIcon('hide', 'lengthTitle');
+                            }
+                            if (valueAsNumber > maxLengthOfActions && valueAsNumber > userProfileExport.mainUserSettings.main.undoManager.maxLength) {
+                                showUndoManagerSectionLengthInfoIcon('show', 'lengthInput');
+                            } else {
+                                showUndoManagerSectionLengthInfoIcon('hide', 'lengthInput');
+                            }
+                        }
+
+                        undoManagerSectionStatusToggleEl.addEventListener('change', updateUndoManagerStatus);
+                        undoManagerSectionLengthInputEl.addEventListener('input', updateUndoManagerActionsLength);
+                    }
+                    addEventListenersToUndoManagerSection();
                     break;
                 case 'exportProfile':
                     let allowToSetPasswordToggle = false;
@@ -6411,7 +6759,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const updateWindowStyleExportSettingsTitlesUI = () => {
                         /**
@@ -6480,9 +6828,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         const progressContainerEl = document.getElementById('progressContainer');
                         const exportButtonEl = document.getElementById('exportButton');
 
-                        exportFileTitleInputEl.style.backgroundColor = colorPalette[1];
-                        exportFilePasswordInputEl.style.backgroundColor = colorPalette[1];
-                        progressContainerEl.style.backgroundColor = colorPalette[1];
+                        exportFileTitleInputEl.style.backgroundColor = colorPalette[4];
+                        exportFilePasswordInputEl.style.backgroundColor = colorPalette[4];
+                        progressContainerEl.style.backgroundColor = colorPalette[4];
                         exportButtonEl.style.backgroundColor = editingMainUserSettings.windows.button.primary.backgroundColor;
                     }
                     setDefaultStyleToElements();
@@ -6491,13 +6839,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         const exportSelectTypeEl = document.getElementById('exportSelectType');
 
                         let exportSelectTypeHtml = ``;
-                        exportSelectTypeEl.innerHTML = exportSelectTypeHtml;
+                        exportSelectTypeEl.innerHTML = DOMPurify.sanitize(exportSelectTypeHtml);
 
                         exportType.forEach(type => {
                             type.status = false;
                             const typeLanguageTitle = languageObject._exportImportOptions._exportProfile._exportTypes[type.type];
                             exportSelectTypeHtml += `
-                                <div class="exportTypeBox" style="background-color: ${colorPalette[1]};">
+                                <div class="exportTypeBox" style="background-color: ${colorPalette[4]};">
                                     <label class="toggle" for="${type.type}Export">
                                         <input type="checkbox" class="toggleInput exportToggleInput" id="${type.type}Export" data-type="${type.type}" ${type.status ? 'checked' : ''} />
                                         <span class="toggleTrack">
@@ -6514,7 +6862,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 </div>
                             `;
                         });
-                        exportSelectTypeEl.innerHTML = exportSelectTypeHtml;
+                        exportSelectTypeEl.innerHTML = DOMPurify.sanitize(exportSelectTypeHtml);
 
                         const exportToggleInput = document.querySelectorAll('.exportToggleInput');
 
@@ -6669,11 +7017,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
 
                         const toggleShowPasswordIcon = () => {
                             if (isPasswordVisible) {
-                                passwordShowHideIconBtn.innerHTML = hidePasswordSvg;
+                                passwordShowHideIconBtn.innerHTML = (hidePasswordSvg);
                                 isPasswordVisible = false;
                                 exportFilePasswordInputEl.setAttribute('type', 'password');
                             } else {
-                                passwordShowHideIconBtn.innerHTML = showPasswordSvg;
+                                passwordShowHideIconBtn.innerHTML = DOMPurify.sanitize(showPasswordSvg);
                                 exportFilePasswordInputEl.setAttribute('type', 'text');
                                 isPasswordVisible = true;
                             }
@@ -6707,12 +7055,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
 
                                 if (fileName.length <= 0) {
                                     showErrorToInputFileName();
-                                    showMessageToastify('error', ``, `Enter a file name. The maximum length does not exceed 150 characters.`, 6000, false, 'bottom', 'right', true);
-                                    throw Error('Enter a file name. The maximum length does not exceed 150 characters.');
+                                    showMessageToastify('error', ``, `Please enter a file name. Keep it under 150 characters!`, 6000, false, 'bottom', 'right', true);
+                                    throw Error('Please enter a file name. Keep it under 150 characters!');
                                 }
                                 if (!statusFilter) {
                                     const exportTypeBox = document.querySelectorAll('.exportTypeBox');
                                     exportTypeBox.forEach((el, index) => {
+                                        const elBackgroundColor = el.style.backgroundColor;
                                         // Shake the elements to indicate an error
                                         gsap.fromTo(el, 0.2, {
                                             x: -3,
@@ -6720,17 +7069,17 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                             x: 3,
                                             delay: index / .85 - index,
                                             repeat: 1,
-                                            backgroundColor: editingMainUserSettings.windows.button.danger.backgroundColor,
+                                            backgroundColor: editingMainUserSettings.windows.button.warning.backgroundColor,
                                             yoyo: true,
                                             ease: Quad.easeInOut,
                                             onComplete: () => {
                                                 gsap.set(el, { clearProps: 'all' });
                                                 gsap.killTweensOf(el);
-                                                el.style.backgroundColor = colorPalette[1];
+                                                el.style.backgroundColor = elBackgroundColor;
                                             }
                                         });
                                     });
-                                    showMessageToastify('error', ``, `Select the export type.`, 4000, false, 'bottom', 'right', true);
+                                    showMessageToastify('warning', ``, `Please choose an export type before proceeding.`, 4000, false, 'bottom', 'right', true);
                                     throw Error('Must select export type');
                                 }
 
@@ -6872,7 +7221,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     if (number == -1) {
                                         progressBarEl.style.width = `2%`;
                                         progressNumberEl.style.left = `15px`;
-                                        progressNumberEl.innerHTML = `0%`;
+                                        progressNumberEl.innerText = `0%`;
                                         return;
                                     }
                                     number <= 100 ? number += randomIntFromInterval(5, 10) : number = 100;
@@ -6882,7 +7231,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     } else {
                                         progressNumberEl.style.left = `91%`;
                                     }
-                                    progressNumberEl.innerHTML = `${number > 100 ? 100 : number}%`;
+                                    progressNumberEl.innerText = (`${number > 100 ? 100 : number}%`);
                                     if (number >= 100) {
                                         clearInterval(update);
                                         if (allowToSetPasswordToggle && passwordValue.length > 0) {
@@ -7005,7 +7354,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const updateWindowStyleImportSettingsTitlesUI = () => {
                         /**
@@ -7130,7 +7479,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 <div id="importFileVerificationMiddle" style="background-color: ${colorPalette[2]};"></div>
                             </div>
                         `;
-                        importFileInfoMiddleDetailEl.innerHTML = importFileInfoMiddleDetailHtml;
+                        importFileInfoMiddleDetailEl.innerHTML = DOMPurify.sanitize(importFileInfoMiddleDetailHtml);
 
                         const updateWindowStyleImportApplyTitlesUI = () => {
                             /**
@@ -7222,7 +7571,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
 
                             if (showDetailErrorStatus) {
                                 importFileVerificationMiddleEl.innerHTML = ``;
-                                importFileVerificationStatusShowDetailEl.innerHTML = html;
+                                importFileVerificationStatusShowDetailEl.innerHTML = DOMPurify.sanitize(html);
 
                                 setTimeout(() => {
                                     const errorListElArray = document.querySelectorAll('.errorList');
@@ -7320,7 +7669,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     </div>
                                 `;
                             });
-                            importFileVerificationMiddleEl.innerHTML = `
+                            importFileVerificationMiddleEl.innerHTML = DOMPurify.sanitize(`
                                 <div id="importFileVerificationResultTable">
                                     <div id="importFileVerificationResultTableHeader" style="background-color: ${colorPalette[4]};">
                                         <div id="resultTableHeaderName">Name</div>
@@ -7331,7 +7680,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                         ${importFileVerificationResultTableHtml}
                                     </div>
                                 </div>
-                            `;
+                            `);
 
                             const updateWindowStyleImportApplyTableTitlesUI = () => {
                                 /**
@@ -7619,11 +7968,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
 
                                             filePickerInputFileNameEl.value = '';
                                             fileData = null;
-                                            importFileInfoMiddleDetailEl.innerHTML = '';
+                                            importFileInfoMiddleDetailEl.innerHTML = DOMPurify.sanitize('');
                                             filePickerInputFileNameEl.setAttribute('title', '');
-                                            filePickerInputFileNameEl.innerHTML = '';
-                                            importFileSizeEl.innerHTML = '';
-                                            importFileDateEl.innerHTML = '';
+                                            filePickerInputFileNameEl.innerHTML = DOMPurify.sanitize('');
+                                            importFileSizeEl.innerHTML = DOMPurify.sanitize('');
+                                            importFileDateEl.innerHTML = DOMPurify.sanitize('');
                                             importFileInfoTopEl.style.opacity = 0;
                                             setDefaultValues();
                                         }
@@ -7705,7 +8054,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 </div>
                             </div>
                         `;
-                        importFileInfoMiddleDetailEl.innerHTML = importFileInfoMiddleDetailHtml;
+                        importFileInfoMiddleDetailEl.innerHTML = DOMPurify.sanitize(importFileInfoMiddleDetailHtml);
 
                         const updateWindowStyleImportDetailTitlesUI = () => {
                             /**
@@ -7841,7 +8190,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 </div>
                             </div>
                         `;
-                        importFileInfoMiddleDetailEl.innerHTML = importFileInfoMiddleDetailHtml;
+                        importFileInfoMiddleDetailEl.innerHTML = DOMPurify.sanitize(importFileInfoMiddleDetailHtml);
 
                         const updateWindowStyleImportDecryptionTitlesUI = () => {
                             /**
@@ -7921,11 +8270,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             const importFilePasswordInputEl = document.getElementById('importFilePasswordInput');
                             const passwordShowHideIconEl = document.getElementById('passwordShowHideIcon');
                             if (isPasswordVisibleImport) {
-                                passwordShowHideIconEl.innerHTML = showPasswordImportSvg;
+                                passwordShowHideIconEl.innerHTML = DOMPurify.sanitize(showPasswordImportSvg);
                                 isPasswordVisibleImport = false;
                                 importFilePasswordInputEl.setAttribute('type', 'text');
                             } else {
-                                passwordShowHideIconEl.innerHTML = hidePasswordImportSvg;
+                                passwordShowHideIconEl.innerHTML = DOMPurify.sanitize(hidePasswordImportSvg);
                                 isPasswordVisibleImport = true;
                                 importFilePasswordInputEl.setAttribute('type', 'password');
                             }
@@ -7953,7 +8302,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                 if (event.type !== 'change') { throw Error('File picker input must have a change event'); }
                                 const importFileInfoIncludeEl = document.getElementById('importFileInfoInclude');
                                 const importFileInfoMiddleDetailEl = document.getElementById('importFileInfoMiddleDetail');
-                                importFileInfoMiddleDetailEl.innerHTML = '';
+                                importFileInfoMiddleDetailEl.innerHTML = DOMPurify.sanitize('');
                                 importFileInfoIncludeEl.textContent = '';
                                 fileData = null;
                                 const file = event.target.files[0];
@@ -8015,11 +8364,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
 
                             filePickerInputFileNameEl.value = '';
                             fileData = null;
-                            importFileInfoMiddleDetailEl.innerHTML = '';
+                            importFileInfoMiddleDetailEl.innerHTML = ('');
                             filePickerInputFileNameEl.setAttribute('title', '');
-                            filePickerInputFileNameEl.innerHTML = '';
-                            importFileSizeEl.innerHTML = '';
-                            importFileDateEl.innerHTML = '';
+                            filePickerInputFileNameEl.innerHTML = ('');
+                            importFileSizeEl.innerHTML = ('');
+                            importFileDateEl.innerHTML = ('');
                             importFileInfoTopEl.style.opacity = 0;
                             setDefaultValues();
                         }
@@ -8199,7 +8548,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
                     const updateWindowStyleSynchronizeSettingsTitlesUI = () => {
                         /**
@@ -8400,10 +8749,10 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         checkArray.forEach((check, index) => {
                             if (check.dataset.id === id && liArray[index].dataset.id === id) {
                                 liArray[index].style.setProperty('--lineWidth', '5px');
-                                check.innerHTML = forbiddenBookmarkIdArray.includes(id) ? notAllowCheckMarkSVG : checkMarkSVG;
+                                check.innerHTML = DOMPurify.sanitize(forbiddenBookmarkIdArray.includes(id) ? notAllowCheckMarkSVG : checkMarkSVG);
                             } else {
                                 liArray[index].style.setProperty('--lineWidth', '15px');
-                                check.innerHTML = '';
+                                check.innerHTML = DOMPurify.sanitize('');
                             }
                         });
                         if (id.length === 0) { return; }
@@ -8496,7 +8845,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             for (let i = 0; i < arrowRightEl.length; i++) {
                                 gsap.killTweensOf(arrowRightEl[i]);
                             }
-                            synchronizeVisualArrowTopEl.innerHTML = '';
+                            synchronizeVisualArrowTopEl.innerHTML = DOMPurify.sanitize('');
                             clearTimeout(timeOutTop);
                             clearTimeout(timeOutBottom);
                             extensionsLogoSVG.style.fill = '#ff6666';
@@ -8507,7 +8856,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             for (let i = 0; i < 9; i++) {
                                 synchronizeVisualArrowTopHtml += `<svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="green" stroke="#000" stroke-width="1" class="arrowRight"><path d="m0,99.85741l0,-99.85741l100,49.92871l-100,49.92871z"/></svg>`;
                             }
-                            synchronizeVisualArrowTopEl.innerHTML = synchronizeVisualArrowTopHtml;
+                            synchronizeVisualArrowTopEl.innerHTML = DOMPurify.sanitize(synchronizeVisualArrowTopHtml);
                             const arrowRightEl = document.querySelectorAll('.arrowRight');
                             const extensionsLogoSVG = document.getElementById('extensionsLogo');
 
@@ -8556,7 +8905,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             for (let i = 0; i < 9; i++) {
                                 synchronizeVisualArrowBottomHtml += `<svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="green" stroke="#000" stroke-width="1" class="arrowLeft"><path d="m99.42575,99.0906l-99.22305,-49.5453l99.22305,-49.5453l0,99.0906z"/></svg>`;
                             }
-                            synchronizeVisualArrowBottomEl.innerHTML = synchronizeVisualArrowBottomHtml;
+                            synchronizeVisualArrowBottomEl.innerHTML = DOMPurify.sanitize(synchronizeVisualArrowBottomHtml);
                             const arrowLeftEl = document.querySelectorAll('.arrowLeft');
                             const stopColorArray = document.querySelectorAll('.stopColor');
                             for (let i = arrowLeftEl.length - 1; i >= 0; i--) {
@@ -8707,13 +9056,14 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             // Return the generated HTML
                             return htmlOutput;
                         };
-                        synchronizeBrowserBookmarksContainerMiddleFolderTreeEl.innerHTML = generateHtmlListFromData();
+                        synchronizeBrowserBookmarksContainerMiddleFolderTreeEl.innerHTML = DOMPurify.sanitize(generateHtmlListFromData());
 
                         setCheckerToFolderTree();
 
                         const setDefaultValues = () => {
                             synchronizeBrowserBookmarksContainerMiddleFolderStatusEl.style.backgroundColor = colorPalette[1];
                             synchronizeBrowserBookmarksContainerMiddleFolderTreeEl.style.backgroundColor = colorPalette[2];
+                            synchronizeBrowserBookmarksContainerMiddleFolderTreeEl.setAttribute('style', `--lineColor: ${editingMainUserSettings.windows.window.font.color};`);
                         }
                         setDefaultValues();
 
@@ -9233,8 +9583,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                             </div>
                         </div>
                     `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                    settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
+                    /**
+                     * Add icons to buttons.
+                     *
+                     * @function addIconsToButtons
+                     */
                     const addIconsToButtons = () => {
                         const shareFirefoxIconEl = document.getElementById('shareFirefoxIcon');
                         const twitterIconSvgEl = document.getElementById('twitterIconSvg');
@@ -9242,14 +9597,20 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         const shareGitHubButton = document.getElementById('shareGitHub');
                         const shareBuyMeACoffeeButton = document.getElementById('shareBuyMeACoffee');
 
-                        twitterIconSvgEl.innerHTML = twitterIcon;
-                        shareFirefoxIconEl.innerHTML = firefoxIcon;
-                        shareFirefoxMessageIconEl.innerHTML = firefoxMessageIcon;
-                        shareGitHubButton.innerHTML = githubIcon;
-                        shareBuyMeACoffeeButton.innerHTML = buyMeACoffeeIcon;
+                        twitterIconSvgEl.innerHTML = DOMPurify.sanitize(twitterIcon);
+                        shareFirefoxIconEl.innerHTML = DOMPurify.sanitize(firefoxIcon);
+                        shareFirefoxMessageIconEl.innerHTML = DOMPurify.sanitize(firefoxMessageIcon);
+                        shareGitHubButton.innerHTML = DOMPurify.sanitize(githubIcon);
+                        shareBuyMeACoffeeButton.innerHTML = DOMPurify.sanitize(buyMeACoffeeIcon);
                     }
                     addIconsToButtons();
 
+                    /**
+                     * Retrieves the URL for the specified type.
+                     *
+                     * @param {string} type The type of URL to retrieve. Possible values are 'firefox', 'twitter', 'github', and 'buymeacoffee'.
+                     * @returns {string} The URL for the specified type.
+                     */
                     const getAllSavedUrls = (type) => {
                         switch (type) {
                             case 'firefox':
@@ -9276,6 +9637,10 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         }
                     }
 
+                    /**
+                     * Copies the provided text to the clipboard and shows a toast notification.
+                     * @param {string} text - The text to be copied to the clipboard.
+                     */
                     const copyTextToClipboard = (text) => {
                         navigator.clipboard.writeText(text).then(() => {
                             showMessageToastify('info', ``, `URL copied to clipboard successfully!`, 4000, false, 'bottom', 'right', true);
@@ -9284,6 +9649,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         });
                     }
 
+                    /**
+                     * Adds event listeners to share buttons.
+                     */
                     const addEventListenerToShareButtons = () => {
                         const shareFirefoxButton = document.getElementById('shareFirefox');
                         const shareTwitterButton = document.getElementById('shareTwitter');
@@ -9468,7 +9836,7 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                                     onComplete: () => {
                                         gsap.killTweensOf(twitterIconEl); // Stops any ongoing animations on the element.
                                         gsap.set(twitterIconEl, { clearProps: 'all' }); // Resets all properties of the element to their initial state.
-                                        twitterIconSvgEl.innerHTML = twitterIconX;
+                                        twitterIconSvgEl.innerHTML = DOMPurify.sanitize(twitterIconX);
                                         const twitterIconXEl = document.getElementById('twitterIconX');
                                         if (twitterIconXEl) {
                                             gsap.fromTo(twitterIconXEl, {
@@ -9801,15 +10169,110 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     }
                     addEventListenerToShareButtons();
                     break;
-                case 'aboutChangelog':
-                    settingsWindowRightSectionHtml = `
-                        <div id="changeLogSection">
-                            <div id="changeLog">
-                                ${getInfoFromVersion('getAllLog')}
+                case 'changelog':
+                    /**
+                     * Reads the 'CHANGELOG.md' document and displays it in the right section.
+                     * @param {string} dataValue - The value of the menu item that was clicked.
+                     * @returns {Promise<void>} - A promise that resolves or rejects based on the
+                     * successful reading of the 'CHANGELOG.md' document.
+                     */
+                    readFile(filesLocationFromThis.changelog).then(text => {
+                        settingsWindowRightSectionHtml = `
+                            <div class="aboutDocumentations" style="--fontColor: ${editingMainUserSettings.windows.window.font.color};--highlightColor5: ${colorPalette[5]};--highlightColor8: ${colorPalette[8]};">
+                                <div id="changeLog" class="documentationsMarkdown">
+                                    ${ marked.parse(text) }
+                                </div>
                             </div>
-                        </div>
-                    `;
-                    settingsWindowRightSectionEl.innerHTML = settingsWindowRightSectionHtml;
+                        `;
+                        settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
+                    }).catch(error => {
+                        console.error(error);
+                        showMessageToastify('error', ``, `Error: Unable to read the '${filesLocationFromThis.changelog}' file. Please contact support if the issue persists.`, 4000, false, 'bottom', 'right', true);
+                    });
+                    break;
+                case 'termsOfUse':
+                    /**
+                     * Reads the 'TERMS_OF_USE.md' document and displays it in the right section.
+                     * @param {string} dataValue - The value of the menu item that was clicked.
+                     * @returns {Promise<void>} - A promise that resolves or rejects based on the
+                     * successful reading of the 'TERMS_OF_USE.md' document.
+                     */
+                    readFile(filesLocationFromThis.termsOfUse).then(text => {
+                        settingsWindowRightSectionHtml = `
+                            <div class="aboutDocumentations" style="--fontColor: ${editingMainUserSettings.windows.window.font.color};--highlightColor5: ${colorPalette[5]};--highlightColor8: ${colorPalette[8]};">
+                                <div class="documentationsMarkdown">
+                                    ${ marked.parse(text) }
+                                </div>
+                            </div>
+                        `;
+                        settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
+                    }).catch(error => {
+                        console.error(error);
+                        showMessageToastify('error', ``, `Error: Unable to read the '${filesLocationFromThis.termsOfUse}' file. Please contact support if the issue persists.`, 4000, false, 'bottom', 'right', true);
+                    });
+                    break;
+                case 'license':
+                    /**
+                     * Reads the 'LICENSE.md' document and displays it in the right section.
+                     * @param {string} dataValue - The value of the menu item that was clicked.
+                     * @returns {Promise<void>} - A promise that resolves or rejects based on the
+                     * successful reading of the 'LICENSE.md' document.
+                     */
+                    readFile(filesLocationFromThis.license).then(text => {
+                        settingsWindowRightSectionHtml = `
+                            <div class="aboutDocumentations" style="--fontColor: ${editingMainUserSettings.windows.window.font.color};--highlightColor5: ${colorPalette[5]};--highlightColor8: ${colorPalette[8]};">
+                                <div class="documentationsMarkdown">
+                                    ${ marked.parse(text) }
+                                </div>
+                            </div>
+                        `;
+                        settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
+                    }).catch(error => {
+                        console.error(error);
+                        showMessageToastify('error', ``, `Error: Unable to read the '${filesLocationFromThis.license}' file. Please contact support if the issue persists.`, 4000, false, 'bottom', 'right', true);
+                    });
+                    break;
+                case 'privacyPolicy':
+                    /**
+                     * Reads the 'privacy-policy.md' document and displays it in the right section.
+                     * @param {string} dataValue - The value of the menu item that was clicked.
+                     * @returns {Promise<void>} - A promise that resolves or rejects based on the
+                     * successful reading of the 'privacy-policy.md' document.
+                     */
+                    readFile(filesLocationFromThis.privacyPolicy).then(text => {
+                        settingsWindowRightSectionHtml = `
+                            <div class="aboutDocumentations" style="--fontColor: ${editingMainUserSettings.windows.window.font.color};--highlightColor5: ${colorPalette[5]};--highlightColor8: ${colorPalette[8]};">
+                                <div class="documentationsMarkdown">
+                                    ${ marked.parse(text) }
+                                </div>
+                            </div>
+                        `;
+                        settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
+                    }).catch(error => {
+                        console.error(error);
+                        showMessageToastify('error', ``, `Error: Unable to read the '${filesLocationFromThis.privacyPolicy}' file. Please contact support if the issue persists.`, 4000, false, 'bottom', 'right', true);
+                    });
+                    break;
+                case 'security':
+                    /**
+                     * Reads the 'security.md' document and displays it in the right section.
+                     * @param {string} dataValue - The value of the menu item that was clicked.
+                     * @returns {Promise<void>} - A promise that resolves or rejects based on the
+                     * successful reading of the 'security.md' document.
+                     */
+                    readFile(filesLocationFromThis.security).then(text => {
+                        settingsWindowRightSectionHtml = `
+                            <div class="aboutDocumentations" style="--fontColor: ${editingMainUserSettings.windows.window.font.color};--highlightColor5: ${colorPalette[5]};--highlightColor8: ${colorPalette[8]};">
+                                <div class="documentationsMarkdown">
+                                    ${ marked.parse(text) }
+                                </div>
+                            </div>
+                        `;
+                        settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
+                    }).catch(error => {
+                        console.error(error);
+                        showMessageToastify('error', ``, `Error: Unable to read the '${filesLocationFromThis.security}' file. Please contact support if the issue persists.`, 4000, false, 'bottom', 'right', true);
+                    });
                     break;
                 default:
                     console.error('%c%s', '', `Wrong data ${data}`);

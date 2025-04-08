@@ -31,6 +31,8 @@
  * - Emoji Mart (MIT License)
  * - jQuery Knob (MIT License)
  * - Howler (MIT License)
+ * - Marked (MIT License)
+ * - DOMPurify (Apache License Version 2.0)
  *
  * All third-party libraries are included under their respective licenses.
  * For more information, please refer to the documentation of each library.
@@ -809,7 +811,7 @@ const createPopupWindow = (status) => {
 
     if (status === 'new') {
         const gsapDuration = 8;
-        contentEl.innerHTML = `
+        contentEl.innerHTML = DOMPurify.sanitize(`
             <div id="popupMainWindow">
                 <div id="popupMainWindowTopWelcomeMessage">Welcome to the Bookmark Manager PRO!</div>
                 <div id="popupMainWindowTopMessage">Thank you for installing this extension! We truly appreciate your support. To begin, please open a new tab in your browser. You can do this by locating the plus (+) icon typically found at the top of your browser window. Alternatively, you can click the button below to open a new tab directly. Once the new tab is open, follow the instructions provided to get started.</div>
@@ -835,7 +837,7 @@ const createPopupWindow = (status) => {
                     </svg>
                 </div>
             </div>
-        `;
+        `);
 
         gsap.fromTo('#stopColor11', {
             attr: {
@@ -964,7 +966,7 @@ const createPopupWindow = (status) => {
         return;
     }
 
-    contentEl.innerHTML = `
+    contentEl.innerHTML = DOMPurify.sanitize(`
         <div id="popupMainWindow">
             <div id="popupMainWindowTop">
                 <div id="currentUserNameAndImage">
@@ -979,7 +981,7 @@ const createPopupWindow = (status) => {
             <div id="popupMainWindowMiddle"></div>
             <div id="popupMainWindowBottom"></div>
         </div>
-    `;
+    `);
 
     const setDefaultStyle = () => {
         const bodyEl = document.getElementsByTagName('body')[0];
@@ -1033,7 +1035,7 @@ const createPopupWindow = (status) => {
                 <div id="liveRadioPlayListContainer"></div>
             </div>
         `;
-        popupMainWindowMiddleEl.innerHTML = popupMainWindowMiddleHtml;
+        popupMainWindowMiddleEl.innerHTML = DOMPurify.sanitize(popupMainWindowMiddleHtml);
     }
     createPopupMainWindowMiddle();
 
@@ -1077,16 +1079,16 @@ const createPopupWindow = (status) => {
                 <button id="liveRadioPlayListButton">${radioPlayListButtonSVG}</button>
             </div>
         `;
-        liveRadioContainerEl.innerHTML = liveRadioContainerHtml;
+        liveRadioContainerEl.innerHTML = DOMPurify.sanitize(liveRadioContainerHtml);
 
         const changeButtonIconAndRadioIcon = () => {
             const liveRadioControlPlayStopButtonEl = document.getElementById('liveRadioControlPlayStopButton');
             if (isUserSelectedOnlineRadioPlaying) {
-                liveRadioControlPlayStopButtonEl.innerHTML = radioStopButtonSVG;
+                liveRadioControlPlayStopButtonEl.innerHTML = DOMPurify.sanitize(radioStopButtonSVG);
                 timeLineForRadioImageRotation.paused(false);
                 return;
             }
-            liveRadioControlPlayStopButtonEl.innerHTML = radioPlayButtonSVG;
+            liveRadioControlPlayStopButtonEl.innerHTML = DOMPurify.sanitize(radioPlayButtonSVG);
             timeLineForRadioImageRotation.paused(true);
         }
 
@@ -1229,7 +1231,7 @@ const createPopupWindow = (status) => {
                 <div id="liveRadioAdvancedMenu"></div>
                 <div id="liveRadioAdvancedMenuBlur"></div>
             `;
-            liveRadioPlayListContainerEl.innerHTML = liveRadioPlayListContainerHtml;
+            liveRadioPlayListContainerEl.innerHTML = DOMPurify.sanitize(liveRadioPlayListContainerHtml);
             liveRadioPlayListContainerEl.style.backgroundColor = colorPalette[4];
 
             const findServerForRadioBrowserInfo = () => {
@@ -1331,7 +1333,7 @@ const createPopupWindow = (status) => {
                 `;
                 }
 
-                liveRadioPlayListMiddleEl.innerHTML = liveRadioPlayListMiddleHtml;
+                liveRadioPlayListMiddleEl.innerHTML = DOMPurify.sanitize(liveRadioPlayListMiddleHtml);
 
                 // Check for overflow after the elements are rendered
                 const stationNames = document.querySelectorAll('.stationName, .stationCountry');
@@ -1400,7 +1402,7 @@ const createPopupWindow = (status) => {
                     </div>
                 </div>
             `;
-                liveRadioAdvancedMenuEl.innerHTML = liveRadioAdvancedMenuHtml;
+                liveRadioAdvancedMenuEl.innerHTML = DOMPurify.sanitize(liveRadioAdvancedMenuHtml);
 
                 const setDefaultValuesToAdvancedMenu = () => {
                     const liveRadioPlaySearchLimitEl = document.getElementById('liveRadioPlaySearchLimit');
@@ -1488,7 +1490,7 @@ const createPopupWindow = (status) => {
                 const liveRadioAdvancedMenuBlurEl = document.getElementById('liveRadioAdvancedMenuBlur');
 
                 const liveRadioPlayListInputText = () => {
-                    liveRadioPlayListMiddleEl.innerHTML = '';
+                    liveRadioPlayListMiddleEl.innerHTML = DOMPurify.sanitize('');
                     if (liveRadioPlayListInputEl.value.trim().length > 0) {
                         liveRadioPlayListDeleteInputTextButtonEl.style.display = 'flex';
                     } else {
@@ -1499,7 +1501,7 @@ const createPopupWindow = (status) => {
                 const liveRadioPlayListDeleteInputText = () => {
                     liveRadioPlayListInputEl.value = '';
                     liveRadioPlayListDeleteInputTextButtonEl.style.display = 'none';
-                    liveRadioPlayListMiddleEl.innerHTML = '';
+                    liveRadioPlayListMiddleEl.innerHTML = DOMPurify.sanitize('');
                 }
 
                 const removeAdvancedMenu = (el) => {
@@ -1510,7 +1512,7 @@ const createPopupWindow = (status) => {
                 const liveRadioSearch = () => {
                     const searchValue = liveRadioPlayListInputEl.value;
                     if (searchValue.trim().length === 0) {
-                        liveRadioPlayListMiddleEl.innerHTML = `<div id="loaderContainerMessages">Please enter a search term to continue.</div>`;
+                        liveRadioPlayListMiddleEl.innerHTML = DOMPurify.sanitize(`<div id="loaderContainerMessages">Please enter a search term to continue.</div>`);
                         gsap.fromTo(liveRadioPlayListInputEl, 0.2, {
                             x: -2,
                             border: `2px solid ${userActiveProfile.mainUserSettings.windows.button.danger.backgroundColor}`,
@@ -1527,7 +1529,7 @@ const createPopupWindow = (status) => {
                         });
                         return;
                     }
-                    liveRadioPlayListMiddleEl.innerHTML = `<div id="loaderContainer">${loaderPinwheel}</div>`;
+                    liveRadioPlayListMiddleEl.innerHTML = DOMPurify.sanitize(`<div id="loaderContainer">${loaderPinwheel}</div>`);
                     gsap.to("#loader", {
                         rotation: 360,
                         duration: 2,
@@ -1558,10 +1560,10 @@ const createPopupWindow = (status) => {
                                 searchResultArray = stations;
                                 createStationList(stations);
                             } else {
-                                liveRadioPlayListMiddleEl.innerHTML = `<div id="loaderContainerMessages">We couldn't find any results for '${searchTerm}'. Consider changing your search term or modifying the search parameters.</div>`;
+                                liveRadioPlayListMiddleEl.innerHTML = DOMPurify.sanitize(`<div id="loaderContainerMessages">We couldn't find any results for '${searchTerm}'. Consider changing your search term or modifying the search parameters.</div>`);
                             }
                         } catch (error) {
-                            liveRadioPlayListMiddleEl.innerHTML = `<div id="loaderContainerMessages">An error occurred while processing your request. Please try again later.</div>`;
+                            liveRadioPlayListMiddleEl.innerHTML = DOMPurify.sanitize(`<div id="loaderContainerMessages">An error occurred while processing your request. Please try again later.</div>`);
                             console.error('Error fetching stations:', error);
                         }
                     };
@@ -1735,7 +1737,7 @@ const createPopupWindow = (status) => {
                 </div>
             </div>
         `;
-        saveActiveTabContainerEl.innerHTML = saveActiveTabContainerHtml;
+        saveActiveTabContainerEl.innerHTML = DOMPurify.sanitize(saveActiveTabContainerHtml);
 
         const createEditForNewBookmark = () => {
             const saveActiveTabContainerHtml = `
@@ -1793,7 +1795,7 @@ const createPopupWindow = (status) => {
                     </div>
                 </div>
             `;
-            saveActiveTabContainerEl.innerHTML = saveActiveTabContainerHtml;
+            saveActiveTabContainerEl.innerHTML = DOMPurify.sanitize(saveActiveTabContainerHtml);
 
             const setValueFromActiveTab = () => {
                 const popupMainWindowTabTitleEl = document.getElementById('popupMainWindowTabTitle');
@@ -2076,7 +2078,7 @@ const createPopupWindow = (status) => {
                     // Return the generated HTML
                     return htmlOutput;
                 };
-                activeTabNameUrlFolderEl.innerHTML = generateHtmlListFromData();
+                activeTabNameUrlFolderEl.innerHTML = DOMPurify.sanitize(generateHtmlListFromData());
 
                 const setCheckerToFolderTree = () => {
                     const checkArray = document.querySelectorAll(`.check`);
@@ -2086,10 +2088,10 @@ const createPopupWindow = (status) => {
                     checkArray.forEach((check, index) => {
                         if (check.dataset.id === id && liArray[index].dataset.id === id) {
                             liArray[index].style.setProperty('--lineWidth', '5px');
-                            check.innerHTML = checkMarkSVG;
+                            check.innerHTML = DOMPurify.sanitize(checkMarkSVG);
                         } else {
                             liArray[index].style.setProperty('--lineWidth', '15px');
-                            check.innerHTML = '';
+                            check.innerHTML = DOMPurify.sanitize('');
                         }
                     });
                     if (id.length === 0) { return; }
@@ -2273,7 +2275,7 @@ const createPopupWindow = (status) => {
                         </div>
                     </div>
                 `;
-            saveActiveTabContainerEl.innerHTML = saveActiveTabContainerHtml;
+            saveActiveTabContainerEl.innerHTML = DOMPurify.sanitize(saveActiveTabContainerHtml);
 
             const addEventListenerToShareButtons = () => {
                 const sharedReviewButton = document.getElementById('sharedReview');
@@ -2360,13 +2362,13 @@ const createPopupWindow = (status) => {
         }
 
         const showSavedNewBookmarkInPreview = (status) => {
-            saveActiveTabContainerEl.innerHTML = `
+            saveActiveTabContainerEl.innerHTML = DOMPurify.sanitize(`
                 <div id="bookmarkExistContainer">
                     <div id="bookmarkExistIcon">${bookmarkHeart}</div>
                     <div id="bookmarkExistMessage">${status ? 'Your bookmark has been saved successfully!' : 'An error occurred while trying to save your data. Please try again.'}</div>
                     <div id="bookmarkExistButtons"></div>
                 </div>
-            `;
+            `);
             timeoutSavedPreview = setTimeout(() => {
                 clearTimeout(timeoutSavedPreview);
                 setValuesActiveTabPreview();
@@ -2484,13 +2486,13 @@ const createPopupWindow = (status) => {
                 const homepageUrl = browser.runtime.getURL('index.html');
                 forbiddenStringArray.push(homepageUrl);
                 if (!isStringAllowed(activeTab.url, forbiddenStringArray)) {
-                    saveActiveTabContainerEl.innerHTML = `<div id="messageWrongUrl">This tab cannot be saved as a bookmark because the URL is not permitted. Please select a different page.</div>`;
+                    saveActiveTabContainerEl.innerHTML = DOMPurify.sanitize(`<div id="messageWrongUrl">This tab cannot be saved as a bookmark because the URL is not permitted. Please select a different page.</div>`);
                     return;
                 }
                 const bookmarkExist = findBookmarkByKey(userActiveProfile.currentUserBookmarks, activeTab.url, 'url');
                 if (bookmarkExist) {
                     const parentBookmarkExist = findBookmarkByKey(userActiveProfile.currentUserBookmarks, bookmarkExist.parentId);
-                    saveActiveTabContainerEl.innerHTML = `
+                    saveActiveTabContainerEl.innerHTML = DOMPurify.sanitize(`
                         <div id="bookmarkExistContainer">
                             <div id="bookmarkExistIcon">${bookmarkHeart}</div>
                             <div id="bookmarkExistMessage"><span id="message">This URL already exists in the folder "<span id="parentFolderTitle">${truncateString(parentBookmarkExist.title, maxLengthForFolderTitle, 2)}</span>"</span></div>
@@ -2498,13 +2500,13 @@ const createPopupWindow = (status) => {
                                 <button id="bookmarkExistOpenParentFolder"></button>
                             </div>
                         </div>
-                    `;
+                    `);
 
                     const addStyleToButton = () => {
                         const bookmarkExistOpenParentFolderEl = document.getElementById('bookmarkExistOpenParentFolder');
                         bookmarkExistOpenParentFolderEl.style.backgroundColor = userActiveProfile.mainUserSettings.windows.button.primary.backgroundColor;
                         bookmarkExistOpenParentFolderEl.style.color = userActiveProfile.mainUserSettings.windows.button.primary.font.color;
-                        bookmarkExistOpenParentFolderEl.innerHTML = folderExist;
+                        bookmarkExistOpenParentFolderEl.innerHTML = DOMPurify.sanitize(folderExist);
                     }
                     addStyleToButton();
 
@@ -2541,12 +2543,12 @@ const createPopupWindow = (status) => {
 
                         const handleMouseEnter = () => {
                             bookmarkExistOpenParentFolderEl.style.backgroundColor = userActiveProfile.mainUserSettings.windows.button.primary.hoverBackgroundColor;
-                            bookmarkExistOpenParentFolderEl.innerHTML = folderExistLink;
+                            bookmarkExistOpenParentFolderEl.innerHTML = DOMPurify.sanitize(folderExistLink);
                         }
 
                         const handleMouseLeave = () => {
                             bookmarkExistOpenParentFolderEl.style.backgroundColor = userActiveProfile.mainUserSettings.windows.button.primary.backgroundColor;
-                            bookmarkExistOpenParentFolderEl.innerHTML = folderExist;
+                            bookmarkExistOpenParentFolderEl.innerHTML = DOMPurify.sanitize(folderExist);
                         }
 
                         bookmarkExistOpenParentFolderEl.addEventListener('click', openParentFolder);
