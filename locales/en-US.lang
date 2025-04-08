@@ -674,7 +674,7 @@
         },
         "_turnOffUndoManagerDialog": {
             "title": "Are you sure you want to turn off?",
-            "message": "Press 'Yes' to save your settings. Press 'No' to keep your current settings.",
+            "message": "Press 'Yes' to confirm your choice. Press 'No' to keep your current settings.",
             "_buttons": {
                 "yes": "Yes",
                 "no": "No"

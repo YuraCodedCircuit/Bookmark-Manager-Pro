@@ -38,7 +38,7 @@
  * For more information, please refer to the documentation of each library.
  */
 
-import { userProfileExport, currentLanguage, createCurrentBookmarkFolder, currentLanguageTextObj, firefoxLogoSVG } from './main.js';
+import { userProfileExport, currentLanguage, createCurrentBookmarkFolder, currentLanguageTextObj } from './main.js';
 import { showMessageToastify, formatDateTime, findBookmarkByKey, translateUserName, checkIfColorBrightness, generateColorPalette, createTooltip, escapeHtml } from './utilityFunctions.js';
 
 /**
@@ -66,6 +66,10 @@ export const searchManager = (status) => {
     const bookmarkIconSVG = `
         <!--Icon by contributors from https://lucide.dev/icons/bookmark, licensed under https://lucide.dev/license-->
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bookmark"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+    `;
+    const noBookmarkImageIconSVG = `
+        <!--Icon by contributors from https://lucide.dev/icons/file-image, licensed under https://lucide.dev/license-->
+        <svg xmlns="http://www.w3.org/2000/svg" width="50%" height="50%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-image-icon lucide-file-image"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="10" cy="12" r="2"/><path d="m20 17-1.296-1.296a2.41 2.41 0 0 0-3.408 0L9 22"/></svg>
     `;
     const userColor = userProfileExport.mainUserSettings.windows.window.backgroundColor;
     const colorPalette = generateColorPalette(userColor);
@@ -488,7 +492,7 @@ export const searchManager = (status) => {
                 filteredBrowserBookmarks.forEach(async (item, index) => {
                     searchWindowBodyRightResultsHtmlBrowser += `
                         <div class="bookmarkElementList" data-id="${item.id}" data-type="browser" style="background-color: ${index % 2 ? colorPalette[1] : colorPalette[2]}">
-                            <div class="bookmarkElementListIcon" style="" data-id="${item.id}" data-type="browser">${firefoxLogoSVG}</div>
+                            <div class="bookmarkElementListIcon" style="" data-id="${item.id}" data-type="browser">${noBookmarkImageIconSVG}</div>
                             <div class="bookmarkElementListDetails" data-id="${item.id}" data-type="browser" style="">
                                 <div class="bookmarkElementListTitle bookmarkTooltipTitle" data-id="${item.id}" data-type="browser">${escapeHtml(item.title)}</div>
                                 <div class="bookmarkElementListDetailsInfo" data-id="${item.id}" data-type="browser">
@@ -632,7 +636,7 @@ export const searchManager = (status) => {
                 filteredBrowserBookmarks.forEach(async (item, index) => {
                     searchWindowBodyRightResultsHtmlBrowser += `
                         <div class="bookmarkElementCompact" data-id="${item.id}" data-type="browser" style="background-color: ${index % 2 ? colorPalette[1] : colorPalette[2]}">
-                            <div class="bookmarkElementCompactIcon" data-id="${item.id}" data-type="browser">${firefoxLogoSVG}</div>
+                            <div class="bookmarkElementCompactIcon" data-id="${item.id}" data-type="browser">${noBookmarkImageIconSVG}</div>
                             <div class="bookmarkElementCompactDetails" data-id="${item.id}" data-type="browser">
                                 <div class="bookmarkElementCompactTitle bookmarkTooltipTitle" data-id="${item.id}" data-type="browser">${escapeHtml(item.title)}</div>
                                 <div class="bookmarkElementCompactDetailsInfo" data-id="${item.id}" data-type="browser">

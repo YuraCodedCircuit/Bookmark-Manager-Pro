@@ -40,7 +40,7 @@
 
 "use strict";
 import { settingMainMenu, defaultUserBookmarks, defaultBookmarkStyle, defaultFolderStyle, defaultMainUserSettings, settingWindowOpen, folderNamesForAddressBarPreview, exportFileExtensionName, browserAndOSInfo, currentLanguage, userProfileExport, backgroundImageExample, symbolArray, userActivityRegister, userProfile, userActiveProfile, exportType, defaultProfileImageBase64, manageUserProfiles, createCurrentBookmarkFolder, firefoxLogoSVG, chromeLogoSVG, extensionLogoSVG, filesLocationFromThis } from './main.js';
-import { indexedDBManipulation, generateColorPalette, showEmojiPicker, updateIdsAndParentIds, findBookmarkByKey, animateElement, getElementPosition, debounce, createTooltip, truncateTextIfOverflow, checkIfColorBrightness, randomIntFromInterval, getRandomColor, invertHexColor, hexToRGB, isObjectEmpty, resizeImageBase64, truncateString, translateUserName, showMessageToastify, getSupportedFontFamilies, getNextMaxIndex, formatDateTime, capitalizeString, countTo, moveElementsInArray, escapeHtml, calculateGradientPercentages, formatBytes, isValidDate, checkIfImageBase64, updateInputRangeAndOutput, updateColorisInputValue, readLocalFile } from './utilityFunctions.js';
+import { indexedDBManipulation, generateColorPalette, showEmojiPicker, updateIdsAndParentIds, findBookmarkByKey, animateElement, getElementPosition, debounce, createTooltip, truncateTextIfOverflow, checkIfColorBrightness, randomIntFromInterval, getRandomColor, invertHexColor, hexToRGB, isObjectEmpty, resizeImageBase64, truncateString, translateUserName, showMessageToastify, getSupportedFontFamilies, getNextMaxIndex, formatDateTime, capitalizeString, countTo, moveElementsInArray, escapeHtml, calculateGradientPercentages, formatBytes, isValidDate, checkIfImageBase64, updateInputRangeAndOutput, updateColorisInputValue, readFile } from './utilityFunctions.js';
 import { importValidation } from './importValidation.js';
 
 /**
@@ -316,10 +316,17 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
             });
         }
 
+        /**
+         * Reads the manifest file and updates the version number in the footer of the left menu section.
+         *
+         * @returns {void}
+         * @description This function reads the manifest file and parses it as JSON. The version number is then
+         *              extracted and used to update the text in the footer section of the left menu section.
+         */
         const getExtensionLatestVersion = () => {
             const leftMenuFooterEl = document.getElementById('leftMenuFooter');
 
-            readLocalFile(filesLocationFromThis.manifest).then(text => {
+            readFile(filesLocationFromThis.manifest).then(text => {
                 const setAsJson = JSON.parse(text);
                 const leftMenuFooterHtml = `<div id="extensionVersion">v. ${setAsJson.version}</div>`;
                 leftMenuFooterEl.innerHTML = DOMPurify.sanitize(leftMenuFooterHtml);
@@ -6466,6 +6473,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     `;
                     settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
+                    /**
+                     * Updates the text content of the UI elements in the Undo Manager section
+                     * of the Settings window based on the user's preferred language.
+                     * @private
+                     */
                     const updateWindowStyleUndoManagerSettingsTitlesUI = () => {
                         /**
                         * Helper function to update the text content of a given element.
@@ -6517,6 +6529,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     }
                     updateWindowStyleUndoManagerSettingsTitlesUI();
 
+                    /**
+                     * Sets default styles for the Undo Manager section input element.
+                     * This function applies a background color and border style to the input element
+                     * for the Undo Manager section length.
+                     */
                     const setDefaultStylesToUndoManagerSection = () => {
                         const undoManagerSectionLengthInputEl = document.getElementById('undoManagerSectionLengthInput');
 
@@ -6525,6 +6542,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     }
                     setDefaultStylesToUndoManagerSection();
 
+                    /**
+                     * Sets the default values for the Undo Manager section elements.
+                     * This function initializes the toggle status and input field for the undo manager
+                     * based on the user's settings, and adjusts the UI elements' visibility and state.
+                     */
                     const setDefaultValuesToUndoManagerSection = () => {
                         const undoManagerSectionStatusToggleEl = document.getElementById('undoManagerSectionStatusToggle');
                         const undoManagerSectionLengthInputAndTitleEl = document.getElementById('undoManagerSectionLengthInputAndTitle');
@@ -6545,6 +6567,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     }
                     setDefaultValuesToUndoManagerSection();
 
+                    /**
+                     * Shows or hides the Undo Manager section length info icon.
+                     * @param {string} iconStatus - The status of the icon. 'show' or 'hide'.
+                     * @param {string} type - The type of the icon. 'info' or 'warning'.
+                     */
                     const showUndoManagerSectionLengthInfoIcon = (iconStatus, type) => {
                         const undoManagerSectionLengthTitleInfoIconEl = document.getElementById('undoManagerSectionLengthTitleInfoIcon');
                         const undoManagerSectionLengthInputEl = document.getElementById('undoManagerSectionLengthInput');
@@ -6591,6 +6618,12 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         }
                     }
 
+                    /**
+                     * Adds event listeners to elements in the Undo Manager section of the settings window.
+                     * The event listeners are added to the toggle button for the Undo Manager, the input field for the maximum length of the action list, and the title and information icon for these elements.
+                     * The event listeners call the corresponding functions when the elements are interacted with.
+                     * @function addEventListenersToUndoManagerSection
+                     */
                     const addEventListenersToUndoManagerSection = () => {
                         const undoManagerSectionStatusToggleEl = document.getElementById('undoManagerSectionStatusToggle');
                         const undoManagerSectionStatusToggleTitleEl = document.getElementById('undoManagerSectionStatusToggleTitle');
@@ -9552,6 +9585,11 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     `;
                     settingsWindowRightSectionEl.innerHTML = DOMPurify.sanitize(settingsWindowRightSectionHtml);
 
+                    /**
+                     * Add icons to buttons.
+                     *
+                     * @function addIconsToButtons
+                     */
                     const addIconsToButtons = () => {
                         const shareFirefoxIconEl = document.getElementById('shareFirefoxIcon');
                         const twitterIconSvgEl = document.getElementById('twitterIconSvg');
@@ -9567,6 +9605,12 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     }
                     addIconsToButtons();
 
+                    /**
+                     * Retrieves the URL for the specified type.
+                     *
+                     * @param {string} type The type of URL to retrieve. Possible values are 'firefox', 'twitter', 'github', and 'buymeacoffee'.
+                     * @returns {string} The URL for the specified type.
+                     */
                     const getAllSavedUrls = (type) => {
                         switch (type) {
                             case 'firefox':
@@ -9593,6 +9637,10 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         }
                     }
 
+                    /**
+                     * Copies the provided text to the clipboard and shows a toast notification.
+                     * @param {string} text - The text to be copied to the clipboard.
+                     */
                     const copyTextToClipboard = (text) => {
                         navigator.clipboard.writeText(text).then(() => {
                             showMessageToastify('info', ``, `URL copied to clipboard successfully!`, 4000, false, 'bottom', 'right', true);
@@ -9601,6 +9649,9 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                         });
                     }
 
+                    /**
+                     * Adds event listeners to share buttons.
+                     */
                     const addEventListenerToShareButtons = () => {
                         const shareFirefoxButton = document.getElementById('shareFirefox');
                         const shareTwitterButton = document.getElementById('shareTwitter');
@@ -10119,7 +10170,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     addEventListenerToShareButtons();
                     break;
                 case 'changelog':
-                    readLocalFile(filesLocationFromThis.changelog).then(text => {
+                    /**
+                     * Reads the 'CHANGELOG.md' document and displays it in the right section.
+                     * @param {string} dataValue - The value of the menu item that was clicked.
+                     * @returns {Promise<void>} - A promise that resolves or rejects based on the
+                     * successful reading of the 'CHANGELOG.md' document.
+                     */
+                    readFile(filesLocationFromThis.changelog).then(text => {
                         settingsWindowRightSectionHtml = `
                             <div class="aboutDocumentations" style="--fontColor: ${editingMainUserSettings.windows.window.font.color};--highlightColor5: ${colorPalette[5]};--highlightColor8: ${colorPalette[8]};">
                                 <div id="changeLog" class="documentationsMarkdown">
@@ -10134,7 +10191,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     });
                     break;
                 case 'termsOfUse':
-                    readLocalFile(filesLocationFromThis.termsOfUse).then(text => {
+                    /**
+                     * Reads the 'TERMS_OF_USE.md' document and displays it in the right section.
+                     * @param {string} dataValue - The value of the menu item that was clicked.
+                     * @returns {Promise<void>} - A promise that resolves or rejects based on the
+                     * successful reading of the 'TERMS_OF_USE.md' document.
+                     */
+                    readFile(filesLocationFromThis.termsOfUse).then(text => {
                         settingsWindowRightSectionHtml = `
                             <div class="aboutDocumentations" style="--fontColor: ${editingMainUserSettings.windows.window.font.color};--highlightColor5: ${colorPalette[5]};--highlightColor8: ${colorPalette[8]};">
                                 <div class="documentationsMarkdown">
@@ -10149,7 +10212,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     });
                     break;
                 case 'license':
-                    readLocalFile(filesLocationFromThis.license).then(text => {
+                    /**
+                     * Reads the 'LICENSE.md' document and displays it in the right section.
+                     * @param {string} dataValue - The value of the menu item that was clicked.
+                     * @returns {Promise<void>} - A promise that resolves or rejects based on the
+                     * successful reading of the 'LICENSE.md' document.
+                     */
+                    readFile(filesLocationFromThis.license).then(text => {
                         settingsWindowRightSectionHtml = `
                             <div class="aboutDocumentations" style="--fontColor: ${editingMainUserSettings.windows.window.font.color};--highlightColor5: ${colorPalette[5]};--highlightColor8: ${colorPalette[8]};">
                                 <div class="documentationsMarkdown">
@@ -10164,7 +10233,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     });
                     break;
                 case 'privacyPolicy':
-                    readLocalFile(filesLocationFromThis.privacyPolicy).then(text => {
+                    /**
+                     * Reads the 'privacy-policy.md' document and displays it in the right section.
+                     * @param {string} dataValue - The value of the menu item that was clicked.
+                     * @returns {Promise<void>} - A promise that resolves or rejects based on the
+                     * successful reading of the 'privacy-policy.md' document.
+                     */
+                    readFile(filesLocationFromThis.privacyPolicy).then(text => {
                         settingsWindowRightSectionHtml = `
                             <div class="aboutDocumentations" style="--fontColor: ${editingMainUserSettings.windows.window.font.color};--highlightColor5: ${colorPalette[5]};--highlightColor8: ${colorPalette[8]};">
                                 <div class="documentationsMarkdown">
@@ -10179,7 +10254,13 @@ export const openCloseSettingWindow = async (status, type = 'default') => {
                     });
                     break;
                 case 'security':
-                    readLocalFile(filesLocationFromThis.security).then(text => {
+                    /**
+                     * Reads the 'security.md' document and displays it in the right section.
+                     * @param {string} dataValue - The value of the menu item that was clicked.
+                     * @returns {Promise<void>} - A promise that resolves or rejects based on the
+                     * successful reading of the 'security.md' document.
+                     */
+                    readFile(filesLocationFromThis.security).then(text => {
                         settingsWindowRightSectionHtml = `
                             <div class="aboutDocumentations" style="--fontColor: ${editingMainUserSettings.windows.window.font.color};--highlightColor5: ${colorPalette[5]};--highlightColor8: ${colorPalette[8]};">
                                 <div class="documentationsMarkdown">

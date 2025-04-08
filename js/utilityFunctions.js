@@ -39,44 +39,7 @@
  */
 
 "use strict";
-import { changelog, currentLanguage, messageStyle, allowAlphabetCharactersAndNumbers, userProfileExport, userActiveProfile, manageUserProfiles, browserAndOSInfo } from './main.js';
-import { undoManager } from './undoManager.js';
-
-/**
- * Retrieves information from the changelog based on the specified type.
- *
- * @param {string} type - The type of information to retrieve. Can be 'lastVersion' or 'getAllLog'.
- * @returns {string} - The requested information. If 'lastVersion', returns the highest version number.
- *                     If 'getAllLog', returns an HTML string containing all changelog entries.
- */
-export const getInfoFromVersion = (type) => {
-    let data = ``;
-    let cloneChangelogJSON = window.structuredClone(changelog);
-
-    switch (type) {
-        case 'lastVersion':
-            // Find the highest ID value in the changelog array
-            const highestAmount = Math.max(...cloneChangelogJSON.map((a) => a.id));
-            // Filter the changelog array to find the entry with the highest ID
-            const highestShots = cloneChangelogJSON.filter(changelog => changelog.id === highestAmount);
-            // Get the version of the entry with the highest ID
-            data = highestShots[0].version;
-            break;
-
-        case 'getAllLog':
-            // Sort the changelog array in descending order by ID
-            cloneChangelogJSON.sort((a, b) => (a.id < b.id))
-                // Generate HTML string for each changelog entry
-                .forEach(e => {
-                    data += `<h2>${e.version}</h2>`;
-                    e.log.forEach(b => {
-                        data += `<ul><li>${b}</li></ul>`;
-                    });
-                });
-            break;
-    }
-    return data;
-}
+import { messageStyle, allowAlphabetCharactersAndNumbers, userProfileExport, userActiveProfile, manageUserProfiles, browserAndOSInfo, filesLocationFromThis } from './main.js';
 
 /**
  * Searches for a bookmark by its ID within a nested structure of bookmarks, using a specific key to match.
@@ -1686,8 +1649,14 @@ export const getBrowserAndOSInfo = () => {
         };
         // Extension information
         const extension = {
-            version: getInfoFromVersion('lastVersion'),
+            version: '',
         };
+        readFile(filesLocationFromThis.manifest).then(text => {
+            const setAsJson = JSON.parse(text);
+            extension.version = setAsJson.version;
+        }).catch(error => {
+            console.error(error);
+        });
         const returnObject = { browser, os, extension };
         return returnObject; // Return the browser and OS information
     } catch (error) {
@@ -1696,6 +1665,15 @@ export const getBrowserAndOSInfo = () => {
     }
 }
 
+/**
+ * Retrieves an array of supported font families.
+ *
+ * @returns {Array} An array of objects. Each object contains the font family name and its corresponding generic font name.
+ * @returns {Object} return font family object - An object containing information about the font family.
+ * @returns {number} return.fontFamilyObject.id - A unique identifier for the font family.
+ * @returns {string} return.fontFamilyObject.fontFamily - The name of the font family.
+ * @returns {string} return.fontFamilyObject.genericFontName - The generic font name of the font family, such as serif, sans-serif, or monospace.
+ */
 export const getSupportedFontFamilies = () => {
     try {
         const osType = browserAndOSInfo.os.name;
@@ -2231,75 +2209,6 @@ export const indexedDBManipulation = async (status, key, data) => {
     }
 }
 
-export const localStorageManipulation = (status, key, data) => {
-    if (status == 'save') {
-        try {
-            if (data != '' && data != null && data != undefined &&
-                key != '' && key != null && key != undefined) {
-                store.set(key, data);
-                return store.has(key);
-            } else {
-                throw Error`No "key" or "data" in parameters`;
-            }
-        } catch (error) {
-            return error;
-        }
-    } else if (status == 'get') {
-        try {
-            if (key != '' && key != null && key != undefined) {
-                if (store.has(key)) {
-                    return store.get(key);
-                } else {
-                    return false;
-                }
-            } else {
-                throw Error`no "key" in parameters`;
-            }
-        } catch (error) {
-            return error
-        }
-    } else if (status == 'has') {
-        try {
-            if (key != '' && key != null && key != undefined) {
-                if (store.has(key)) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                throw Error`no "key" in parameters`;
-            }
-        } catch (error) {
-            return error;
-        }
-    } else if (status == 'remove') {
-        try {
-            if (key != '' && key != null && key != undefined) {
-                if (store.has(key)) {
-                    store.remove(key);
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                throw Error`no "key" in parameters`;
-            }
-        } catch (error) {
-            return error;
-        }
-    } else if (status == 'getKeys') {
-        try {
-            if (store.size() > 0) {
-                return store.keys() || [];
-            } else {
-                return false;
-            }
-        } catch (error) {
-            return error;
-        }
-    }
-}
-
 /**
  * Generates a palette of colors based on the input color.
  * If the input color is light, it generates darker colors; if dark, it generates lighter colors.
@@ -2412,7 +2321,7 @@ export class returnRandomElementFromObject {
  * @returns {(string|Object|false)} The file content or the parsed JSON object if parseJson is true or false.
  * @throws {Error} If the file cannot be read or if it is not a valid JSON file.
  */
-const readFile = async (fileLocation, parseJson = false, mimeType = 'text/plain') => {
+export const readFile = async (fileLocation, parseJson = false, mimeType = 'text/plain') => {
     try {
         const response = await fetch(fileLocation, {
             headers: {
@@ -2436,7 +2345,6 @@ const readFile = async (fileLocation, parseJson = false, mimeType = 'text/plain'
         return false;
     }
 };
-
 /**
  * Shows an emoji picker in a given element.
  * The emoji picker is fetched from the EmojiMart library.
@@ -2555,6 +2463,14 @@ export const showEmojiPicker = async (element) => {
     }
 }
 
+/**
+ * Animates a DOM element using the specified animation object.
+ *
+ * @param {string|HTMLElement} el - The element or the ID of the element to animate.
+ * @param {Object} animationObject - The animation configuration object.
+ * @param {boolean} animationObject.status - The status of the animation.
+ * @param {Array} animationObject.type - The types of animations to apply.
+ */
 export const animateElement = (el, animationObject) => {
     try {
         let element;
@@ -2919,82 +2835,6 @@ export const isBookmarkInFolder = (bookmark, specificFolderId, bookmarkId) => {
     return false;
 };
 
-export const syncToBrowserBookmarksManager = (status, bookmarks, bookmarkId, syncRootFolderId, objectDetail = {}) => {
-    console.log('syncToBrowserBookmarksManager', status, bookmarks, bookmarkId, syncRootFolderId, objectDetail);
-    if (bookmarkId.length === 0 && syncRootFolderId.length === 0) {
-        return 'Wrong bookmarkId or syncRootFolderId';
-    }
-    if (!Array.isArray(bookmarks) && bookmarks.length === 0) {
-        return 'Wrong bookmarks';
-    }
-    if (!['create', 'update', 'delete', 'move'].includes(status)) {
-        return 'Wrong status';
-    }
-    // check if the bookmarkId in the syncRootFolderId
-    if (!isBookmarkInFolder(bookmarks, syncRootFolderId, bookmarkId)) {
-        return 'BookmarkId not found in the specified folder';
-    }
-    switch (status) {
-        case 'create':
-            if (isObjectEmpty(objectDetail)) {
-                return 'ObjectDetail is empty';
-            }
-            const bookmarkDetails = {
-                title: objectDetail.title,
-                url: objectDetail.url,
-                parentId: objectDetail.parentId // Optional: specify the parent folder ID
-            };
-
-            browser.bookmarks.create(bookmarkDetails)
-                .then((newBookmark) => {
-                    console.log(`Bookmark created: ${newBookmark.title} (${newBookmark.url})`);
-                })
-                .catch((error) => {
-                    console.error("Error creating bookmark:", error);
-                });
-            break;
-        case 'update':
-            const updateDetails = {
-                title: objectDetail.newTitle,
-                url: objectDetail.newUrl // Optional: you can update the URL as well
-            };
-
-            browser.bookmarks.update(bookmarkId, updateDetails)
-                .then((updatedBookmark) => {
-                    console.log(`Bookmark updated: ${updatedBookmark.title} (${updatedBookmark.url})`);
-                })
-                .catch((error) => {
-                    console.error("Error updating bookmark:", error);
-                });
-            break;
-        case 'delete':
-            browser.bookmarks.remove(bookmarkId)
-                .then(() => {
-                    console.log(`Bookmark with ID ${bookmarkId} has been deleted.`);
-                })
-                .catch((error) => {
-                    console.error(`Error deleting bookmark with ID ${bookmarkId}:`, error);
-                });
-            break;
-        case 'move':
-            const moveDetails = {
-                parentId: objectDetail.newParentId, // New parent folder ID
-                index: objectDetail.newIndex // Optional: specify the new index (position) within the parent
-            };
-
-            browser.bookmarks.move(bookmarkId, moveDetails)
-                .then((movedBookmark) => {
-                    console.log(`Bookmark moved: ${movedBookmark.title} to new parent ID ${newParentId}`);
-                })
-                .catch((error) => {
-                    console.error("Error moving bookmark:", error);
-                });
-            break;
-        default:
-            break;
-    }
-}
-
 /**
  * Translate the username element's text horizontally if it is wider than its parent element.
  * This is done to create a marquee effect.
@@ -3069,7 +2909,6 @@ export const translateUserName = (parent, child) => {
     }
 };
 
-
 /**
  * Opens a URL in a new tab or the same tab based on the CTRL parameter.
  * @param {string} url - The URL to open.
@@ -3129,7 +2968,11 @@ export const unescapeHtml = (str) => {
         .replace(/&#39;/g, "'");
 };
 
-// Function to get all children's IDs starting with a given ID
+/**
+ * Recursively retrieves all child IDs of a given object.
+ * @param {Object} object - The object to traverse.
+ * @returns {string[]} An array of IDs of all children of the given object.
+ */
 export const getAllChildIds = (object) => {
     // Initialize an array to hold the IDs
     let ids = [];
@@ -3160,7 +3003,14 @@ export const getAllChildIds = (object) => {
     return ids;
 };
 
-
+/**
+ * Reads a file from the given location and returns its content.
+ * @function readLocalFile
+ * @param {string} location - The location of the file to read.
+ * @param {string} [mineType='application/text'] - The MIME type of the file.
+ * @returns {Promise<string>} The file content.
+ * @throws {Error} If the file cannot be read.
+ */
 export const readLocalFile = (location, mineType = 'application/text') => {
     return new Promise((resolve, reject) => {
         const rawFile = new XMLHttpRequest();

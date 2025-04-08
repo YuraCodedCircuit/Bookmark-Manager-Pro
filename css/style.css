@@ -8068,10 +8068,6 @@ body>.moreDetails>.moreDetailsItems>.moreDetailsItemsDate {
     padding-right: 5px;
 }
 
-
-
-
-
 body>#uiElementsContainer>#undoManager {
     display: flex;
     justify-content: flex-start;
@@ -8088,7 +8084,6 @@ body>#uiElementsContainer>#undoManager>#undoManagerLeftSection {
     flex-direction: column;
     width: 250px;
     height: 100%;
-    /* background-color: #21a3cb; */
 }
 
 body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionTop {
@@ -8107,7 +8102,6 @@ body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftS
     flex-direction: row;
     width: 100%;
     height: 50px;
-    /* background-color: #020420; */
 }
 
 body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle {
@@ -8129,7 +8123,6 @@ body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftS
     padding: 0px 5px 0px 5px;
     width: 100%;
     height: 60px;
-    /* background-color: #364cfa; */
 }
 
 body>#uiElementsContainer>#undoManager>#undoManagerLeftSection>#undoManagerLeftSectionMiddle>.undoManagerLeftSectionMiddleElements .toggleTrack {

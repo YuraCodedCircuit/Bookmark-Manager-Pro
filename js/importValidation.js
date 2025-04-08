@@ -1030,8 +1030,8 @@ export const importValidation = async (importedObject) => {
                                     "extensionToBrowser": { type: 'boolean', required: true, default: false }
                                 }
                             },
-                            "extensionFolderId": { type: 'string', required: true, default: '', rule: new createRules().maxLength(13) },
-                            "browserFolderId": { type: 'string', required: true, default: '' },
+                            "extensionFolderId": { type: 'string', required: true, allowedEmpty: true, default: '', rule: new createRules().maxLength(13) },
+                            "browserFolderId": { type: 'string', required: true, allowedEmpty: true, default: '' },
                         }
                     },
                     "onlineRadio": {
@@ -1039,7 +1039,15 @@ export const importValidation = async (importedObject) => {
                         required: true,
                         schema: {
                             "allowed": { type: 'boolean', required: true, default: false },
-                            "lastUserSelectedStationuuid": { type: 'string', required: true, default: '', rule: new createRules().maxLength(36) }
+                            "lastUserSelectedStationuuid": { type: 'string', required: true, allowedEmpty: true, default: '', rule: new createRules().maxLength(36) }
+                        }
+                    },
+                    "undoManager": {
+                        type: 'object',
+                        required: true,
+                        schema: {
+                            status: { type: 'boolean', required: true, default: true },
+                            maxLength: { type: 'number', required: true, allItems: true, rule: new createRules().min(0), default: 10 },
                         }
                     }
                 }
