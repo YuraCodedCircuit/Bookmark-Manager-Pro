@@ -1,0 +1,93 @@
+html,
+body {
+  width: 640px;
+  height: 600px;
+  margin: 0;
+  overflow: hidden !important;
+  scrollbar-gutter: auto;
+  background: var(--surface, #101923);
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.save-current-page__status {
+  display: grid;
+  min-height: 240px;
+  padding: 24px;
+  color: var(--text, #f3f6fa);
+  place-items: center;
+  text-align: center;
+}
+
+.content-editor {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  appearance: none;
+  border: 0 !important;
+  border-radius: 0;
+  outline: 0 !important;
+  box-shadow: none;
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -khtml-user-select: none;
+  /* Konqueror HTML */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Standard syntax */
+}
+
+.content-editor:focus,
+.content-editor:focus-visible {
+  outline: 0 !important;
+}
+
+.content-editor form {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 28px;
+  overflow-y: auto;
+  scrollbar-gutter: auto;
+}
+
+.content-editor__capture-button {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.625rem;
+  background: var(--surface-raised);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.content-editor__capture-button:hover {
+  border-color: var(--accent);
+  background: var(--highlight-background);
+}
+
+.content-editor::backdrop {
+  background: transparent;
+  backdrop-filter: none;
+}

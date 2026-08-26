@@ -1,0 +1,5 @@
+{
+  "appName": { "message": "Bookmark Manager Pro" },
+  "appDescription": { "message": "A local-first bookmark manager." },
+  "saveCurrentPage": { "message": "Save page to Bookmark Manager Pro" }
+}

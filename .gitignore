@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# WXT and build output
+.wxt/
+.output/
+dist/
+artifacts/
+
+# Codex files
+*.codex
+AGENTS.md
+codex-internal/
+design/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Local browser profiles and extension data
+.profiles/
+.web-ext-artifacts/
+
+# Environment and local configuration
+.env
+.env.*
+!.env.example
+
+# Editor and operating-system files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
