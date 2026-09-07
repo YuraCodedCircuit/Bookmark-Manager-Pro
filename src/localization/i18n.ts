@@ -388,7 +388,7 @@ void i18n.use(initReactI18next).init({
           firstRun:
             'Create a profile in Bookmark Manager Pro before saving pages.',
           loadError: 'The current page could not be loaded.',
-          title: 'Save current page',
+          title: 'Save current URL',
         },
         displaySettings: {
           accessibility: {

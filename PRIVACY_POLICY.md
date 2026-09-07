@@ -85,7 +85,7 @@ titles, addresses, profile identifiers, search text, notes, and copied content.
   the current page title and address after an explicit user action. It also
   allows an optional visible-tab screenshot requested inside that popup. The
   extension does not capture tabs automatically or in the background.
-- **Context menus:** adds the Save page to Bookmark Manager Pro command to the
+- **Context menus:** adds the Save URL to Bookmark Manager Pro command to the
   browser's page context menu.
 
 Bookmark Manager Pro requests only permissions used by implemented features.

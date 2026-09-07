@@ -35,7 +35,7 @@ export default defineConfig({
         32: 'favicon-32.png',
         48: 'extension-icon.png',
       },
-      default_title: '__MSG_saveCurrentPage__',
+      default_title: '__MSG_saveCurrentUrl__',
     },
     browser_specific_settings:
       browser === 'firefox'

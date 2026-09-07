@@ -47,10 +47,13 @@ available.
 The required `storage` permission currently supports browser-session undo and
 redo patches. It does not enable remote storage or synchronization.
 
-The toolbar action and native page context menu open the same current-page save
-popup. The `activeTab` grant is limited to that user-invoked page and supports
+The toolbar action and native page context menu open the same current-URL save
+popup. The background worker verifies the native menu registration whenever it
+starts so Chrome, Edge, and Firefox can recover a missing menu item after an
+extension reload or browser cleanup. The `activeTab` grant is limited to that
+user-invoked page and supports
 prefilling its title/address and optional local visible-tab capture. The
-`contextMenus` permission adds only the save-page command. Firefox uses an
+`contextMenus` permission adds only the save-URL command. Firefox uses an
 event-driven background script while Chrome and Edge use service workers.
 
 ## Acceptance matrix

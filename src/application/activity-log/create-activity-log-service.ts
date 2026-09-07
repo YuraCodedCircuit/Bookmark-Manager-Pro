@@ -10,14 +10,14 @@ import { ManageActivityLog } from './manage-activity-log';
 /** Composes the durable webpage/extension activity-log service. */
 export function createActivityLogService(): ManageActivityLog {
   const operatingSystem = getOperatingSystemInfo(
-    window.navigator.userAgent,
-    window.navigator.platform,
+    globalThis.navigator.userAgent,
+    globalThis.navigator.platform,
   );
   return new ManageActivityLog(
     new DexieActivityLogRepository(new BookmarkManagerDatabase()),
     {
       applicationVersion: packageMetadata.version,
-      browserTarget: getBrowserTarget(window.navigator.userAgent),
+      browserTarget: getBrowserTarget(globalThis.navigator.userAgent),
       operatingSystem: operatingSystem.name,
       operatingSystemVersion: operatingSystem.version,
     },

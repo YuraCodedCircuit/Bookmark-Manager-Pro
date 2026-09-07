@@ -6,6 +6,13 @@ behavior. Developer-facing implementation details are maintained in
 
 ## Unreleased
 
+### Fixed
+
+- The Save URL to Bookmark Manager Pro right-click command now appears in
+  Chrome and Edge and restores itself after an extension reload or browser
+  cleanup. The right-click command, toolbar label, and popup title now make clear
+  that this action saves the page address, not an offline copy of the webpage.
+
 ## 0.1.0 - 2026-08-24
 
 ### Added

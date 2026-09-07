@@ -7,10 +7,15 @@ import {
   backgroundRequestSchema,
   type BackgroundResponse,
 } from '../src/messaging/background-protocol';
+import {
+  ensureSaveUrlContextMenu,
+  SAVE_CURRENT_URL_MENU_ID,
+} from '../src/platform/browser/save-url-context-menu';
 
 const background: ReturnType<typeof defineBackground> = defineBackground(() => {
   const preflight = createBackgroundPreflight();
   let activePreflight: Promise<unknown> | undefined;
+  let activeMenuRegistration: Promise<void> | undefined;
 
   const runPreflight = () => {
     activePreflight ??= preflight.execute().finally(() => {
@@ -19,23 +24,26 @@ const background: ReturnType<typeof defineBackground> = defineBackground(() => {
     return activePreflight;
   };
 
+  const registerSaveUrlContextMenu = () => {
+    activeMenuRegistration ??= ensureSaveUrlContextMenu().finally(() => {
+      activeMenuRegistration = undefined;
+    });
+    return activeMenuRegistration;
+  };
+
+  const registerSaveUrlContextMenuSafely = () => {
+    void registerSaveUrlContextMenu().catch((error: unknown) =>
+      console.error('save-url-context-menu-registration-failed', error),
+    );
+  };
+
   // Register every listener synchronously before starting asynchronous work.
   browser.runtime.onInstalled.addListener(() => {
-    void browser.contextMenus
-      .removeAll()
-      .then(() =>
-        browser.contextMenus.create({
-          contexts: ['page'],
-          id: 'save-current-page',
-          title:
-            browser.i18n.getMessage('saveCurrentPage') ||
-            'Save page to Bookmark Manager Pro',
-        }),
-      )
-      .catch(() => console.error('save-page-context-menu-create-failed'));
+    registerSaveUrlContextMenuSafely();
     void runPreflight();
   });
   browser.runtime.onStartup.addListener(() => {
+    registerSaveUrlContextMenuSafely();
     void runPreflight();
   });
   browser.runtime.onMessage.addListener(
@@ -66,7 +74,7 @@ const background: ReturnType<typeof defineBackground> = defineBackground(() => {
     },
   );
   browser.contextMenus.onClicked.addListener((info) => {
-    if (info.menuItemId !== 'save-current-page') return;
+    if (info.menuItemId !== SAVE_CURRENT_URL_MENU_ID) return;
     void browser.action.openPopup().catch(async () => {
       await browser.windows.create({
         height: 760,
@@ -77,6 +85,7 @@ const background: ReturnType<typeof defineBackground> = defineBackground(() => {
     });
   });
 
+  registerSaveUrlContextMenuSafely();
   void runPreflight();
 });
 

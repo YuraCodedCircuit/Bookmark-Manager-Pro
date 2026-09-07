@@ -6,6 +6,22 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+### Fixed
+
+- Replaced install-only native context-menu creation with an idempotent
+  update-or-create registration that also runs at background initialization and
+  browser startup. The shared activity-log factory now reads the worker-safe
+  global `navigator` instead of the page-only `window.navigator`, preventing the
+  Chrome and Edge Manifest V3 worker from crashing before listener and menu
+  registration. The platform adapter now calls the global
+  `chrome.contextMenus` API directly on Chrome and Edge while retaining the
+  `webextension-polyfill` path on Firefox. Chromium update and creation both use
+  explicit callbacks so browsers without promise returns cannot mistake a
+  missing item for a successful update. Callback errors are surfaced to the
+  existing privacy-safe developer diagnostic, and the localized command label
+  now consistently describes saving the current URL. The stable menu ID is
+  retained so installed copies update in place without duplicate commands.
+
 ## 0.1.0 - 2026-08-24
 
 ### Added
