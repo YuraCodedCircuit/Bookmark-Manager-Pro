@@ -29,6 +29,22 @@ import type { UndoProfileState } from '../../domain/undo-history';
 
 const MAX_ID_ATTEMPTS = 5;
 
+// Applied only during creation; schema parsing gives each folder its own values.
+const DEFAULT_FOLDER_STYLE = {
+  backgroundAppearance: {
+    colors: ['#2f80c9', '#185a82', '#0b1f3a'],
+    direction: 135,
+    kind: 'gradient',
+  },
+  includeNavigationBackground: true,
+  navigationTransparency: 70,
+} satisfies Pick<
+  Folder,
+  | 'backgroundAppearance'
+  | 'includeNavigationBackground'
+  | 'navigationTransparency'
+>;
+
 const creationInputSchema = z.object({
   cardAppearance: itemAppearanceSchema,
   tags: z.array(z.string().trim().min(1).max(80)).max(50),
@@ -98,11 +114,7 @@ export class ManageBookmarks {
   async ensureRoot(profileId: string): Promise<Folder> {
     const timestamp = this.now();
     const root = folderSchema.parse({
-      backgroundAppearance: {
-        colors: ['#2f80c9', '#185a82', '#0b1f3a'],
-        direction: 135,
-        kind: 'gradient',
-      },
+      ...DEFAULT_FOLDER_STYLE,
       bookmarkView: 'card',
       cardSize: 'small',
       cardSpacing: 'comfortable',
@@ -110,8 +122,6 @@ export class ManageBookmarks {
       bookmarkSortDirection: 'ascending',
       bookmarkGroupBy: 'none',
       detailsTableTransparency: 0,
-      includeNavigationBackground: true,
-      navigationTransparency: 70,
       cardAppearance: { kind: 'color', value: '#2f7de1' },
       createdAt: timestamp,
       id: await this.createUniqueItemId(),
@@ -461,7 +471,7 @@ export class ManageBookmarks {
     );
     await this.repository.addFolder(
       folderSchema.parse({
-        backgroundAppearance: { kind: 'color', value: '#0b121a' },
+        ...DEFAULT_FOLDER_STYLE,
         bookmarkView: value.bookmarkView ?? 'card',
         cardSize: value.cardSize ?? 'medium',
         cardSpacing: value.cardSpacing ?? 'comfortable',
@@ -469,8 +479,6 @@ export class ManageBookmarks {
         bookmarkSortDirection: value.bookmarkSortDirection ?? 'ascending',
         bookmarkGroupBy: value.bookmarkGroupBy ?? 'none',
         detailsTableTransparency: 0,
-        includeNavigationBackground: false,
-        navigationTransparency: 45,
         cardAppearance: value.cardAppearance,
         createdAt: timestamp,
         id: await this.createUniqueItemId(),

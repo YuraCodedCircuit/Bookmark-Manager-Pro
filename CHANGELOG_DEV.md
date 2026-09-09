@@ -6,8 +6,64 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.5 - 2026-09-09
+
+### Added
+
+- Added a validated, global update-announcement preference and lifecycle stored
+  in the existing IndexedDB metadata table. Normal semantic-version upgrades
+  create a pending or consumed record according to the install-time preference;
+  app tabs atomically claim matching pending records, recover claims after five
+  minutes, and complete them after render. Automatic changelog parsing accepts
+  exactly one matching dated version section, while the existing manual reader
+  continues to use the full bundled Markdown source. Its published
+  developer-changelog link delegates to the existing validated external-link
+  navigation and confirmation path.
+- Added the reusable `FolderTreePicker`, selected-folder semantics, and a
+  popup-only editor slot. The toolbar popup builds the tree from the active
+  profile's folders, selects the newest non-root folder, expands only its
+  ancestor IDs, and passes the selected folder ID through the existing validated
+  bookmark creation and undo-history path. A shared borderless
+  `folder-tree-scroll` wrapper now owns horizontal overflow independently from
+  the left panel and popup vertical scroll containers.
+- Added random Color and Gradient generation to `CreateContentDialog`, including
+  immediate controlled-preview updates and a polite assistive announcement of
+  generated values.
+- Added nullable `NotificationPreferences.countdownLineColor`, where `null`
+  preserves the app foreground color, plus Settings controls and notification
+  viewport CSS-variable propagation.
+
+### Changed
+
+- Shared creation-only background and navigation defaults between
+  `ManageBookmarks.ensureRoot` and `createFolder`. Existing folder styles,
+  profile-derived view settings, and card appearances remain unchanged.
+- Replaced category-name filtering in `BookmarkDisplaySettingsDialog` with a
+  localization-key search index, permanent and query-specific disabled states,
+  accessible match indicators, and CSS Custom Highlight ranges over visible
+  category text. Matching displayed select values use an aria-hidden overlay
+  while the focused native control retains normal keyboard and popup behavior.
+  The no-results link delegates to validated external navigation and does not
+  place the query in its fixed GitHub URL.
+- Added the stored item title to the native `title` attribute of shared
+  Favorites and Recent open-row buttons without changing their accessible names.
+- Timed `NotificationCard` instances now render an aria-hidden CSS countdown
+  line synchronized with their duration and pause state. Persistent notices
+  omit the line, and forced-colors mode maps it to `CanvasText`.
+
 ### Fixed
 
+- Changed the shared root to `scrollbar-gutter: auto` so non-scrolling main
+  pages fill the viewport in Chromium. Independent panel and dialog gutters
+  remain unchanged; hiding an existing document scrollbar can change the
+  content width.
+- Configured Zod 4 in `jitless` mode before application modules load in the
+  background, popup, and new-tab entry points. This prevents its dynamic-code
+  capability probe from conflicting with the extension CSP while preserving
+  schema validation.
+- Set the popup root's explicit `scrollbar-gutter: auto` rule at `:root`
+  specificity, keeping its scrollbar against the popup edge in Chromium.
+  The shared `CreateContentDialog` fields and behavior remain unchanged.
 - Replaced install-only native context-menu creation with an idempotent
   update-or-create registration that also runs at background initialization and
   browser startup. The shared activity-log factory now reads the worker-safe
@@ -21,6 +77,15 @@ benefits and behavior are maintained in `CHANGELOG.md`.
   existing privacy-safe developer diagnostic, and the localized command label
   now consistently describes saving the current URL. The stable menu ID is
   retained so installed copies update in place without duplicate commands.
+
+### Migration Notes
+
+- Update announcements add schema-versioned records to the existing metadata
+  table without changing the Dexie schema or indexes. Existing databases need no
+  structural migration and use the enabled default until a preference is saved.
+- IndexedDB schema 27 adds `countdownLineColor: null` to schema-26 notification
+  preferences, preserving the existing app-foreground countdown line. The
+  additive upgrade changes no indexes or other profile settings.
 
 ## 0.1.0 - 2026-08-24
 

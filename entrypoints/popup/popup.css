@@ -1,4 +1,4 @@
-html,
+:root,
 body {
   width: 640px;
   height: 600px;
@@ -67,6 +67,30 @@ body {
   padding: 28px;
   overflow-y: auto;
   scrollbar-gutter: auto;
+}
+
+.save-current-page__destination {
+  display: grid;
+  gap: 7px;
+}
+
+.save-current-page__destination h2 {
+  margin: 0;
+  font-size: inherit;
+  font-weight: 650;
+}
+
+.save-current-page__destination .folder-tree-picker {
+  display: grid;
+  gap: 7px;
+}
+
+.save-current-page__destination .visually-hidden {
+  display: block;
+}
+
+.save-current-page__destination .folder-tree-filter {
+  padding: 0;
 }
 
 .content-editor__capture-button {

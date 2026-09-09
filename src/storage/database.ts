@@ -647,6 +647,36 @@ export class BookmarkManagerDatabase extends Dexie {
             };
           }),
       );
+    this.version(27)
+      .stores({
+        profiles: 'id, username, createdAt, updatedAt',
+        profileSettings: '&profileId',
+        metadata: '&key',
+        activity:
+          '&id, profileId, [profileId+timestamp], [profileId+level], category',
+        activityLogSettings: '&profileId',
+        bookmarks:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index]',
+        folders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index]',
+        favoriteItems: '&[profileId+itemId], profileId, itemId, favoritedAt',
+        undoHistory:
+          '&id, sessionId, [sessionId+profileId], [sessionId+position], [sessionId+createdAt]',
+      })
+      .upgrade((transaction) =>
+        transaction
+          .table('profileSettings')
+          .toCollection()
+          .modify((settings) => {
+            settings.notificationPreferences ??= {
+              enabled: true,
+              position: 'bottom-right',
+              order: 'newest',
+              stackLimit: 3,
+            };
+            settings.notificationPreferences.countdownLineColor ??= null;
+          }),
+      );
   }
 }
 

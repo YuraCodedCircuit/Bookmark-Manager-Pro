@@ -1,4 +1,6 @@
-import { StrictMode } from 'react';
+import '../../src/platform/validation/configure-runtime-validation';
+
+import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 
@@ -17,6 +19,12 @@ import {
   type CurrentTab,
 } from '../../src/platform/tabs/current-tab';
 import type { Folder } from '../../src/domain/folder';
+import { FolderTreePicker } from '../../src/features/folder-tree/FolderTreePicker';
+import {
+  buildFolderTree,
+  findFolderAncestorIds,
+  findNewestNonRootFolder,
+} from '../../src/features/folder-tree/folder-tree-data';
 import type { ProfileSettings } from '../../src/domain/profile-settings';
 import { addHttpsToHostLikeUrl } from '../../src/domain/bookmark-url';
 import '../../src/styles/global.css';
@@ -29,6 +37,7 @@ const undoHistory = createUndoHistoryService(bookmarkManager);
 
 interface ReadyState {
   folder: Folder;
+  folders: readonly Folder[];
   profileId: string;
   settings: ProfileSettings;
   tab: CurrentTab;
@@ -40,6 +49,9 @@ interface SaveCurrentPagePopupProps {
 
 export function SaveCurrentPagePopup({ ready }: SaveCurrentPagePopupProps) {
   const { t } = useTranslation();
+  const [selectedFolderId, setSelectedFolderId] = useState(ready.folder.id);
+  const selectedFolder =
+    ready.folders.find(({ id }) => id === selectedFolderId) ?? ready.folder;
 
   const record = async (
     eventCode: string,
@@ -98,7 +110,7 @@ export function SaveCurrentPagePopup({ ready }: SaveCurrentPagePopupProps) {
         const before = await bookmarkManager.captureUndoState(ready.profileId);
         await bookmarkManager.createBookmark({
           ...value,
-          parentId: ready.folder.id,
+          parentId: selectedFolder.id,
           profileId: ready.profileId,
           tags:
             ready.settings.tagOrder === 'alphabetical'
@@ -130,6 +142,26 @@ export function SaveCurrentPagePopup({ ready }: SaveCurrentPagePopupProps) {
 
   return (
     <CreateContentDialog
+      afterNote={
+        <section
+          aria-labelledby="save-current-page-destination"
+          className="save-current-page__destination"
+        >
+          <h2 id="save-current-page-destination">
+            {t('saveCurrentPage.destination')}
+          </h2>
+          <FolderTreePicker
+            folderTree={buildFolderTree(ready.folders)}
+            idPrefix="save-current-page"
+            initiallyExpandedFolderIds={findFolderAncestorIds(
+              ready.folders,
+              selectedFolder.id,
+            )}
+            onSelect={(_path, folderId) => setSelectedFolderId(folderId)}
+            selectedFolderId={selectedFolder.id}
+          />
+        </section>
+      }
       defaultAppearance={ready.settings.lastBookmarkAppearance}
       initialValue={{
         cardAppearance: ready.settings.lastBookmarkAppearance ?? {
@@ -163,7 +195,7 @@ export function SaveCurrentPagePopup({ ready }: SaveCurrentPagePopupProps) {
       }}
       onClose={() => window.close()}
       onCreate={save}
-      parentName={ready.folder.title}
+      parentName={selectedFolder.title}
       titleKey="saveCurrentPage.title"
     />
   );
@@ -199,9 +231,8 @@ async function loadReadyState(): Promise<ReadyState> {
     ),
     8_000,
   );
-  const folder =
-    folders.find(({ id }) => id === settings.lastOpenedFolderId) ?? root;
-  return { folder, profileId: profile.id, settings, tab };
+  const folder = findNewestNonRootFolder(folders) ?? root;
+  return { folder, folders, profileId: profile.id, settings, tab };
 }
 
 const root = document.querySelector<HTMLDivElement>('#root');

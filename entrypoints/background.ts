@@ -1,7 +1,10 @@
+import '../src/platform/validation/configure-runtime-validation';
+
 import browser from 'webextension-polyfill';
 import { defineBackground } from 'wxt/utils/define-background';
 
 import { createBackgroundPreflight } from '../src/application/preflight/create-background-preflight';
+import { createUpdateAnnouncementManager } from '../src/application/update-announcement/create-update-announcement-manager';
 import {
   BACKGROUND_PROTOCOL_VERSION,
   backgroundRequestSchema,
@@ -14,6 +17,7 @@ import {
 
 const background: ReturnType<typeof defineBackground> = defineBackground(() => {
   const preflight = createBackgroundPreflight();
+  const updateAnnouncements = createUpdateAnnouncementManager();
   let activePreflight: Promise<unknown> | undefined;
   let activeMenuRegistration: Promise<void> | undefined;
 
@@ -38,9 +42,17 @@ const background: ReturnType<typeof defineBackground> = defineBackground(() => {
   };
 
   // Register every listener synchronously before starting asynchronous work.
-  browser.runtime.onInstalled.addListener(() => {
+  browser.runtime.onInstalled.addListener((details) => {
     registerSaveUrlContextMenuSafely();
     void runPreflight();
+    if (details.reason === 'update' && details.previousVersion) {
+      void updateAnnouncements
+        .recordUpgrade(
+          details.previousVersion,
+          browser.runtime.getManifest().version,
+        )
+        .catch(() => console.error('update-announcement-record-failed'));
+    }
   });
   browser.runtime.onStartup.addListener(() => {
     registerSaveUrlContextMenuSafely();

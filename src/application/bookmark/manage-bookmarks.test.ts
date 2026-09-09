@@ -280,6 +280,9 @@ describe('ManageBookmarks', () => {
     );
     expect(repo.addFolder).toHaveBeenCalledWith(
       expect.objectContaining({
+        backgroundAppearance: root.backgroundAppearance,
+        includeNavigationBackground: true,
+        navigationTransparency: 70,
         bookmarkGroupBy: 'domain',
         bookmarkSortBy: 'title',
         bookmarkSortDirection: 'descending',
@@ -289,6 +292,47 @@ describe('ManageBookmarks', () => {
         title: 'Reading',
       }),
     );
+  });
+
+  it('uses the default style under a customized parent without changing that parent', async () => {
+    const repo = repository();
+    const parent = {
+      ...root,
+      backgroundAppearance: { kind: 'color' as const, value: '#abcdef' },
+      includeNavigationBackground: false,
+      navigationTransparency: 25,
+    };
+    vi.mocked(repo.getFolder).mockResolvedValue(parent);
+    const service = new ManageBookmarks(
+      repo,
+      () => itemId,
+      () => 20,
+    );
+
+    await service.createFolder({
+      cardAppearance: { kind: 'color', value: '#123456' },
+      note: '',
+      parentId: rootId,
+      profileId,
+      title: 'New folder',
+      tags: [],
+    });
+
+    expect(repo.addFolder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        backgroundAppearance: root.backgroundAppearance,
+        includeNavigationBackground: true,
+        navigationTransparency: 70,
+        cardAppearance: { kind: 'color', value: '#123456' },
+      }),
+    );
+    expect(repo.updateFolder).not.toHaveBeenCalled();
+    expect(parent.backgroundAppearance).toEqual({
+      kind: 'color',
+      value: '#abcdef',
+    });
+    expect(parent.includeNavigationBackground).toBe(false);
+    expect(parent.navigationTransparency).toBe(25);
   });
 
   it('rejects unsafe URLs and parents outside the active profile', async () => {

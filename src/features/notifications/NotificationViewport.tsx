@@ -1,4 +1,10 @@
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useStore } from 'zustand';
 import { useTranslation } from 'react-i18next';
@@ -71,6 +77,7 @@ export function NotificationViewport({
       {rendered.map((notification) => (
         <NotificationCard
           key={notification.id}
+          countdownLineColor={preferences.countdownLineColor}
           notification={notification}
           dismissLabel={t('notifications.dismiss')}
           onDismiss={() => service.dismiss(notification.id)}
@@ -82,6 +89,7 @@ export function NotificationViewport({
 }
 
 interface NotificationCardProps {
+  countdownLineColor: string | null;
   dismissLabel: string;
   notification: AppNotification;
   onDismiss: () => void;
@@ -89,6 +97,7 @@ interface NotificationCardProps {
 
 /** Manages pause-and-resume timing without changing the underlying operation. */
 function NotificationCard({
+  countdownLineColor,
   dismissLabel,
   notification,
   onDismiss,
@@ -178,6 +187,19 @@ function NotificationCard({
       >
         ×
       </button>
+      {notification.durationMs === null ? null : (
+        <span
+          aria-hidden="true"
+          className="notification-card__time-line"
+          data-paused={paused ? 'true' : 'false'}
+          style={
+            {
+              '--notification-duration': `${notification.durationMs}ms`,
+              '--notification-line-color': countdownLineColor ?? 'var(--text)',
+            } as CSSProperties
+          }
+        />
+      )}
     </article>
   );
 }

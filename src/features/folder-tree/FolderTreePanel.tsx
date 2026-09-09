@@ -1,10 +1,8 @@
-import { useMemo, useRef, useState, type RefObject } from 'react';
+import { useRef, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ClearIcon } from '../../components/icons/ClearIcon';
 import { useAnimatedSidePanel } from '../../components/side-panel/use-animated-side-panel';
-import { filterFolderTree } from './filter-folder-tree';
-import { FolderTreeNodeView } from './FolderTreeNodeView';
+import { FolderTreePicker } from './FolderTreePicker';
 import type { FolderTreeNode } from './folder-tree-data';
 import type { NavigationItem } from '../../application/bookmark/manage-bookmarks';
 import { PinIcon } from '../../components/icons/PinIcon';
@@ -46,17 +44,7 @@ export function FolderTreePanel({
     isOpen,
     onAfterClose,
   });
-  const [filterQuery, setFilterQuery] = useState('');
-  const normalizedFilterQuery = filterQuery.trim();
-  const filteredTree = useMemo(
-    () => filterFolderTree(folderTree, normalizedFilterQuery),
-    [folderTree, normalizedFilterQuery],
-  );
-
-  const closePanel = () => {
-    setFilterQuery('');
-    onClose();
-  };
+  const closePanel = () => onClose();
 
   return (
     <dialog
@@ -69,17 +57,6 @@ export function FolderTreePanel({
       onClick={(event) => {
         if (event.currentTarget === event.target) {
           closePanel();
-        }
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          event.stopPropagation();
-          if (filterQuery.length > 0) {
-            setFilterQuery('');
-          } else {
-            closePanel();
-          }
         }
       }}
       ref={dialogRef}
@@ -100,52 +77,13 @@ export function FolderTreePanel({
         onOpenItem={onOpenItem}
         {...(favorites.length === 0 ? { firstItemRef: firstShortcutRef } : {})}
       />
-      <div className="folder-tree-filter">
-        <label className="visually-hidden" htmlFor="folder-tree-filter">
-          {t('folderTree.filterLabel')}
-        </label>
-        <input
-          autoComplete="off"
-          id="folder-tree-filter"
-          onChange={(event) => setFilterQuery(event.target.value)}
-          placeholder={t('folderTree.filterPlaceholder')}
-          ref={filterInputRef}
-          spellCheck="false"
-          type="search"
-          value={filterQuery}
-        />
-        {filterQuery.length > 0 ? (
-          <button
-            aria-label={t('folderTree.clearFilter')}
-            onClick={() => {
-              setFilterQuery('');
-              filterInputRef.current?.focus();
-            }}
-            type="button"
-          >
-            <ClearIcon />
-          </button>
-        ) : null}
-      </div>
-      <nav aria-label={t('folderTree.label')} className="folder-tree">
-        {filteredTree === null ? (
-          <p className="folder-tree__empty" role="status">
-            {t('folderTree.noResults')}
-          </p>
-        ) : (
-          <ul role="tree">
-            <FolderTreeNodeView
-              filterQuery={normalizedFilterQuery}
-              node={filteredTree}
-              onSelect={(path, folderId) => {
-                setFilterQuery('');
-                onSelect(path, folderId);
-              }}
-              parentPath={[]}
-            />
-          </ul>
-        )}
-      </nav>
+      <FolderTreePicker
+        filterInputRef={filterInputRef}
+        folderTree={folderTree}
+        idPrefix="navigation"
+        onEscapeWithoutFilter={closePanel}
+        onSelect={onSelect}
+      />
     </dialog>
   );
 }
@@ -179,6 +117,7 @@ function NavigationSection({
                 className="folder-tree-shortcuts__open"
                 onClick={() => onOpenItem(item)}
                 ref={index === 0 ? firstItemRef : undefined}
+                title={item.value.title}
                 type="button"
               >
                 {item.kind === 'folder' ? <FolderIcon /> : <BookmarkIcon />}

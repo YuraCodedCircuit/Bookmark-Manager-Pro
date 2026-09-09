@@ -1,13 +1,53 @@
 # Changelog
 
 This changelog records user-visible Bookmark Manager Pro improvements and
-behavior. Developer-facing implementation details are maintained in
-`CHANGELOG_DEV.md`.
+behavior. Developer-facing implementation details are maintained in the
+[developer changelog](https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/blob/main/CHANGELOG_DEV.md).
 
 ## Unreleased
 
+## 0.1.5 - 2026-09-09
+
+### New
+
+- Normal extension upgrades now open What's new once when the next app tab is
+  ready, showing only the dated changelog section for the installed version.
+  Settings > General can disable future automatic announcements, and unavailable
+  release notes offer the full bundled changelog in the same window. The full
+  changelog links to the published developer changelog on GitHub.
+- The Save current URL popup now places a filterable folder tree after Note for
+  choosing where Save bookmark creates the bookmark. It initially selects the
+  newest created folder and reveals only that folder's ancestor path. Long names
+  and deep nesting scroll horizontally without moving the filter or surrounding
+  popup content.
+- Color and Gradient appearances now include a button after the preview for
+  generating a random solid color or a three-color gradient and direction.
+- Notifications settings now allow the automatic-close countdown line to use a
+  custom profile-owned color or continue following the app foreground color.
+
+### Improved
+
+- Newly created folders now start with Home's default blue gradient and matching
+  navigation background at 70-percent transparency.
+- Settings search now matches localized text and labels inside every category,
+  keeps category rows visible, disables nonmatches, marks matching categories,
+  and highlights visible phrases, including matches in the displayed value of a
+  closed choice control. No-results guidance can open a blank GitHub
+  feature-request form without transmitting the search phrase.
+- Horizontal scrolling in folder trees now moves only the tree, keeping the
+  left panel's shortcuts and filter fixed to the panel width.
+- Favorites and Recent rows now show their complete bookmark or folder title in
+  a native tooltip when the pointer rests on truncated text.
+- Auto-closing notifications now show a 5 px countdown line that recedes from
+  right to left and pauses while the notification is paused.
+
 ### Fixed
 
+- Removed the empty right-edge gap in the main window in Chrome and Edge.
+- Runtime validation no longer produces Content Security Policy errors in
+  extension pages.
+- Removed the Chromium-only strip after the Save current URL popup scrollbar
+  without changing the popup fields or Firefox scrollbar behavior.
 - The Save URL to Bookmark Manager Pro right-click command now appears in
   Chrome and Edge and restores itself after an extension reload or browser
   cleanup. The right-click command, toolbar label, and popup title now make clear
@@ -274,9 +314,9 @@ behavior. Developer-facing implementation details are maintained in
   separates a wider category rail, category options, and fixed Cancel and Save
   actions. Search and a reserved bottom panel stay fixed while only the
   icon-labeled category list scrolls. The options area no longer repeats a
-  Settings heading, leaving more room for controls. General contains the existing bookmark display controls;
-  thirteen additional one-word categories have empty option panels, with
-  Import, Export, and Backup listed separately.
+  Settings heading, leaving more room for controls. General contains the existing
+  bookmark display controls; thirteen additional one-word categories have empty
+  option panels, with Import, Export, and Backup listed separately.
 - The activity log now records bookmark and folder edits and opening requests,
   first-profile completion, profile-list loading, Get info opening, and log
   loading, settings, clearing, and export without storing personal content.

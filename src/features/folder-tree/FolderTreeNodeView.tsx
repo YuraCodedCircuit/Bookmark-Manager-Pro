@@ -7,20 +7,26 @@ import type { FolderTreeNode } from './folder-tree-data';
 
 interface FolderTreeNodeViewProps {
   filterQuery: string;
+  initiallyExpandedFolderIds?: ReadonlySet<string>;
   node: FolderTreeNode;
   parentPath: readonly string[];
   onSelect: (path: readonly string[], id: string) => void;
+  selectedFolderId?: string;
 }
 
 export function FolderTreeNodeView({
   filterQuery,
+  initiallyExpandedFolderIds,
   node,
   parentPath,
   onSelect,
+  selectedFolderId,
 }: FolderTreeNodeViewProps) {
   const { t } = useTranslation();
   const hasChildren = Boolean(node.children?.length);
-  const [isExpanded, setIsExpanded] = useState(hasChildren);
+  const [isExpanded, setIsExpanded] = useState(
+    initiallyExpandedFolderIds?.has(node.id) ?? hasChildren,
+  );
   const isFiltering = filterQuery.length > 0;
   const isEffectivelyExpanded = isFiltering || isExpanded;
   const path = [...parentPath, node.name];
@@ -56,6 +62,7 @@ export function FolderTreeNodeView({
         )}
 
         <button
+          aria-current={node.id === selectedFolderId ? 'true' : undefined}
           className="folder-tree__folder"
           onClick={() => onSelect(path, node.id)}
           type="button"
@@ -81,9 +88,13 @@ export function FolderTreeNodeView({
             <FolderTreeNodeView
               key={child.id}
               filterQuery={filterQuery}
+              {...(initiallyExpandedFolderIds
+                ? { initiallyExpandedFolderIds }
+                : {})}
               node={child}
               onSelect={onSelect}
               parentPath={path}
+              {...(selectedFolderId ? { selectedFolderId } : {})}
             />
           ))}
         </ul>

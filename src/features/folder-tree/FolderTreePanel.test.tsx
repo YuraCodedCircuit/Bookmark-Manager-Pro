@@ -47,6 +47,22 @@ describe('FolderTreePanel', () => {
     const text = panel.textContent ?? '';
     expect(text.indexOf('Favorites')).toBeLessThan(text.indexOf('Recent'));
     expect(text.indexOf('Recent')).toBeLessThan(text.indexOf('Filter folders'));
+    const favorites = within(panel)
+      .getByRole('heading', { name: 'Favorites' })
+      .closest('section');
+    const recent = within(panel)
+      .getByRole('heading', { name: 'Recent' })
+      .closest('section');
+    expect(
+      favorites
+        ? within(favorites).getByRole('button', { name: 'Pinned folder' })
+        : null,
+    ).toHaveAttribute('title', 'Pinned folder');
+    expect(
+      recent
+        ? within(recent).getByRole('button', { name: 'Pinned folder' })
+        : null,
+    ).toHaveAttribute('title', 'Pinned folder');
     await user.click(
       within(panel).getByRole('button', {
         name: 'Remove Pinned folder from favorites',

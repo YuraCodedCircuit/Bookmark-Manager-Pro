@@ -177,4 +177,98 @@ describe('NotificationViewport', () => {
       screen.queryByText('Timer stays continuous'),
     ).not.toBeInTheDocument();
   });
+
+  it('shows a countdown line only for auto-closing notices', () => {
+    const service = new NotificationService();
+    service.show({
+      durationMs: 4_000,
+      level: 'success',
+      message: 'Closes automatically',
+      title: 'Timed',
+    });
+    service.show({
+      durationMs: null,
+      level: 'error',
+      message: 'Requires dismissal',
+      title: 'Persistent',
+    });
+
+    render(
+      <NotificationViewport
+        preferences={{ ...defaultNotificationPreferences, stackLimit: 6 }}
+        service={service}
+      />,
+    );
+
+    const timedNotice = screen
+      .getByText('Closes automatically')
+      .closest('article');
+    const persistentNotice = screen
+      .getByText('Requires dismissal')
+      .closest('article');
+    const timeLine = timedNotice?.querySelector(
+      '.notification-card__time-line',
+    );
+
+    expect(timeLine).toHaveAttribute('aria-hidden', 'true');
+    expect(timeLine).toHaveStyle('--notification-duration: 4000ms');
+    expect(timeLine).toHaveStyle('--notification-line-color: var(--text)');
+    expect(
+      persistentNotice?.querySelector('.notification-card__time-line'),
+    ).toBeNull();
+  });
+
+  it('applies the saved countdown line color', () => {
+    const service = new NotificationService();
+    service.show({
+      durationMs: 4_000,
+      level: 'success',
+      message: 'Uses a custom line',
+      title: 'Timed',
+    });
+
+    render(
+      <NotificationViewport
+        preferences={{
+          ...defaultNotificationPreferences,
+          countdownLineColor: '#4a90e2',
+        }}
+        service={service}
+      />,
+    );
+
+    expect(
+      screen
+        .getByText('Uses a custom line')
+        .closest('article')
+        ?.querySelector('.notification-card__time-line'),
+    ).toHaveStyle('--notification-line-color: #4a90e2');
+  });
+
+  it('pauses the countdown line with the automatic-close timer', () => {
+    const service = new NotificationService();
+    service.show({
+      durationMs: 4_000,
+      level: 'success',
+      message: 'Pause together',
+      title: 'Timed',
+    });
+
+    render(
+      <NotificationViewport
+        preferences={defaultNotificationPreferences}
+        service={service}
+      />,
+    );
+
+    const notice = screen.getByText('Pause together').closest('article');
+    const timeLine = notice?.querySelector('.notification-card__time-line');
+    expect(timeLine).toHaveAttribute('data-paused', 'false');
+
+    if (notice) fireEvent.mouseEnter(notice);
+    expect(timeLine).toHaveAttribute('data-paused', 'true');
+
+    if (notice) fireEvent.mouseLeave(notice);
+    expect(timeLine).toHaveAttribute('data-paused', 'false');
+  });
 });

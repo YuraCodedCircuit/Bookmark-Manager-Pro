@@ -131,6 +131,16 @@ const profileManager = {
   updateProfileSettings: vi.fn(),
   updateLastOpenedFolder: vi.fn(),
 };
+const updateAnnouncements = {
+  claim: vi.fn(async () => null),
+  getPreferences: vi.fn(async () => ({
+    schemaVersion: 1 as const,
+    showAfterUpdate: true,
+  })),
+  markShown: vi.fn(async () => undefined),
+  markUnavailable: vi.fn(async () => undefined),
+  updatePreferences: vi.fn(async () => undefined),
+};
 const createProfileAndResumePreflight = vi.fn().mockResolvedValue({
   operationId: 'resumed-operation',
   language: 'en-US',
@@ -153,6 +163,7 @@ function renderApp(
   return render(
     <App
       activityLog={activityLog}
+      applicationVersion="0.1.1"
       bookmarkManager={bookmarkManager}
       createProfileAndResumePreflight={createProfileAndResumePreflight}
       initialPreflightSnapshot={{
@@ -170,6 +181,7 @@ function renderApp(
         operationId: 'resumed-operation',
       })}
       undoHistory={undoHistory}
+      updateAnnouncements={updateAnnouncements}
     />,
   );
 }

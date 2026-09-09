@@ -1,4 +1,10 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -147,10 +153,11 @@ describe('BookmarkDisplaySettingsDialog', () => {
     );
   });
 
-  it('filters categories without saving and Cancel closes the window', async () => {
+  it('keeps categories visible, disables nonmatches, and restores availability on Escape', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     const onSave = vi.fn(async () => undefined);
+    const onOpenExternalLink = vi.fn();
     render(
       <BookmarkDisplaySettingsDialog
         activityLogSettings={activityLogSettings}
@@ -158,6 +165,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
         onClose={onClose}
         onSave={onSave}
         onSaveActivitySettings={vi.fn(async () => undefined)}
+        onOpenExternalLink={onOpenExternalLink}
         profiles={[]}
         settings={settings}
         storageUsage={[]}
@@ -165,18 +173,118 @@ describe('BookmarkDisplaySettingsDialog', () => {
     );
 
     const dialog = screen.getByRole('dialog', { name: 'Settings' });
-    await user.type(
-      within(dialog).getByPlaceholderText('Search settings'),
-      'not-a-category',
-    );
+    const navigation = within(dialog).getByRole('navigation', {
+      name: 'Settings categories',
+    });
+    const search = within(dialog).getByPlaceholderText('Search settings');
+    await user.type(search, 'not-a-category');
+    expect(within(navigation).getAllByRole('button')).toHaveLength(15);
+    for (const category of within(navigation).getAllByRole('button'))
+      expect(category).toBeDisabled();
     expect(
       within(dialog).getByRole('heading', { name: 'No settings found' }),
     ).toBeVisible();
+    const suggestion = within(dialog).getByRole('link', {
+      name: 'Suggest a feature.',
+    });
+    expect(suggestion).toHaveAttribute(
+      'href',
+      'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues/new',
+    );
+    await user.click(suggestion);
+    expect(onOpenExternalLink).toHaveBeenCalledWith(
+      'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues/new',
+    );
     expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled();
+    await user.click(search);
+    await user.keyboard('{Escape}');
+    expect(search).toHaveValue('');
+    expect(search).toHaveFocus();
+    expect(
+      within(navigation).getByRole('button', { name: 'General' }),
+    ).toBeEnabled();
+    expect(
+      within(navigation).getByRole('button', { name: 'Import' }),
+    ).toBeDisabled();
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
 
     expect(onClose).toHaveBeenCalledOnce();
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('matches category content and marks only available matching categories', async () => {
+    const user = userEvent.setup();
+    render(
+      <BookmarkDisplaySettingsDialog
+        activityLogSettings={activityLogSettings}
+        isOpen
+        onClose={vi.fn()}
+        onSave={vi.fn(async () => undefined)}
+        onSaveActivitySettings={vi.fn(async () => undefined)}
+        profiles={[]}
+        settings={settings}
+        storageUsage={[]}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+    const navigation = within(dialog).getByRole('navigation', {
+      name: 'Settings categories',
+    });
+
+    await user.type(
+      within(dialog).getByPlaceholderText('Search settings'),
+      'duplicate handling',
+    );
+
+    const bookmarks = within(navigation).getByRole('button', {
+      name: 'Bookmarks. Contains a search match',
+    });
+    expect(bookmarks).toBeEnabled();
+    expect(bookmarks).toHaveAttribute('aria-current', 'page');
+    expect(
+      bookmarks.querySelector('.settings-dialog__match-dot'),
+    ).toBeInTheDocument();
+    expect(
+      within(navigation).getByRole('button', { name: 'General' }),
+    ).toBeDisabled();
+    expect(
+      within(navigation).getByRole('button', { name: 'Import' }),
+    ).toBeDisabled();
+    expect(within(navigation).getAllByRole('button')).toHaveLength(15);
+    expect(
+      within(dialog).getByRole('heading', { name: 'Bookmarks' }),
+    ).toBeVisible();
+    expect(within(dialog).getByText('Duplicate handling')).toBeVisible();
+  });
+
+  it('highlights a matching phrase in the currently displayed select choice', async () => {
+    const user = userEvent.setup();
+    render(
+      <BookmarkDisplaySettingsDialog
+        activityLogSettings={activityLogSettings}
+        isOpen
+        onClose={vi.fn()}
+        onSave={vi.fn(async () => undefined)}
+        onSaveActivitySettings={vi.fn(async () => undefined)}
+        profiles={[]}
+        settings={settings}
+        storageUsage={[]}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+
+    await user.type(
+      within(dialog).getByPlaceholderText('Search settings'),
+      'bookmarks',
+    );
+
+    const choice = within(dialog).getByRole('combobox', {
+      name: 'Opening behavior',
+    });
+    expect(choice).toHaveAttribute('data-settings-choice-highlight', 'true');
+    expect(
+      dialog.querySelector('.settings-dialog__choice-highlight mark'),
+    ).toHaveTextContent('bookmarks');
   });
 
   it('keeps future data categories visible but unavailable', async () => {
@@ -544,7 +652,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
     );
   });
 
-  it('saves notification placement, ordering, and stack preferences', async () => {
+  it('saves notification placement, ordering, stack, and line color preferences', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async () => undefined);
     render(
@@ -576,11 +684,17 @@ describe('BookmarkDisplaySettingsDialog', () => {
       within(dialog).getByLabelText('Visible notifications'),
       '6',
     );
+    const lineColor = within(dialog).getByLabelText('Countdown line color');
+    expect(lineColor).toBeDisabled();
+    await user.click(within(dialog).getByLabelText('Use app foreground color'));
+    expect(lineColor).toBeEnabled();
+    fireEvent.change(lineColor, { target: { value: '#4a90e2' } });
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
         notificationPreferences: {
+          countdownLineColor: '#4a90e2',
           enabled: true,
           order: 'oldest',
           position: 'top-left',

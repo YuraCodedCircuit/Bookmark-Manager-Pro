@@ -1,10 +1,21 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ImageFit, ItemAppearance } from '../../domain/bookmark';
 import { parseGradientDirection } from '../../shared/gradient-direction';
 import { GradientDirectionControl } from '../../components/GradientDirectionControl';
 import { ImageFitSelect } from '../../components/ImageFitSelect';
+
+const createRandomColor = (): string =>
+  `#${Math.floor(Math.random() * 0x1000000)
+    .toString(16)
+    .padStart(6, '0')}`;
 
 export type ContentKind = 'bookmark' | 'folder';
 
@@ -17,6 +28,7 @@ export interface CreateContentValue {
 }
 
 interface CreateContentDialogProps {
+  afterNote?: ReactNode;
   defaultAppearance?: ItemAppearance | undefined;
   initialValue?: CreateContentValue;
   isOpen: boolean;
@@ -30,6 +42,7 @@ interface CreateContentDialogProps {
 
 /** Focused creation window shared by bookmark and folder commands. */
 export function CreateContentDialog({
+  afterNote,
   defaultAppearance,
   initialValue,
   isOpen,
@@ -85,6 +98,7 @@ export function CreateContentDialog({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [appearanceAnnouncement, setAppearanceAnnouncement] = useState('');
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -107,7 +121,33 @@ export function CreateContentDialog({
     setImage(undefined);
     setImageFit('fill');
     setError('');
+    setAppearanceAnnouncement('');
     onClose();
+  };
+
+  const randomizeColor = () => {
+    const nextColor = createRandomColor();
+    setColor(nextColor);
+    setAppearanceAnnouncement(
+      t('contentEditor.randomColorGenerated', { color: nextColor }),
+    );
+  };
+
+  const randomizeGradient = () => {
+    const nextColors: [string, string, string] = [
+      createRandomColor(),
+      createRandomColor(),
+      createRandomColor(),
+    ];
+    const nextDirection = String(Math.floor(Math.random() * 360));
+    setGradientColors(nextColors);
+    setGradientDirection(nextDirection);
+    setAppearanceAnnouncement(
+      t('contentEditor.randomGradientGenerated', {
+        colors: nextColors.join(', '),
+        direction: nextDirection,
+      }),
+    );
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -247,6 +287,8 @@ export function CreateContentDialog({
           />
         </label>
 
+        {afterNote}
+
         <fieldset>
           <legend>{t('contentEditor.appearance')}</legend>
           <div className="content-editor__appearance-options">
@@ -262,7 +304,10 @@ export function CreateContentDialog({
                 <input
                   checked={appearanceKind === option}
                   name="appearance"
-                  onChange={() => setAppearanceKind(option)}
+                  onChange={() => {
+                    setAppearanceKind(option);
+                    setAppearanceAnnouncement('');
+                  }}
                   type="radio"
                 />
                 {t(`contentEditor.appearanceKinds.${option}`)}
@@ -270,12 +315,21 @@ export function CreateContentDialog({
             ))}
           </div>
           {appearanceKind === 'color' ? (
-            <input
-              aria-label={t('contentEditor.color')}
-              onChange={(event) => setColor(event.target.value)}
-              type="color"
-              value={color}
-            />
+            <div className="content-editor__color-controls">
+              <input
+                aria-label={t('contentEditor.color')}
+                onChange={(event) => setColor(event.target.value)}
+                type="color"
+                value={color}
+              />
+              <button
+                className="content-editor__randomize-button"
+                onClick={randomizeColor}
+                type="button"
+              >
+                {t('contentEditor.randomColor')}
+              </button>
+            </div>
           ) : null}
           {appearanceKind === 'gradient' ? (
             <div className="content-editor__gradient-controls">
@@ -318,6 +372,13 @@ export function CreateContentDialog({
                   background: `linear-gradient(${gradientDirection}deg, ${gradientColors.join(', ')})`,
                 }}
               />
+              <button
+                className="content-editor__randomize-button"
+                onClick={randomizeGradient}
+                type="button"
+              >
+                {t('contentEditor.randomGradient')}
+              </button>
             </div>
           ) : null}
           {appearanceKind === 'image' ? (
@@ -376,6 +437,9 @@ export function CreateContentDialog({
               ) : null}
             </div>
           ) : null}
+          <span aria-live="polite" className="visually-hidden">
+            {appearanceAnnouncement}
+          </span>
         </fieldset>
 
         {error ? (

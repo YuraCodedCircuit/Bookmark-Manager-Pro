@@ -69,6 +69,10 @@ export const notificationStackLimitSchema = z.union([
   z.literal(9),
 ]);
 export const notificationPreferencesSchema = z.object({
+  countdownLineColor: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .nullable(),
   enabled: z.boolean(),
   position: notificationPositionSchema,
   order: notificationOrderSchema,
@@ -77,6 +81,7 @@ export const notificationPreferencesSchema = z.object({
 
 export const defaultNotificationPreferences =
   notificationPreferencesSchema.parse({
+    countdownLineColor: null,
     enabled: true,
     position: 'bottom-right',
     order: 'newest',

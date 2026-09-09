@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ProfileSettings } from '../../domain/profile-settings';
@@ -22,16 +22,26 @@ import {
   settingsCategories,
   type SettingsCategory,
 } from './settings-categories';
+import {
+  getSettingsCategoryMatches,
+  highlightSettingsMatches,
+} from './settings-search';
+
+const FEATURE_REQUEST_URL =
+  'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues/new';
 
 interface BookmarkDisplaySettingsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (value: ProfileSettings) => Promise<void>;
   onSaveActivitySettings: (value: ActivityLogSettings) => Promise<void>;
+  onSaveUpdateAnnouncements?: (enabled: boolean) => Promise<void>;
+  onOpenExternalLink?: (url: string) => void;
   profiles: readonly ProfileListItem[];
   activityLogSettings: ActivityLogSettings;
   settings: ProfileSettings;
   storageUsage: readonly ProfileStorageUsage[];
+  updateAnnouncementsEnabled?: boolean;
 }
 
 /**
@@ -46,13 +56,17 @@ export function BookmarkDisplaySettingsDialog({
   onClose,
   onSave,
   onSaveActivitySettings,
+  onSaveUpdateAnnouncements = async () => undefined,
+  onOpenExternalLink = () => undefined,
   profiles,
   settings,
   storageUsage,
+  updateAnnouncementsEnabled = true,
 }: BookmarkDisplaySettingsDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLElement>(null);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] =
     useState<SettingsCategory>('general');
@@ -73,38 +87,47 @@ export function BookmarkDisplaySettingsDialog({
   const [shortcutPreferences, setShortcutPreferences] = useState(
     settings.shortcutPreferences ?? defaultShortcutPreferences,
   );
+  const initialNotificationPreferences =
+    settings.notificationPreferences ?? defaultNotificationPreferences;
+  const [notificationLineUsesForeground, setNotificationLineUsesForeground] =
+    useState(initialNotificationPreferences.countdownLineColor === null);
+  const [notificationLineColor, setNotificationLineColor] = useState(
+    initialNotificationPreferences.countdownLineColor ?? '#f6f8fb',
+  );
 
   const normalizedSearch = search.trim().toLocaleLowerCase();
-  const visibleCategories = settingsCategories.filter((category) =>
-    t(`displaySettings.category.${category}`)
-      .toLocaleLowerCase()
-      .includes(normalizedSearch),
+  const categoryMatches = useMemo(
+    () => getSettingsCategoryMatches(t, normalizedSearch),
+    [normalizedSearch, t],
   );
-  const showGeneral =
-    selectedCategory === 'general' && visibleCategories.includes('general');
+  const enabledMatches = settingsCategories.filter(
+    (category) =>
+      !isSettingsCategoryDisabled(category) && categoryMatches.has(category),
+  );
+  const hasSearch = normalizedSearch.length > 0;
+  const hasResults = !hasSearch || enabledMatches.length > 0;
+  const selectedCategoryMatches =
+    !hasSearch || categoryMatches.has(selectedCategory);
+  const showGeneral = selectedCategory === 'general' && selectedCategoryMatches;
   const showProfiles =
-    selectedCategory === 'profiles' && visibleCategories.includes('profiles');
+    selectedCategory === 'profiles' && selectedCategoryMatches;
   const showAppearance =
-    selectedCategory === 'appearance' &&
-    visibleCategories.includes('appearance');
+    selectedCategory === 'appearance' && selectedCategoryMatches;
   const showLanguage =
-    selectedCategory === 'language' && visibleCategories.includes('language');
+    selectedCategory === 'language' && selectedCategoryMatches;
   const showNotifications =
-    selectedCategory === 'notifications' &&
-    visibleCategories.includes('notifications');
+    selectedCategory === 'notifications' && selectedCategoryMatches;
   const showActivity =
-    selectedCategory === 'activity' && visibleCategories.includes('activity');
+    selectedCategory === 'activity' && selectedCategoryMatches;
   const showSecurity =
-    selectedCategory === 'security' && visibleCategories.includes('security');
+    selectedCategory === 'security' && selectedCategoryMatches;
   const showAccessibility =
-    selectedCategory === 'accessibility' &&
-    visibleCategories.includes('accessibility');
+    selectedCategory === 'accessibility' && selectedCategoryMatches;
   const showBookmarks =
-    selectedCategory === 'bookmarks' && visibleCategories.includes('bookmarks');
-  const showSearch =
-    selectedCategory === 'search' && visibleCategories.includes('search');
+    selectedCategory === 'bookmarks' && selectedCategoryMatches;
+  const showSearch = selectedCategory === 'search' && selectedCategoryMatches;
   const showShortcuts =
-    selectedCategory === 'shortcuts' && visibleCategories.includes('shortcuts');
+    selectedCategory === 'shortcuts' && selectedCategoryMatches;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -122,6 +145,14 @@ export function BookmarkDisplaySettingsDialog({
       setShortcutPreferences(
         settings.shortcutPreferences ?? defaultShortcutPreferences,
       );
+      const notificationPreferences =
+        settings.notificationPreferences ?? defaultNotificationPreferences;
+      setNotificationLineUsesForeground(
+        notificationPreferences.countdownLineColor === null,
+      );
+      setNotificationLineColor(
+        notificationPreferences.countdownLineColor ?? '#f6f8fb',
+      );
       if (typeof dialog.showModal === 'function') dialog.showModal();
       else dialog.setAttribute('open', '');
       requestAnimationFrame(() => searchRef.current?.focus());
@@ -137,7 +168,31 @@ export function BookmarkDisplaySettingsDialog({
     settings.searchPreferences,
     settings.shortcutPreferences,
     settings.startupLocation,
+    settings.notificationPreferences,
   ]);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    let clearHighlight = highlightSettingsMatches(content, normalizedSearch);
+    const observer = new MutationObserver((mutations) => {
+      const contentChanged = mutations.some((mutation) =>
+        [...mutation.addedNodes, ...mutation.removedNodes].some(
+          (node) =>
+            !(node instanceof Element) ||
+            !node.classList.contains('settings-dialog__choice-highlight'),
+        ),
+      );
+      if (!contentChanged) return;
+      clearHighlight();
+      clearHighlight = highlightSettingsMatches(content, normalizedSearch);
+    });
+    observer.observe(content, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      clearHighlight();
+    };
+  }, [normalizedSearch, selectedCategory]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -267,6 +322,9 @@ export function BookmarkDisplaySettingsDialog({
                       ? {
                           ...settings,
                           notificationPreferences: {
+                            countdownLineColor: notificationLineUsesForeground
+                              ? null
+                              : notificationLineColor,
                             enabled: data.has('notificationsEnabled'),
                             order:
                               data.get('notificationOrder') === 'oldest'
@@ -375,6 +433,8 @@ export function BookmarkDisplaySettingsDialog({
                                       : 'system',
                               },
         );
+      if (showGeneral)
+        await onSaveUpdateAnnouncements(data.has('showWhatsNewAfterUpdate'));
       onClose();
     } catch {
       setError(true);
@@ -406,15 +466,28 @@ export function BookmarkDisplaySettingsDialog({
                   const nextNormalizedSearch = nextSearch
                     .trim()
                     .toLocaleLowerCase();
+                  const nextMatches = getSettingsCategoryMatches(
+                    t,
+                    nextNormalizedSearch,
+                  );
                   const firstMatch = settingsCategories.find(
                     (category) =>
                       !isSettingsCategoryDisabled(category) &&
-                      t(`displaySettings.category.${category}`)
-                        .toLocaleLowerCase()
-                        .includes(nextNormalizedSearch),
+                      nextMatches.has(category),
                   );
                   setSearch(nextSearch);
-                  if (firstMatch) setSelectedCategory(firstMatch);
+                  if (
+                    nextNormalizedSearch &&
+                    !nextMatches.has(selectedCategory) &&
+                    firstMatch
+                  )
+                    setSelectedCategory(firstMatch);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Escape' || !search) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setSearch('');
                 }}
                 placeholder={t('displaySettings.search')}
                 ref={searchRef}
@@ -423,26 +496,40 @@ export function BookmarkDisplaySettingsDialog({
               />
             </label>
             <nav aria-label={t('displaySettings.categories')}>
-              {visibleCategories.length ? (
-                visibleCategories.map((category) => (
+              {settingsCategories.map((category) => {
+                const permanentlyDisabled =
+                  isSettingsCategoryDisabled(category);
+                const hasMatch = hasSearch && categoryMatches.has(category);
+                const searchDisabled = hasSearch && !hasMatch;
+                const label = t(`displaySettings.category.${category}`);
+                return (
                   <button
                     aria-current={
-                      selectedCategory === category ? 'page' : undefined
+                      hasResults && selectedCategory === category
+                        ? 'page'
+                        : undefined
                     }
-                    disabled={isSettingsCategoryDisabled(category)}
+                    aria-label={
+                      hasMatch && !permanentlyDisabled
+                        ? `${label}. ${t('displaySettings.containsSearchMatch')}`
+                        : undefined
+                    }
+                    disabled={permanentlyDisabled || searchDisabled}
                     key={category}
                     onClick={() => setSelectedCategory(category)}
                     type="button"
                   >
                     <SettingsCategoryIcon category={category} />
-                    {t(`displaySettings.category.${category}`)}
+                    <span>{label}</span>
+                    {hasMatch && !permanentlyDisabled ? (
+                      <span
+                        aria-hidden="true"
+                        className="settings-dialog__match-dot"
+                      />
+                    ) : null}
                   </button>
-                ))
-              ) : (
-                <p className="settings-dialog__empty">
-                  {t('displaySettings.noResults')}
-                </p>
-              )}
+                );
+              })}
             </nav>
             <footer className="settings-dialog__sidebar-footer">
               <p>{t('displaySettings.footerCredit')}</p>
@@ -452,6 +539,7 @@ export function BookmarkDisplaySettingsDialog({
           <section
             aria-label={t(`displaySettings.category.${selectedCategory}`)}
             className="settings-dialog__content"
+            ref={contentRef}
             role="region"
           >
             {showGeneral ? (
@@ -484,6 +572,16 @@ export function BookmarkDisplaySettingsDialog({
                         {t('displaySettings.general.openLastFolder')}
                       </option>
                     </select>
+                  </label>
+                  <label className="settings-checkbox-row">
+                    <input
+                      defaultChecked={updateAnnouncementsEnabled}
+                      name="showWhatsNewAfterUpdate"
+                      type="checkbox"
+                    />
+                    <span>
+                      {t('displaySettings.general.showWhatsNewAfterUpdate')}
+                    </span>
                   </label>
                 </fieldset>
                 <fieldset>
@@ -1100,6 +1198,33 @@ export function BookmarkDisplaySettingsDialog({
                       <option value="9">9</option>
                     </select>
                   </label>
+                  <label className="settings-checkbox-row">
+                    <input
+                      checked={notificationLineUsesForeground}
+                      name="notificationLineUsesForeground"
+                      onChange={(event) =>
+                        setNotificationLineUsesForeground(event.target.checked)
+                      }
+                      type="checkbox"
+                    />
+                    <span>
+                      {t('displaySettings.notifications.useForegroundColor')}
+                    </span>
+                  </label>
+                  <label>
+                    <span>
+                      {t('displaySettings.notifications.countdownLineColor')}
+                    </span>
+                    <input
+                      disabled={notificationLineUsesForeground}
+                      name="notificationLineColor"
+                      onChange={(event) =>
+                        setNotificationLineColor(event.target.value)
+                      }
+                      type="color"
+                      value={notificationLineColor}
+                    />
+                  </label>
                   <p className="settings-dialog__help">
                     {t('displaySettings.notifications.orderHelp')}
                   </p>
@@ -1201,10 +1326,23 @@ export function BookmarkDisplaySettingsDialog({
                 onChange={setShortcutPreferences}
                 preferences={shortcutPreferences}
               />
-            ) : visibleCategories.length === 0 ? (
+            ) : !hasResults ? (
               <div className="settings-dialog__content-empty">
                 <h2>{t('displaySettings.noResults')}</h2>
-                <p>{t('displaySettings.noResultsHelp')}</p>
+                <p>
+                  {t('displaySettings.noResultsHelp')}{' '}
+                  <a
+                    href={FEATURE_REQUEST_URL}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      onOpenExternalLink(FEATURE_REQUEST_URL);
+                    }}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {t('displaySettings.suggestFeature')}
+                  </a>
+                </p>
               </div>
             ) : null}
 

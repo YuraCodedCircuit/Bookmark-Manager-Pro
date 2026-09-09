@@ -25,7 +25,7 @@
   --window-title-line-height: 1.2;
   --toolbar-height: 5.5rem;
   --page-gutter: clamp(1.25rem, 3.2vw, 3.25rem);
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
   color-scheme: light dark;
   font-family:
     Inter,
@@ -788,6 +788,29 @@ main {
   display: grid;
   gap: 14px;
 }
+.content-editor__color-controls {
+  display: grid;
+  gap: 14px;
+}
+.content-editor__randomize-button {
+  min-height: 3rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.625rem;
+  background: var(--surface-raised);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+.content-editor__randomize-button:hover {
+  border-color: var(--accent);
+  background: var(--highlight-background);
+}
+.content-editor__randomize-button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
 
 .gradient-direction-control {
   display: grid;
@@ -934,7 +957,7 @@ main {
 
 .settings-dialog__workspace > aside nav button {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
+  grid-template-columns: 20px minmax(0, 1fr) auto;
   gap: 11px;
   align-items: center;
   width: 100%;
@@ -945,6 +968,13 @@ main {
   border: 1px solid transparent;
   border-radius: 10px;
   font: 650 0.95rem/1.2 inherit;
+}
+
+.settings-dialog__match-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  background: var(--accent);
+  border-radius: 50%;
 }
 
 .settings-dialog__workspace > aside nav button svg {
@@ -1176,6 +1206,45 @@ main {
   font: inherit;
 }
 
+.settings-dialog fieldset label:has(> .settings-dialog__choice-highlight) {
+  position: relative;
+}
+
+.settings-dialog select[data-settings-choice-highlight='true'] {
+  color: transparent;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.settings-dialog select[data-settings-choice-highlight='true']:focus {
+  color: inherit;
+}
+
+.settings-dialog__choice-highlight {
+  z-index: 1;
+  display: block;
+  min-width: 0;
+  padding: 11px 38px 11px 12px;
+  overflow: hidden;
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.settings-dialog select:focus + .settings-dialog__choice-highlight {
+  visibility: hidden;
+}
+
+.settings-dialog__choice-highlight mark {
+  color: inherit;
+  background: color-mix(in srgb, var(--accent) 48%, transparent);
+  text-decoration: underline solid var(--accent) 0.12em;
+  text-underline-offset: 0.12em;
+}
+
 .settings-dialog__help {
   margin: 0;
   font-size: 0.92rem;
@@ -1273,6 +1342,28 @@ main {
   text-align: center;
 }
 
+.settings-dialog__content-empty a {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+::highlight(settings-search-match) {
+  color: inherit;
+  background: color-mix(in srgb, var(--accent) 48%, transparent);
+  text-decoration: underline solid var(--accent) 0.12em;
+  text-underline-offset: 0.12em;
+}
+
+:root.high-contrast ::highlight(settings-search-match) {
+  color: CanvasText;
+  background: Highlight;
+}
+
+:root.high-contrast .settings-dialog__choice-highlight mark {
+  color: CanvasText;
+  background: Highlight;
+}
+
 .settings-dialog__empty {
   margin: 12px;
   font-size: 0.9rem;
@@ -1340,6 +1431,16 @@ main {
   .settings-dialog fieldset label {
     grid-template-columns: 1fr;
     gap: 7px;
+  }
+
+  .settings-dialog__choice-highlight {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .settings-dialog select[data-settings-choice-highlight='true'] {
+    grid-column: 1;
+    grid-row: 2;
   }
 }
 
@@ -1418,6 +1519,8 @@ main {
 
 .folder-tree-panel {
   inset: 0 auto 0 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   border-right: 1px solid var(--border-strong);
   box-shadow: 1rem 0 2.5rem rgb(0 0 0 / 36%);
 }
@@ -1768,6 +1871,13 @@ main {
   height: 1.15rem;
 }
 
+.folder-tree-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 .folder-tree {
   width: max-content;
   min-width: 100%;
@@ -1837,6 +1947,11 @@ main {
 
 .folder-tree__folder span {
   white-space: nowrap;
+}
+
+.folder-tree__folder[aria-current='true'] {
+  background: var(--highlight-background);
+  box-shadow: inset 0 0 0 1px var(--highlight-border);
 }
 
 .folder-tree__toggle:hover,
@@ -3884,6 +3999,7 @@ html:has(dialog[open]) {
 }
 
 .notification-card {
+  position: relative;
   display: grid;
   grid-template-columns: 1.75rem minmax(0, 1fr) 2rem;
   gap: 0.75rem;
@@ -3894,6 +4010,7 @@ html:has(dialog[open]) {
   border: 1px solid currentColor;
   border-radius: 0.85rem;
   box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 28%);
+  overflow: hidden;
   pointer-events: auto;
   animation: notification-enter 160ms ease-out;
 }
@@ -3982,6 +4099,33 @@ html:has(dialog[open]) {
   margin-top: 0.75rem;
 }
 
+.notification-card__time-line {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 5px;
+  background: var(--notification-line-color, var(--text));
+  pointer-events: none;
+  transform-origin: left center;
+  animation: notification-time-left var(--notification-duration) linear forwards;
+}
+
+.notification-card__time-line[data-paused='true'] {
+  animation-play-state: paused;
+}
+
+:root[data-motion='reduced'] .notification-card__time-line {
+  animation-duration: var(--notification-duration) !important;
+  animation-timing-function: steps(10, end) !important;
+}
+
+@keyframes notification-time-left {
+  to {
+    transform: scaleX(0);
+  }
+}
+
 @keyframes notification-enter {
   from {
     opacity: 0;
@@ -3993,6 +4137,10 @@ html:has(dialog[open]) {
   .notification-card {
     animation: none;
   }
+
+  .notification-card__time-line {
+    animation-timing-function: steps(10, end);
+  }
 }
 
 @media (forced-colors: active) {
@@ -4001,6 +4149,10 @@ html:has(dialog[open]) {
     background: Canvas;
     border-color: CanvasText;
     forced-color-adjust: none;
+  }
+
+  .notification-card__time-line {
+    background: CanvasText;
   }
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import changelogMarkdown from '../../../CHANGELOG.md?raw';
@@ -6,15 +6,43 @@ import { ClearIcon } from '../../components/icons/ClearIcon';
 import { MarkdownContent } from '../../components/MarkdownContent';
 
 interface ChangelogDialogProps {
+  content?:
+    | { kind: 'full' }
+    | { kind: 'version'; markdown: string }
+    | { kind: 'unavailable' };
   isOpen: boolean;
+  onAutomaticContentRendered?(): void;
   onClose(): void;
+  onOpenExternalLink(url: string): void;
 }
 
 /** Displays the bundled user-facing changelog as safe rendered Markdown. */
-export function ChangelogDialog({ isOpen, onClose }: ChangelogDialogProps) {
+export function ChangelogDialog({
+  content = { kind: 'full' },
+  isOpen,
+  onAutomaticContentRendered,
+  onClose,
+  onOpenExternalLink,
+}: ChangelogDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const renderedRef = useRef(false);
+  const [showFullChangelog, setShowFullChangelog] = useState(false);
+
+  const closeDialog = () => {
+    renderedRef.current = false;
+    setShowFullChangelog(false);
+    onClose();
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (content.kind !== 'full' && !renderedRef.current) {
+      renderedRef.current = true;
+      onAutomaticContentRendered?.();
+    }
+  }, [content.kind, isOpen, onAutomaticContentRendered]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -35,7 +63,7 @@ export function ChangelogDialog({ isOpen, onClose }: ChangelogDialogProps) {
       className="profile-window changelog-window"
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        closeDialog();
       }}
       ref={dialogRef}
     >
@@ -46,7 +74,7 @@ export function ChangelogDialog({ isOpen, onClose }: ChangelogDialogProps) {
         </div>
         <button
           aria-label={t('changelog.close')}
-          onClick={onClose}
+          onClick={closeDialog}
           ref={closeButtonRef}
           type="button"
         >
@@ -54,10 +82,24 @@ export function ChangelogDialog({ isOpen, onClose }: ChangelogDialogProps) {
         </button>
       </header>
       <article className="changelog-window__content">
-        <MarkdownContent markdown={changelogMarkdown} />
+        {content.kind === 'unavailable' && !showFullChangelog ? (
+          <p>{t('changelog.unavailable')}</p>
+        ) : (
+          <MarkdownContent
+            markdown={
+              content.kind === 'version' ? content.markdown : changelogMarkdown
+            }
+            onOpenLink={onOpenExternalLink}
+          />
+        )}
       </article>
       <footer className="changelog-window__footer">
-        <button onClick={onClose} type="button">
+        {content.kind === 'unavailable' && !showFullChangelog ? (
+          <button onClick={() => setShowFullChangelog(true)} type="button">
+            {t('changelog.openFull')}
+          </button>
+        ) : null}
+        <button onClick={closeDialog} type="button">
           {t('changelog.close')}
         </button>
       </footer>

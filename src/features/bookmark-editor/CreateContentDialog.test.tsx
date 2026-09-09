@@ -5,9 +5,127 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../localization/i18n';
 import { CreateContentDialog } from './CreateContentDialog';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe('CreateContentDialog edit mode', () => {
+  it('generates a random color and updates the color preview', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0);
+    render(
+      <CreateContentDialog
+        isOpen
+        kind="bookmark"
+        onClose={vi.fn()}
+        onCreate={vi.fn()}
+        parentName="Home"
+      />,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'New bookmark' });
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Generate random color' }),
+    );
+
+    expect(within(dialog).getByLabelText('Card color')).toHaveValue('#000000');
+    expect(
+      within(dialog).getByText('Random color generated: #000000.'),
+    ).toBeInTheDocument();
+  });
+
+  it('generates three random gradient colors and a valid direction', async () => {
+    const user = userEvent.setup();
+    const onCreate = vi.fn(async () => undefined);
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0.5)
+      .mockReturnValueOnce(0.75)
+      .mockReturnValueOnce(0.25);
+    render(
+      <CreateContentDialog
+        isOpen
+        kind="folder"
+        onClose={vi.fn()}
+        onCreate={onCreate}
+        parentName="Home"
+      />,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'New folder' });
+    await user.click(within(dialog).getByLabelText('Gradient'));
+    await user.click(
+      within(dialog).getByRole('button', {
+        name: 'Generate random gradient',
+      }),
+    );
+
+    expect(within(dialog).getByLabelText('Gradient color 1')).toHaveValue(
+      '#000000',
+    );
+    expect(within(dialog).getByLabelText('Gradient color 2')).toHaveValue(
+      '#800000',
+    );
+    expect(within(dialog).getByLabelText('Gradient color 3')).toHaveValue(
+      '#c00000',
+    );
+    expect(within(dialog).getByLabelText('Gradient direction')).toHaveValue(90);
+    expect(
+      within(dialog).getByText(
+        'Random gradient generated: #000000, #800000, #c00000 at 90 degrees.',
+      ),
+    ).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText('Title'), 'Generated folder');
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Create folder' }),
+    );
+    expect(onCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cardAppearance: {
+          colors: ['#000000', '#800000', '#c00000'],
+          direction: 90,
+          kind: 'gradient',
+        },
+      }),
+    );
+  });
+
+  it('renders caller-provided controls after Note and before Appearance', () => {
+    render(
+      <CreateContentDialog
+        afterNote={<button type="button">Choose destination</button>}
+        isOpen
+        kind="bookmark"
+        onClose={vi.fn()}
+        onCreate={vi.fn()}
+        parentName="Home"
+      />,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'New bookmark' });
+    const destination = within(dialog).getByRole('button', {
+      name: 'Choose destination',
+    });
+    const title = within(dialog).getByLabelText('Title');
+    const note = within(dialog).getByLabelText('Note');
+    const appearance = within(dialog).getByRole('group', {
+      name: 'Appearance',
+    });
+    expect(
+      title.compareDocumentPosition(destination) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      note.compareDocumentPosition(destination) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      destination.compareDocumentPosition(appearance) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it('offers screenshot appearance only when capture is supplied', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async () => undefined);

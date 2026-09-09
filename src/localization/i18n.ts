@@ -185,6 +185,8 @@ void i18n.use(initReactI18next).init({
           loadError: 'The activity log could not be loaded.',
           localBadge: 'Saved locally',
           messages: {
+            updateReleaseNotesUnavailable:
+              'Release notes for this update are unavailable.',
             bookmarkOpenFailed: 'A bookmark could not be opened.',
             bookmarkOpenRequested: 'A bookmark open request was sent.',
             bookmarkDisplayUpdated: 'Bookmark display settings were updated.',
@@ -354,6 +356,11 @@ void i18n.use(initReactI18next).init({
             upperRight: 'Lower left to upper right',
           },
           gradientPreview: 'Gradient preview',
+          randomColor: 'Generate random color',
+          randomColorGenerated: 'Random color generated: {{color}}.',
+          randomGradient: 'Generate random gradient',
+          randomGradientGenerated:
+            'Random gradient generated: {{colors}} at {{direction}} degrees.',
           image: 'Choose card image',
           imageFit: 'Choose a fit for your image',
           imageFits: {
@@ -385,6 +392,7 @@ void i18n.use(initReactI18next).init({
           url: 'URL',
         },
         saveCurrentPage: {
+          destination: 'Save to folder',
           firstRun:
             'Create a profile in Bookmark Manager Pro before saving pages.',
           loadError: 'The current page could not be loaded.',
@@ -500,6 +508,7 @@ void i18n.use(initReactI18next).init({
           comfortable: 'Comfortable',
           compact: 'Compact',
           categories: 'Settings categories',
+          containsSearchMatch: 'Contains a search match',
           category: {
             accessibility: 'Accessibility',
             activity: 'Activity',
@@ -540,6 +549,7 @@ void i18n.use(initReactI18next).init({
             opening: 'Opening behavior',
             openLastFolder: 'Open the last opened folder',
             singleClick: 'Single-click',
+            showWhatsNewAfterUpdate: 'Show What’s new after updates',
             startup: 'Startup',
             startupLocation: 'Startup location',
           },
@@ -614,6 +624,7 @@ void i18n.use(initReactI18next).init({
             bottomRight: 'Bottom right',
             description:
               'Choose when notifications appear and how they are arranged.',
+            countdownLineColor: 'Countdown line color',
             enabled: 'Enable notifications',
             newest: 'Newest first',
             oldest: 'Oldest first',
@@ -624,14 +635,16 @@ void i18n.use(initReactI18next).init({
             stackLimit: 'Visible notifications',
             topLeft: 'Top left',
             topRight: 'Top right',
+            useForegroundColor: 'Use app foreground color',
           },
           list: 'List',
           medium: 'Medium',
           noResults: 'No settings found',
-          noResultsHelp: 'Try a different search term.',
+          noResultsHelp: "Can't find the option you need?",
           save: 'Save',
           scrollbars: 'Scrollbars',
           search: 'Search settings',
+          suggestFeature: 'Suggest a feature.',
           saving: 'Saving…',
           size: 'Card size',
           small: 'Small',
@@ -883,7 +896,10 @@ void i18n.use(initReactI18next).init({
         changelog: {
           close: 'Close',
           description: 'Review changes included in Bookmark Manager Pro.',
+          openFull: 'Open full changelog',
           title: 'What’s new',
+          unavailable:
+            'Release notes for this version are currently unavailable.',
         },
         legal: {
           close: 'Close',

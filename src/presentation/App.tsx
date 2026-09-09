@@ -45,7 +45,7 @@ import {
   type ContentKind,
   type CreateContentValue,
 } from '../features/bookmark-editor/CreateContentDialog';
-import type { FolderTreeNode } from '../features/folder-tree/folder-tree-data';
+import { buildFolderTree } from '../features/folder-tree/folder-tree-data';
 import { BookmarkDisplaySettingsDialog } from '../features/settings/BookmarkDisplaySettingsDialog';
 import { FolderStyleDialog } from '../features/folder-style/FolderStyleDialog';
 import {
@@ -78,6 +78,8 @@ import {
 import { SearchDialog } from '../features/search/SearchDialog';
 import { AboutDialog } from '../features/about/AboutDialog';
 import { ChangelogDialog } from '../features/changelog/ChangelogDialog';
+import changelogMarkdown from '../../CHANGELOG.md?raw';
+import { getPublishedVersionSection } from '../features/changelog/changelog-sections';
 import { LegalDialog } from '../features/legal/LegalDialog';
 import { HelpDialog } from '../features/help/HelpDialog';
 import { createBrowserSearchAdapter } from '../platform/search/browser-search';
@@ -85,6 +87,7 @@ import {
   defaultShortcutPreferences,
   matchesShortcut,
 } from '../domain/keyboard-shortcuts';
+import type { ManageUpdateAnnouncements } from '../application/update-announcement/manage-update-announcements';
 
 const browserSearch = createBrowserSearchAdapter();
 
@@ -98,6 +101,7 @@ interface AppProps {
     | 'record'
     | 'updateSettings'
   >;
+  applicationVersion: string;
   bookmarkManager: Pick<
     ManageBookmarks,
     | 'ensureRoot'
@@ -140,6 +144,14 @@ interface AppProps {
   >;
   resumePreflight(): Promise<WebPreflightSnapshot>;
   undoHistory: UndoHistoryService;
+  updateAnnouncements: Pick<
+    ManageUpdateAnnouncements,
+    | 'claim'
+    | 'getPreferences'
+    | 'markShown'
+    | 'markUnavailable'
+    | 'updatePreferences'
+  >;
 }
 
 type ConfirmationAction =
@@ -158,6 +170,7 @@ const pasteDisabledKeys = new Set(['paste']);
 /** Renders the application exclusively from a completed preflight snapshot. */
 export function App({
   activityLog,
+  applicationVersion,
   bookmarkManager,
   createProfileAndResumePreflight,
   initialPreflightSnapshot,
@@ -165,6 +178,7 @@ export function App({
   profileManager,
   resumePreflight,
   undoHistory,
+  updateAnnouncements,
 }: AppProps) {
   const { t } = useTranslation();
   const [confirmationService] = useState(() => new ConfirmationService());
@@ -254,6 +268,11 @@ export function App({
     | 'undo-history'
     | null
   >(null);
+  const [automaticChangelogContent, setAutomaticChangelogContent] = useState<
+    { kind: 'version'; markdown: string } | { kind: 'unavailable' } | null
+  >(null);
+  const [updateAnnouncementsEnabled, setUpdateAnnouncementsEnabled] =
+    useState(true);
   const [profiles, setProfiles] = useState<readonly ProfileListItem[]>([]);
   const [profileStorageUsage, setProfileStorageUsage] = useState<
     readonly ProfileStorageUsage[]
@@ -280,11 +299,24 @@ export function App({
   const initializedProfileIdRef = useRef<string | undefined>(undefined);
   const clipboardProfileIdRef = useRef<string | undefined>(undefined);
   const initializationStateRef = useRef(currentInitializationState);
+  const updateAnnouncementCheckedRef = useRef(false);
+  const updateAnnouncementMountedRef = useRef(false);
+  const updateAnnouncementClaimRef = useRef<{
+    claimId: string;
+    version: string;
+  } | null>(null);
   const pathSeparator = getPathSeparator(window.navigator.userAgent);
 
   useEffect(() => {
     initializationStateRef.current = currentInitializationState;
   }, [currentInitializationState]);
+
+  useEffect(() => {
+    updateAnnouncementMountedRef.current = true;
+    return () => {
+      updateAnnouncementMountedRef.current = false;
+    };
+  }, []);
 
   const readyProfileId =
     currentInitializationState.status === 'ready'
@@ -365,6 +397,67 @@ export function App({
     },
     [activityLog],
   );
+
+  useEffect(() => {
+    if (
+      !readyProfileId ||
+      isWelcomeOpen ||
+      profileWindow !== null ||
+      updateAnnouncementCheckedRef.current
+    )
+      return;
+    updateAnnouncementCheckedRef.current = true;
+    void updateAnnouncements
+      .claim(applicationVersion)
+      .then(async (claim) => {
+        if (!claim || claim.status !== 'claimed') return;
+        const section = getPublishedVersionSection(
+          changelogMarkdown,
+          applicationVersion,
+        );
+        updateAnnouncementClaimRef.current = {
+          claimId: claim.claimId,
+          version: claim.version,
+        };
+        if (section) {
+          if (updateAnnouncementMountedRef.current) {
+            setAutomaticChangelogContent({
+              kind: 'version',
+              markdown: section,
+            });
+            setProfileWindow('changelog');
+          }
+          return;
+        }
+        await recordEventForProfile(readyProfileId, {
+          action: 'Load',
+          category: 'Application',
+          dataChanged: false,
+          durationMs: 0,
+          eventCode: 'UPDATE-RELEASE-NOTES-UNAVAILABLE',
+          itemType: 'Release notes',
+          itemsAffected: 0,
+          kind: 'DIAGNOSTIC',
+          level: 'ERROR',
+          message: t('activityLog.messages.updateReleaseNotesUnavailable'),
+          outcome: 'Failed',
+          source: 'Application startup',
+        });
+        if (updateAnnouncementMountedRef.current) {
+          setAutomaticChangelogContent({ kind: 'unavailable' });
+          setProfileWindow('changelog');
+        }
+      })
+      .catch(() => console.error('update-announcement-claim-failed'));
+  }, [
+    applicationVersion,
+    isWelcomeOpen,
+    profileWindow,
+    readyProfileId,
+    recordEventForProfile,
+    t,
+    updateAnnouncements,
+  ]);
 
   useEffect(
     () =>
@@ -623,6 +716,20 @@ export function App({
       });
       throw error;
     }
+  };
+
+  /** Opens a trusted app-documentation link without treating it as bookmark activity. */
+  const openExternalAppLink = async (url: string) => {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol !== 'https:')
+      throw new Error('external-app-link-protocol-not-allowed');
+    if (
+      currentInitializationState.status === 'ready' &&
+      currentInitializationState.settings.confirmExternalLinks &&
+      !(await requestConfirmation(t('security.confirmExternalLink'), 'open'))
+    )
+      return;
+    window.open(parsedUrl.href, '_blank', 'noopener,noreferrer');
   };
 
   useEffect(() => {
@@ -1975,6 +2082,7 @@ export function App({
           }
           if (openChangelogAfterMenuClose) {
             setOpenChangelogAfterMenuClose(false);
+            setAutomaticChangelogContent(null);
             setProfileWindow('changelog');
             return;
           }
@@ -2005,6 +2113,7 @@ export function App({
           setIsProfileMenuOpen(false);
         }}
         onOpenChangelog={() => {
+          setAutomaticChangelogContent(null);
           setOpenChangelogAfterMenuClose(true);
           setIsProfileMenuOpen(false);
         }}
@@ -2024,10 +2133,12 @@ export function App({
           void Promise.all([
             profileManager.getStorageUsage(),
             profileManager.list(),
+            updateAnnouncements.getPreferences(),
           ])
-            .then(([usage, profileList]) => {
+            .then(([usage, profileList, updatePreferences]) => {
               setProfileStorageUsage(usage);
               setProfiles(profileList);
+              setUpdateAnnouncementsEnabled(updatePreferences.showAfterUpdate);
             })
             .catch(() => {
               setProfileStorageUsage([]);
@@ -2090,8 +2201,32 @@ export function App({
         onClose={() => setProfileWindow(null)}
       />
       <ChangelogDialog
+        content={automaticChangelogContent ?? { kind: 'full' }}
         isOpen={profileWindow === 'changelog'}
-        onClose={() => setProfileWindow(null)}
+        onClose={() => {
+          setProfileWindow(null);
+          setAutomaticChangelogContent(null);
+        }}
+        onOpenExternalLink={(url) => {
+          void openExternalAppLink(url).catch(() =>
+            console.error('external-app-link-open-failed'),
+          );
+        }}
+        onAutomaticContentRendered={() => {
+          const claim = updateAnnouncementClaimRef.current;
+          if (!claim) return;
+          updateAnnouncementClaimRef.current = null;
+          const completion =
+            automaticChangelogContent?.kind === 'unavailable'
+              ? updateAnnouncements.markUnavailable(
+                  claim.version,
+                  claim.claimId,
+                )
+              : updateAnnouncements.markShown(claim.version, claim.claimId);
+          void completion.catch(() =>
+            console.error('update-announcement-complete-failed'),
+          );
+        }}
       />
       <LegalDialog
         isOpen={profileWindow === 'legal'}
@@ -2101,8 +2236,8 @@ export function App({
         isOpen={profileWindow === 'help'}
         onClose={() => setProfileWindow(null)}
         onOpenExternalLink={(url) => {
-          void openBookmark(url, 'new-tab', 'Help & FAQ').catch(
-            () => undefined,
+          void openExternalAppLink(url).catch(() =>
+            console.error('external-app-link-open-failed'),
           );
         }}
       />
@@ -2301,9 +2436,19 @@ export function App({
                 throw error;
               }
             }}
+            onSaveUpdateAnnouncements={async (enabled) => {
+              await updateAnnouncements.updatePreferences(enabled);
+              setUpdateAnnouncementsEnabled(enabled);
+            }}
+            onOpenExternalLink={(url) => {
+              void openExternalAppLink(url).catch(() =>
+                console.error('external-app-link-open-failed'),
+              );
+            }}
             profiles={profiles}
             settings={currentInitializationState.settings}
             storageUsage={profileStorageUsage}
+            updateAnnouncementsEnabled={updateAnnouncementsEnabled}
           />
         </>
       ) : null}
@@ -3191,23 +3336,6 @@ export function App({
       <ConfirmationDialog service={confirmationService} />
     </main>
   );
-}
-
-/** Converts flat durable folders into the recursive navigation view model. */
-function buildFolderTree(folders: readonly Folder[]): FolderTreeNode {
-  const root = folders.find((folder) => folder.isRoot);
-  if (!root) return { id: 'loading', name: 'Home' };
-  const build = (folder: Folder): FolderTreeNode => {
-    const children = folders.filter(
-      (candidate) => candidate.parentId === folder.id,
-    );
-    return {
-      id: folder.id,
-      name: folder.title,
-      ...(children.length ? { children: children.map(build) } : {}),
-    };
-  };
-  return build(root);
 }
 
 /** Resolves a breadcrumb without storing transient navigation state durably. */

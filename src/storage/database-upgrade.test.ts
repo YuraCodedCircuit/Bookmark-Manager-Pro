@@ -11,14 +11,14 @@ afterEach(async () =>
 );
 
 describe('BookmarkManagerDatabase schema upgrades', () => {
-  it('opens schema 26 with session-namespaced undo history', async () => {
+  it('opens schema 27 with session-namespaced undo history', async () => {
     const name = `search-preferences-schema-${crypto.randomUUID()}`;
     names.push(name);
     const database = new BookmarkManagerDatabase(name);
 
     await database.open();
 
-    expect(database.verno).toBe(26);
+    expect(database.verno).toBe(27);
     expect(database.undoHistory.schema.indexes.map(({ name }) => name)).toEqual(
       expect.arrayContaining([
         'sessionId',
@@ -27,6 +27,36 @@ describe('BookmarkManagerDatabase schema upgrades', () => {
       ]),
     );
     database.close();
+  });
+
+  it('keeps the app foreground countdown color for schema-26 profiles', async () => {
+    const name = `upgrade-notification-line-${crypto.randomUUID()}`;
+    names.push(name);
+    const versionTwentySix = new Dexie(name);
+    versionTwentySix.version(26).stores({ profileSettings: '&profileId' });
+    const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
+    await versionTwentySix.table('profileSettings').add({
+      notificationPreferences: {
+        enabled: true,
+        order: 'newest',
+        position: 'bottom-right',
+        stackLimit: 3,
+      },
+      profileId,
+    });
+    versionTwentySix.close();
+
+    const upgraded = new BookmarkManagerDatabase(name);
+    await upgraded.open();
+
+    await expect(upgraded.profileSettings.get(profileId)).resolves.toEqual(
+      expect.objectContaining({
+        notificationPreferences: expect.objectContaining({
+          countdownLineColor: null,
+        }),
+      }),
+    );
+    upgraded.close();
   });
 
   it('adds enabled default app shortcuts to schema-25 profiles', async () => {

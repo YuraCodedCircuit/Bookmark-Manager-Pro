@@ -1,3 +1,5 @@
+import './platform/validation/configure-runtime-validation';
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
@@ -9,6 +11,8 @@ import { createBrowserProfileCreator } from './application/profile/create-browse
 import { createProfileManager } from './application/profile/create-profile-manager';
 import { createWebPreflight } from './application/preflight/create-web-preflight';
 import { createUndoHistoryService } from './application/undo-history/create-undo-history-service';
+import { createUpdateAnnouncementManager } from './application/update-announcement/create-update-announcement-manager';
+import packageMetadata from '../package.json';
 import { i18n } from './localization/i18n';
 import { App } from './presentation/App';
 import './styles/global.css';
@@ -30,6 +34,7 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
   const preflight = createWebPreflight(activityLog);
   const profileCreator = createBrowserProfileCreator();
   const profileManager = createProfileManager();
+  const updateAnnouncements = createUpdateAnnouncementManager();
   const preflightSnapshot = await preflight.execute();
   const undoHistoryReady = await undoHistory.initialize();
   if (
@@ -69,6 +74,7 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
       <I18nextProvider i18n={i18n}>
         <App
           activityLog={activityLog}
+          applicationVersion={packageMetadata.version}
           bookmarkManager={bookmarkManager}
           createProfileAndResumePreflight={createProfileAndResumePreflight}
           initialPreflightSnapshot={preflightSnapshot}
@@ -76,6 +82,7 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
           profileManager={profileManager}
           resumePreflight={() => preflight.execute()}
           undoHistory={undoHistory}
+          updateAnnouncements={updateAnnouncements}
         />
       </I18nextProvider>
     </StrictMode>,
