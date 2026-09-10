@@ -4,6 +4,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -107,7 +108,7 @@ describe('NotificationViewport', () => {
     );
   });
 
-  it('keeps notification controls in the app-level top-layer viewport', async () => {
+  it('keeps notification controls interactive inside an open modal', async () => {
     const service = new NotificationService();
     service.show({
       durationMs: null,
@@ -126,10 +127,9 @@ describe('NotificationViewport', () => {
       </>,
     );
 
-    const alert = screen.getByRole('alert', { hidden: true });
+    const alert = await screen.findByRole('alert', { hidden: true });
     const editor = screen.getByTestId('editor');
-    expect(alert.closest('dialog')).toBeNull();
-    expect(editor).not.toContainElement(alert);
+    expect(editor).toContainElement(alert);
     fireEvent.click(
       screen.getByRole('button', {
         hidden: true,
@@ -139,6 +139,46 @@ describe('NotificationViewport', () => {
     expect(
       screen.queryByRole('alert', { hidden: true }),
     ).not.toBeInTheDocument();
+  });
+
+  it('moves notifications out of a dialog as soon as it closes', async () => {
+    const service = new NotificationService();
+    service.show({
+      durationMs: null,
+      level: 'information',
+      message: 'Remains visible.',
+      title: 'Saved',
+    });
+
+    const { rerender } = render(
+      <>
+        <dialog data-testid="editor" open />
+        <NotificationViewport
+          preferences={defaultNotificationPreferences}
+          service={service}
+        />
+      </>,
+    );
+    const editor = screen.getByTestId('editor');
+    expect(editor).toContainElement(
+      await screen.findByRole('status', { hidden: true }),
+    );
+
+    rerender(
+      <>
+        <dialog data-testid="editor" />
+        <NotificationViewport
+          preferences={defaultNotificationPreferences}
+          service={service}
+        />
+      </>,
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('status', { hidden: true }).closest('dialog'),
+      ).toBe(null),
+    );
   });
 
   it('does not restart a notice timer when an application window opens', () => {

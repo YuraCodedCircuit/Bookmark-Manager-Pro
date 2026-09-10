@@ -1,37 +1,27 @@
-# What's New in 0.1.5
+# What's New in 0.2.0
 
-Released September 9, 2026.
+Released September 10, 2026.
 
-This update improves folder selection, settings search, appearance controls,
-and Chrome and Edge layout behavior.
+This release adds guided synchronization between an extension folder and a
+browser bookmarks folder.
 
 ## Highlights
 
-- Settings search now finds labels and text throughout Settings, marks matching
-  categories, and highlights matches in the selected category.
-- The Save current URL popup includes a searchable folder tree for choosing
-  where a bookmark is saved. It starts with the newest folder selected.
-- New folders now use Home's blue gradient and matching navigation background
-  at 70-percent transparency. Existing folder styles remain unchanged.
-- What's new opens once after a normal extension upgrade and shows the notes
-  for the installed version. Settings > General can disable announcements.
+- Choose whether changes flow from the browser, from the extension, or in both
+  directions. Extension-only notes, tags, styles, images, and favorites remain
+  local.
+- Select both folders with searchable folder trees, review a read-only preview,
+  and resolve duplicate matches or competing changes before enabling sync.
+- Active synchronization runs automatically for the current profile. Clear
+  status and recovery actions cover pausing, revoked bookmark access, missing
+  folders, conflicts, retrying, and disconnecting.
+- Bookmark permission remains optional until browser folder access is needed.
+  Revoking access pauses synchronization without deleting bookmarks.
 
-## Appearance and navigation
+## Known limitation
 
-- Color and Gradient appearances include a random-generation button.
-- Auto-closing notifications display a countdown line that pauses with the
-  notification. Its color can be customized in Notifications settings.
-- Folder trees scroll horizontally without moving their filter or shortcuts.
-- Truncated Favorites and Recent titles appear in full when hovered.
-
-## Fixes
-
-- Removed extra right-edge space in the main window and Save current URL popup
-  in Chrome and Edge. Opening a dialog on a scrolling main page can cause a
-  small content-width shift.
-- Runtime validation works with the extension's Content Security Policy.
-- The Save URL to Bookmark Manager Pro context-menu command restores itself
-  after extension reloads and browser cleanup in Chrome and Edge.
+- Recovery snapshots are unavailable because the backup service is not yet
+  implemented.
 
 ## Full changelog
 

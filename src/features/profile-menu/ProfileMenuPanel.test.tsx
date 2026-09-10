@@ -14,6 +14,7 @@ afterEach(cleanup);
 
 describe('ProfileMenuPanel', () => {
   it('highlights enabled commands only while the mouse is over them', () => {
+    const onOpenSynchronization = vi.fn();
     render(
       <ProfileMenuPanel
         initializationState={{
@@ -43,11 +44,18 @@ describe('ProfileMenuPanel', () => {
         onOpenHelp={vi.fn()}
         onOpenLegal={vi.fn()}
         onOpenUndoHistory={vi.fn()}
+        onOpenSynchronization={onOpenSynchronization}
         onOpenSettings={vi.fn()}
         onSwitchProfile={vi.fn()}
       />,
     );
     const menu = screen.getByRole('dialog', { name: 'Profile menu' });
+    const synchronization = within(menu).getByRole('button', {
+      name: 'Bookmark synchronization',
+    });
+    expect(synchronization.previousElementSibling).toHaveTextContent('Backup');
+    fireEvent.click(synchronization);
+    expect(onOpenSynchronization).toHaveBeenCalledOnce();
     const enabled = within(menu).getByRole('button', { name: 'Settings' });
     const disabled = within(menu).getByRole('button', {
       name: 'ImportComing soon',
@@ -79,6 +87,7 @@ describe('ProfileMenuPanel', () => {
         onOpenHelp={onOpenHelp}
         onOpenLegal={onOpenLegal}
         onOpenUndoHistory={vi.fn()}
+        onOpenSynchronization={vi.fn()}
         onOpenSettings={vi.fn()}
         onSwitchProfile={vi.fn()}
       />,

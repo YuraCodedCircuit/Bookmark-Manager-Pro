@@ -41,6 +41,14 @@ features:
 
 ## Storage and use
 
+Bookmark synchronization reads native bookmark titles, addresses, and folder
+structure after optional access is granted. A reviewed preview enables updates
+between the selected folder trees in the chosen direction. Connections, local
+comparison baselines, and resumable operations are stored in IndexedDB; only
+the active profile synchronizes. Disconnecting removes the connection and keeps
+both folders' content. No synchronization data is sent to a remote service.
+Bookmark content is excluded from activity records and notifications.
+
 Structured application information is stored locally using browser-managed
 IndexedDB. A temporary, opaque undo-session identifier may be stored in
 browser-managed session storage. The information is used only to provide the
@@ -89,6 +97,11 @@ titles, addresses, profile identifiers, search text, notes, and copied content.
   browser's page context menu.
 
 Bookmark Manager Pro requests only permissions used by implemented features.
+Optional **Bookmarks** access is requested before browser folder selection.
+It permits reading bookmarks for previews and modifying linked content after
+synchronization is enabled. Access can be revoked through the browser's
+extension controls. **Alarms** resumes active-profile synchronization work after
+background suspension, without requiring an application tab to remain open.
 Browser-specific manifests may express equivalent capabilities differently.
 
 ## Retention and deletion

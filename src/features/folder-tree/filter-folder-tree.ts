@@ -10,16 +10,30 @@ export function filterFolderTree(
     return node;
   }
 
-  const matchingChildren = node.children
-    ?.map((child) => filterFolderTree(child, normalizedQuery))
-    .filter((child): child is FolderTreeNode => child !== null);
-  const isMatch = node.name.toLocaleLowerCase().includes(normalizedQuery);
-
-  if (!isMatch && (matchingChildren?.length ?? 0) === 0) {
-    return null;
+  const pending = [node],
+    order: FolderTreeNode[] = [];
+  while (pending.length) {
+    const current = pending.pop()!;
+    order.push(current);
+    for (const child of current.children ?? []) pending.push(child);
   }
-
-  return matchingChildren !== undefined && matchingChildren.length > 0
-    ? { ...node, children: matchingChildren }
-    : { id: node.id, name: node.name };
+  const matches = new Map<FolderTreeNode, FolderTreeNode>();
+  for (let index = order.length - 1; index >= 0; index--) {
+    const current = order[index]!;
+    const children = (current.children ?? []).flatMap((child) => {
+      const match = matches.get(child);
+      return match ? [match] : [];
+    });
+    if (
+      children.length ||
+      current.name.toLocaleLowerCase().includes(normalizedQuery)
+    )
+      matches.set(
+        current,
+        children.length
+          ? { ...current, children }
+          : { id: current.id, name: current.name },
+      );
+  }
+  return matches.get(node) ?? null;
 }

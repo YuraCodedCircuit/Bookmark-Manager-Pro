@@ -21,6 +21,7 @@ interface ProfileMenuPanelProps {
   onOpenHelp: () => void;
   onOpenLegal: () => void;
   onOpenUndoHistory: () => void;
+  onOpenSynchronization: () => void;
   onClose: () => void;
   onManageProfiles: () => void;
   onOpenSettings: () => void;
@@ -38,7 +39,7 @@ const menuSections = [
   },
   {
     heading: 'profileMenu.sections.data',
-    items: ['import', 'export', 'backup'],
+    items: ['import', 'export', 'backup', 'synchronization'],
   },
   {
     heading: 'profileMenu.sections.activity',
@@ -62,6 +63,7 @@ export function ProfileMenuPanel({
   onOpenHelp,
   onOpenLegal,
   onOpenUndoHistory,
+  onOpenSynchronization,
   onOpenSettings,
   onSwitchProfile,
 }: ProfileMenuPanelProps) {
@@ -204,6 +206,8 @@ export function ProfileMenuPanel({
                   (item === 'bookmarkActivityLog' &&
                     initializationState.status === 'ready') ||
                   (item === 'undoHistory' &&
+                    initializationState.status === 'ready') ||
+                  (item === 'synchronization' &&
                     initializationState.status === 'ready');
                 return (
                   <button
@@ -233,7 +237,9 @@ export function ProfileMenuPanel({
                                       ? onOpenBookmarkActivityLog
                                       : item === 'undoHistory'
                                         ? onOpenUndoHistory
-                                        : undefined
+                                        : item === 'synchronization'
+                                          ? onOpenSynchronization
+                                          : undefined
                     }
                     onMouseEnter={() => {
                       if (isAvailableCommand) setHighlightedItem(item);

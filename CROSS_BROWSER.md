@@ -26,6 +26,14 @@ keys, or navigating. The webpage preview reports this capability as unavailable.
 
 ## Expected compatibility boundaries
 
+Synchronization declares `bookmarks` as an optional permission in every target.
+Grant bookmark access requests permission from a user gesture before folder
+selection becomes available. Browser events and local database changes wake the
+active profile's connection; a one-minute alarm resumes durable work after
+worker suspension. Each batch checks the active profile, permission, and roots.
+Revocation pauses the connection without deleting content. The standalone
+webpage cannot access native bookmarks or run synchronization.
+
 - Background declarations and worker lifecycle differ across browser targets.
 - Commands may have browser-reserved shortcuts and different assignment rules.
 - Browser session-storage availability differs. Undo history stores its patches

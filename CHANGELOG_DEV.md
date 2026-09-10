@@ -6,6 +6,34 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.2.0 - 2026-09-10
+
+### Added
+
+- Added versioned synchronization commands and Zod-validated adapters for native
+  bookmark trees and runtime messages.
+- Added a three-way reconciliation planner with persistent identity mappings,
+  explicit duplicate pairing, conflict resolution, protected roots, supported
+  URL validation, and preservation of extension-only properties.
+- Added IndexedDB records for connections, preview tokens, mappings, and
+  resumable operation checkpoints. Synchronized writes commit with their
+  checkpoints and remain outside session undo history.
+- Added background reconciliation for bookmark events, profile activation,
+  startup, resume, and retry. Web Locks serialize work, while alarms recover
+  interrupted operations after Manifest V3 worker suspension.
+- Added optional bookmark-permission handling, including denial, revocation,
+  missing-root, partial-failure, pause, resume, retry, and disconnect states.
+- Added a localized synchronization dialog with shared filterable folder trees,
+  a distinct permission action, on-demand direction descriptions, contextual
+  read-only previews, conflict decisions, visually distinct connection states,
+  and state-specific active-connection recovery controls.
+- Added privacy-safe synchronization activity records and profile-controlled
+  notifications for user operations, conflicts, skipped entries, and failures.
+  Permission recovery assigns its success notification to the service resume
+  outcome so the preceding access grant does not publish a duplicate notice,
+  while the notification portal follows the active modal dialog to avoid native
+  dialog inertness.
+
 ## 0.1.5 - 2026-09-09
 
 ### Added

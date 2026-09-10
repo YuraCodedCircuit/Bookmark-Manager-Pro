@@ -42,6 +42,10 @@ Bookmark Manager Pro is in Alpha and is developed in small, reviewed increments.
 Core profile, folder, bookmark, search, appearance, shortcut, activity, undo,
 help, and legal-document surfaces are implemented. Import, Export, Backup, and
 Advanced settings remain visible but disabled until those features are built.
+Bookmark synchronization pairs one browser folder with one extension folder per
+profile, supports either or both directions, and reconciles the active profile
+in the background after a reviewed preview. Bookmark access is optional.
+Recovery snapshots remain unavailable.
 
 This is a greenfield implementation. It does not currently migrate data from
 the legacy Bookmark Manager Pro extension. See the

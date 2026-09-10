@@ -841,6 +841,57 @@ describe('App', () => {
     expect(profileButton).toHaveFocus();
   });
 
+  it('opens sync setup and records unavailable capability without notifying when disabled', async () => {
+    const user = userEvent.setup();
+    renderApp({
+      status: 'ready',
+      theme: 'dark',
+      ...createdProfile,
+      settings: {
+        ...createdProfile.settings,
+        notificationPreferences: {
+          enabled: false,
+          position: 'bottom-right',
+          order: 'newest',
+          stackLimit: 3,
+          countdownLineColor: null,
+        },
+      },
+    });
+    await user.click(screen.getByRole('button', { name: 'Open profile menu' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Bookmark synchronization' }),
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Bookmark synchronization',
+    });
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Allow bookmark access' }),
+    );
+    await waitFor(() =>
+      expect(activityLog.record).toHaveBeenCalledWith(
+        createdProfile.profile.id,
+        expect.objectContaining({
+          eventCode: 'SYNC-SETUP-UNAVAILABLE',
+          level: 'WARN',
+          dataChanged: false,
+        }),
+      ),
+    );
+    expect(
+      screen.queryByRole('region', { name: 'Notifications' }),
+    ).not.toBeInTheDocument();
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Close synchronization' }),
+    );
+    expect(
+      screen.queryByRole('dialog', { name: 'Bookmark synchronization' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Open profile menu' }),
+    ).toHaveFocus();
+  });
+
   it('opens distinct switch and management profile windows', async () => {
     const user = userEvent.setup();
     renderApp({ status: 'storage-unavailable' });
@@ -1418,7 +1469,7 @@ describe('App', () => {
         url: 'https://docs.example.com/',
       }),
     );
-    expect(screen.getByText('Bookmark created')).toBeInTheDocument();
+    expect(await screen.findByText('Bookmark created')).toBeInTheDocument();
 
     await user.pointer({ keys: '[MouseRight]', target: region });
     await user.click(screen.getByRole('menuitem', { name: 'New folder' }));

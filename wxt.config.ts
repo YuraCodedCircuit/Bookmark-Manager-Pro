@@ -22,7 +22,8 @@ export default defineConfig({
     default_locale: 'en',
     incognito: 'not_allowed',
     minimum_chrome_version: browser === 'firefox' ? undefined : '140',
-    permissions: ['activeTab', 'contextMenus', 'search', 'storage'],
+    permissions: ['activeTab', 'alarms', 'contextMenus', 'search', 'storage'],
+    optional_permissions: ['bookmarks'],
     icons: {
       16: 'favicon-32.png',
       32: 'favicon-32.png',

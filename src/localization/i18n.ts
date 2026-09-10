@@ -9,6 +9,174 @@ void i18n.use(initReactI18next).init({
   resources: {
     'en-US': {
       translation: {
+        sync: {
+          serviceEvents: {
+            enabled: 'Bookmark synchronization is enabled.',
+            paused: 'Bookmark synchronization is paused.',
+            resumed: 'Bookmark synchronization has resumed.',
+            disconnected:
+              'Bookmark synchronization is disconnected. Both folders retain their content.',
+            conflict:
+              'Synchronization needs a decision. Open Bookmark synchronization to review the changes.',
+            skipped: 'Unsupported entries were skipped during synchronization.',
+            failed:
+              'Bookmark synchronization failed. Open Bookmark synchronization to retry, or review the activity log.',
+            permission:
+              'Bookmark access was removed. Synchronization is paused.',
+            'missing-root':
+              'A paired folder no longer exists. Synchronization has stopped.',
+          },
+          grantPermission: 'Allow bookmark access',
+          status: {
+            connected: 'Connected',
+            paused: 'Paused',
+            conflict: 'Needs a decision',
+            error: 'Sync failed',
+            'missing-root': 'Folder unavailable',
+            permission: 'Permission required',
+          },
+          lastSuccess: 'Last synchronized: {{time}}',
+          pause: 'Pause synchronization',
+          resume: 'Resume / Retry',
+          retry: 'Retry synchronization',
+          disconnect: 'Disconnect',
+          pairCandidates: 'Pair matching candidates',
+          choosePair: 'Choose a browser item',
+          resolveConflict: 'Resolve conflicting changes',
+          keepItem: 'Keep item',
+          deleteItem: 'Delete item',
+          use: {
+            extension: 'Use extension version',
+            browser: 'Use browser version',
+          },
+          errors: {
+            failed:
+              'Synchronization could not finish. Check the activity log and retry.',
+            permission:
+              'Bookmark access is required. Grant access to continue.',
+            stale:
+              'The folders changed after the preview. Refresh the preview before enabling synchronization.',
+            overlap:
+              'This browser folder overlaps a connection in another profile.',
+            inactive: 'Only the active profile can synchronize.',
+            'missing-root':
+              'A paired folder no longer exists. Disconnect and select an existing folder.',
+          },
+          title: 'Bookmark synchronization',
+          description: 'Keep a browser folder and an extension folder in sync.',
+          close: 'Close synchronization',
+          cancel: 'Close',
+          notConnected: 'Not connected',
+          activeProfile: 'Active profile only',
+          folders: 'Folders to synchronize',
+          extensionFolder: 'Extension folder',
+          browserFolder: 'Browser folder',
+          chooseFolder: 'Choose a folder',
+          folderPicker: {
+            extension: {
+              title: 'Choose an extension folder',
+              description:
+                'Select the Bookmark Manager Pro folder to synchronize.',
+            },
+            browser: {
+              title: 'Choose a browser folder',
+              description:
+                'Select the browser bookmarks folder to synchronize.',
+            },
+          },
+          chooseBrowser: 'Choose browser folder',
+          direction: 'Synchronization direction',
+          directionInformation: 'Information about {{direction}}',
+          directions: {
+            'browser-to-extension': 'Browser to extension',
+            'extension-to-browser': 'Extension to browser',
+            both: 'Both directions',
+          },
+          directionHelp: {
+            'browser-to-extension':
+              'Changes made in the browser folder are copied to the extension folder. Changes made only in the extension folder are not copied back to the browser.',
+            'extension-to-browser':
+              'Changes made in the extension folder are copied to the browser folder. Changes made only in the browser folder are not copied back to the extension.',
+            both: 'Changes made in either folder are copied to the other folder. If the same item is changed in both places, synchronization pauses and asks which version to keep.',
+          },
+          snapshotUnavailable: 'Create a recovery snapshot (Unavailable)',
+          preview: 'Preview changes',
+          refresh: 'Refresh preview',
+          destination: 'Destination',
+          add: 'Add',
+          update: 'Update',
+          delete: 'Delete',
+          counts:
+            '{{conflicts}} matching conflicts; {{skipped}} unsupported entries skipped.',
+          loading: 'Loading folder data...',
+          emptyPreview: 'Choose both folders to preview the changes.',
+          readyToPreview: 'Refresh the preview. No changes will be made yet.',
+          previewHelp:
+            'Resolve matching conflicts and refresh the preview before enabling synchronization. Initial setup does not delete existing items.',
+          disconnectHelp: 'Disconnecting keeps the content in both folders.',
+          management: {
+            connected: {
+              title: 'Synchronization is active',
+              description:
+                'Changes are being copied between the connected folders.',
+            },
+            paused: {
+              title: 'Synchronization is paused',
+              description:
+                'No changes are being copied. Resume synchronization when you are ready.',
+            },
+            permission: {
+              title: 'Bookmark access required',
+              description:
+                'Synchronization is paused. Allow bookmark access to continue copying changes.',
+            },
+            error: {
+              title: 'Synchronization needs attention',
+              description:
+                'Synchronization could not finish. Retry when you are ready.',
+            },
+            'missing-root': {
+              title: 'Connected folder unavailable',
+              description:
+                'A connected folder no longer exists. Disconnect before choosing another folder.',
+            },
+            summary: 'Connected folders',
+            direction: 'Direction',
+            lastSynchronized: 'Last synchronized',
+            notYetSynchronized: 'Not synchronized yet',
+            folderUnavailable: 'Folder unavailable',
+            actions: 'Manage synchronization',
+            pauseHelp:
+              'Temporarily stop copying changes. You can resume synchronization later.',
+            resumeHelp: 'Start copying changes between the folders again.',
+            permissionHelp:
+              'Restore bookmark access and resume synchronization.',
+            retryHelp:
+              'Retry the unfinished synchronization without changing the connected folders.',
+            disconnectHelp:
+              'Stop synchronization permanently. Existing bookmarks remain in both folders.',
+          },
+          enable: 'Enable synchronization',
+          applyPreview: 'Apply reviewed changes',
+          events: {
+            operationFailed:
+              'The synchronization service could not be reached. Try again or review the activity log.',
+            accessGranted: 'Browser bookmark access was granted.',
+            accessDenied:
+              'Bookmark access was denied. Choose a browser folder to try again.',
+            unavailable:
+              'Browser bookmark access is available only in the installed extension.',
+            foldersLoaded: 'Browser folders were loaded.',
+            loadFailed:
+              'Browser folders could not be loaded. Check bookmark access and try again.',
+            previewComplete:
+              'Synchronization preview is ready. No bookmarks were changed.',
+            previewIncomplete:
+              'The preview has matching conflicts or skipped entries. No bookmarks were changed.',
+            previewFailed:
+              'The preview could not be loaded. Check bookmark access and select existing folders before trying again.',
+          },
+        },
         about: {
           alpha: 'Alpha',
           browserTarget: 'Browser target',
@@ -869,6 +1037,7 @@ void i18n.use(initReactI18next).init({
           close: 'Close profile menu',
           comingSoon: 'Coming soon',
           items: {
+            synchronization: 'Bookmark synchronization',
             about: 'About Bookmark Manager Pro',
             backup: 'Backup',
             bookmarkActivityLog: 'Bookmark activity log',

@@ -39,6 +39,10 @@ import { ProfileMenuPanel } from '../features/profile-menu/ProfileMenuPanel';
 import { ProfileManagerDialog } from '../features/profile-manager/ProfileManagerDialog';
 import { ProfileSwitcherDialog } from '../features/profile-manager/ProfileSwitcherDialog';
 import { UndoHistoryDialog } from '../features/undo-history/UndoHistoryDialog';
+import { SynchronizationDialog } from '../features/synchronization/SynchronizationDialog';
+import { shouldNotifyForSyncSetupEvent } from '../features/synchronization/sync-setup-feedback';
+import { SyncFeedbackBridge } from '../features/synchronization/SyncFeedbackBridge';
+import { createSyncBookmarksAdapter } from '../platform/browser/sync-bookmarks';
 import { WelcomeDialog } from '../features/welcome/WelcomeDialog';
 import {
   CreateContentDialog,
@@ -183,6 +187,7 @@ export function App({
   const { t } = useTranslation();
   const [confirmationService] = useState(() => new ConfirmationService());
   const [notificationService] = useState(() => new NotificationService());
+  const [syncAdapter] = useState(() => createSyncBookmarksAdapter());
   const undoHistoryState = useSyncExternalStore(
     undoHistory.store.subscribe,
     undoHistory.store.getState,
@@ -256,6 +261,7 @@ export function App({
     useState(false);
   const [openLegalAfterMenuClose, setOpenLegalAfterMenuClose] = useState(false);
   const [openHelpAfterMenuClose, setOpenHelpAfterMenuClose] = useState(false);
+  const [openSyncAfterMenuClose, setOpenSyncAfterMenuClose] = useState(false);
   const [profileWindow, setProfileWindow] = useState<
     | 'about'
     | 'activity-log'
@@ -266,6 +272,7 @@ export function App({
     | 'settings'
     | 'switch'
     | 'undo-history'
+    | 'synchronization'
     | null
   >(null);
   const [automaticChangelogContent, setAutomaticChangelogContent] = useState<
@@ -2060,6 +2067,11 @@ export function App({
         initializationState={currentInitializationState}
         isOpen={isProfileMenuOpen}
         onAfterClose={() => {
+          if (openSyncAfterMenuClose) {
+            setOpenSyncAfterMenuClose(false);
+            setProfileWindow('synchronization');
+            return;
+          }
           if (openActivityLogAfterMenuClose) {
             setOpenActivityLogAfterMenuClose(false);
             setProfileWindow('activity-log');
@@ -2129,6 +2141,10 @@ export function App({
           setOpenUndoHistoryAfterMenuClose(true);
           setIsProfileMenuOpen(false);
         }}
+        onOpenSynchronization={() => {
+          setOpenSyncAfterMenuClose(true);
+          setIsProfileMenuOpen(false);
+        }}
         onOpenSettings={() => {
           void Promise.all([
             profileManager.getStorageUsage(),
@@ -2196,6 +2212,84 @@ export function App({
           void openProfileWindow('switch').catch(() => undefined)
         }
       />
+      {readyProfileId ? (
+        <SyncFeedbackBridge
+          profileId={readyProfileId}
+          onEvent={(event) =>
+            notifyForActiveProfile({
+              level:
+                event === 'failed'
+                  ? 'error'
+                  : [
+                        'conflict',
+                        'skipped',
+                        'permission',
+                        'missing-root',
+                      ].includes(event)
+                    ? 'warning'
+                    : ['paused', 'disconnected'].includes(event)
+                      ? 'information'
+                      : 'success',
+              title: t('sync.title'),
+              message: t(`sync.serviceEvents.${event}`),
+            })
+          }
+        />
+      ) : null}
+      {profileWindow === 'synchronization' && readyProfileId ? (
+        <SynchronizationDialog
+          key={readyProfileId}
+          profileId={readyProfileId}
+          adapter={syncAdapter}
+          returnFocusRef={profileButtonRef}
+          extensionFolders={allFolders.filter(
+            (folder) => folder.profileId === readyProfileId,
+          )}
+          onClose={() => {
+            setProfileWindow(null);
+            profileButtonRef.current?.focus();
+          }}
+          readExtension={async () => {
+            const [profileFolders, profileBookmarks] = await Promise.all([
+              bookmarkManager.listFolders(readyProfileId),
+              bookmarkManager.listBookmarks(readyProfileId),
+            ]);
+            return [...profileFolders, ...profileBookmarks].filter(
+              (item) => item.profileId === readyProfileId,
+            );
+          }}
+          onReport={(event) => {
+            const failed =
+              event === 'loadFailed' ||
+              event === 'previewFailed' ||
+              event === 'operationFailed';
+            const degraded =
+              event === 'unavailable' ||
+              event === 'accessDenied' ||
+              event === 'previewIncomplete';
+            void recordEventForProfile(readyProfileId, {
+              action: 'Preview',
+              category: 'Bookmarks',
+              dataChanged: false,
+              durationMs: 0,
+              eventCode: `SYNC-SETUP-${event.replace(/[A-Z]/g, (letter) => `-${letter}`).toUpperCase()}`,
+              itemType: 'Synchronization',
+              itemsAffected: 0,
+              kind: failed ? 'DIAGNOSTIC' : 'ACTIVITY',
+              level: failed ? 'ERROR' : degraded ? 'WARN' : 'INFO',
+              message: t(`sync.events.${event}`),
+              outcome: failed ? 'Failed' : degraded ? 'Skipped' : 'Succeeded',
+              source: 'Synchronization setup',
+            });
+            if (shouldNotifyForSyncSetupEvent(event))
+              notifyForActiveProfile({
+                level: failed ? 'error' : degraded ? 'warning' : 'success',
+                title: t('sync.title'),
+                message: t(`sync.events.${event}`),
+              });
+          }}
+        />
+      ) : null}
       <AboutDialog
         isOpen={profileWindow === 'about'}
         onClose={() => setProfileWindow(null)}

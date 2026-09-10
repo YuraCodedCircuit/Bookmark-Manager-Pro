@@ -1,3 +1,494 @@
+.sync-dialog {
+  width: min(94vw, 940px);
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  overflow: hidden;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 1.25rem;
+}
+.sync-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.sync-dialog::backdrop {
+  background: rgb(0 0 0 / 70%);
+  backdrop-filter: blur(5px);
+}
+.sync-dialog__header,
+.sync-dialog__footer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+.sync-dialog__header {
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.sync-dialog h1 {
+  margin: 0;
+  font-size: var(--window-title-font-size);
+  font-weight: var(--window-title-font-weight);
+  line-height: var(--window-title-line-height);
+}
+.sync-dialog h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.sync-dialog p {
+  margin: 0.65rem 0 0;
+  color: var(--window-info-color);
+  font-size: var(--window-info-font-size);
+  font-weight: var(--window-info-font-weight);
+  line-height: var(--window-info-line-height);
+}
+.sync-dialog button,
+.sync-dialog select {
+  min-height: 2.75rem;
+  padding: 0.6rem 0.9rem;
+  color: inherit;
+  background: var(--background);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.65rem;
+  font: inherit;
+}
+.sync-dialog button {
+  cursor: pointer;
+}
+.sync-dialog button:disabled,
+.sync-dialog select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.sync-dialog button:focus-visible,
+.sync-dialog select:focus-visible,
+.sync-dialog input:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.sync-dialog__header button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  flex-shrink: 0;
+  min-height: 0;
+  padding: 9px;
+  background: transparent;
+  border-radius: 9px;
+}
+.sync-dialog__header button svg {
+  width: 20px;
+  height: 20px;
+}
+.sync-dialog__body svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.sync-dialog__body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+.sync-dialog__status {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--text-muted);
+}
+.sync-dialog__status span:first-child {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.4rem;
+}
+.sync-dialog fieldset {
+  min-width: 0;
+  padding: 0;
+  margin: 1.5rem 0;
+  border: 0;
+}
+.sync-dialog legend {
+  margin-bottom: 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.sync-dialog__folders {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.75rem;
+}
+.sync-dialog__folder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.65rem;
+}
+.sync-dialog__folder > :is(label, span) {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.sync-dialog__folder select,
+.sync-dialog__folder button {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sync-dialog .sync-dialog__permission {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  color: var(--background);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.sync-dialog__permission svg {
+  flex: 0 0 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.sync-dialog__step {
+  color: var(--accent);
+  font: inherit;
+}
+.sync-dialog__flow {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+.sync-dialog__dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+.sync-dialog__dot.is-connected {
+  background: var(--accent);
+}
+.sync-dialog__connection-status {
+  --sync-status-color: var(--accent);
+
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.85rem;
+  padding: 1rem;
+  color: var(--text);
+  background: var(--highlight-background);
+  border: 1px solid var(--highlight-border);
+  border-radius: 0.75rem;
+}
+.sync-dialog__connection-icon {
+  position: relative;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-top: 0.25rem;
+  color: var(--sync-status-color);
+  background: currentColor;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.3rem
+    color-mix(in srgb, var(--sync-status-color) 18%, transparent);
+}
+.sync-dialog__connection-status:is(.is-paused, .is-permission) {
+  --sync-status-color: #f3a847;
+
+  background: color-mix(
+    in srgb,
+    var(--sync-status-color) 12%,
+    var(--surface-raised)
+  );
+  border-color: color-mix(in srgb, var(--sync-status-color) 62%, var(--border));
+}
+.sync-dialog__connection-status:is(.is-paused, .is-permission)
+  .sync-dialog__connection-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: 0.2rem;
+  background: transparent;
+  border-radius: 0.15rem;
+  box-shadow: 0 0 0 0.25rem
+    color-mix(in srgb, var(--sync-status-color) 16%, transparent);
+}
+.sync-dialog__connection-status:is(.is-paused, .is-permission)
+  .sync-dialog__connection-icon::before,
+.sync-dialog__connection-status:is(.is-paused, .is-permission)
+  .sync-dialog__connection-icon::after {
+  position: absolute;
+  top: 0.08rem;
+  width: 0.25rem;
+  height: 0.74rem;
+  content: '';
+  background: currentColor;
+  border-radius: 0.08rem;
+}
+.sync-dialog__connection-status:is(.is-paused, .is-permission)
+  .sync-dialog__connection-icon::before {
+  left: 0.08rem;
+}
+.sync-dialog__connection-status:is(.is-paused, .is-permission)
+  .sync-dialog__connection-icon::after {
+  right: 0.08rem;
+}
+.sync-dialog__connection-status p {
+  margin-top: 0.25rem;
+}
+.sync-dialog__connection-summary,
+.sync-dialog__management {
+  margin-top: 1.5rem;
+}
+.sync-dialog__connection-summary dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0 0;
+}
+.sync-dialog__connection-summary dl > div {
+  min-width: 0;
+  padding: 0.85rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+}
+.sync-dialog__connection-summary dt {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.sync-dialog__connection-summary dd {
+  margin: 0.3rem 0 0;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sync-dialog__management-actions {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+.sync-dialog__management-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+}
+.sync-dialog__management-action h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+.sync-dialog__management-action p {
+  margin-top: 0.25rem;
+}
+.sync-dialog .sync-dialog__management-primary {
+  min-width: 12rem;
+  background: var(--accent);
+  color: var(--background);
+}
+.sync-dialog__management-disconnect {
+  min-width: 12rem;
+  border-color: #a85f65;
+}
+.sync-dialog__directions svg {
+  flex-shrink: 0;
+}
+.sync-folder-dialog {
+  width: min(92vw, 620px);
+  height: min(75dvh, 700px);
+}
+.sync-folder-dialog .sync-dialog__body {
+  flex: 1;
+}
+.sync-folder-dialog .folder-tree-picker {
+  height: 100%;
+}
+.sync-folder-dialog :is(.folder-tree__toggle, .folder-tree__folder) {
+  min-height: 2.45rem;
+  padding: 0.35rem 0.55rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0.4rem;
+}
+.sync-folder-dialog .folder-tree__toggle {
+  width: 1.9rem;
+  padding: 0;
+}
+.sync-folder-dialog .sync-dialog__footer {
+  justify-content: flex-end;
+}
+.sync-dialog__directions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.sync-dialog__direction {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.65rem;
+}
+.sync-dialog__direction label {
+  display: flex;
+  min-width: 0;
+  min-height: 4.5rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1rem 1rem 1rem 0.55rem;
+  cursor: pointer;
+}
+.sync-dialog__directions .is-selected {
+  border-color: var(--accent);
+  background: var(--highlight-background);
+}
+.sync-dialog .sync-dialog__direction-info {
+  display: grid;
+  width: 2.75rem;
+  min-height: 2.75rem;
+  margin-left: 0.55rem;
+  padding: 0.65rem;
+  place-items: center;
+  color: var(--accent);
+  background: transparent;
+  border-color: transparent;
+  border-radius: 50%;
+}
+.sync-dialog__direction-info:hover,
+.sync-dialog__direction-info[aria-expanded='true'] {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+.sync-dialog__direction-info svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.sync-dialog input {
+  accent-color: var(--accent);
+}
+.sync-dialog__snapshot label {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+.sync-dialog__preview {
+  padding: 1rem;
+  margin-top: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+}
+.sync-dialog__preview-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+.sync-dialog table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.sync-dialog th,
+.sync-dialog td {
+  padding: 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.sync-dialog thead {
+  background: var(--surface-raised);
+}
+.sync-dialog .sync-dialog__error {
+  color: #e67878;
+}
+.sync-dialog__footer {
+  border-top: 1px solid var(--border);
+}
+.sync-dialog__footer > button:first-of-type {
+  margin-left: auto;
+}
+.sync-dialog__footer p {
+  flex: 1;
+  margin: 0;
+}
+.sync-dialog .sync-dialog__primary {
+  background: var(--accent);
+  color: var(--background);
+}
+@media (max-width: 680px) {
+  .sync-dialog {
+    width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+  }
+  .sync-dialog__folders,
+  .sync-dialog__directions,
+  .sync-dialog__connection-summary dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sync-dialog__management-action {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sync-dialog__management-action button {
+    justify-self: end;
+  }
+  .sync-dialog__flow svg {
+    transform: rotate(90deg);
+  }
+  .sync-dialog__header,
+  .sync-dialog__body,
+  .sync-dialog__footer {
+    padding: 1rem;
+  }
+  .sync-dialog__footer {
+    flex-wrap: wrap;
+  }
+  .sync-dialog__footer p {
+    flex-basis: 100%;
+  }
+}
+@media (forced-colors: active) {
+  .sync-dialog__connection-status:is(.is-paused, .is-permission) {
+    background: Canvas;
+    border-color: Highlight;
+  }
+  .sync-dialog__connection-status:is(.is-paused, .is-permission)
+    .sync-dialog__connection-icon {
+    color: Highlight;
+  }
+  .sync-dialog__directions .is-selected {
+    outline: 2px solid Highlight;
+  }
+  .sync-dialog .sync-dialog__permission {
+    color: ButtonText;
+    background: ButtonFace;
+    border-color: Highlight;
+  }
+  .sync-dialog__direction-info[aria-expanded='true'] {
+    border-color: Highlight;
+  }
+}
+
 :root {
   --background: #101419;
   --surface: #151a20;
@@ -46,6 +537,11 @@
   --text-muted: #5f6874;
   --border: #d5dae1;
   --border-strong: #aeb7c2;
+}
+
+[data-theme='light']
+  .sync-dialog__connection-status:is(.is-paused, .is-permission) {
+  --sync-status-color: #985600;
 }
 
 :root.high-contrast {
@@ -4001,7 +4497,7 @@ html:has(dialog[open]) {
 .notification-card {
   position: relative;
   display: grid;
-  grid-template-columns: 1.75rem minmax(0, 1fr) 2rem;
+  grid-template-columns: 1.75rem minmax(0, 1fr) 2.5rem;
   gap: 0.75rem;
   align-items: start;
   padding: 1rem;
@@ -4062,11 +4558,12 @@ html:has(dialog[open]) {
   border: 1px solid var(--border);
 }
 
-.notification-card__close {
+.notification-card > .notification-card__close {
   position: relative;
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
   padding: 0;
   overflow: hidden;
   place-items: center;
@@ -4078,7 +4575,7 @@ html:has(dialog[open]) {
 .notification-card__close::before,
 .notification-card__close::after {
   position: absolute;
-  width: 10px;
+  width: 12px;
   height: 1.5px;
   content: '';
   background: currentcolor;

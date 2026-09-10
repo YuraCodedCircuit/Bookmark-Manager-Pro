@@ -1,6 +1,11 @@
 import '../src/platform/validation/configure-runtime-validation';
 
 import browser from 'webextension-polyfill';
+import { registerSynchronizationBackground } from '../src/platform/browser/sync-background';
+import {
+  syncRequestSchema,
+  type SyncResponse,
+} from '../src/messaging/sync-protocol';
 import { defineBackground } from 'wxt/utils/define-background';
 
 import { createBackgroundPreflight } from '../src/application/preflight/create-background-preflight';
@@ -16,6 +21,7 @@ import {
 } from '../src/platform/browser/save-url-context-menu';
 
 const background: ReturnType<typeof defineBackground> = defineBackground(() => {
+  const syncCommand = registerSynchronizationBackground();
   const preflight = createBackgroundPreflight();
   const updateAnnouncements = createUpdateAnnouncementManager();
   let activePreflight: Promise<unknown> | undefined;
@@ -59,7 +65,15 @@ const background: ReturnType<typeof defineBackground> = defineBackground(() => {
     void runPreflight();
   });
   browser.runtime.onMessage.addListener(
-    async (message: unknown): Promise<BackgroundResponse> => {
+    async (
+      message: unknown,
+      sender: browser.Runtime.MessageSender,
+    ): Promise<BackgroundResponse | SyncResponse> => {
+      if (
+        sender.id === browser.runtime.id &&
+        syncRequestSchema.safeParse(message).success
+      )
+        return syncCommand(message);
       const request = backgroundRequestSchema.safeParse(message);
       if (!request.success) {
         return {

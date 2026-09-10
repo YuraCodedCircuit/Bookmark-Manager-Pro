@@ -20,6 +20,11 @@ interface NotificationViewportProps {
   service: NotificationService;
 }
 
+const findNotificationHost = (): HTMLElement => {
+  const dialogs = document.querySelectorAll<HTMLDialogElement>('dialog[open]');
+  return dialogs.item(dialogs.length - 1) ?? document.body;
+};
+
 /** Renders the visible portion of the notification queue at the saved edge. */
 export function NotificationViewport({
   preferences,
@@ -27,7 +32,32 @@ export function NotificationViewport({
 }: NotificationViewportProps) {
   const { t } = useTranslation();
   const viewportRef = useRef<HTMLElement>(null);
+  const [portalHost, setPortalHost] = useState<HTMLElement>(() =>
+    findNotificationHost(),
+  );
   const notifications = useStore(service.store, (state) => state.notifications);
+
+  useEffect(() => {
+    const updateHost = () => setPortalHost(findNotificationHost());
+    updateHost();
+    const observer = new MutationObserver((records) => {
+      if (
+        records.some(
+          (record) =>
+            record.type === 'childList' || record.attributeName === 'open',
+        )
+      ) {
+        updateHost();
+      }
+    });
+    observer.observe(document.body, {
+      attributeFilter: ['open'],
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!preferences.enabled) service.clear();
@@ -55,7 +85,7 @@ export function NotificationViewport({
       observer.disconnect();
       if (viewport.matches(':popover-open')) viewport.hidePopover();
     };
-  }, [notifications.length]);
+  }, [notifications.length, portalHost]);
 
   if (!preferences.enabled || notifications.length === 0) return null;
   const priority =
@@ -85,7 +115,11 @@ export function NotificationViewport({
       ))}
     </section>
   );
-  return createPortal(viewport, document.body);
+  const activePortalHost =
+    !portalHost.isConnected || portalHost.matches('dialog:not([open])')
+      ? document.body
+      : portalHost;
+  return createPortal(viewport, activePortalHost);
 }
 
 interface NotificationCardProps {

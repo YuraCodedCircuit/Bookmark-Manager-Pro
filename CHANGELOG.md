@@ -6,6 +6,30 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.2.0 - 2026-09-10
+
+### New
+
+- Added bookmark synchronization between one extension folder and one browser
+  bookmarks folder for each profile. Changes can flow from the browser, from the
+  extension, or in both directions while extension-only details remain local.
+- A guided setup requests bookmark access only when needed, explains each
+  synchronization direction on demand, provides filterable folder selection,
+  and previews changes before synchronization is enabled.
+- Duplicate matches and competing changes require a decision, while unsupported
+  entries and deleted connected folders are reported without silently removing
+  protected content.
+- Active connections run automatically for the current profile, visually
+  distinguish active and paused states, and provide recovery actions for errors,
+  revoked access, missing folders, and conflicts. Permission recovery produces
+  one completion notice, notification controls remain usable while the window
+  is open, and existing bookmarks remain in both folders.
+
+### Known limitations
+
+- Recovery snapshots are unavailable because the backup service is not
+  implemented.
+
 ## 0.1.5 - 2026-09-09
 
 ### New
