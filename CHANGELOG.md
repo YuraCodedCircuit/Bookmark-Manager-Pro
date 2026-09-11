@@ -6,6 +6,20 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.2.5 - 2026-09-11
+
+### Fixed
+
+- Content changes from synchronization, the toolbar popup, or another app tab
+  now appear in every affected open folder without reloading the new-tab page.
+  Hidden tabs wait until visible, and a deleted open folder moves to its closest
+  available parent with a clear notice. Switching profiles also moves every
+  profile-bound app surface to the new profile's Home folder.
+- Simultaneous item creation now preserves unique folder positions, and an
+  editor opened before another change can no longer overwrite the newer item.
+- Shared undo history no longer reports a storage-write failure when another
+  open extension surface publishes an already-saved history update.
+
 ## 0.2.0 - 2026-09-10
 
 ### New

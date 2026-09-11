@@ -386,6 +386,12 @@ void i18n.use(initReactI18next).init({
             folderUpdateFailed: 'A folder could not be updated.',
             initialFolderLoadFailed:
               'The initial folder contents could not be loaded.',
+            externalContentRefreshFailed:
+              'Updated folder contents could not be loaded.',
+            localContentChangePublishFailed:
+              'Other open tabs could not be notified about a saved content change.',
+            profileActivationPublishFailed:
+              'Other open app windows could not be notified about the active profile change.',
             loadFailed: 'The activity log could not be loaded.',
             opened: 'Bookmark activity log opened.',
             preflight: {
@@ -481,6 +487,10 @@ void i18n.use(initReactI18next).init({
             'A bookmark with this address already exists. Save another copy?',
           duplicatePrevented:
             'A bookmark with this address already exists in this profile.',
+          concurrentChangeError:
+            'This item changed after the editor opened. Review the latest version before saving again.',
+          destinationUnavailableError:
+            'The destination folder no longer exists. Choose another folder or cancel.',
           ftpSaveConfirm:
             'FTP addresses may open outside the browser or may not be supported. Save this FTP bookmark anyway?',
           normalizationConfirm:
@@ -865,14 +875,32 @@ void i18n.use(initReactI18next).init({
           dismiss: 'Dismiss notification',
           errorMessage: 'The operation could not be completed.',
           errorTitle: 'Operation failed',
+          externalContentRefreshFailedMessage:
+            'Updated folder contents could not be loaded. The last available contents remain visible.',
+          externalContentRefreshFailedTitle: 'Folder update failed',
+          externalFolderRemovedMessage:
+            'The open folder was removed. Its closest available parent is now open.',
+          externalFolderRemovedTitle: 'Open folder removed',
+          externalProfileChangedMessage:
+            'The active profile changed in another app window. Home is now open.',
+          externalProfileChangedTitle: 'Active profile changed',
+          externalProfileChangeFailed:
+            'The active profile changed, but its Home folder could not be loaded. Try again.',
           folderCreatedTitle: 'Folder created',
           folderStyleSavedTitle: 'Folder style saved',
           folderUpdatedTitle: 'Folder saved',
           limitedDataTitle: 'Some information is unavailable',
+          localContentChangePublishFailedMessage:
+            'The item was saved, but other open tabs may need to be refreshed manually.',
+          localContentChangePublishFailedTitle: 'Other tabs not updated',
           operationCompletedTitle: 'Operation completed',
           profileCreatedTitle: 'Profile created',
           profileSwitchedTitle: 'Profile switched',
+          profileActivationPublishFailedMessage:
+            'The profile changed, but other open app windows may update only when they become active.',
+          profileActivationPublishFailedTitle: 'Other windows may update later',
           regionLabel: 'Notifications',
+          retry: 'Retry',
           settingsSavedMessage: 'Your settings are now in use.',
           settingsSavedTitle: 'Settings saved',
         },

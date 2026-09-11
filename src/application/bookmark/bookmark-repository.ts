@@ -32,8 +32,8 @@ export interface BookmarkRepository {
     destinationParentId: string,
     timestamp: number,
   ): Promise<void>;
-  updateBookmark(bookmark: Bookmark): Promise<void>;
-  updateFolder(folder: Folder): Promise<void>;
+  updateBookmark(bookmark: Bookmark, expectedUpdatedAt?: number): Promise<void>;
+  updateFolder(folder: Folder, expectedUpdatedAt?: number): Promise<void>;
   setFavorite(favorite: FavoriteItem): Promise<void>;
   removeFavorite(profileId: string, itemId: string): Promise<void>;
   deleteItem(profileId: string, itemId: string): Promise<void>;

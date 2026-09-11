@@ -142,6 +142,16 @@ remain UI-surface responsibilities because extension workers have no DOM or
   IndexedDB. If session storage is unavailable, preflight safely reruns.
 - React state owns control values and short-lived view state.
 - Zustand owns cross-component transient state within a single surface.
+- Synchronization, toolbar-popup saves, and successful app mutations publish a
+  versioned, Zod-validated BroadcastChannel message containing only profile and
+  affected-item identifiers. Each profile also has a monotonic content revision
+  in IndexedDB metadata so a suspended tab can detect a missed message. Tabs
+  decide locally whether to refresh visible content, refresh only navigation
+  state, coalesce deferred work, or ignore the change. If the displayed folder
+  was removed, the tab follows its previous path to the closest surviving
+  ancestor or the profile root. Active-profile selection uses a separate
+  serialized activation message and atomic durable revision; receiving
+  profile-bound surfaces discard old-profile transient state and open Home.
 - Browser APIs own native bookmarks, permissions, tabs, and windows.
 
 ## Feature modules

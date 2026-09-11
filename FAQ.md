@@ -76,8 +76,10 @@ another profile before deleting an inactive profile.
 
 ### 14. Does switching profiles change the folder open in another tab?
 
-Saved data changes synchronize between open application tabs, but each tab can
-keep its own currently open folder.
+Yes. Switching the active profile in one app tab switches every profile-bound
+app surface to that profile and opens Home. Hidden tabs apply the latest switch
+when they become visible. Drafts and profile-bound dialogs close so they cannot
+save into the previously active profile.
 
 ## Creating and organizing bookmarks and folders
 
@@ -324,30 +326,64 @@ Extension-data removal is controlled by the browser. Review the browser's
 extension and site-data controls before relying on uninstall as a recovery or
 deletion method.
 
+## Bookmark synchronization
+
+### 61. How do I connect an application folder to browser bookmarks?
+
+Open the profile menu and choose Data > Bookmark synchronization. Allow the
+optional bookmark permission, select one application folder and one browser
+folder, choose a direction, review the preview, and then enable synchronization.
+
+### 62. When do changes appear in another open application tab?
+
+After synchronization or a successful app mutation changes content, every
+visible tab showing an affected parent folder reloads that folder. This includes
+create, delete, edit, move, copy, duplicate, cut-and-paste, favorite,
+appearance, undo, and redo. A hidden tab waits until visible, and pending
+changes are combined before it reads. Unaffected folders are not reloaded, and
+the new-tab page itself is not refreshed.
+
+Saving a bookmark from the toolbar popup uses the same targeted update, so an
+open tab showing the destination folder displays the new item automatically.
+
+### 63. What happens if synchronization deletes the folder I am viewing?
+
+The tab opens the closest surviving parent from the previous folder path, or
+Home if no ancestor remains. A creation window tied to the removed location
+closes, and an Information notification explains the navigation change without
+naming the folder.
+
+### 64. What happens if content changes while an editor is open?
+
+Saving a bookmark or folder editor fails safely if another surface changed that
+item after the editor opened. New bookmarks and folders use the latest stored
+sibling order when they are saved, preventing duplicate positions when more
+than one creation window is open.
+
 ## Browser differences and troubleshooting
 
-### 61. Why is a feature unavailable in the webpage preview?
+### 65. Why is a feature unavailable in the webpage preview?
 
 The development preview cannot provide some features that exist only inside an
 installed browser extension. Installed builds check whether each browser
 feature is available before using it.
 
-### 62. Why did Web mode return to Bookmarks mode?
+### 66. Why did Web mode return to Bookmarks mode?
 
 The current browser surface did not provide its built-in search feature. The
 notification explains the fallback without transmitting the query.
 
-### 63. Why did an external-link confirmation appear?
+### 67. Why did an external-link confirmation appear?
 
 The active profile's Security setting can require confirmation before opening
 external bookmark links. FTP addresses always retain their specific warning.
 
-### 64. Why does the interface look different between profiles?
+### 68. Why does the interface look different between profiles?
 
 Themes, accessibility choices, folder appearances, views, shortcuts, search
 defaults, and other implemented settings are owned by each profile.
 
-### 65. Where can I review application changes and legal information?
+### 69. Where can I review application changes and legal information?
 
 The profile menu's Information section contains What's new, Legal & privacy,
 and About Bookmark Manager Pro alongside this Help & FAQ window.

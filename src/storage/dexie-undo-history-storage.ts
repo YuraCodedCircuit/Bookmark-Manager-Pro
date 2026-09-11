@@ -19,6 +19,11 @@ export class DexieUndoHistoryStorage implements UndoHistoryStorage {
     private readonly createSessionId: () => string = () => crypto.randomUUID(),
   ) {}
 
+  /** Reports whether every extension surface writes to the same session rows. */
+  get sharedAcrossTabs(): boolean {
+    return this.marker.sharedAcrossTabs;
+  }
+
   async load(): Promise<readonly UndoHistoryEntry[]> {
     const sessionId = await this.getSessionId();
     const records = await this.database.undoHistory

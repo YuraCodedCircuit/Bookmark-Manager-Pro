@@ -9,11 +9,13 @@ import {
 import type { ProfileSettings } from '../../domain/profile-settings';
 import type {
   ProfileListItem,
+  ProfileActivationResult,
   ProfileManagementRepository,
 } from './profile-management-repository';
 import { defaultShortcutPreferences } from '../../domain/keyboard-shortcuts';
 
 const MAX_ID_ATTEMPTS = 5;
+type RunExclusive = <T>(run: () => Promise<T>) => Promise<T>;
 const profileInputSchema = z.object({
   icon: z
     .string()
@@ -32,6 +34,7 @@ export class ManageProfiles {
     private readonly repository: ProfileManagementRepository,
     private readonly createId: () => string = () => crypto.randomUUID(),
     private readonly now: () => number = () => Date.now(),
+    private readonly runExclusive: RunExclusive = (run) => run(),
   ) {}
 
   list(): Promise<readonly ProfileListItem[]> {
@@ -158,8 +161,8 @@ export class ManageProfiles {
     }
   }
 
-  switchTo(profileId: string): Promise<void> {
-    return this.repository.switchTo(profileId);
+  switchTo(profileId: string): Promise<ProfileActivationResult> {
+    return this.runExclusive(() => this.repository.switchTo(profileId));
   }
 
   /** Saves the currently implemented profile-level bookmark presentation. */

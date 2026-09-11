@@ -433,15 +433,11 @@ export class ManageBookmarks {
     const value = bookmarkInputSchema.parse(input);
     await this.assertParent(value.profileId, value.parentId);
     const timestamp = this.now();
-    const index = await this.repository.nextIndex(
-      value.profileId,
-      value.parentId,
-    );
     await this.repository.addBookmark(
       bookmarkSchema.parse({
         ...value,
         id: await this.createUniqueItemId(),
-        index,
+        index: 0,
         createdAt: timestamp,
         updatedAt: timestamp,
       }),
@@ -465,10 +461,6 @@ export class ManageBookmarks {
     const value = creationInputSchema.parse(input);
     await this.assertParent(value.profileId, value.parentId);
     const timestamp = this.now();
-    const index = await this.repository.nextIndex(
-      value.profileId,
-      value.parentId,
-    );
     await this.repository.addFolder(
       folderSchema.parse({
         ...DEFAULT_FOLDER_STYLE,
@@ -483,7 +475,7 @@ export class ManageBookmarks {
         createdAt: timestamp,
         id: await this.createUniqueItemId(),
         isRoot: false,
-        index,
+        index: 0,
         note: value.note,
         parentId: value.parentId,
         profileId: value.profileId,
@@ -499,19 +491,26 @@ export class ManageBookmarks {
     profileId: string,
     bookmarkId: string,
     input: UpdateBookmarkInput,
+    expectedUpdatedAt?: number,
   ): Promise<void> {
     const existing = await this.repository.getBookmark(profileId, bookmarkId);
     if (!existing) throw new Error('bookmark-not-found');
     const value = bookmarkInputSchema
       .omit({ parentId: true, profileId: true })
       .parse(input);
-    await this.repository.updateBookmark(
-      bookmarkSchema.parse({
-        ...existing,
-        ...value,
-        updatedAt: this.now(),
-      }),
-    );
+    if (
+      expectedUpdatedAt !== undefined &&
+      existing.updatedAt !== expectedUpdatedAt
+    )
+      throw new Error('content-changed');
+    const updated = bookmarkSchema.parse({
+      ...existing,
+      ...value,
+      updatedAt: this.now(),
+    });
+    await (expectedUpdatedAt === undefined
+      ? this.repository.updateBookmark(updated)
+      : this.repository.updateBookmark(updated, expectedUpdatedAt));
   }
 
   /** Updates editable folder fields while preserving identity and placement. */
@@ -519,19 +518,26 @@ export class ManageBookmarks {
     profileId: string,
     folderId: string,
     input: UpdateFolderInput,
+    expectedUpdatedAt?: number,
   ): Promise<void> {
     const existing = await this.repository.getFolder(profileId, folderId);
     if (!existing || existing.isRoot) throw new Error('folder-not-found');
     const value = creationInputSchema
       .omit({ parentId: true, profileId: true })
       .parse(input);
-    await this.repository.updateFolder(
-      folderSchema.parse({
-        ...existing,
-        ...value,
-        updatedAt: this.now(),
-      }),
-    );
+    if (
+      expectedUpdatedAt !== undefined &&
+      existing.updatedAt !== expectedUpdatedAt
+    )
+      throw new Error('content-changed');
+    const updated = folderSchema.parse({
+      ...existing,
+      ...value,
+      updatedAt: this.now(),
+    });
+    await (expectedUpdatedAt === undefined
+      ? this.repository.updateFolder(updated)
+      : this.repository.updateFolder(updated, expectedUpdatedAt));
   }
 
   /** Atomically saves the open folder's background and content view. */
@@ -552,33 +558,40 @@ export class ManageBookmarks {
       includeNavigationBackground: boolean;
       navigationTransparency: number;
     },
+    expectedUpdatedAt?: number,
   ): Promise<void> {
     const existing = await this.repository.getFolder(profileId, folderId);
     if (!existing) throw new Error('folder-not-found');
-    await this.repository.updateFolder(
-      folderSchema.parse({
-        ...existing,
-        backgroundAppearance: folderBackgroundAppearanceSchema.parse(
-          input.backgroundAppearance,
-        ),
-        bookmarkView: bookmarkViewSchema.parse(input.bookmarkView),
-        cardSize: cardSizeSchema.parse(input.cardSize),
-        cardSpacing: cardSpacingSchema.parse(input.cardSpacing),
-        bookmarkSortBy: bookmarkSortBySchema.parse(input.bookmarkSortBy),
-        bookmarkSortDirection: bookmarkSortDirectionSchema.parse(
-          input.bookmarkSortDirection,
-        ),
-        bookmarkGroupBy: bookmarkGroupBySchema.parse(input.bookmarkGroupBy),
-        detailsTableTransparency: detailsTableTransparencySchema.parse(
-          input.detailsTableTransparency,
-        ),
-        includeNavigationBackground: input.includeNavigationBackground,
-        navigationTransparency: navigationTransparencySchema.parse(
-          input.navigationTransparency,
-        ),
-        updatedAt: this.now(),
-      }),
-    );
+    if (
+      expectedUpdatedAt !== undefined &&
+      existing.updatedAt !== expectedUpdatedAt
+    )
+      throw new Error('content-changed');
+    const updated = folderSchema.parse({
+      ...existing,
+      backgroundAppearance: folderBackgroundAppearanceSchema.parse(
+        input.backgroundAppearance,
+      ),
+      bookmarkView: bookmarkViewSchema.parse(input.bookmarkView),
+      cardSize: cardSizeSchema.parse(input.cardSize),
+      cardSpacing: cardSpacingSchema.parse(input.cardSpacing),
+      bookmarkSortBy: bookmarkSortBySchema.parse(input.bookmarkSortBy),
+      bookmarkSortDirection: bookmarkSortDirectionSchema.parse(
+        input.bookmarkSortDirection,
+      ),
+      bookmarkGroupBy: bookmarkGroupBySchema.parse(input.bookmarkGroupBy),
+      detailsTableTransparency: detailsTableTransparencySchema.parse(
+        input.detailsTableTransparency,
+      ),
+      includeNavigationBackground: input.includeNavigationBackground,
+      navigationTransparency: navigationTransparencySchema.parse(
+        input.navigationTransparency,
+      ),
+      updatedAt: this.now(),
+    });
+    await (expectedUpdatedAt === undefined
+      ? this.repository.updateFolder(updated)
+      : this.repository.updateFolder(updated, expectedUpdatedAt));
   }
 
   private async assertParent(

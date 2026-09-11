@@ -12,6 +12,12 @@ export interface ProfileStorageUsage {
   sizeBytes: number;
 }
 
+export interface ProfileActivationResult {
+  changed: boolean;
+  profileId: string;
+  revision: number;
+}
+
 /** Durable operations required by profile management and switching. */
 export interface ProfileManagementRepository {
   list(): Promise<readonly ProfileListItem[]>;
@@ -27,5 +33,5 @@ export interface ProfileManagementRepository {
   updateSettings(settings: ProfileSettings): Promise<void>;
   update(profile: Profile): Promise<void>;
   delete(profileId: string): Promise<void>;
-  switchTo(profileId: string): Promise<void>;
+  switchTo(profileId: string): Promise<ProfileActivationResult>;
 }

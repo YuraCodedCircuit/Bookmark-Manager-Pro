@@ -29,6 +29,10 @@ export class DexieProfileCreationRepository implements ProfileCreationRepository
           key: 'activeProfileId',
           value: profile.id,
         });
+        await this.database.metadata.put({
+          key: 'profile-activation-revision:v1',
+          value: 1,
+        });
       },
     );
   }

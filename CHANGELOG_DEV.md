@@ -6,6 +6,25 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.2.5 - 2026-09-11
+
+### Added
+
+- Added versioned, Zod-validated cross-context content-change and profile-
+  activation channels with profile-scoped affected IDs, local mutation deltas,
+  and durable content and activation revisions. App tabs self-filter and
+  coalesce refreshes, defer IndexedDB reads while hidden, and recover the latest
+  committed active profile atomically.
+
+### Fixed
+
+- Moved creation-time append-index allocation and parent validation into the
+  bookmark repository transaction, and added conditional `updatedAt` checks for
+  stale bookmark and folder editors.
+- Stopped packaged extension surfaces from redundantly rewriting shared
+  IndexedDB undo-history rows after receiving a validated cross-tab sync;
+  tab-isolated webpage previews still persist their received session copy.
+
 ## 0.2.0 - 2026-09-10
 
 ### Added

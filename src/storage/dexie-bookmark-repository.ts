@@ -121,7 +121,14 @@ export class DexieBookmarkRepository implements BookmarkRepository {
       'rw',
       [this.database.bookmarks, this.database.folders],
       async () => {
-        await this.database.bookmarks.add(bookmark);
+        const parent = await this.database.folders.get(bookmark.parentId);
+        if (!parent || parent.profileId !== bookmark.profileId)
+          throw new Error('parent-folder-not-found');
+        const index = await this.nextIndex(
+          bookmark.profileId,
+          bookmark.parentId,
+        );
+        await this.database.bookmarks.add({ ...bookmark, index });
         await this.touchAncestorsInTransaction(
           bookmark.profileId,
           bookmark.parentId,
@@ -132,16 +139,25 @@ export class DexieBookmarkRepository implements BookmarkRepository {
   }
 
   async addFolder(folder: Folder): Promise<void> {
-    await this.database.transaction('rw', this.database.folders, async () => {
-      await this.database.folders.add(folder);
-      if (folder.parentId) {
-        await this.touchAncestorsInTransaction(
-          folder.profileId,
-          folder.parentId,
-          folder.updatedAt,
-        );
-      }
-    });
+    await this.database.transaction(
+      'rw',
+      [this.database.bookmarks, this.database.folders],
+      async () => {
+        if (!folder.parentId) throw new Error('parent-folder-not-found');
+        const parent = await this.database.folders.get(folder.parentId);
+        if (!parent || parent.profileId !== folder.profileId)
+          throw new Error('parent-folder-not-found');
+        const index = await this.nextIndex(folder.profileId, folder.parentId);
+        await this.database.folders.add({ ...folder, index });
+        if (folder.parentId) {
+          await this.touchAncestorsInTransaction(
+            folder.profileId,
+            folder.parentId,
+            folder.updatedAt,
+          );
+        }
+      },
+    );
   }
 
   async addItems(
@@ -172,7 +188,10 @@ export class DexieBookmarkRepository implements BookmarkRepository {
     );
   }
 
-  async updateBookmark(bookmark: Bookmark): Promise<void> {
+  async updateBookmark(
+    bookmark: Bookmark,
+    expectedUpdatedAt?: number,
+  ): Promise<void> {
     await this.database.transaction(
       'rw',
       [this.database.bookmarks, this.database.folders],
@@ -181,6 +200,11 @@ export class DexieBookmarkRepository implements BookmarkRepository {
         if (!existing || existing.profileId !== bookmark.profileId) {
           throw new Error('bookmark-not-found');
         }
+        if (
+          expectedUpdatedAt !== undefined &&
+          existing.updatedAt !== expectedUpdatedAt
+        )
+          throw new Error('content-changed');
         await this.database.bookmarks.put(bookmark);
         await this.touchAncestorsInTransaction(
           bookmark.profileId,
@@ -191,12 +215,20 @@ export class DexieBookmarkRepository implements BookmarkRepository {
     );
   }
 
-  async updateFolder(folder: Folder): Promise<void> {
+  async updateFolder(
+    folder: Folder,
+    expectedUpdatedAt?: number,
+  ): Promise<void> {
     await this.database.transaction('rw', this.database.folders, async () => {
       const existing = await this.database.folders.get(folder.id);
       if (!existing || existing.profileId !== folder.profileId) {
         throw new Error('folder-not-found');
       }
+      if (
+        expectedUpdatedAt !== undefined &&
+        existing.updatedAt !== expectedUpdatedAt
+      )
+        throw new Error('content-changed');
       await this.database.folders.put(folder);
       if (folder.parentId) {
         await this.touchAncestorsInTransaction(

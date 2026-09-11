@@ -85,7 +85,13 @@ folder display choices.
 - `snapshots`: verified recovery points for destructive workflows
 - `jobs`: resumable import, export, schema-upgrade, and synchronization state
 - `syncMappings`: internal and native browser bookmark identity mapping
-- `metadata`: schema, export-format, upgrade, and installation identifiers
+- `metadata`: schema, export-format, upgrade, installation identifiers,
+  per-profile `content-revision:v1` counters, and the global
+  `profile-activation-revision:v1` counter. Revision records contain no bookmark
+  or folder content and require no table or index migration. Successful content
+  mutations increment the affected profile's counter after commit. Active
+  profile selection and its activation revision commit atomically. Hidden or
+  suspended surfaces use these counters to detect missed transient messages.
 
 ## Identifiers
 
@@ -99,8 +105,13 @@ Every tree mutation updates affected parents, children, and ordering in one
 transaction. The session history service captures the validated before/after
 delta around that transaction and serializes new mutations with undo/redo
 restoration. Applying a history patch restores all affected bookmark, folder,
-and favorite records in one IndexedDB transaction. Synchronization planning is read-only;
-application of a plan creates a snapshot and records durable progress.
+and favorite records in one IndexedDB transaction. Synchronization planning is
+read-only; application of a plan creates a snapshot and records durable
+progress.
+New bookmark and folder creation verifies the parent, calculates the current
+append position, and inserts the record within one transaction. Conditional
+editor writes compare the stored `updatedAt` value within the write transaction
+and reject stale input.
 
 ## Image storage and quota behavior
 

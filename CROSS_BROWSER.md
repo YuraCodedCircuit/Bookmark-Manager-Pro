@@ -34,6 +34,16 @@ worker suspension. Each batch checks the active profile, permission, and roots.
 Revocation pauses the connection without deleting content. The standalone
 webpage cannot access native bookmarks or run synchronization.
 
+After a committed synchronization, toolbar-popup, or app content change,
+installed Chrome, Edge, and Firefox surfaces receive the same profile-scoped
+content-change message. Each tab reloads only an affected visible folder,
+coalesces reads while hidden, and falls back to the closest surviving ancestor
+when its displayed folder was removed. A durable revision recovers missed
+messages. Active-profile changes use a separate durable activation revision so
+all profile-bound surfaces open the latest profile's Home folder. The webpage
+preview can receive local cross-tab updates but cannot originate native
+bookmark sync.
+
 - Background declarations and worker lifecycle differ across browser targets.
 - Commands may have browser-reserved shortcuts and different assignment rules.
 - Browser session-storage availability differs. Undo history stores its patches

@@ -76,7 +76,8 @@ async function fixture(
     }),
   };
   const report = vi.fn(async () => undefined);
-  let service = new SyncService(repo, native, report);
+  const publishContentChange = vi.fn(async () => undefined);
+  let service = new SyncService(repo, native, report, publishContentChange);
   const command = (
     command: SyncRequest['command'],
     extra: Partial<SyncRequest> = {},
@@ -108,6 +109,7 @@ async function fixture(
     repo,
     native,
     report,
+    publishContentChange,
     command,
     preview,
     enable,
@@ -117,11 +119,46 @@ async function fixture(
     },
     wake: () => service.wake(),
     restart: () => {
-      service = new SyncService(repo, native, report);
+      service = new SyncService(repo, native, report, publishContentChange);
     },
   };
 }
 describe('durable synchronization', () => {
+  it('publishes one profile-scoped change after extension mutations complete', async () => {
+    const f = await fixture('browser-to-extension');
+
+    await f.enable();
+
+    expect(f.publishContentChange).toHaveBeenCalledOnce();
+    expect(f.publishContentChange).toHaveBeenCalledWith({
+      affectedParentIds: [rootId],
+      changedFolderIds: [],
+      deletedFolderPaths: [],
+      fullRefresh: false,
+      navigationChanged: true,
+      profileId,
+    });
+  });
+
+  it('retains a completed change summary until publication can be retried', async () => {
+    const f = await fixture('browser-to-extension');
+    const diagnostic = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    f.publishContentChange.mockRejectedValueOnce(new Error('unavailable'));
+    try {
+      await f.enable();
+      expect((await f.repo.get(profileId))?.pendingContentChange).toBeDefined();
+      await f.wake();
+      expect(f.publishContentChange).toHaveBeenCalledTimes(2);
+      expect(
+        (await f.repo.get(profileId))?.pendingContentChange,
+      ).toBeUndefined();
+    } finally {
+      diagnostic.mockRestore();
+    }
+  });
+
   it('keeps a stable baseline when native values normalize in extension storage', async () => {
     const f = await fixture('browser-to-extension');
     f.setNodes(

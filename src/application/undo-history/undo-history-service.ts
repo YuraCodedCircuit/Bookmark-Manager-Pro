@@ -40,6 +40,12 @@ type StoragePressureListener = (
   removedEntries: number,
 ) => void;
 
+interface HistoryChannel {
+  close(): void;
+  onmessage: ((event: MessageEvent<unknown>) => void) | null;
+  postMessage(message: unknown): void;
+}
+
 const MAX_HISTORY_ENTRIES = 100;
 
 /** Owns serialized, session-only undo and redo state for bookmark mutations. */
@@ -50,11 +56,6 @@ export class UndoHistoryService {
     initializationFailed: false,
   }));
   private operation: Promise<void> = Promise.resolve();
-  private readonly channel =
-    typeof window === 'undefined' ||
-    typeof window.BroadcastChannel === 'undefined'
-      ? undefined
-      : new window.BroadcastChannel('bookmark-manager-pro.undo-history.v1');
   private readonly surfaceId = crypto.randomUUID();
   private readonly peers = new Set<string>();
   private readonly storageWriteFailureListeners =
@@ -68,6 +69,8 @@ export class UndoHistoryService {
     private readonly createId: () => string = () => crypto.randomUUID(),
     private readonly now: () => number = () => Date.now(),
     private readonly runExclusive: RunExclusive = (run) => run(),
+    private readonly channel:
+      HistoryChannel | undefined = createHistoryChannel(),
   ) {
     if (this.channel)
       this.channel.onmessage = (event: MessageEvent<unknown>) => {
@@ -97,7 +100,11 @@ export class UndoHistoryService {
           .safeParse(message.entries);
         if (parsed.success) {
           this.store.setState({ entries: parsed.data });
-          void this.persist(parsed.data, false);
+          // Packaged surfaces share the same session rows, so the sender's
+          // successful write is authoritative. Preview tabs have isolated
+          // session IDs and must retain their own received copy.
+          if (!this.storage.sharedAcrossTabs)
+            void this.persist(parsed.data, false);
         }
       };
   }
@@ -374,6 +381,15 @@ export class UndoHistoryService {
   ): void {
     this.channel?.postMessage({ entries, sourceId: this.surfaceId, type });
   }
+}
+
+function createHistoryChannel(): HistoryChannel | undefined {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.BroadcastChannel === 'undefined'
+  )
+    return undefined;
+  return new window.BroadcastChannel('bookmark-manager-pro.undo-history.v1');
 }
 
 function isStorageCapacityError(error: unknown): boolean {

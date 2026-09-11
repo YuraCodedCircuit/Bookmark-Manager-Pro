@@ -5,11 +5,13 @@ import { createActivityLogService } from '../../application/activity-log/create-
 import { BookmarkManagerDatabase } from '../../storage/database';
 import { SyncRepository } from '../../storage/sync-repository';
 import { parseNativeBookmarkTree } from './sync-bookmarks';
+import { createContentChangeBridge } from '../content-change/create-content-change-bridge';
 
 /** Registers restart-safe browser wakes synchronously; IndexedDB owns all progress. */
 export function registerSynchronizationBackground() {
   const repository = new SyncRepository(new BookmarkManagerDatabase());
   const activity = createActivityLogService();
+  const contentChanges = createContentChangeBridge();
   const service = new SyncService(
     repository,
     {
@@ -76,6 +78,7 @@ export function registerSynchronizationBackground() {
               .catch(() => console.error('sync-notification-write-failed'));
       await Promise.all([logging, notification]);
     },
+    (change) => contentChanges.publish(change),
   );
   const locked = <T>(work: () => Promise<T>) =>
     globalThis.navigator.locks.request('bookmark-synchronization-v1', work);

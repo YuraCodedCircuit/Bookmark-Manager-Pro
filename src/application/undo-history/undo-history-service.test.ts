@@ -36,6 +36,49 @@ describe('UndoHistoryService', () => {
     consoleError.mockRestore();
   });
 
+  it('accepts a packaged cross-tab sync without rewriting shared storage', async () => {
+    const save = vi.fn(async () => undefined);
+    const channel = {
+      close: vi.fn(),
+      onmessage: null as ((event: MessageEvent<unknown>) => void) | null,
+      postMessage: vi.fn(),
+    };
+    const source = new UndoHistoryService(
+      memoryStorage(),
+      vi.fn(async () => undefined),
+      () => '33333333-3333-4333-8333-333333333333',
+      () => 10,
+      undefined,
+      undefined,
+    );
+    await source.record({
+      action: 'created',
+      after,
+      before,
+      itemId,
+      itemType: 'folder',
+      profileId,
+    });
+    const entries = source.store.getState().entries;
+    const receiver = new UndoHistoryService(
+      { load: async () => [], save, sharedAcrossTabs: true },
+      vi.fn(async () => undefined),
+      undefined,
+      undefined,
+      undefined,
+      channel,
+    );
+
+    channel.onmessage?.(
+      new MessageEvent('message', {
+        data: { entries, sourceId: 'another-surface', type: 'sync' },
+      }),
+    );
+
+    expect(receiver.store.getState().entries).toEqual(entries);
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it('records a minimal operation and restores its before and after states', async () => {
     const restore = vi.fn(async () => undefined);
     const storage = memoryStorage();

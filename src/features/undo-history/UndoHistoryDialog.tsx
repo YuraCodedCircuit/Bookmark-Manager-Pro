@@ -22,7 +22,10 @@ interface Props {
   dateTimeFormat?: DateTimeFormatPreference;
   isOpen: boolean;
   onClose(): void;
-  onHistoryChanged(): void | Promise<void>;
+  onHistoryChanged(
+    entry: UndoHistoryEntry,
+    direction: 'redo' | 'undo',
+  ): void | Promise<void>;
   onHistoryClearCompleted(): void | Promise<void>;
   onHistoryClearFailed(): void;
   onOperationCompleted(
@@ -147,7 +150,7 @@ export function UndoHistoryDialog({
     try {
       if (direction === 'redo') await service.redo(profileId, entry.id);
       else await service.undo(profileId, entry.id);
-      await onHistoryChanged();
+      await onHistoryChanged(entry, direction);
       await onOperationCompleted(direction, entry.itemType);
     } catch {
       onOperationFailed(direction);

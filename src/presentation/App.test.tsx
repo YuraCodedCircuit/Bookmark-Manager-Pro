@@ -19,6 +19,7 @@ import '../localization/i18n';
 import { App } from './App';
 import { defaultActivityLogSettings } from '../application/activity-log/manage-activity-log';
 import { UndoHistoryService } from '../application/undo-history/undo-history-service';
+import type { ContentChange } from '../messaging/content-change-protocol';
 
 const createdProfile = {
   profile: {
@@ -125,7 +126,11 @@ const profileManager = {
   duplicate: vi.fn(),
   getStorageUsage: vi.fn().mockResolvedValue([]),
   list: vi.fn().mockResolvedValue([]),
-  switchTo: vi.fn(),
+  switchTo: vi.fn(async (profileId: string) => ({
+    changed: true,
+    profileId,
+    revision: 1,
+  })),
   update: vi.fn(),
   updateBookmarkDisplay: vi.fn(),
   updateProfileSettings: vi.fn(),
@@ -159,11 +164,27 @@ function renderApp(
     { load: async () => [], save: async () => undefined },
     bookmarkManager.restoreUndoState,
   ),
+  contentChanges?: Partial<
+    NonNullable<Parameters<typeof App>[0]['contentChanges']>
+  >,
 ) {
-  return render(
+  const changeBridge = {
+    profileActivation: vi.fn(async () => ({
+      profileId: createdProfile.profile.id,
+      revision: 0,
+    })),
+    publish: vi.fn(async () => undefined),
+    publishProfileActivation: vi.fn(),
+    revision: vi.fn(async () => 0),
+    subscribe: vi.fn(() => () => undefined),
+    subscribeProfileActivation: vi.fn(() => () => undefined),
+    ...contentChanges,
+  };
+  const rendered = render(
     <App
       activityLog={activityLog}
       applicationVersion="0.1.1"
+      contentChanges={changeBridge}
       bookmarkManager={bookmarkManager}
       createProfileAndResumePreflight={createProfileAndResumePreflight}
       initialPreflightSnapshot={{
@@ -184,6 +205,7 @@ function renderApp(
       updateAnnouncements={updateAnnouncements}
     />,
   );
+  return { ...rendered, changeBridge };
 }
 
 afterEach(() => {
@@ -208,6 +230,259 @@ afterEach(() => {
 });
 
 describe('App', () => {
+  it('re-reads only the visible affected folder after a cross-context change', async () => {
+    let receive: ((change: ContentChange) => void) | undefined;
+    const contentChanges = {
+      revision: vi.fn(async () => 0),
+      subscribe: vi.fn((next: (change: ContentChange) => void) => {
+        receive = next;
+        return () => undefined;
+      }),
+    };
+    renderApp(
+      { status: 'ready', theme: 'dark', ...createdProfile },
+      undefined,
+      undefined,
+      contentChanges,
+    );
+    await screen.findByText('Example');
+    bookmarkManager.listContents.mockResolvedValue({
+      bookmarks: [{ ...storedBookmark, title: 'Added from popup' }],
+      folders: [],
+    });
+
+    receive?.({
+      affectedParentIds: [rootFolder.id],
+      changedFolderIds: [],
+      deletedFolderPaths: [],
+      fullRefresh: false,
+      navigationChanged: true,
+      profileId: createdProfile.profile.id,
+      protocolVersion: 1,
+      revision: 1,
+      type: 'content.changed',
+    });
+
+    expect(await screen.findByText('Added from popup')).toBeVisible();
+  });
+
+  it('opens the closest surviving ancestor when sync removes the displayed folder', async () => {
+    let receive: ((change: ContentChange) => void) | undefined;
+    const folder = (id: string, parentId: string, title: string): Folder => ({
+      ...rootFolder,
+      id,
+      isRoot: false,
+      parentId,
+      title,
+    });
+    const action = folder(
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      rootFolder.id,
+      'Action',
+    );
+    const nested = folder(
+      'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      action.id,
+      'New',
+    );
+    const year = folder(
+      'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+      nested.id,
+      '2026',
+    );
+    bookmarkManager.listFolders.mockResolvedValue([
+      rootFolder,
+      action,
+      nested,
+      year,
+    ]);
+    bookmarkManager.listContents.mockResolvedValue({
+      bookmarks: [],
+      folders: [],
+    });
+    renderApp(
+      {
+        status: 'ready',
+        theme: 'dark',
+        ...createdProfile,
+        settings: {
+          ...createdProfile.settings,
+          lastOpenedFolderId: year.id,
+          startupLocation: 'last',
+        },
+      },
+      undefined,
+      undefined,
+      {
+        revision: vi.fn(async () => 0),
+        subscribe: (next) => {
+          receive = next;
+          return () => undefined;
+        },
+      },
+    );
+    await screen.findByRole('button', { name: '2026' });
+    bookmarkManager.listFolders.mockResolvedValue([rootFolder, action]);
+
+    receive?.({
+      affectedParentIds: [action.id],
+      changedFolderIds: [nested.id, year.id],
+      deletedFolderPaths: [
+        {
+          folderId: year.id,
+          ancestorIds: [nested.id, action.id, rootFolder.id],
+        },
+      ],
+      fullRefresh: false,
+      navigationChanged: true,
+      profileId: createdProfile.profile.id,
+      protocolVersion: 1,
+      revision: 1,
+      type: 'content.changed',
+    });
+
+    expect(
+      (await screen.findByRole('button', { name: 'Action' })).closest('li'),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(
+      await screen.findByText(
+        'The open folder was removed. Its closest available parent is now open.',
+      ),
+    ).toBeInTheDocument();
+    expect(profileManager.updateLastOpenedFolder).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      action.id,
+    );
+  });
+
+  it('defers affected folder reads while the app tab is hidden', async () => {
+    let receive: ((change: ContentChange) => void) | undefined;
+    let revision = 0;
+    const originalVisibility = document.visibilityState;
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'hidden',
+    });
+    try {
+      renderApp(
+        { status: 'ready', theme: 'dark', ...createdProfile },
+        undefined,
+        undefined,
+        {
+          revision: vi.fn(async () => revision),
+          subscribe: (next) => {
+            receive = next;
+            return () => undefined;
+          },
+        },
+      );
+      await screen.findByText('Example');
+      const initialReads = bookmarkManager.listContents.mock.calls.length;
+      bookmarkManager.listContents.mockResolvedValue({
+        bookmarks: [{ ...storedBookmark, title: 'Deferred update' }],
+        folders: [],
+      });
+      revision = 1;
+      receive?.({
+        affectedParentIds: [rootFolder.id],
+        changedFolderIds: [],
+        deletedFolderPaths: [],
+        fullRefresh: false,
+        navigationChanged: true,
+        profileId: createdProfile.profile.id,
+        protocolVersion: 1,
+        revision,
+        type: 'content.changed',
+      });
+      expect(bookmarkManager.listContents).toHaveBeenCalledTimes(initialReads);
+
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        value: 'visible',
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+      expect(await screen.findByText('Deferred update')).toBeVisible();
+    } finally {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        value: originalVisibility,
+      });
+    }
+  });
+
+  it('opens Home when another surface activates a different profile', async () => {
+    let receiveActivation:
+      | ((activation: {
+          profileId: string;
+          protocolVersion: 1;
+          revision: number;
+          type: 'profile.activated';
+        }) => void)
+      | undefined;
+    const secondProfileId = '85923bcb-cfd7-45a4-bf10-12f6162cad44';
+    const secondRoot = { ...rootFolder, profileId: secondProfileId };
+    bookmarkManager.ensureRoot
+      .mockResolvedValueOnce(rootFolder)
+      .mockResolvedValue(secondRoot);
+    bookmarkManager.listFolders.mockImplementation(async (profileId) =>
+      profileId === secondProfileId ? [secondRoot] : [rootFolder],
+    );
+    bookmarkManager.listContents.mockImplementation(async (profileId) => ({
+      bookmarks: profileId === secondProfileId ? [] : [storedBookmark],
+      folders: [],
+    }));
+    renderApp(
+      { status: 'ready', theme: 'dark', ...createdProfile },
+      {
+        status: 'ready',
+        theme: 'dark',
+        profile: {
+          createdAt: 2,
+          id: secondProfileId,
+          updatedAt: 2,
+          username: 'Second profile',
+        },
+        settings: {
+          ...createdProfile.settings,
+          profileId: secondProfileId,
+          startupLocation: 'last',
+          lastOpenedFolderId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        },
+      },
+      undefined,
+      {
+        profileActivation: vi.fn(async () => ({
+          profileId: secondProfileId,
+          revision: 2,
+        })),
+        subscribeProfileActivation: vi.fn((receive) => {
+          receiveActivation = receive;
+          return () => undefined;
+        }),
+      },
+    );
+    await screen.findByText('Example');
+
+    receiveActivation?.({
+      profileId: secondProfileId,
+      protocolVersion: 1,
+      revision: 2,
+      type: 'profile.activated',
+    });
+
+    expect(
+      await screen.findByText(
+        'The active profile changed in another app window. Home is now open.',
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(bookmarkManager.listContents).toHaveBeenCalledWith(
+        secondProfileId,
+        secondRoot.id,
+      ),
+    );
+  });
+
   it('notifies when undo history cannot initialize safely', async () => {
     const undoHistory = new UndoHistoryService(
       {
@@ -1265,6 +1540,7 @@ describe('App', () => {
         title: 'Example',
         url: 'https://example.com/',
       },
+      storedBookmark.updatedAt,
     );
     expect(activityLog.record).toHaveBeenCalledWith(
       createdProfile.profile.id,
@@ -1387,7 +1663,22 @@ describe('App', () => {
 
   it('opens the current-folder style editor and saves its background', async () => {
     const user = userEvent.setup();
-    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+    bookmarkManager.captureUndoState
+      .mockResolvedValueOnce({
+        bookmarks: [storedBookmark],
+        favorites: [],
+        folders: [rootFolder],
+      })
+      .mockResolvedValueOnce({
+        bookmarks: [storedBookmark],
+        favorites: [],
+        folders: [{ ...rootFolder, updatedAt: 2 }],
+      });
+    const { changeBridge } = renderApp({
+      status: 'ready',
+      theme: 'dark',
+      ...createdProfile,
+    });
     const region = await screen.findByRole('region', { name: 'Bookmarks' });
 
     await user.pointer({ keys: '[MouseRight]', target: region });
@@ -1424,6 +1715,7 @@ describe('App', () => {
         includeNavigationBackground: false,
         navigationTransparency: 45,
       },
+      rootFolder.updatedAt,
     );
     expect(activityLog.record).toHaveBeenCalledWith(
       createdProfile.profile.id,
@@ -1432,6 +1724,14 @@ describe('App', () => {
         level: 'INFO',
       }),
     );
+    expect(changeBridge.publish).toHaveBeenCalledWith({
+      affectedParentIds: [],
+      changedFolderIds: [rootFolder.id],
+      deletedFolderPaths: [],
+      fullRefresh: false,
+      navigationChanged: true,
+      profileId: createdProfile.profile.id,
+    });
   });
 
   it('creates bookmarks and folders in the currently open folder', async () => {

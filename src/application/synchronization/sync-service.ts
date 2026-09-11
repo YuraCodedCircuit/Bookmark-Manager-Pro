@@ -14,6 +14,7 @@ import {
   type SyncResponse,
 } from '../../messaging/sync-protocol';
 import type { SyncRepository } from '../../storage/sync-repository';
+import type { ContentChangeInput } from '../../messaging/content-change-protocol';
 
 export interface SyncNativePort {
   hasPermission(): Promise<boolean>;
@@ -62,6 +63,9 @@ export class SyncService {
       profileId: string,
       event: SyncEvent,
     ) => Promise<void>,
+    private readonly publishContentChange: (
+      change: ContentChangeInput,
+    ) => Promise<unknown> = async () => undefined,
   ) {}
   private async feedback(profileId: string, event: SyncEvent) {
     try {
@@ -171,7 +175,7 @@ export class SyncService {
           preview.setup.choices,
         );
         if (plan.conflicts.length) throw new Error('failed');
-        this.prepare(connection, plan);
+        this.prepare(connection, plan, extension);
         connection.status = 'connected';
         connection.issue = '';
         await this.repository.save(connection);
@@ -240,6 +244,8 @@ export class SyncService {
     try {
       if ((await this.repository.activeProfile()) !== profileId) return;
       if (!(await this.native.hasPermission())) throw new Error('permission');
+      if (!connection.operations.length)
+        await this.flushPendingContentChange(connection);
       if (!connection.operations.length) {
         const [e, b] = await Promise.all([
           this.repository.tree(profileId),
@@ -255,7 +261,7 @@ export class SyncService {
         if (plan.preview.skipped && connection.issue !== 'skipped')
           await this.feedback(profileId, 'skipped');
         connection.issue = plan.preview.skipped ? 'skipped' : '';
-        this.prepare(connection, plan);
+        this.prepare(connection, plan, e);
         await this.repository.save(connection);
       }
       const hadOperations = connection.operations.length > 0;
@@ -370,7 +376,10 @@ export class SyncService {
         connection.plannedLinks = [];
         connection.lastSuccess = Date.now();
         await this.repository.save(connection);
-        if (hadOperations) await this.feedback(profileId, 'completed');
+        if (hadOperations) {
+          await this.flushPendingContentChange(connection);
+          await this.feedback(profileId, 'completed');
+        }
       }
     } catch (error) {
       // Reload the last committed checkpoint: an aborted local transaction must not lose its operation.
@@ -425,9 +434,55 @@ export class SyncService {
         }
     }
   }
-  private prepare(connection: SyncConnection, plan: SyncPlan) {
+  private prepare(
+    connection: SyncConnection,
+    plan: SyncPlan,
+    extensionTree: readonly SyncNode[],
+  ) {
     connection.plannedLinks = plan.links;
     connection.operations = plan.operations;
+    const extensionOperations = plan.operations.filter(
+      (operation) => operation.side === 'extension',
+    );
+    const affectedParentIds = new Set<string>();
+    const changedFolderIds = new Set<string>();
+    const byId = new Map(extensionTree.map((node) => [node.id, node]));
+    const deletedFolderPaths: Array<{
+      folderId: string;
+      ancestorIds: string[];
+    }> = [];
+    for (const operation of extensionOperations) {
+      if (operation.before?.parentId)
+        affectedParentIds.add(operation.before.parentId);
+      if (operation.after?.parentId)
+        affectedParentIds.add(operation.after.parentId);
+      const folderNode =
+        operation.after?.url === undefined
+          ? operation.after
+          : operation.before?.url === undefined
+            ? operation.before
+            : undefined;
+      if (!folderNode) continue;
+      changedFolderIds.add(folderNode.id);
+      if (operation.kind !== 'delete') continue;
+      const ancestorIds: string[] = [];
+      let parentId = folderNode.parentId;
+      const visited = new Set<string>();
+      while (parentId && !visited.has(parentId)) {
+        visited.add(parentId);
+        ancestorIds.push(parentId);
+        parentId = byId.get(parentId)?.parentId ?? null;
+      }
+      deletedFolderPaths.push({ ancestorIds, folderId: folderNode.id });
+    }
+    if (extensionOperations.length)
+      connection.pendingContentChange = {
+        affectedParentIds: [...affectedParentIds],
+        changedFolderIds: [...changedFolderIds],
+        deletedFolderPaths,
+      };
+    else if (!connection.pendingContentChange)
+      delete connection.pendingContentChange;
     const touchedE = new Set(
         plan.operations.filter((o) => o.side === 'extension').map((o) => o.id),
       ),
@@ -458,5 +513,22 @@ export class SyncService {
     );
     if (link) connection.links.push(structuredClone(link));
     connection.operations.shift();
+  }
+
+  private async flushPendingContentChange(connection: SyncConnection) {
+    const pending = connection.pendingContentChange;
+    if (!pending) return;
+    try {
+      await this.publishContentChange({
+        ...pending,
+        fullRefresh: false,
+        navigationChanged: true,
+        profileId: connection.profileId,
+      });
+      delete connection.pendingContentChange;
+      await this.repository.save(connection);
+    } catch {
+      console.error('sync-content-change-publish-failed');
+    }
   }
 }

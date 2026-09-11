@@ -47,6 +47,15 @@ export const syncConnectionSchema = z.object({
   plannedLinks: z.array(syncLinkSchema).default([]),
   lastSuccess: z.number().nullable(),
   issue: z.string().default(''),
+  pendingContentChange: z
+    .object({
+      affectedParentIds: z.array(z.string()),
+      changedFolderIds: z.array(z.string()),
+      deletedFolderPaths: z.array(
+        z.object({ folderId: z.string(), ancestorIds: z.array(z.string()) }),
+      ),
+    })
+    .optional(),
 });
 export type SyncConnection = z.infer<typeof syncConnectionSchema>;
 export interface SyncConflict {

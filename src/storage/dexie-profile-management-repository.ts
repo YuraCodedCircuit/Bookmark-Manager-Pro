@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type {
+  ProfileActivationResult,
   ProfileListItem,
   ProfileManagementRepository,
   ProfileStorageUsage,
@@ -17,6 +18,7 @@ const activeMetadataSchema = z.object({
   key: z.literal('activeProfileId'),
   value: z.uuid(),
 });
+const activationRevisionSchema = z.number().int().nonnegative();
 
 /** Implements profile management as validated IndexedDB transactions. */
 export class DexieProfileManagementRepository implements ProfileManagementRepository {
@@ -274,17 +276,32 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
     );
   }
 
-  async switchTo(profileId: string): Promise<void> {
-    await this.database.transaction(
+  async switchTo(profileId: string): Promise<ProfileActivationResult> {
+    return this.database.transaction(
       'rw',
       [this.database.profiles, this.database.metadata],
       async () => {
         if (!(await this.database.profiles.get(profileId)))
           throw new Error('profile-not-found');
+        const active = activeMetadataSchema.parse(
+          await this.database.metadata.get('activeProfileId'),
+        );
+        const revision = activationRevisionSchema.parse(
+          (await this.database.metadata.get('profile-activation-revision:v1'))
+            ?.value ?? 0,
+        );
+        if (active.value === profileId)
+          return { changed: false, profileId, revision };
+        const nextRevision = revision + 1;
         await this.database.metadata.put({
           key: 'activeProfileId',
           value: profileId,
         });
+        await this.database.metadata.put({
+          key: 'profile-activation-revision:v1',
+          value: nextRevision,
+        });
+        return { changed: true, profileId, revision: nextRevision };
       },
     );
   }

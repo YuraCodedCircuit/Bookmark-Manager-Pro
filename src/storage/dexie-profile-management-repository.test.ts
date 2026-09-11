@@ -139,6 +139,19 @@ describe('DexieProfileManagementRepository', () => {
       createdAt: 2,
       updatedAt: 3,
     });
+    await expect(repository.switchTo(secondId)).resolves.toEqual({
+      changed: true,
+      profileId: secondId,
+      revision: 1,
+    });
+    await expect(repository.switchTo(secondId)).resolves.toEqual({
+      changed: false,
+      profileId: secondId,
+      revision: 1,
+    });
+    await expect(
+      repository.switchTo('df6f88b6-10c7-43d7-b516-a063b77db6c6'),
+    ).resolves.toMatchObject({ changed: true, revision: 2 });
     await repository.switchTo(secondId);
     expect(
       (await repository.list()).find(({ isActive }) => isActive)?.profile

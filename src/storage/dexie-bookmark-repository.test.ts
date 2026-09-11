@@ -36,6 +36,82 @@ afterEach(async () =>
 );
 
 describe('DexieBookmarkRepository', () => {
+  it('allocates unique append indexes inside concurrent creation transactions', async () => {
+    const database = new BookmarkManagerDatabase(
+      `concurrent-append-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = new DexieBookmarkRepository(database);
+    await repository.ensureRoot(profileId, root);
+    const bookmark = (id: string, title: string) => ({
+      cardAppearance: { kind: 'color' as const, value: '#abcdef' },
+      createdAt: 2,
+      id,
+      index: 0,
+      note: '',
+      parentId: rootId,
+      profileId,
+      tags: [],
+      title,
+      updatedAt: 2,
+      url: `https://${title.toLowerCase()}.example/`,
+    });
+
+    await Promise.all([
+      repository.addBookmark(
+        bookmark('22222222-2222-4222-8222-222222222222', 'First'),
+      ),
+      repository.addBookmark(
+        bookmark('33333333-3333-4333-8333-333333333333', 'Second'),
+      ),
+    ]);
+
+    const contents = await repository.listContents(profileId, rootId);
+    expect(contents.bookmarks.map(({ index }) => index)).toEqual([0, 1]);
+    expect(new Set(contents.bookmarks.map(({ index }) => index)).size).toBe(2);
+  });
+
+  it('rejects an edit whose expected version became stale', async () => {
+    const database = new BookmarkManagerDatabase(
+      `stale-edit-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = new DexieBookmarkRepository(database);
+    await repository.ensureRoot(profileId, root);
+    const bookmark = {
+      cardAppearance: { kind: 'color' as const, value: '#abcdef' },
+      createdAt: 2,
+      id: '22222222-2222-4222-8222-222222222222',
+      index: 0,
+      note: '',
+      parentId: rootId,
+      profileId,
+      tags: [],
+      title: 'Original',
+      updatedAt: 2,
+      url: 'https://example.com/',
+    };
+    await repository.addBookmark(bookmark);
+    await repository.updateBookmark({
+      ...bookmark,
+      title: 'Other tab',
+      updatedAt: 3,
+    });
+
+    await expect(
+      repository.updateBookmark(
+        { ...bookmark, title: 'Stale editor', updatedAt: 4 },
+        2,
+      ),
+    ).rejects.toThrow('content-changed');
+    await expect(
+      repository.getBookmark(profileId, bookmark.id),
+    ).resolves.toMatchObject({
+      title: 'Other tab',
+      updatedAt: 3,
+    });
+  });
+
   it('adds a prepared copied tree in one profile transaction', async () => {
     const database = new BookmarkManagerDatabase(
       `copy-tree-test-${crypto.randomUUID()}`,

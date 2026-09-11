@@ -1,27 +1,22 @@
-# What's New in 0.2.0
+# What's New in 0.2.5
 
-Released September 10, 2026.
+Released September 11, 2026.
 
-This release adds guided synchronization between an extension folder and a
-browser bookmarks folder.
+This release keeps open Bookmark Manager Pro tabs current after content and
+profile changes, while strengthening concurrent editing safeguards.
 
 ## Highlights
 
-- Choose whether changes flow from the browser, from the extension, or in both
-  directions. Extension-only notes, tags, styles, images, and favorites remain
-  local.
-- Select both folders with searchable folder trees, review a read-only preview,
-  and resolve duplicate matches or competing changes before enabling sync.
-- Active synchronization runs automatically for the current profile. Clear
-  status and recovery actions cover pausing, revoked bookmark access, missing
-  folders, conflicts, retrying, and disconnecting.
-- Bookmark permission remains optional until browser folder access is needed.
-  Revoking access pauses synchronization without deleting bookmarks.
-
-## Known limitation
-
-- Recovery snapshots are unavailable because the backup service is not yet
-  implemented.
+- Content changes from synchronization, the toolbar popup, or another app tab
+  now appear in every open tab showing an affected folder. Hidden tabs update
+  when they become visible instead of performing unnecessary background reads.
+- If an open folder is deleted, the tab moves to the closest available parent
+  and explains the change. Switching profiles also opens the selected profile's
+  Home folder across profile-bound app surfaces.
+- Simultaneous bookmark or folder creation now preserves a valid item order,
+  and an editor cannot overwrite an item that changed after the editor opened.
+- Shared undo history no longer reports a storage-write error when another open
+  extension surface receives an already-saved update.
 
 ## Full changelog
 

@@ -201,7 +201,12 @@ export function CreateContentDialog({
           : error instanceof Error &&
               error.message === 'duplicate-bookmark-prevented'
             ? t('contentEditor.duplicatePrevented')
-            : t('contentEditor.saveError'),
+            : error instanceof Error && error.message === 'content-changed'
+              ? t('contentEditor.concurrentChangeError')
+              : error instanceof Error &&
+                  error.message === 'parent-folder-not-found'
+                ? t('contentEditor.destinationUnavailableError')
+                : t('contentEditor.saveError'),
       );
     } finally {
       setIsSaving(false);

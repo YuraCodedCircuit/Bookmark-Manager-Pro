@@ -1,6 +1,6 @@
 import '../../src/platform/validation/configure-runtime-validation';
 
-import { StrictMode, useState } from 'react';
+import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 
@@ -27,6 +27,7 @@ import {
 } from '../../src/features/folder-tree/folder-tree-data';
 import type { ProfileSettings } from '../../src/domain/profile-settings';
 import { addHttpsToHostLikeUrl } from '../../src/domain/bookmark-url';
+import { createContentChangeBridge } from '../../src/platform/content-change/create-content-change-bridge';
 import '../../src/styles/global.css';
 import './popup.css';
 
@@ -34,6 +35,7 @@ const activityLog = createActivityLogService();
 const bookmarkManager = createBookmarkManager();
 const preflight = createWebPreflight(activityLog);
 const undoHistory = createUndoHistoryService(bookmarkManager);
+const contentChanges = createContentChangeBridge();
 
 interface ReadyState {
   folder: Folder;
@@ -52,6 +54,14 @@ export function SaveCurrentPagePopup({ ready }: SaveCurrentPagePopupProps) {
   const [selectedFolderId, setSelectedFolderId] = useState(ready.folder.id);
   const selectedFolder =
     ready.folders.find(({ id }) => id === selectedFolderId) ?? ready.folder;
+
+  useEffect(
+    () =>
+      contentChanges.subscribeProfileActivation((activation) => {
+        if (activation.profileId !== ready.profileId) window.close();
+      }),
+    [ready.profileId],
+  );
 
   const record = async (
     eventCode: string,
@@ -84,6 +94,11 @@ export function SaveCurrentPagePopup({ ready }: SaveCurrentPagePopupProps) {
   const save = async (value: CreateContentValue) => {
     if (!value.url) throw new Error('popup-not-ready');
     try {
+      const activation = await contentChanges.profileActivation();
+      if (activation.profileId !== ready.profileId) {
+        window.close();
+        throw new Error('popup-profile-changed');
+      }
       let url = value.url;
       const normalized = addHttpsToHostLikeUrl(url);
       if (normalized && window.confirm(t('contentEditor.normalizationConfirm')))
@@ -132,6 +147,16 @@ export function SaveCurrentPagePopup({ ready }: SaveCurrentPagePopupProps) {
           });
         }
       });
+      await contentChanges
+        .publish({
+          affectedParentIds: [selectedFolder.id],
+          changedFolderIds: [],
+          deletedFolderPaths: [],
+          fullRefresh: false,
+          navigationChanged: true,
+          profileId: ready.profileId,
+        })
+        .catch(() => console.error('popup-content-change-publish-failed'));
       await record('CURRENT-TAB-BOOKMARK-CREATE-COMPLETE', 'INFO', 'Succeeded');
       window.close();
     } catch (error) {
