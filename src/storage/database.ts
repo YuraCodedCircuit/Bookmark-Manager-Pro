@@ -677,6 +677,37 @@ export class BookmarkManagerDatabase extends Dexie {
             settings.notificationPreferences.countdownLineColor ??= null;
           }),
       );
+    this.version(28)
+      .stores({
+        profiles: 'id, username, createdAt, updatedAt',
+        profileSettings: '&profileId',
+        metadata: '&key',
+        activity:
+          '&id, profileId, [profileId+timestamp], [profileId+level], category',
+        activityLogSettings: '&profileId',
+        bookmarks:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index]',
+        folders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index]',
+        favoriteItems: '&[profileId+itemId], profileId, itemId, favoritedAt',
+        undoHistory:
+          '&id, sessionId, [sessionId+profileId], [sessionId+position], [sessionId+createdAt]',
+      })
+      .upgrade((transaction) =>
+        transaction
+          .table('profileSettings')
+          .toCollection()
+          .modify((settings) => {
+            settings.backupPreferences ??= {
+              automaticEnabled: true,
+              beforeDatabaseUpgrade: true,
+              beforeImport: true,
+              beforeProfileReset: true,
+              beforeSynchronization: true,
+              retentionPerTrigger: 5,
+            };
+          }),
+      );
   }
 }
 

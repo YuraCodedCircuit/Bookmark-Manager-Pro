@@ -22,7 +22,6 @@ export type SettingsCategory = (typeof settingsCategories)[number];
 const disabledSettingsCategories = new Set<SettingsCategory>([
   'import',
   'export',
-  'backup',
   'advanced',
 ]);
 

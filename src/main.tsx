@@ -12,6 +12,7 @@ import { createProfileManager } from './application/profile/create-profile-manag
 import { createWebPreflight } from './application/preflight/create-web-preflight';
 import { createUndoHistoryService } from './application/undo-history/create-undo-history-service';
 import { createUpdateAnnouncementManager } from './application/update-announcement/create-update-announcement-manager';
+import { createBackupManager } from './application/backup/create-backup-manager';
 import packageMetadata from '../package.json';
 import { i18n } from './localization/i18n';
 import { App } from './presentation/App';
@@ -35,6 +36,7 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
   const profileCreator = createBrowserProfileCreator();
   const profileManager = createProfileManager();
   const updateAnnouncements = createUpdateAnnouncementManager();
+  const backupManager = createBackupManager();
   const preflightSnapshot = await preflight.execute();
   const undoHistoryReady = await undoHistory.initialize();
   if (
@@ -74,6 +76,7 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
       <I18nextProvider i18n={i18n}>
         <App
           activityLog={activityLog}
+          backupManager={backupManager}
           applicationVersion={packageMetadata.version}
           bookmarkManager={bookmarkManager}
           createProfileAndResumePreflight={createProfileAndResumePreflight}

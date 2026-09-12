@@ -17,6 +17,7 @@ interface ProfileMenuPanelProps {
   onAfterClose: () => void;
   onOpenAbout: () => void;
   onOpenBookmarkActivityLog: () => void;
+  onOpenBackup?: () => void;
   onOpenChangelog: () => void;
   onOpenHelp: () => void;
   onOpenLegal: () => void;
@@ -59,6 +60,7 @@ export function ProfileMenuPanel({
   onManageProfiles,
   onOpenAbout,
   onOpenBookmarkActivityLog,
+  onOpenBackup = () => undefined,
   onOpenChangelog,
   onOpenHelp,
   onOpenLegal,
@@ -207,6 +209,8 @@ export function ProfileMenuPanel({
                     initializationState.status === 'ready') ||
                   (item === 'undoHistory' &&
                     initializationState.status === 'ready') ||
+                  (item === 'backup' &&
+                    initializationState.status === 'ready') ||
                   (item === 'synchronization' &&
                     initializationState.status === 'ready');
                 return (
@@ -235,11 +239,13 @@ export function ProfileMenuPanel({
                                     ? onOpenAbout
                                     : item === 'bookmarkActivityLog'
                                       ? onOpenBookmarkActivityLog
-                                      : item === 'undoHistory'
-                                        ? onOpenUndoHistory
-                                        : item === 'synchronization'
-                                          ? onOpenSynchronization
-                                          : undefined
+                                      : item === 'backup'
+                                        ? onOpenBackup
+                                        : item === 'undoHistory'
+                                          ? onOpenUndoHistory
+                                          : item === 'synchronization'
+                                            ? onOpenSynchronization
+                                            : undefined
                     }
                     onMouseEnter={() => {
                       if (isAvailableCommand) setHighlightedItem(item);

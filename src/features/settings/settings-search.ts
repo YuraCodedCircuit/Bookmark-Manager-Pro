@@ -55,6 +55,7 @@ const CATEGORY_RESOURCE_KEYS: Partial<
   accessibility: ['displaySettings.accessibility'],
   activity: ['displaySettings.activity'],
   appearance: APPEARANCE_KEYS.map((key) => `displaySettings.${key}`),
+  backup: ['displaySettings.backupSettings'],
   bookmarks: ['displaySettings.bookmarkBehavior'],
   general: ['displaySettings.generalDescription', 'displaySettings.general'],
   language: ['displaySettings.languageSettings'],

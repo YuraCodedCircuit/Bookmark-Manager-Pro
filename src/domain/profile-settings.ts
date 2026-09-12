@@ -79,6 +79,29 @@ export const notificationPreferencesSchema = z.object({
   stackLimit: notificationStackLimitSchema,
 });
 
+export const backupRetentionSchema = z.union([
+  z.literal(3),
+  z.literal(5),
+  z.literal(10),
+  z.literal(20),
+]);
+export const backupPreferencesSchema = z.object({
+  automaticEnabled: z.boolean(),
+  beforeDatabaseUpgrade: z.boolean(),
+  beforeImport: z.boolean(),
+  beforeProfileReset: z.boolean(),
+  beforeSynchronization: z.boolean(),
+  retentionPerTrigger: backupRetentionSchema,
+});
+export const defaultBackupPreferences = backupPreferencesSchema.parse({
+  automaticEnabled: true,
+  beforeDatabaseUpgrade: true,
+  beforeImport: true,
+  beforeProfileReset: true,
+  beforeSynchronization: true,
+  retentionPerTrigger: 5,
+});
+
 export const defaultNotificationPreferences =
   notificationPreferencesSchema.parse({
     countdownLineColor: null,
@@ -162,6 +185,7 @@ export const profileSettingsSchema = z.object({
   animationPreference: animationPreferenceSchema.optional(),
   highContrast: z.boolean().optional(),
   shortcutPreferences: shortcutPreferencesSchema.optional(),
+  backupPreferences: backupPreferencesSchema.optional(),
 });
 
 export type ProfileSettings = z.infer<typeof profileSettingsSchema>;
@@ -172,3 +196,4 @@ export type NotificationPreferences = z.infer<
 export type ThemePreference = z.infer<typeof themePreferenceSchema>;
 export type ResolvedTheme = Exclude<ThemePreference, 'system'>;
 export type AnimationPreference = z.infer<typeof animationPreferenceSchema>;
+export type BackupPreferences = z.infer<typeof backupPreferencesSchema>;

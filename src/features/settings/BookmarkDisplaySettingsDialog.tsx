@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { ProfileSettings } from '../../domain/profile-settings';
 import type { ActivityLogSettings } from '../../domain/activity-log';
 import {
+  defaultBackupPreferences,
   defaultNotificationPreferences,
   defaultProfilePreferences,
 } from '../../domain/profile-settings';
@@ -126,6 +127,7 @@ export function BookmarkDisplaySettingsDialog({
   const showBookmarks =
     selectedCategory === 'bookmarks' && selectedCategoryMatches;
   const showSearch = selectedCategory === 'search' && selectedCategoryMatches;
+  const showBackup = selectedCategory === 'backup' && selectedCategoryMatches;
   const showShortcuts =
     selectedCategory === 'shortcuts' && selectedCategoryMatches;
 
@@ -349,89 +351,115 @@ export function BookmarkDisplaySettingsDialog({
                                   : 3,
                           },
                         }
-                      : showSecurity
+                      : showBackup
                         ? {
                             ...settings,
-                            confirmExternalLinks: data.has(
-                              'confirmExternalLinks',
-                            ),
+                            backupPreferences: {
+                              automaticEnabled: data.has(
+                                'backupAutomaticEnabled',
+                              ),
+                              beforeDatabaseUpgrade: data.has(
+                                'backupBeforeDatabaseUpgrade',
+                              ),
+                              beforeImport: data.has('backupBeforeImport'),
+                              beforeProfileReset: data.has(
+                                'backupBeforeProfileReset',
+                              ),
+                              beforeSynchronization: data.has(
+                                'backupBeforeSynchronization',
+                              ),
+                              retentionPerTrigger: [3, 10, 20].includes(
+                                Number(data.get('backupRetention')),
+                              )
+                                ? (Number(data.get('backupRetention')) as
+                                    3 | 10 | 20)
+                                : 5,
+                            },
                           }
-                        : showAccessibility
+                        : showSecurity
                           ? {
                               ...settings,
-                              animationPreference:
-                                data.get('animationPreference') === 'reduced'
-                                  ? 'reduced'
-                                  : data.get('animationPreference') === 'none'
-                                    ? 'none'
-                                    : 'system',
-                              highContrast: data.has('highContrast'),
+                              confirmExternalLinks: data.has(
+                                'confirmExternalLinks',
+                              ),
                             }
-                          : showShortcuts
-                            ? { ...settings, shortcutPreferences }
-                            : {
+                          : showAccessibility
+                            ? {
                                 ...settings,
-                                accentColorMode,
-                                bookmarkView:
-                                  data.get('bookmarkView') === 'list'
-                                    ? 'list'
-                                    : data.get('bookmarkView') === 'details'
-                                      ? 'details'
-                                      : 'card',
-                                cardSize:
-                                  data.get('cardSize') === 'small'
-                                    ? 'small'
-                                    : data.get('cardSize') === 'large'
-                                      ? 'large'
-                                      : 'medium',
-                                cardSpacing:
-                                  data.get('cardSpacing') === 'compact'
-                                    ? 'compact'
-                                    : data.get('cardSpacing') === 'spacious'
-                                      ? 'spacious'
-                                      : 'comfortable',
-                                bookmarkSortBy:
-                                  data.get('bookmarkSortBy') === 'title'
-                                    ? 'title'
-                                    : data.get('bookmarkSortBy') === 'createdAt'
-                                      ? 'createdAt'
+                                animationPreference:
+                                  data.get('animationPreference') === 'reduced'
+                                    ? 'reduced'
+                                    : data.get('animationPreference') === 'none'
+                                      ? 'none'
+                                      : 'system',
+                                highContrast: data.has('highContrast'),
+                              }
+                            : showShortcuts
+                              ? { ...settings, shortcutPreferences }
+                              : {
+                                  ...settings,
+                                  accentColorMode,
+                                  bookmarkView:
+                                    data.get('bookmarkView') === 'list'
+                                      ? 'list'
+                                      : data.get('bookmarkView') === 'details'
+                                        ? 'details'
+                                        : 'card',
+                                  cardSize:
+                                    data.get('cardSize') === 'small'
+                                      ? 'small'
+                                      : data.get('cardSize') === 'large'
+                                        ? 'large'
+                                        : 'medium',
+                                  cardSpacing:
+                                    data.get('cardSpacing') === 'compact'
+                                      ? 'compact'
+                                      : data.get('cardSpacing') === 'spacious'
+                                        ? 'spacious'
+                                        : 'comfortable',
+                                  bookmarkSortBy:
+                                    data.get('bookmarkSortBy') === 'title'
+                                      ? 'title'
                                       : data.get('bookmarkSortBy') ===
-                                          'updatedAt'
-                                        ? 'updatedAt'
+                                          'createdAt'
+                                        ? 'createdAt'
                                         : data.get('bookmarkSortBy') ===
-                                            'domain'
-                                          ? 'domain'
-                                          : 'manual',
-                                bookmarkSortDirection:
-                                  data.get('bookmarkSortDirection') ===
-                                  'descending'
-                                    ? 'descending'
-                                    : 'ascending',
-                                bookmarkGroupBy:
-                                  data.get('bookmarkGroupBy') === 'type'
-                                    ? 'type'
-                                    : data.get('bookmarkGroupBy') === 'domain'
-                                      ? 'domain'
-                                      : 'none',
-                                customAccentColor:
-                                  data.get('customAccentColor')?.toString() ||
-                                  settings.customAccentColor ||
-                                  '#88bdf2',
-                                profilePreferences: currentPreferences,
-                                scrollbarBehavior:
-                                  data.get('scrollbarBehavior') === 'always'
-                                    ? 'always'
-                                    : data.get('scrollbarBehavior') ===
-                                        'scrolling'
-                                      ? 'scrolling'
-                                      : 'system',
-                                theme:
-                                  data.get('theme') === 'light'
-                                    ? 'light'
-                                    : data.get('theme') === 'dark'
-                                      ? 'dark'
-                                      : 'system',
-                              },
+                                            'updatedAt'
+                                          ? 'updatedAt'
+                                          : data.get('bookmarkSortBy') ===
+                                              'domain'
+                                            ? 'domain'
+                                            : 'manual',
+                                  bookmarkSortDirection:
+                                    data.get('bookmarkSortDirection') ===
+                                    'descending'
+                                      ? 'descending'
+                                      : 'ascending',
+                                  bookmarkGroupBy:
+                                    data.get('bookmarkGroupBy') === 'type'
+                                      ? 'type'
+                                      : data.get('bookmarkGroupBy') === 'domain'
+                                        ? 'domain'
+                                        : 'none',
+                                  customAccentColor:
+                                    data.get('customAccentColor')?.toString() ||
+                                    settings.customAccentColor ||
+                                    '#88bdf2',
+                                  profilePreferences: currentPreferences,
+                                  scrollbarBehavior:
+                                    data.get('scrollbarBehavior') === 'always'
+                                      ? 'always'
+                                      : data.get('scrollbarBehavior') ===
+                                          'scrolling'
+                                        ? 'scrolling'
+                                        : 'system',
+                                  theme:
+                                    data.get('theme') === 'light'
+                                      ? 'light'
+                                      : data.get('theme') === 'dark'
+                                        ? 'dark'
+                                        : 'system',
+                                },
         );
       if (showGeneral)
         await onSaveUpdateAnnouncements(data.has('showWhatsNewAfterUpdate'));
@@ -1253,6 +1281,81 @@ export function BookmarkDisplaySettingsDialog({
                   </p>
                 </fieldset>
               </section>
+            ) : showBackup ? (
+              <section aria-labelledby="settings-backup-title" key="backup">
+                <div className="settings-dialog__section-heading">
+                  <h2 id="settings-backup-title">
+                    {t('displaySettings.category.backup')}
+                  </h2>
+                  <p>{t('displaySettings.backupSettings.localWarning')}</p>
+                </div>
+                <fieldset>
+                  <legend>
+                    {t('displaySettings.backupSettings.automatic')}
+                  </legend>
+                  <label className="settings-checkbox-row">
+                    <input
+                      defaultChecked={
+                        (settings.backupPreferences ?? defaultBackupPreferences)
+                          .automaticEnabled
+                      }
+                      name="backupAutomaticEnabled"
+                      type="checkbox"
+                    />
+                    <span>{t('displaySettings.backupSettings.automatic')}</span>
+                  </label>
+                  <p className="settings-dialog__help">
+                    {t('displaySettings.backupSettings.automaticHelp')}
+                  </p>
+                </fieldset>
+                <fieldset>
+                  <legend>{t('displaySettings.backupSettings.before')}</legend>
+                  {(['Synchronization'] as const).map((trigger) => (
+                    <label className="settings-checkbox-row" key={trigger}>
+                      <input
+                        defaultChecked={
+                          (settings.backupPreferences ??
+                            defaultBackupPreferences)[
+                            `before${trigger}` as keyof typeof defaultBackupPreferences
+                          ] as boolean
+                        }
+                        name={`backupBefore${trigger}`}
+                        type="checkbox"
+                      />
+                      <span>
+                        {t(`displaySettings.backupSettings.before${trigger}`)}
+                      </span>
+                    </label>
+                  ))}
+                  <label>
+                    <span>{t('displaySettings.backupSettings.retention')}</span>
+                    <select
+                      defaultValue={
+                        (settings.backupPreferences ?? defaultBackupPreferences)
+                          .retentionPerTrigger
+                      }
+                      name="backupRetention"
+                    >
+                      {[3, 5, 10, 20].map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </fieldset>
+                <fieldset>
+                  <legend>
+                    {t('displaySettings.backupSettings.alwaysProtected')}
+                  </legend>
+                  <p className="settings-dialog__help">
+                    {t('displaySettings.backupSettings.alwaysProtectedHelp')}
+                  </p>
+                </fieldset>
+                <p className="settings-dialog__help">
+                  {t('displaySettings.backupSettings.manageHelp')}
+                </p>
+              </section>
             ) : showSecurity ? (
               <section aria-labelledby="settings-security-title" key="security">
                 <div className="settings-dialog__section-heading">
@@ -1371,7 +1474,8 @@ export function BookmarkDisplaySettingsDialog({
                 !showShortcuts &&
                 !showNotifications &&
                 !showBookmarks &&
-                !showSearch)
+                !showSearch &&
+                !showBackup)
             }
             type="submit"
           >

@@ -6,6 +6,33 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.4.0 - 2026-09-12
+
+### Added
+
+- Added a separate versioned Dexie backup database with immutable, Zod-validated
+  profile payloads, SHA-256 integrity verification, read-back verification,
+  automatic retention, and transactional restore paths.
+- Added profile-owned backup preferences, a backup application service, manual
+  and automatic synchronization triggers, mandatory profile-deletion and
+  pre-restore safety snapshots, and privacy-safe activity boundaries.
+- Added the accessible Backup window and Settings controls, including current
+  and deleted profile selection, bounded visible pagination, explicit row
+  actions, nested confirmations, filter-specific empty states, semantic striped
+  details tables, estimated-size guidance, and theme-aware enabled-only hover
+  and pressed action styling.
+- Seeded the Backup profile selector from the validated preflight profile while
+  asynchronously refreshing the complete profile list and storage estimates.
+  The active profile therefore remains current even when the shared profile
+  cache has not been populated after startup.
+
+### Fixed
+
+- Moved notification countdown state above the portal boundary and kept a stable
+  portal container while changing the active modal host, preserving the card,
+  remaining time, and visual progress. Popover calls now require a connected
+  viewport, preventing `InvalidStateError` during modal teardown.
+
 ## 0.3.0 - 2026-09-12
 
 ### Changed

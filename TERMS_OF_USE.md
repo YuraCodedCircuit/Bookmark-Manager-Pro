@@ -1,6 +1,6 @@
 # Bookmark Manager Pro Terms of Use
 
-**Effective date:** August 24, 2026  
+**Effective date:** September 12, 2026
 **Publisher:** YuraCodedCircuit
 
 These Terms of Use apply to Bookmark Manager Pro and its accompanying
@@ -38,6 +38,11 @@ Users are responsible for maintaining any backups they consider necessary.
 Deleting browser profiles, clearing browser data, uninstalling the extension,
 or encountering storage failure may cause locally stored information to be
 lost.
+
+The application's recovery snapshots are stored with the extension's local
+browser data. They are a recovery aid, not an independent external backup.
+Removing the extension or clearing its data removes those snapshots, and a
+restore may replace newer profile information after explicit confirmation.
 
 ## External websites and services
 

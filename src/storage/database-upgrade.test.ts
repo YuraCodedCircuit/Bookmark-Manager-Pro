@@ -11,14 +11,14 @@ afterEach(async () =>
 );
 
 describe('BookmarkManagerDatabase schema upgrades', () => {
-  it('opens schema 27 with session-namespaced undo history', async () => {
+  it('opens schema 28 with backup preferences and session undo history', async () => {
     const name = `search-preferences-schema-${crypto.randomUUID()}`;
     names.push(name);
     const database = new BookmarkManagerDatabase(name);
 
     await database.open();
 
-    expect(database.verno).toBe(27);
+    expect(database.verno).toBe(28);
     expect(database.undoHistory.schema.indexes.map(({ name }) => name)).toEqual(
       expect.arrayContaining([
         'sessionId',
@@ -27,6 +27,33 @@ describe('BookmarkManagerDatabase schema upgrades', () => {
       ]),
     );
     database.close();
+  });
+
+  it('adds default backup preferences to schema-27 profiles', async () => {
+    const name = `upgrade-backup-preferences-${crypto.randomUUID()}`;
+    names.push(name);
+    const versionTwentySeven = new Dexie(name);
+    versionTwentySeven.version(27).stores({ profileSettings: '&profileId' });
+    const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
+    await versionTwentySeven.table('profileSettings').add({ profileId });
+    versionTwentySeven.close();
+
+    const upgraded = new BookmarkManagerDatabase(name);
+    await upgraded.open();
+
+    await expect(upgraded.profileSettings.get(profileId)).resolves.toEqual(
+      expect.objectContaining({
+        backupPreferences: {
+          automaticEnabled: true,
+          beforeDatabaseUpgrade: true,
+          beforeImport: true,
+          beforeProfileReset: true,
+          beforeSynchronization: true,
+          retentionPerTrigger: 5,
+        },
+      }),
+    );
+    upgraded.close();
   });
 
   it('keeps the app foreground countdown color for schema-26 profiles', async () => {

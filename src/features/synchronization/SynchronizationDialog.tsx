@@ -29,6 +29,7 @@ interface Props {
   extensionFolders: readonly SyncNode[];
   readExtension(): Promise<SyncNode[]>;
   onClose(): void;
+  beforeMutation?(): Promise<void>;
   onReport(event: SyncSetupEvent): void | Promise<void>;
   returnFocusRef?: RefObject<HTMLButtonElement | null>;
 }
@@ -40,6 +41,7 @@ export function SynchronizationDialog({
   extensionFolders,
   readExtension,
   onClose,
+  beforeMutation = async () => undefined,
   onReport,
   returnFocusRef,
 }: Props) {
@@ -325,6 +327,8 @@ export function SynchronizationDialog({
     setBusy(true);
     setServiceError('');
     try {
+      if (['enable', 'resume', 'retry'].includes(command))
+        await beforeMutation();
       const result = await adapter.command({
         type: 'sync.command',
         protocolVersion: 1,

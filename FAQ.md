@@ -322,19 +322,33 @@ storage cannot be used rather than pretending that data was saved.
 
 ### 60. Does uninstalling remove all application data?
 
-Extension-data removal is controlled by the browser. Review the browser's
-extension and site-data controls before relying on uninstall as a recovery or
-deletion method.
+Yes. Removing the extension or clearing its extension data also removes its
+local recovery snapshots. Export important information outside the extension
+before removing it.
+
+### 61. How do recovery snapshots work?
+
+Open the profile menu and choose Backup. Select a profile to create or review
+its snapshots. Each row provides Restore, View details, and Delete. Automatic
+snapshots can be enabled in Settings > Backup and are retained separately for
+each enabled trigger.
+
+### 62. What happens during restore?
+
+Restoring a current profile requires acknowledgment, first creates a safety
+snapshot, and then replaces that profile. A snapshot retained for a deleted
+profile is restored as a new profile. Synchronization settings are restored in
+a paused state and must be reviewed before resuming.
 
 ## Bookmark synchronization
 
-### 61. How do I connect an application folder to browser bookmarks?
+### 63. How do I connect an application folder to browser bookmarks?
 
 Open the profile menu and choose Data > Bookmark synchronization. Allow the
 optional bookmark permission, select one application folder and one browser
 folder, choose a direction, review the preview, and then enable synchronization.
 
-### 62. When do changes appear in another open application tab?
+### 64. When do changes appear in another open application tab?
 
 After synchronization or a successful app mutation changes content, every
 visible tab showing an affected parent folder reloads that folder. This includes

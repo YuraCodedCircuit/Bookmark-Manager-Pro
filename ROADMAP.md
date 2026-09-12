@@ -343,12 +343,17 @@ checks in every supported browser target.
 
 ### Backup and restore
 
-- Create complete local recovery snapshots containing the selected profiles and
-  the information required to restore them consistently.
-- Validate a backup before offering a restore and show what existing information
-  would be added, replaced, or removed.
-- Require confirmation before replacing existing information and preserve a
-  recovery path when practical.
+- Implemented: create complete, verified local recovery snapshots for one
+  selected profile; manage them in a dedicated Backup window; and restore a
+  current or deleted profile with synchronization paused.
+- Implemented: require acknowledgment and a verified safety snapshot before a
+  replacement restore, and preserve a deleted profile before removal.
+- Implemented: optional automatic snapshots before synchronization with
+  configurable per-trigger retention.
+- Add automatic triggers when import, profile reset, and destructive database
+  upgrade workflows are implemented.
+- Add portable backup export so recovery data can survive extension removal or
+  browser-data clearing.
 - Test backup and restore compatibility for every supported data-format version
   and across Chrome, Firefox, and Edge.
 

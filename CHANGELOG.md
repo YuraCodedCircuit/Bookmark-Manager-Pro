@@ -6,6 +6,31 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.4.0 - 2026-09-12
+
+### New
+
+- Added local, verified recovery snapshots for each profile, available from the
+  profile menu. The Backup window supports manual creation, filtering, sorting,
+  details, deletion, and restoring current or deleted profiles. It recognizes
+  the active profile immediately after startup, shows profile-specific creation
+  guidance and storage estimates, and uses filter-specific empty states.
+- Added optional automatic snapshots before bookmark synchronization, with a
+  configurable per-trigger retention limit. Profile deletion and replacement
+  restores always preserve a safety snapshot. Restored synchronization remains
+  paused until reviewed, and the window explains that snapshots are removed
+  with extension data.
+- Added an accessible Backup interface with striped details tables, accent-colored
+  Restore actions, destructive Delete actions, a bordered close control, and
+  lighter pointer-hover feedback for every enabled button. Restore confirmation
+  keeps its checkbox and label together and explains that synchronization
+  connections will be paused.
+
+### Fixed
+
+- Opening or closing the profile menu no longer restarts notification countdowns
+  or attempts to display a disconnected notification popover.
+
 ## 0.3.0 - 2026-09-12
 
 ### Improved
@@ -55,11 +80,6 @@ behavior. Developer-facing implementation details are maintained in the
   revoked access, missing folders, and conflicts. Permission recovery produces
   one completion notice, notification controls remain usable while the window
   is open, and existing bookmarks remain in both folders.
-
-### Known limitations
-
-- Recovery snapshots are unavailable because the backup service is not
-  implemented.
 
 ## 0.1.5 - 2026-09-09
 

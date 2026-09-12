@@ -9,6 +9,94 @@ void i18n.use(initReactI18next).init({
   resources: {
     'en-US': {
       translation: {
+        backup: {
+          title: 'Backup snapshots',
+          description:
+            'Create and restore recovery points stored in this browser profile.',
+          close: 'Close',
+          profile: 'Profile',
+          currentProfiles: 'Current profiles',
+          deletedProfiles: 'Deleted profiles',
+          deletedProfileOption: '{{name}} (Deleted {{date}})',
+          type: 'Type',
+          sort: 'Sort',
+          create: 'Create snapshot',
+          snapshotList: 'Snapshots',
+          retry: 'Retry',
+          restore: 'Restore',
+          viewDetails: 'View details',
+          delete: 'Delete',
+          verified: 'Verified',
+          loadMore: 'Load more',
+          emptyTitle: 'No snapshots',
+          emptyDescription: 'Create a manual recovery point for this profile.',
+          emptyManualTitle: 'No manual snapshots',
+          emptyManualDescription:
+            'Create a manual recovery point for this profile.',
+          emptyAutomaticTitle: 'No automatic snapshots',
+          emptyAutomaticDescription:
+            'Automatic snapshots appear here when an enabled backup trigger runs.',
+          deletedEmpty: 'No retained snapshots are available.',
+          summary: '{{count}} snapshots ({{size}})',
+          localWarning:
+            'Snapshots are stored only in this browser profile. Removing the extension or clearing its data also removes its snapshots.',
+          includes:
+            'Includes folders, bookmarks, favorites, activity records, local images, profile settings, and synchronization configuration.',
+          includedContent: 'Included content',
+          nameOptional: 'Snapshot name (optional)',
+          namePlaceholder: 'e.g. Before making changes',
+          estimatedSize: 'Estimated size: {{size}}',
+          estimatedSizeUnavailable: 'Unavailable',
+          profileDataLoadFailed:
+            'The complete profile list and storage estimate could not be loaded.',
+          cancel: 'Cancel',
+          working: 'Working...',
+          detailsTitle: 'Snapshot details',
+          deleteTitle: 'Delete snapshot',
+          deleteConfirm: 'Delete "{{name}}"? This action cannot be undone.',
+          restoreTitle: 'Restore snapshot',
+          restoreSummary: 'Snapshot content to restore',
+          replaceWarning:
+            'This will replace the current profile content, settings, and newer activity history.',
+          syncPausedWarning:
+            'Synchronization connections will be paused. Review them before resuming.',
+          replaceAcknowledgment:
+            'I understand that this will replace the current profile',
+          name: 'Name',
+          formatVersion: 'Format version',
+          databaseVersion: 'Database version',
+          applicationVersion: 'Application version',
+          bookmarks: 'Bookmarks',
+          folders: 'Folders',
+          favorites: 'Favorites',
+          activityRecords: 'Activity records',
+          createdStatus: 'Snapshot created.',
+          automaticCreated: 'Automatic snapshot created.',
+          deletedStatus: 'Snapshot deleted.',
+          restoredStatus: 'Snapshot restored. Synchronization remains paused.',
+          loadFailed: 'Snapshots could not be loaded.',
+          createFailed: 'The snapshot could not be created and verified.',
+          deleteFailed: 'The snapshot could not be deleted.',
+          restoreFailed: 'The snapshot could not be validated or restored.',
+          filters: {
+            all: 'All snapshots',
+            manual: 'Manual',
+            automatic: 'Automatic',
+          },
+          sorts: {
+            newest: 'Newest first',
+            oldest: 'Oldest first',
+            name: 'Name',
+            size: 'Size',
+          },
+          types: {
+            manual: 'Manual snapshot',
+            automatic: 'Automatic snapshot',
+            safety: 'Safety snapshot',
+            'pre-upgrade': 'Pre-upgrade snapshot',
+            'deleted-profile': 'Deleted profile snapshot',
+          },
+        },
         sync: {
           serviceEvents: {
             enabled: 'Bookmark synchronization is enabled.',
@@ -702,6 +790,25 @@ void i18n.use(initReactI18next).init({
           compact: 'Compact',
           categories: 'Settings categories',
           containsSearchMatch: 'Contains a search match',
+          backupSettings: {
+            automatic: 'Automatic snapshots',
+            automaticHelp:
+              'Create verified recovery points before enabled operations.',
+            before: 'Create snapshots before',
+            beforeImport: 'Import',
+            beforeSynchronization:
+              'Synchronization changes that modify or delete data',
+            beforeProfileReset: 'Profile reset',
+            beforeDatabaseUpgrade: 'Database upgrade',
+            retention: 'Automatic retention per trigger',
+            alwaysProtected: 'Always protected',
+            alwaysProtectedHelp:
+              'Profile deletion and snapshot restoration always create a verified safety snapshot and cannot be disabled.',
+            localWarning:
+              'Snapshots are stored only in this browser profile. Removing the extension or clearing its data also removes its snapshots.',
+            manageHelp:
+              'Open Backup from the right profile menu to create, restore, view, or delete snapshots.',
+          },
           category: {
             accessibility: 'Accessibility',
             activity: 'Activity',

@@ -107,6 +107,29 @@ Changing this boundary requires a new decision covering data ownership,
 retention, permissions, cross-browser behavior, privacy documentation, and
 verification.
 
+### ADR-010: Isolate recovery snapshots in a separate local database
+
+Status: Accepted
+
+Date: 2026-09-12
+
+Store complete profile recovery snapshots in a versioned IndexedDB database
+separate from the primary application database. Snapshot records are immutable,
+schema validated, hashed with SHA-256, and read back before they are considered
+verified. Restoration validates integrity again and keeps synchronization
+paused.
+
+Keeping snapshots in the primary database would simplify discovery but would
+couple recovery points to primary-database transactions and destructive schema
+failures. External files would survive extension-data removal but require file
+permissions, user-managed locations, and a separate import trust boundary. The
+separate local database gives recovery data an independent transaction boundary
+without weakening the local-first and permission-minimization goals.
+
+The consequence is that snapshots still belong to browser-managed extension
+storage: uninstalling the extension or clearing its data removes them. They are
+not a replacement for future portable exports.
+
 ## Proposed decisions
 
 - Export container format and cryptographic parameters

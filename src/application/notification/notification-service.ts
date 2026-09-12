@@ -28,6 +28,18 @@ interface NotificationState {
   notifications: readonly AppNotification[];
 }
 
+interface NotificationTiming {
+  durationMs: number | null;
+  remainingMs: number | null;
+  runningSince: number | null;
+}
+
+export interface NotificationTimingSnapshot {
+  durationMs: number | null;
+  elapsedMs: number;
+  remainingMs: number | null;
+}
+
 const defaultDurations: Record<NotificationLevel, number | null> = {
   success: 4_000,
   information: 6_000,
@@ -41,6 +53,7 @@ const defaultDurations: Record<NotificationLevel, number | null> = {
  * de-duplicated so repeated failures cannot flood the stack.
  */
 export class NotificationService {
+  private readonly timings = new Map<string, NotificationTiming>();
   readonly store: StoreApi<NotificationState> = createStore(() => ({
     notifications: [],
   }));
@@ -69,6 +82,11 @@ export class NotificationService {
       id,
       revision: (sameId?.revision ?? 0) + 1,
     };
+    this.timings.set(id, {
+      durationMs: next.durationMs,
+      remainingMs: next.durationMs,
+      runningSince: null,
+    });
     this.store.setState({
       notifications: sameId
         ? current.map((notification) =>
@@ -80,6 +98,7 @@ export class NotificationService {
   }
 
   dismiss(id: string): void {
+    this.timings.delete(id);
     this.store.setState((state) => ({
       notifications: state.notifications.filter(
         (notification) => notification.id !== id,
@@ -88,6 +107,54 @@ export class NotificationService {
   }
 
   clear(): void {
+    this.timings.clear();
     this.store.setState({ notifications: [] });
+  }
+
+  /** Returns countdown progress that remains stable across React portal moves. */
+  getTiming(id: string): NotificationTimingSnapshot {
+    const timing = this.requireTiming(id);
+    const remainingMs = this.currentRemaining(timing);
+    return {
+      durationMs: timing.durationMs,
+      elapsedMs:
+        timing.durationMs === null || remainingMs === null
+          ? 0
+          : Math.max(0, timing.durationMs - remainingMs),
+      remainingMs,
+    };
+  }
+
+  /** Starts or resumes an auto-close countdown and returns its remaining time. */
+  resumeTimer(id: string): number | null {
+    const timing = this.requireTiming(id);
+    if (timing.remainingMs !== null && timing.runningSince === null)
+      timing.runningSince = performance.now();
+    return this.currentRemaining(timing);
+  }
+
+  /** Persists elapsed countdown time before a card pauses or unmounts. */
+  pauseTimer(id: string): void {
+    const timing = this.timings.get(id);
+    if (!timing || timing.runningSince === null) return;
+    timing.remainingMs = this.currentRemaining(timing);
+    timing.runningSince = null;
+  }
+
+  private currentRemaining(timing: NotificationTiming): number | null {
+    if (timing.remainingMs === null) return null;
+    return Math.max(
+      0,
+      timing.remainingMs -
+        (timing.runningSince === null
+          ? 0
+          : performance.now() - timing.runningSince),
+    );
+  }
+
+  private requireTiming(id: string): NotificationTiming {
+    const timing = this.timings.get(id);
+    if (!timing) throw new Error('notification-timing-not-found');
+    return timing;
   }
 }

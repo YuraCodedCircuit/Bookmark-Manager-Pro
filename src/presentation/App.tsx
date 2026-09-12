@@ -102,10 +102,15 @@ import type {
   ProfileActivationInput,
 } from '../messaging/content-change-protocol';
 import { summarizeContentChange } from '../application/bookmark/summarize-content-change';
+import type { ManageBackups } from '../application/backup/manage-backups';
+import { createBackupManager } from '../application/backup/create-backup-manager';
+import { BackupDialog } from '../features/backup/BackupDialog';
+import type { BackupUiEvent } from '../features/backup/BackupDialog';
 
 const browserSearch = createBrowserSearchAdapter();
 
 interface AppProps {
+  backupManager?: Pick<ManageBackups, 'create' | 'delete' | 'list' | 'restore'>;
   activityLog: Pick<
     ManageActivityLog,
     | 'clear'
@@ -192,6 +197,7 @@ const pasteDisabledKeys = new Set(['paste']);
 /** Renders the application exclusively from a completed preflight snapshot. */
 export function App({
   activityLog,
+  backupManager,
   applicationVersion,
   contentChanges: suppliedContentChanges,
   bookmarkManager,
@@ -207,6 +213,9 @@ export function App({
   const [confirmationService] = useState(() => new ConfirmationService());
   const [notificationService] = useState(() => new NotificationService());
   const [syncAdapter] = useState(() => createSyncBookmarksAdapter());
+  const [backupService] = useState(
+    () => backupManager ?? createBackupManager(),
+  );
   const [contentChanges] = useState(
     () => suppliedContentChanges ?? createContentChangeBridge(),
   );
@@ -284,6 +293,8 @@ export function App({
   const [openLegalAfterMenuClose, setOpenLegalAfterMenuClose] = useState(false);
   const [openHelpAfterMenuClose, setOpenHelpAfterMenuClose] = useState(false);
   const [openSyncAfterMenuClose, setOpenSyncAfterMenuClose] = useState(false);
+  const [openBackupAfterMenuClose, setOpenBackupAfterMenuClose] =
+    useState(false);
   const [profileWindow, setProfileWindow] = useState<
     | 'about'
     | 'activity-log'
@@ -295,6 +306,7 @@ export function App({
     | 'switch'
     | 'undo-history'
     | 'synchronization'
+    | 'backup'
     | null
   >(null);
   const [automaticChangelogContent, setAutomaticChangelogContent] = useState<
@@ -2532,6 +2544,11 @@ export function App({
         initializationState={currentInitializationState}
         isOpen={isProfileMenuOpen}
         onAfterClose={() => {
+          if (openBackupAfterMenuClose) {
+            setOpenBackupAfterMenuClose(false);
+            setProfileWindow('backup');
+            return;
+          }
           if (openSyncAfterMenuClose) {
             setOpenSyncAfterMenuClose(false);
             setProfileWindow('synchronization');
@@ -2587,6 +2604,26 @@ export function App({
           // Native modal dialogs cannot overlap; wait for the side panel's
           // closing animation before opening the focused log window.
           setOpenActivityLogAfterMenuClose(true);
+          setIsProfileMenuOpen(false);
+        }}
+        onOpenBackup={() => {
+          setOpenBackupAfterMenuClose(true);
+          void Promise.all([
+            profileManager.list(),
+            profileManager.getStorageUsage(),
+          ])
+            .then(([profileList, usage]) => {
+              setProfiles(profileList);
+              setProfileStorageUsage(usage);
+            })
+            .catch(() => {
+              setProfileStorageUsage([]);
+              notifyForActiveProfile({
+                level: 'warning',
+                message: t('backup.profileDataLoadFailed'),
+                title: t('notifications.limitedDataTitle'),
+              });
+            });
           setIsProfileMenuOpen(false);
         }}
         onOpenChangelog={() => {
@@ -2701,11 +2738,130 @@ export function App({
           }
         />
       ) : null}
+      {profileWindow === 'backup' &&
+      readyProfileId &&
+      currentInitializationState.status === 'ready' ? (
+        <BackupDialog
+          activeProfile={currentInitializationState.profile}
+          dateTimeFormat={activeSettings?.dateTimeFormat ?? 'browser'}
+          onClose={() => {
+            setProfileWindow(null);
+            profileButtonRef.current?.focus();
+          }}
+          onRestored={async (profileId) => {
+            await profileManager.switchTo(profileId);
+            setPreflightSnapshot(await resumePreflight());
+            await refreshProfiles();
+            setProfileWindow(null);
+            notifyForActiveProfile({
+              level: 'information',
+              message: t('backup.syncPausedWarning'),
+              title: t('backup.restoredStatus'),
+            });
+          }}
+          onReport={(event: BackupUiEvent) => {
+            const failed = event.endsWith('Failed');
+            const action = event.startsWith('create')
+              ? 'Create'
+              : event.startsWith('delete')
+                ? 'Delete'
+                : event.startsWith('restore')
+                  ? 'Restore'
+                  : 'Load';
+            const message = t(
+              event === 'created'
+                ? 'backup.createdStatus'
+                : event === 'deleted'
+                  ? 'backup.deletedStatus'
+                  : event === 'restored'
+                    ? 'backup.restoredStatus'
+                    : event === 'createFailed'
+                      ? 'backup.createFailed'
+                      : event === 'deleteFailed'
+                        ? 'backup.deleteFailed'
+                        : event === 'restoreFailed'
+                          ? 'backup.restoreFailed'
+                          : 'backup.loadFailed',
+            );
+            void recordEventForProfile(readyProfileId, {
+              action,
+              category: 'Application',
+              dataChanged: !failed && event !== 'loadFailed',
+              durationMs: 0,
+              eventCode: `BACKUP-SNAPSHOT-${event.replace(/([A-Z])/g, '-$1').toUpperCase()}`,
+              itemType: 'Backup snapshot',
+              itemsAffected: !failed && event !== 'loadFailed' ? 1 : 0,
+              kind:
+                failed || event === 'loadFailed' ? 'DIAGNOSTIC' : 'ACTIVITY',
+              level: failed || event === 'loadFailed' ? 'ERROR' : 'INFO',
+              message,
+              outcome:
+                failed || event === 'loadFailed' ? 'Failed' : 'Succeeded',
+              source: 'Backup window',
+            });
+            notifyForActiveProfile({
+              level: failed || event === 'loadFailed' ? 'error' : 'success',
+              message,
+              title:
+                failed || event === 'loadFailed'
+                  ? t('notifications.operationFailedTitle')
+                  : t('notifications.operationCompletedTitle'),
+            });
+          }}
+          profiles={profiles}
+          service={backupService}
+          storageUsage={profileStorageUsage}
+        />
+      ) : null}
       {profileWindow === 'synchronization' && readyProfileId ? (
         <SynchronizationDialog
           key={readyProfileId}
           profileId={readyProfileId}
           adapter={syncAdapter}
+          beforeMutation={async () => {
+            const preferences = activeSettings?.backupPreferences;
+            if (
+              preferences?.automaticEnabled !== false &&
+              preferences?.beforeSynchronization !== false
+            )
+              try {
+                await backupService.create({
+                  profileId: readyProfileId,
+                  trigger: 'synchronization',
+                  type: 'automatic',
+                });
+                await recordEventForProfile(readyProfileId, {
+                  action: 'Create',
+                  category: 'Application',
+                  dataChanged: true,
+                  durationMs: 0,
+                  eventCode: 'BACKUP-SNAPSHOT-AUTOMATIC-CREATED',
+                  itemType: 'Backup snapshot',
+                  itemsAffected: 1,
+                  kind: 'ACTIVITY',
+                  level: 'INFO',
+                  message: t('backup.automaticCreated'),
+                  outcome: 'Succeeded',
+                  source: 'Bookmark synchronization',
+                });
+              } catch (error) {
+                await recordEventForProfile(readyProfileId, {
+                  action: 'Create',
+                  category: 'Application',
+                  dataChanged: false,
+                  durationMs: 0,
+                  eventCode: 'BACKUP-SNAPSHOT-AUTOMATIC-FAILED',
+                  itemType: 'Backup snapshot',
+                  itemsAffected: 0,
+                  kind: 'DIAGNOSTIC',
+                  level: 'ERROR',
+                  message: t('backup.createFailed'),
+                  outcome: 'Failed',
+                  source: 'Bookmark synchronization',
+                });
+                throw error;
+              }
+          }}
           returnFocusRef={profileButtonRef}
           extensionFolders={allFolders.filter(
             (folder) => folder.profileId === readyProfileId,
@@ -3123,6 +3279,11 @@ export function App({
         onDelete={async (profileId) => {
           await runLoggedProfileAction(
             async () => {
+              await backupService.create({
+                profileId,
+                trigger: 'profile-deletion',
+                type: 'deleted-profile',
+              });
               await profileManager.delete(profileId);
               await refreshProfiles();
             },

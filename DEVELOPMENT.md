@@ -102,6 +102,12 @@ A change is complete when:
 - Permissions, storage, schema upgrades, and privacy implications are reviewed.
 - Architecture, development, and changelog documentation is current.
 
+Backup changes additionally require synthetic tests for payload validation,
+integrity failure before mutation, retention boundaries, mandatory safety
+snapshot ordering, identifier remapping, and paused synchronization state.
+Verify creation and restore separately in Chrome, Firefox, and Edge because one
+target's IndexedDB behavior does not establish another target's runtime result.
+
 ## Branch and commit conventions
 
 Use focused branches and commits. Commit titles use imperative mood and describe

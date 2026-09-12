@@ -74,13 +74,16 @@ describe('BookmarkDisplaySettingsDialog', () => {
         .getByRole('button', { name: 'Advanced' })
         .querySelectorAll('ellipse'),
     ).toHaveLength(1);
-    for (const category of ['Import', 'Export', 'Backup', 'Advanced']) {
+    for (const category of ['Import', 'Export', 'Advanced']) {
       const button = within(categoryNavigation).getByRole('button', {
         name: category,
       });
       expect(button).toBeDisabled();
       expect(button).not.toHaveAttribute('aria-current');
     }
+    expect(
+      within(categoryNavigation).getByRole('button', { name: 'Backup' }),
+    ).toBeEnabled();
     expect(
       dialog.querySelector('.settings-dialog__sidebar-footer'),
     ).toBeInTheDocument();

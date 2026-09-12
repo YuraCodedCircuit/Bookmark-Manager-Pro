@@ -96,5 +96,11 @@ Each release candidate must verify:
 - Package contents, manifest permissions, and Content Security Policy
 - Private-mode exclusion and privileged browser-page fallback behavior
 
+Backup snapshots use IndexedDB and Web Crypto APIs available in the Chrome 140+,
+Edge 140+, and Firefox 140+ support baseline. Each target must verify snapshot
+creation, retention, replacement restore, deleted-profile restore, paused sync
+state, and browser-data removal behavior. Snapshots are browser-profile local
+and do not transfer between browsers.
+
 Chrome and Edge may share automated coverage where behavior is identical, but
 both packaged extensions must receive installation smoke tests.

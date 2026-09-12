@@ -1,23 +1,26 @@
-# What's New in 0.3.0
+# What's New in 0.4.0
 
 Released September 12, 2026.
 
-This release makes saving the current page clearer when the address already
-exists or the browser does not allow the page to be saved.
+This release adds local recovery snapshots for protecting profile data before
+important changes.
 
 ## Highlights
 
-- The Save current URL popup checks the active profile for the same address
-  before opening the bookmark form and follows the profile's Allow, Warn, or
-  Prevent duplicate setting.
-- Duplicate warnings show where existing copies are stored, including a concise
-  summary when the address appears in more than three folders.
-- Browser pages that cannot be read or saved now show a clear message instead
-  of a retry action that cannot succeed.
-- Popup messages and actions now use consistent alignment, themed backgrounds,
-  and readable buttons in light and dark themes.
-- The language selector now names the initial locale English (United States),
-  establishing the Language (Region) convention for future translations.
+- Open Backup from the profile menu to create, inspect, filter, sort, restore,
+  or delete snapshots for current profiles and retained deleted profiles.
+- Optional automatic snapshots can protect a profile before bookmark
+  synchronization. Settings control whether this trigger runs and how many
+  automatic snapshots it retains.
+- Restoring an existing profile first creates a verified safety snapshot.
+  Synchronization connections remain paused until they are reviewed.
+- Snapshots remain local to the browser profile and are removed if the extension
+  is uninstalled or its data is cleared.
+
+## Bug Fixes
+
+- Opening or closing the profile menu no longer restarts notification
+  countdowns or triggers a disconnected notification popover error.
 
 ## Full changelog
 

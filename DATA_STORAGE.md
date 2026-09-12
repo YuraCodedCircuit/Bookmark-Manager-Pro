@@ -82,7 +82,11 @@ folder display choices.
   timestamp, level, and category
 - `activityLogSettings`: per-profile capture, diagnostic threshold, retention,
   and export choices
-- `snapshots`: verified recovery points for destructive workflows
+- `snapshots`: immutable recovery points stored in the separate versioned
+  `bookmark-manager-pro-backups` IndexedDB database. Each snapshot contains one
+  complete profile payload, creation metadata, encoded size, and a SHA-256
+  digest. Creation is accepted only after a persisted read-back verifies the
+  digest.
 - `jobs`: resumable import, export, schema-upgrade, and synchronization state
 - `syncMappings`: internal and native browser bookmark identity mapping
 - `metadata`: schema, export-format, upgrade, installation identifiers,
@@ -112,6 +116,21 @@ New bookmark and folder creation verifies the parent, calculates the current
 append position, and inserts the record within one transaction. Conditional
 editor writes compare the stored `updatedAt` value within the write transaction
 and reject stale input.
+
+## Backup snapshots and restore
+
+Manual, automatic, safety, pre-upgrade, and deleted-profile snapshot types share
+a versioned validated payload. Automatic retention applies independently to
+each profile and trigger; it never deletes manual or mandatory safety records.
+A replacement restore validates integrity, creates a verified safety snapshot,
+and replaces the selected profile in one primary-database transaction. A
+deleted-profile restore remaps record identifiers into a new profile. Restored
+synchronization configuration is always paused and native bookmark links are
+not reactivated automatically.
+
+Snapshot deletion affects only the chosen snapshot. Uninstalling the extension
+or clearing its browser-managed data removes both primary data and the separate
+snapshot database.
 
 ## Image storage and quota behavior
 

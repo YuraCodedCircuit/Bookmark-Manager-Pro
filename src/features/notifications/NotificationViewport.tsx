@@ -1,6 +1,7 @@
 import {
   useEffect,
   useEffectEvent,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -32,6 +33,7 @@ export function NotificationViewport({
 }: NotificationViewportProps) {
   const { t } = useTranslation();
   const viewportRef = useRef<HTMLElement>(null);
+  const [portalContainer] = useState(() => document.createElement('div'));
   const [portalHost, setPortalHost] = useState<HTMLElement>(() =>
     findNotificationHost(),
   );
@@ -59,6 +61,18 @@ export function NotificationViewport({
     return () => observer.disconnect();
   }, []);
 
+  useLayoutEffect(() => {
+    const activeHost =
+      !portalHost.isConnected || portalHost.matches('dialog:not([open])')
+        ? document.body
+        : portalHost;
+    activeHost.append(portalContainer);
+    return () => {
+      if (portalContainer.parentElement === activeHost)
+        portalContainer.remove();
+    };
+  }, [portalContainer, portalHost]);
+
   useEffect(() => {
     if (!preferences.enabled) service.clear();
   }, [preferences.enabled, service]);
@@ -67,7 +81,9 @@ export function NotificationViewport({
     const viewport = viewportRef.current;
     if (!viewport || typeof viewport.showPopover !== 'function') return;
     const bringToFront = () => {
+      if (!viewport.isConnected) return;
       if (viewport.matches(':popover-open')) viewport.hidePopover();
+      if (!viewport.isConnected) return;
       viewport.showPopover();
     };
     bringToFront();
@@ -83,7 +99,8 @@ export function NotificationViewport({
     });
     return () => {
       observer.disconnect();
-      if (viewport.matches(':popover-open')) viewport.hidePopover();
+      if (viewport.isConnected && viewport.matches(':popover-open'))
+        viewport.hidePopover();
     };
   }, [notifications.length, portalHost]);
 
@@ -109,17 +126,14 @@ export function NotificationViewport({
           key={notification.id}
           countdownLineColor={preferences.countdownLineColor}
           notification={notification}
+          service={service}
           dismissLabel={t('notifications.dismiss')}
           onDismiss={() => service.dismiss(notification.id)}
         />
       ))}
     </section>
   );
-  const activePortalHost =
-    !portalHost.isConnected || portalHost.matches('dialog:not([open])')
-      ? document.body
-      : portalHost;
-  return createPortal(viewport, activePortalHost);
+  return createPortal(viewport, portalContainer);
 }
 
 interface NotificationCardProps {
@@ -127,6 +141,7 @@ interface NotificationCardProps {
   dismissLabel: string;
   notification: AppNotification;
   onDismiss: () => void;
+  service: NotificationService;
 }
 
 /** Manages pause-and-resume timing without changing the underlying operation. */
@@ -135,28 +150,32 @@ function NotificationCard({
   dismissLabel,
   notification,
   onDismiss,
+  service,
 }: NotificationCardProps) {
-  const remainingRef = useRef(notification.durationMs);
-  const startedRef = useRef(0);
   const timerRef = useRef<number | undefined>(undefined);
   const [paused, setPaused] = useState(false);
   const dismiss = useEffectEvent(onDismiss);
 
   useEffect(() => {
-    if (paused || remainingRef.current === null) return;
-    startedRef.current = performance.now();
+    if (paused || notification.durationMs === null) return;
+    const remainingMs = service.resumeTimer(notification.id);
     timerRef.current = window.setTimeout(
       dismiss,
-      Math.max(0, remainingRef.current),
+      Math.max(0, remainingMs ?? 0),
     );
     return () => {
       window.clearTimeout(timerRef.current);
-      remainingRef.current = Math.max(
-        0,
-        (remainingRef.current ?? 0) - (performance.now() - startedRef.current),
-      );
+      service.pauseTimer(notification.id);
     };
-  }, [paused]);
+  }, [
+    notification.durationMs,
+    notification.id,
+    notification.revision,
+    paused,
+    service,
+  ]);
+
+  const { elapsedMs } = service.getTiming(notification.id);
 
   const setPauseFromFocus = (next: boolean) => setPaused(next);
 
@@ -229,6 +248,7 @@ function NotificationCard({
           style={
             {
               '--notification-duration': `${notification.durationMs}ms`,
+              '--notification-delay': `-${elapsedMs}ms`,
               '--notification-line-color': countdownLineColor ?? 'var(--text)',
             } as CSSProperties
           }

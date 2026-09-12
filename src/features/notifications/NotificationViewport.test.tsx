@@ -16,6 +16,8 @@ import { NotificationViewport } from './NotificationViewport';
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  Reflect.deleteProperty(HTMLElement.prototype, 'hidePopover');
+  Reflect.deleteProperty(HTMLElement.prototype, 'showPopover');
 });
 
 describe('NotificationViewport', () => {
@@ -181,7 +183,7 @@ describe('NotificationViewport', () => {
     );
   });
 
-  it('does not restart a notice timer when an application window opens', () => {
+  it('does not restart a notice timer when an application window opens', async () => {
     vi.useFakeTimers();
     const service = new NotificationService();
     service.show({
@@ -201,6 +203,9 @@ describe('NotificationViewport', () => {
       </>,
     );
 
+    const originalNotice = screen
+      .getByText('Timer stays continuous')
+      .closest('article');
     act(() => vi.advanceTimersByTime(600));
     rerender(
       <>
@@ -211,11 +216,69 @@ describe('NotificationViewport', () => {
         <dialog open />
       </>,
     );
+    await act(async () => Promise.resolve());
+    expect(
+      screen.getByText('Timer stays continuous').closest('dialog'),
+    ).not.toBeNull();
+    expect(screen.getByText('Timer stays continuous').closest('article')).toBe(
+      originalNotice,
+    );
+    expect(
+      screen
+        .getByText('Timer stays continuous')
+        .closest('article')
+        ?.querySelector('.notification-card__time-line'),
+    ).toHaveStyle('--notification-delay: -600ms');
     act(() => vi.advanceTimersByTime(450));
 
     expect(
       screen.queryByText('Timer stays continuous'),
     ).not.toBeInTheDocument();
+  });
+
+  it('does not show a popover after its viewport is disconnected', async () => {
+    const showPopover = vi.fn(function (this: HTMLElement) {
+      if (!this.isConnected)
+        throw new DOMException('Disconnected', 'InvalidStateError');
+    });
+    const hidePopover = vi.fn();
+    Object.defineProperties(HTMLElement.prototype, {
+      hidePopover: { configurable: true, value: hidePopover },
+      showPopover: { configurable: true, value: showPopover },
+    });
+    const service = new NotificationService();
+    service.show({
+      durationMs: null,
+      level: 'information',
+      message: 'Survives modal changes',
+      title: 'Popover',
+    });
+
+    const { rerender } = render(
+      <>
+        <NotificationViewport
+          preferences={defaultNotificationPreferences}
+          service={service}
+        />
+        <dialog />
+      </>,
+    );
+    rerender(
+      <>
+        <NotificationViewport
+          preferences={defaultNotificationPreferences}
+          service={service}
+        />
+        <dialog open />
+      </>,
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('Survives modal changes').closest('dialog'),
+      ).not.toBeNull(),
+    );
+    expect(showPopover).toHaveBeenCalled();
   });
 
   it('shows a countdown line only for auto-closing notices', () => {

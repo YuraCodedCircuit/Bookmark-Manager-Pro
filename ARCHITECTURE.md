@@ -141,6 +141,10 @@ remain UI-surface responsibilities because extension workers have no DOM or
 
 - IndexedDB owns profiles, profile-scoped activity logs and logging settings,
   bookmark trees, customization, recovery snapshots, and jobs.
+- Recovery snapshots reside in a separate versioned IndexedDB database behind
+  `BackupRepository`. `ManageBackups` owns capture, validation, integrity
+  verification, retention, and restore orchestration; React receives that
+  service through explicit composition and does not access either database.
 - The schema-23 `undoHistory` IndexedDB table owns bounded undo/redo patches.
   Browser session storage owns only an opaque session ID, shared across packaged
   extension surfaces and tab-scoped in the webpage preview. Startup under the
