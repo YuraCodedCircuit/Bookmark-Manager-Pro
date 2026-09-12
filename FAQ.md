@@ -378,12 +378,32 @@ notification explains the fallback without transmitting the query.
 The active profile's Security setting can require confirmation before opening
 external bookmark links. FTP addresses always retain their specific warning.
 
-### 68. Why does the interface look different between profiles?
+### 68. Can Bookmark Manager Pro run in a private or incognito window?
+
+No. The extension is intentionally unavailable in Chrome Incognito, Edge
+InPrivate, and Firefox Private Browsing windows. Open the workflow in a normal
+browser window instead.
+
+### 69. Why does the Save current URL popup say that a page cannot be saved?
+
+The browser may withhold the address of a privileged internal page, or the page
+may use an unsupported address type. Open an HTTP, HTTPS, or FTP page and try
+again. Retrying on the same internal page cannot make its address available.
+
+### 70. What happens when the current URL is already saved?
+
+The active profile's duplicate setting applies. Allow opens the editor, Warn
+asks before another copy is saved, and Prevent blocks another copy. Warn and
+Prevent identify up to three distinct folders containing the URL and summarize
+any additional folders. A complete long folder name remains available through
+its tooltip.
+
+### 71. Why does the interface look different between profiles?
 
 Themes, accessibility choices, folder appearances, views, shortcuts, search
 defaults, and other implemented settings are owned by each profile.
 
-### 69. Where can I review application changes and legal information?
+### 72. Where can I review application changes and legal information?
 
 The profile menu's Information section contains What's new, Legal & privacy,
 and About Bookmark Manager Pro alongside this Help & FAQ window.

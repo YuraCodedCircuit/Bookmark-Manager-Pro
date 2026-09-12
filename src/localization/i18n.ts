@@ -570,11 +570,26 @@ void i18n.use(initReactI18next).init({
           url: 'URL',
         },
         saveCurrentPage: {
+          close: 'Close',
           destination: 'Save to folder',
+          duplicateMessage: 'This URL is already saved in this profile.',
+          duplicateMoreFolders: 'and {{count}} more',
+          duplicatePrevented:
+            'Your duplicate settings prevent another copy from being saved.',
+          duplicateQuestion: 'Do you want to save another copy?',
+          duplicateSavedIn: 'Saved in:',
+          duplicateTitle: 'URL already saved',
           firstRun:
             'Create a profile in Bookmark Manager Pro before saving pages.',
+          goBack: 'Go back',
           loadError: 'The current page could not be loaded.',
+          retry: 'Retry',
+          saveAnother: 'Save another copy',
+          savingAnother: 'Saving...',
           title: 'Save current URL',
+          unsupportedMessage:
+            'Open a page with an address that starts with http://, https://, or ftp://.',
+          unsupportedTitle: 'This page cannot be saved',
         },
         displaySettings: {
           accessibility: {
@@ -780,7 +795,7 @@ void i18n.use(initReactI18next).init({
           large: 'Large',
           lightTheme: 'Light theme',
           languageSettings: {
-            americanEnglish: 'American English',
+            americanEnglish: 'English (United States)',
             applicationLanguage: 'Application language',
             browserDefault: 'Browser default',
             dateAndTime: 'Date and time format',

@@ -496,9 +496,15 @@ describe('BookmarkDisplaySettingsDialog', () => {
     );
     const dialog = screen.getByRole('dialog', { name: 'Settings' });
     await user.click(within(dialog).getByRole('button', { name: 'Language' }));
+    const applicationLanguage = within(dialog).getByLabelText(
+      'Application language',
+    );
+    expect(applicationLanguage).toBeDisabled();
     expect(
-      within(dialog).getByLabelText('Application language'),
-    ).toBeDisabled();
+      within(applicationLanguage).getByRole('option', {
+        name: 'English (United States)',
+      }),
+    ).toHaveValue('en-US');
     await user.selectOptions(
       within(dialog).getByLabelText('Date and time format'),
       'iso',

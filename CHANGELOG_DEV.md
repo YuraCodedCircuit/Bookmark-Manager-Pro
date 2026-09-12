@@ -6,6 +6,25 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.3.0 - 2026-09-12
+
+### Changed
+
+- Extracted the toolbar popup controller from its WXT bootstrap and added
+  canonical, profile-scoped duplicate gating before editor render and again
+  before persistence. URL-scoped approvals avoid duplicate prompts, deferred
+  decisions preserve editor values, lookup failures fail closed with retry and
+  privacy-safe diagnostics, and Allow, Warn, and Prevent remain profile-owned.
+- Profile-scoped location lookup returns distinct matching folders for bounded,
+  accessible duplicate summaries without logging folder titles.
+- Active-tab schemes and browser-withheld URLs are classified before duplicate
+  lookup, so expected privileged-page and URL-policy rejections are not reported
+  as storage failures.
+- Shared semantic theme tokens and a full-height message layout keep popup
+  decision and error controls consistent across themes.
+- Application-language option labels follow the Language (Region) convention
+  while preserving `en-US` as the stored locale value and fallback.
+
 ## 0.2.5 - 2026-09-11
 
 ### Added

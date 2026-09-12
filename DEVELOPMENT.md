@@ -63,6 +63,17 @@ pnpm package:edge
 
 Generated extension builds and archives are written under `.output/`.
 
+## Localization conventions
+
+English (`en-US`) is the source and fallback locale. Application-language
+options use the `Language (Region)` format with the complete country or region
+name, such as `English (United States)`. The visible label does not replace the
+BCP 47 locale code used by settings and localization resources.
+
+New application languages must add complete localized UI and manifest strings,
+preserve predictable English fallback behavior, and include checks for
+pluralization, text expansion, and directionality where applicable.
+
 ## Local web preview
 
 The standard Vite preview is available at `http://127.0.0.1:5173/`. The optional

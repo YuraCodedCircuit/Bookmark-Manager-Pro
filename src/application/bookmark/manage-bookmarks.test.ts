@@ -92,6 +92,55 @@ describe('ManageBookmarks', () => {
     ).resolves.toBe(false);
   });
 
+  it('returns each folder containing a canonical URL match only once', async () => {
+    const repo = repository();
+    const secondFolder = {
+      ...root,
+      id: '33333333-3333-4333-8333-333333333333',
+      isRoot: false,
+      parentId: rootId,
+      title: 'Research',
+    };
+    const bookmark = {
+      cardAppearance: { kind: 'color' as const, value: '#123456' },
+      createdAt: 1,
+      id: itemId,
+      index: 0,
+      note: '',
+      parentId: rootId,
+      profileId,
+      tags: [],
+      title: 'Existing',
+      updatedAt: 1,
+      url: 'https://example.com/',
+    };
+    vi.mocked(repo.listBookmarks).mockResolvedValue([
+      bookmark,
+      { ...bookmark, id: '44444444-4444-4444-8444-444444444444' },
+      {
+        ...bookmark,
+        id: '55555555-5555-4555-8555-555555555555',
+        parentId: secondFolder.id,
+      },
+      {
+        ...bookmark,
+        id: '66666666-6666-4666-8666-666666666666',
+        url: 'https://different.example/',
+      },
+    ]);
+    vi.mocked(repo.listFolders).mockResolvedValue([root, secondFolder]);
+
+    await expect(
+      new ManageBookmarks(repo).listBookmarkLocationsByUrl(
+        profileId,
+        'https://example.com',
+      ),
+    ).resolves.toEqual([
+      { folderId: rootId, folderTitle: 'Home' },
+      { folderId: secondFolder.id, folderTitle: 'Research' },
+    ]);
+  });
+
   it('requires an existing non-root item before deletion', async () => {
     const repo = repository();
     const service = new ManageBookmarks(repo);

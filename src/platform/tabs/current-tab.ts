@@ -3,15 +3,24 @@ import { z } from 'zod';
 
 const currentTabSchema = z.object({
   title: z.string().default(''),
-  url: z.string().min(1),
+  url: z.string().default(''),
   windowId: z.number().int(),
 });
 
 export type CurrentTab = z.infer<typeof currentTabSchema>;
 
+export class CurrentTabUrlUnavailableError extends Error {
+  constructor() {
+    super('current-tab-url-unavailable');
+    this.name = 'CurrentTabUrlUnavailableError';
+  }
+}
+
 export async function getCurrentTab(): Promise<CurrentTab> {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  return currentTabSchema.parse(tab);
+  const currentTab = currentTabSchema.parse(tab);
+  if (!currentTab.url) throw new CurrentTabUrlUnavailableError();
+  return currentTab;
 }
 
 /** Captures and bounds a visible tab image to the bookmark image limit. */

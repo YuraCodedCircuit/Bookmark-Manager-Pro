@@ -57,6 +57,23 @@ application services rather than treated as a UI store.
 - Activity page: privacy-safe operational history
 - Background entry point: event routing and resumable jobs
 
+### Action-popup flow
+
+The action popup reads the current tab through the typed platform adapter after
+an explicit toolbar or page-context-menu action. A missing URL on a privileged
+browser page and a URL rejected by the shared allowlist both become an expected,
+non-retryable unsupported-page state before bookmark data is queried.
+
+For profiles using Warn or Prevent duplicate handling, the application layer
+compares the canonical URL across the active profile before the editor appears.
+It returns each distinct matching parent folder so presentation can show up to
+three folder names and summarize the remainder without exposing bookmark titles
+or addresses. The popup repeats the lookup immediately before persistence to
+cover edited URLs and concurrent changes. An approved Warn decision is scoped
+to the canonical URL that was checked, and a later decision preserves the
+editor's transient values. Storage access remains behind repository contracts;
+presentation components receive services through explicit dependencies.
+
 ## Dependency direction
 
 ```text

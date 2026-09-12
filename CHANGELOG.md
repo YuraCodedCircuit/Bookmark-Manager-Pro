@@ -6,6 +6,23 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.3.0 - 2026-09-12
+
+### Improved
+
+- The Save current URL popup now checks the active profile for the same address
+  before showing its form. Profile settings can allow the form immediately,
+  warn before another copy, or block another copy; later checks preserve entered
+  form values and avoid asking twice for an already approved address.
+- Duplicate decisions identify up to three matching folders and summarize any
+  others.
+- Browser pages whose addresses cannot be read or saved now show a clear,
+  non-retryable message.
+- Popup decisions use one themed background, centered explanations, bottom-right
+  actions, and readable controls in light and dark themes.
+- The application language selector identifies the initial locale as English
+  (United States).
+
 ## 0.2.5 - 2026-09-11
 
 ### Fixed

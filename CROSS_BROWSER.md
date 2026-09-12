@@ -9,6 +9,11 @@
 Chrome 140+, Edge 140+, and Firefox 140+ are supported. Compatibility claims
 require automated or manual verification on that browser.
 
+Every generated manifest sets `incognito` to `not_allowed`. Bookmark Manager Pro
+is intentionally unavailable in Chrome Incognito, Edge InPrivate, and Firefox
+Private Browsing windows. This is a product boundary, not a missing browser
+capability.
+
 ## Build strategy
 
 WXT generates browser-specific manifests and packages. Shared code uses the
@@ -51,6 +56,9 @@ bookmark sync.
   the webpage preview uses a tab-session marker. IndexedDB capacity errors use
   the same oldest-first retention behavior across targets.
 - Extension windows, new-tab overrides, and popup sizing may differ.
+- Privileged browser pages may hide the active tab URL from extensions. The
+  current-URL popup treats a hidden or unsupported URL as an expected condition,
+  explains that the page cannot be saved, and offers Close without a retry.
 - Optional permissions and user prompts may differ.
 - Bookmark roots and native bookmark identifiers are browser-owned.
 - Store packaging, signing, review, and update processes are separate.
@@ -86,6 +94,7 @@ Each release candidate must verify:
 - Import, export, backup, restore, and schema-upgrade failure recovery
 - Keyboard, focus, zoom, contrast, and localization behavior
 - Package contents, manifest permissions, and Content Security Policy
+- Private-mode exclusion and privileged browser-page fallback behavior
 
 Chrome and Edge may share automated coverage where behavior is identical, but
 both packaged extensions must receive installation smoke tests.

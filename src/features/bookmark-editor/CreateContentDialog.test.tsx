@@ -11,6 +11,27 @@ afterEach(() => {
 });
 
 describe('CreateContentDialog edit mode', () => {
+  it('keeps the editor open when its caller defers completion', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(
+      <CreateContentDialog
+        isOpen
+        kind="bookmark"
+        onClose={onClose}
+        onCreate={vi.fn(async () => false)}
+        parentName="Home"
+      />,
+    );
+
+    await user.type(screen.getByLabelText('Title'), 'Deferred bookmark');
+    await user.type(screen.getByLabelText('URL'), 'https://example.com');
+    await user.click(screen.getByRole('button', { name: 'Create bookmark' }));
+
+    expect(screen.getByRole('dialog', { name: 'New bookmark' })).toBeVisible();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('generates a random color and updates the color preview', async () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValueOnce(0);

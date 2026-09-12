@@ -1,22 +1,23 @@
-# What's New in 0.2.5
+# What's New in 0.3.0
 
-Released September 11, 2026.
+Released September 12, 2026.
 
-This release keeps open Bookmark Manager Pro tabs current after content and
-profile changes, while strengthening concurrent editing safeguards.
+This release makes saving the current page clearer when the address already
+exists or the browser does not allow the page to be saved.
 
 ## Highlights
 
-- Content changes from synchronization, the toolbar popup, or another app tab
-  now appear in every open tab showing an affected folder. Hidden tabs update
-  when they become visible instead of performing unnecessary background reads.
-- If an open folder is deleted, the tab moves to the closest available parent
-  and explains the change. Switching profiles also opens the selected profile's
-  Home folder across profile-bound app surfaces.
-- Simultaneous bookmark or folder creation now preserves a valid item order,
-  and an editor cannot overwrite an item that changed after the editor opened.
-- Shared undo history no longer reports a storage-write error when another open
-  extension surface receives an already-saved update.
+- The Save current URL popup checks the active profile for the same address
+  before opening the bookmark form and follows the profile's Allow, Warn, or
+  Prevent duplicate setting.
+- Duplicate warnings show where existing copies are stored, including a concise
+  summary when the address appears in more than three folders.
+- Browser pages that cannot be read or saved now show a clear message instead
+  of a retry action that cannot succeed.
+- Popup messages and actions now use consistent alignment, themed backgrounds,
+  and readable buttons in light and dark themes.
+- The language selector now names the initial locale English (United States),
+  establishing the Language (Region) convention for future translations.
 
 ## Full changelog
 

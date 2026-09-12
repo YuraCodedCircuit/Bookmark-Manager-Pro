@@ -302,6 +302,22 @@ error handling, accessibility, and cross-browser tests are complete. Inclusion
 here describes planned product direction rather than a commitment to a specific
 release.
 
+### Additional application languages
+
+- Add complete application and manifest translations beyond the English source
+  locale when each translation can be maintained and verified.
+- Label application-language choices with the `Language (Region)` format and a
+  complete country or region name, such as `English (United States)`, while
+  retaining BCP 47 locale codes in stored settings and localization resources.
+- Verify fallback behavior, pluralization, text expansion, and localized date
+  presentation for every added locale.
+- Add bidirectional layout and keyboard verification before shipping the first
+  right-to-left language.
+
+Acceptance signal: each shipped locale has complete resources, predictable
+English fallback behavior, and passing localization, layout, and accessibility
+checks in every supported browser target.
+
 ### Import
 
 - Accept documented Bookmark Manager Pro export formats and selected standard

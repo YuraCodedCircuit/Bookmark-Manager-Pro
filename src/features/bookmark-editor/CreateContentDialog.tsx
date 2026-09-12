@@ -34,7 +34,8 @@ interface CreateContentDialogProps {
   isOpen: boolean;
   kind: ContentKind;
   onClose: () => void;
-  onCreate: (value: CreateContentValue) => Promise<void>;
+  /** Returns false when a caller defers completion to another UI decision. */
+  onCreate: (value: CreateContentValue) => Promise<boolean | void>;
   onCaptureScreenshot?: (() => Promise<string>) | undefined;
   parentName: string;
   titleKey?: string | undefined;
@@ -181,7 +182,7 @@ export function CreateContentDialog({
     setIsSaving(true);
     setError('');
     try {
-      await onCreate({
+      const shouldClose = await onCreate({
         cardAppearance,
         note: String(form.get('note') ?? ''),
         tags: String(form.get('tags') ?? '')
@@ -191,7 +192,7 @@ export function CreateContentDialog({
         title,
         ...(kind === 'bookmark' ? { url } : {}),
       });
-      resetAndClose();
+      if (shouldClose !== false) resetAndClose();
     } catch (error) {
       setError(
         error instanceof Error &&

@@ -103,6 +103,11 @@ export interface CopiedItemResult {
   rootItemId: string;
 }
 
+export interface BookmarkUrlLocation {
+  folderId: string;
+  folderTitle: string;
+}
+
 /** Coordinates validated creation and querying of profile-local content. */
 export class ManageBookmarks {
   constructor(
@@ -455,6 +460,31 @@ export class ManageBookmarks {
       (bookmark) =>
         bookmark.id !== excludingBookmarkId && bookmark.url === normalizedUrl,
     );
+  }
+
+  /** Returns each profile folder containing at least one canonical URL match. */
+  async listBookmarkLocationsByUrl(
+    profileId: string,
+    url: string,
+  ): Promise<readonly BookmarkUrlLocation[]> {
+    const validatedProfileId = z.uuid().parse(profileId);
+    const normalizedUrl = safeBookmarkUrlSchema.parse(url);
+    const [bookmarks, folders] = await Promise.all([
+      this.repository.listBookmarks(validatedProfileId),
+      this.repository.listFolders(validatedProfileId),
+    ]);
+    const foldersById = new Map(folders.map((folder) => [folder.id, folder]));
+    const matchingFolderIds = new Set(
+      bookmarks
+        .filter((bookmark) => bookmark.url === normalizedUrl)
+        .map((bookmark) => bookmark.parentId),
+    );
+
+    return [...matchingFolderIds].map((folderId) => {
+      const folder = foldersById.get(folderId);
+      if (!folder) throw new Error('bookmark-parent-folder-not-found');
+      return { folderId, folderTitle: folder.title };
+    });
   }
 
   async createFolder(input: CreateFolderInput): Promise<void> {

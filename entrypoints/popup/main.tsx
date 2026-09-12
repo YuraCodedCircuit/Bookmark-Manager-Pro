@@ -1,32 +1,26 @@
 import '../../src/platform/validation/configure-runtime-validation';
 
-import { StrictMode, useEffect, useState } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { I18nextProvider, useTranslation } from 'react-i18next';
+import { I18nextProvider } from 'react-i18next';
 
 import { createActivityLogService } from '../../src/application/activity-log/create-activity-log-service';
 import { createBookmarkManager } from '../../src/application/bookmark/create-bookmark-manager';
 import { createWebPreflight } from '../../src/application/preflight/create-web-preflight';
 import { createUndoHistoryService } from '../../src/application/undo-history/create-undo-history-service';
 import {
-  CreateContentDialog,
-  type CreateContentValue,
-} from '../../src/features/bookmark-editor/CreateContentDialog';
+  SaveCurrentPagePopup,
+  type SaveCurrentPageReadyState,
+  UnsupportedCurrentPage,
+} from '../../src/features/save-current-page/SaveCurrentPagePopup';
+import { isSaveableCurrentPageUrl } from '../../src/features/save-current-page/current-page-url';
 import { i18n } from '../../src/localization/i18n';
 import {
   captureCurrentTab,
+  CurrentTabUrlUnavailableError,
   getCurrentTab,
-  type CurrentTab,
 } from '../../src/platform/tabs/current-tab';
-import type { Folder } from '../../src/domain/folder';
-import { FolderTreePicker } from '../../src/features/folder-tree/FolderTreePicker';
-import {
-  buildFolderTree,
-  findFolderAncestorIds,
-  findNewestNonRootFolder,
-} from '../../src/features/folder-tree/folder-tree-data';
-import type { ProfileSettings } from '../../src/domain/profile-settings';
-import { addHttpsToHostLikeUrl } from '../../src/domain/bookmark-url';
+import { findNewestNonRootFolder } from '../../src/features/folder-tree/folder-tree-data';
 import { createContentChangeBridge } from '../../src/platform/content-change/create-content-change-bridge';
 import '../../src/styles/global.css';
 import './popup.css';
@@ -36,196 +30,14 @@ const bookmarkManager = createBookmarkManager();
 const preflight = createWebPreflight(activityLog);
 const undoHistory = createUndoHistoryService(bookmarkManager);
 const contentChanges = createContentChangeBridge();
-
-interface ReadyState {
-  folder: Folder;
-  folders: readonly Folder[];
-  profileId: string;
-  settings: ProfileSettings;
-  tab: CurrentTab;
-}
-
-interface SaveCurrentPagePopupProps {
-  ready: ReadyState;
-}
-
-export function SaveCurrentPagePopup({ ready }: SaveCurrentPagePopupProps) {
-  const { t } = useTranslation();
-  const [selectedFolderId, setSelectedFolderId] = useState(ready.folder.id);
-  const selectedFolder =
-    ready.folders.find(({ id }) => id === selectedFolderId) ?? ready.folder;
-
-  useEffect(
-    () =>
-      contentChanges.subscribeProfileActivation((activation) => {
-        if (activation.profileId !== ready.profileId) window.close();
-      }),
-    [ready.profileId],
-  );
-
-  const record = async (
-    eventCode: string,
-    level: 'INFO' | 'ERROR',
-    outcome: 'Succeeded' | 'Failed',
-  ) => {
-    try {
-      await activityLog.record(ready.profileId, {
-        action: eventCode.includes('SCREENSHOT') ? 'Capture' : 'Create',
-        category: 'Bookmarks',
-        dataChanged: eventCode === 'CURRENT-TAB-BOOKMARK-CREATE-COMPLETE',
-        durationMs: 0,
-        eventCode,
-        itemType: eventCode.includes('SCREENSHOT') ? 'Card image' : 'Bookmark',
-        itemsAffected: outcome === 'Succeeded' ? 1 : 0,
-        kind: level === 'INFO' ? 'ACTIVITY' : 'DIAGNOSTIC',
-        level,
-        message:
-          outcome === 'Succeeded'
-            ? 'Current page operation completed.'
-            : 'Current page operation failed.',
-        outcome,
-        source: 'Toolbar popup',
-      });
-    } catch {
-      console.error('current-tab-popup-activity-log-write-failed');
-    }
-  };
-
-  const save = async (value: CreateContentValue) => {
-    if (!value.url) throw new Error('popup-not-ready');
-    try {
-      const activation = await contentChanges.profileActivation();
-      if (activation.profileId !== ready.profileId) {
-        window.close();
-        throw new Error('popup-profile-changed');
-      }
-      let url = value.url;
-      const normalized = addHttpsToHostLikeUrl(url);
-      if (normalized && window.confirm(t('contentEditor.normalizationConfirm')))
-        url = normalized;
-      if (
-        url.toLowerCase().startsWith('ftp://') &&
-        !window.confirm(t('contentEditor.ftpSaveConfirm'))
-      )
-        throw new Error('ftp-bookmark-cancelled');
-      const duplicate = await bookmarkManager.hasBookmarkWithUrl(
-        ready.profileId,
-        url,
-      );
-      if (duplicate && ready.settings.duplicateHandling === 'prevent')
-        throw new Error('duplicate-bookmark-prevented');
-      if (
-        duplicate &&
-        ready.settings.duplicateHandling === 'warn' &&
-        !window.confirm(t('contentEditor.duplicateConfirm'))
-      )
-        throw new Error('duplicate-bookmark-cancelled');
-
-      await undoHistory.runMutation(async () => {
-        const before = await bookmarkManager.captureUndoState(ready.profileId);
-        await bookmarkManager.createBookmark({
-          ...value,
-          parentId: selectedFolder.id,
-          profileId: ready.profileId,
-          tags:
-            ready.settings.tagOrder === 'alphabetical'
-              ? [...value.tags].sort((left, right) => left.localeCompare(right))
-              : value.tags,
-          url,
-        });
-        const after = await bookmarkManager.captureUndoState(ready.profileId);
-        const beforeIds = new Set(before.bookmarks.map(({ id }) => id));
-        const created = after.bookmarks.find(({ id }) => !beforeIds.has(id));
-        if (created) {
-          await undoHistory.record({
-            action: 'created',
-            after,
-            before,
-            itemId: created.id,
-            itemType: 'bookmark',
-            profileId: ready.profileId,
-          });
-        }
-      });
-      await contentChanges
-        .publish({
-          affectedParentIds: [selectedFolder.id],
-          changedFolderIds: [],
-          deletedFolderPaths: [],
-          fullRefresh: false,
-          navigationChanged: true,
-          profileId: ready.profileId,
-        })
-        .catch(() => console.error('popup-content-change-publish-failed'));
-      await record('CURRENT-TAB-BOOKMARK-CREATE-COMPLETE', 'INFO', 'Succeeded');
-      window.close();
-    } catch (error) {
-      await record('CURRENT-TAB-BOOKMARK-CREATE-FAILED', 'ERROR', 'Failed');
-      throw error;
-    }
-  };
-
-  return (
-    <CreateContentDialog
-      afterNote={
-        <section
-          aria-labelledby="save-current-page-destination"
-          className="save-current-page__destination"
-        >
-          <h2 id="save-current-page-destination">
-            {t('saveCurrentPage.destination')}
-          </h2>
-          <FolderTreePicker
-            folderTree={buildFolderTree(ready.folders)}
-            idPrefix="save-current-page"
-            initiallyExpandedFolderIds={findFolderAncestorIds(
-              ready.folders,
-              selectedFolder.id,
-            )}
-            onSelect={(_path, folderId) => setSelectedFolderId(folderId)}
-            selectedFolderId={selectedFolder.id}
-          />
-        </section>
-      }
-      defaultAppearance={ready.settings.lastBookmarkAppearance}
-      initialValue={{
-        cardAppearance: ready.settings.lastBookmarkAppearance ?? {
-          kind: 'color',
-          value: '#2f7de1',
-        },
-        note: '',
-        tags: [],
-        title: ready.tab.title || ready.tab.url,
-        url: ready.tab.url,
-      }}
-      isOpen
-      kind="bookmark"
-      onCaptureScreenshot={async () => {
-        try {
-          const image = await captureCurrentTab(ready.tab.windowId);
-          await record(
-            'CURRENT-TAB-SCREENSHOT-CAPTURE-COMPLETE',
-            'INFO',
-            'Succeeded',
-          );
-          return image;
-        } catch (error) {
-          await record(
-            'CURRENT-TAB-SCREENSHOT-CAPTURE-FAILED',
-            'ERROR',
-            'Failed',
-          );
-          throw error;
-        }
-      }}
-      onClose={() => window.close()}
-      onCreate={save}
-      parentName={selectedFolder.title}
-      titleKey="saveCurrentPage.title"
-    />
-  );
-}
-
+const popupDependencies = {
+  activityLog,
+  bookmarkManager,
+  captureCurrentTab,
+  close: () => window.close(),
+  contentChanges,
+  undoHistory,
+};
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return Promise.race([
     promise,
@@ -238,13 +50,20 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   ]);
 }
 
-async function loadReadyState(): Promise<ReadyState> {
+async function loadReadyState(): Promise<{
+  initialDuplicateLocations: Awaited<
+    ReturnType<typeof bookmarkManager.listBookmarkLocationsByUrl>
+  >;
+  ready: SaveCurrentPageReadyState;
+}> {
   const [snapshot, tab] = await withTimeout(
     Promise.all([preflight.execute(), getCurrentTab()]),
     8_000,
   );
   if (snapshot.initialization.status !== 'ready')
     throw new Error('popup-profile-not-ready');
+  if (!isSaveableCurrentPageUrl(tab.url))
+    throw new Error('popup-current-url-not-supported');
   const { profile, settings } = snapshot.initialization;
   const [root, folders] = await withTimeout(
     Promise.all([
@@ -257,7 +76,41 @@ async function loadReadyState(): Promise<ReadyState> {
     8_000,
   );
   const folder = findNewestNonRootFolder(folders) ?? root;
-  return { folder, folders, profileId: profile.id, settings, tab };
+  let initialDuplicateLocations: Awaited<
+    ReturnType<typeof bookmarkManager.listBookmarkLocationsByUrl>
+  > = [];
+  if (settings.duplicateHandling !== 'allow') {
+    try {
+      initialDuplicateLocations = await withTimeout(
+        bookmarkManager.listBookmarkLocationsByUrl(profile.id, tab.url),
+        8_000,
+      );
+    } catch (error) {
+      try {
+        await activityLog.record(profile.id, {
+          action: 'Read',
+          category: 'Bookmarks',
+          dataChanged: false,
+          durationMs: 0,
+          eventCode: 'CURRENT-TAB-DUPLICATE-CHECK-FAILED',
+          itemType: 'Bookmark',
+          itemsAffected: 0,
+          kind: 'DIAGNOSTIC',
+          level: 'ERROR',
+          message: 'Current page duplicate check failed.',
+          outcome: 'Failed',
+          source: 'Toolbar popup',
+        });
+      } catch {
+        console.error('current-tab-popup-activity-log-write-failed');
+      }
+      throw new Error('popup-duplicate-check-failed', { cause: error });
+    }
+  }
+  return {
+    initialDuplicateLocations,
+    ready: { folder, folders, profileId: profile.id, settings, tab },
+  };
 }
 
 const root = document.querySelector<HTMLDivElement>('#root');
@@ -266,27 +119,68 @@ const reactRoot = createRoot(root);
 reactRoot.render(<main className="save-current-page__status">Loading…</main>);
 
 async function bootstrap(): Promise<void> {
+  reactRoot.render(
+    <main className="save-current-page__status">Loading...</main>,
+  );
   try {
-    const ready = await loadReadyState();
+    const { initialDuplicateLocations, ready } = await loadReadyState();
     reactRoot.render(
       <StrictMode>
         <I18nextProvider i18n={i18n}>
-          <SaveCurrentPagePopup ready={ready} />
+          <SaveCurrentPagePopup
+            dependencies={popupDependencies}
+            initialDuplicateLocations={initialDuplicateLocations}
+            ready={ready}
+          />
         </I18nextProvider>
       </StrictMode>,
     );
   } catch (error) {
+    if (
+      error instanceof CurrentTabUrlUnavailableError ||
+      (error instanceof Error &&
+        error.message === 'popup-current-url-not-supported')
+    ) {
+      reactRoot.render(
+        <StrictMode>
+          <I18nextProvider i18n={i18n}>
+            <UnsupportedCurrentPage onClose={() => window.close()} />
+          </I18nextProvider>
+        </StrictMode>,
+      );
+      return;
+    }
     console.error('save-current-page-popup-initialization-failed');
     const message =
       error instanceof Error && error.message === 'popup-profile-not-ready'
         ? i18n.t('saveCurrentPage.firstRun')
         : i18n.t('saveCurrentPage.loadError');
     reactRoot.render(
-      <main className="save-current-page__status" role="alert">
-        {message}
-      </main>,
+      <StrictMode>
+        <I18nextProvider i18n={i18n}>
+          {renderPopupLoadError(message, bootstrap)}
+        </I18nextProvider>
+      </StrictMode>,
     );
   }
+}
+
+function renderPopupLoadError(message: string, onRetry: () => Promise<void>) {
+  return (
+    <main className="save-current-page__decision save-current-page__load-error">
+      <div className="save-current-page__decision-content">
+        <p role="alert">{message}</p>
+      </div>
+      <footer>
+        <button onClick={() => window.close()} type="button">
+          {i18n.t('saveCurrentPage.close')}
+        </button>
+        <button autoFocus onClick={() => void onRetry()} type="button">
+          {i18n.t('saveCurrentPage.retry')}
+        </button>
+      </footer>
+    </main>
+  );
 }
 
 void bootstrap();

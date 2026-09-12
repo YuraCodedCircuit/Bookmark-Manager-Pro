@@ -82,6 +82,31 @@ limit. These per-image limits prevent a single image from consuming an
 unbounded portion of local browser storage. The browser continues to control
 the total storage quota.
 
+### ADR-009: Prohibit private-browsing operation
+
+Status: Accepted
+
+Date: 2026-09-12
+
+Bookmark Manager Pro stores profile-owned bookmarks, settings, history, and
+other durable application data locally. Allowing extension surfaces in private
+browsing could expose normal-window application data in a context users expect
+to be isolated, while browser-specific private-mode storage and extension-access
+rules would make behavior inconsistent across Chrome, Edge, and Firefox.
+
+The considered options were to support private browsing with shared data,
+support browser-specific isolated or split data, or prohibit private-browsing
+operation. Shared data weakens the expected separation between normal and
+private contexts. Split data introduces browser-dependent lifecycle, recovery,
+and user-expectation problems for a local-first product.
+
+Every generated browser manifest therefore sets `incognito` to `not_allowed`.
+The extension does not run in Chrome Incognito, Edge InPrivate, or Firefox
+Private Browsing windows. Users must reopen the workflow in a normal window.
+Changing this boundary requires a new decision covering data ownership,
+retention, permissions, cross-browser behavior, privacy documentation, and
+verification.
+
 ## Proposed decisions
 
 - Export container format and cryptographic parameters
