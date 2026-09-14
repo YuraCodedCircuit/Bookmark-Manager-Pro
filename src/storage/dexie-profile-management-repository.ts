@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type {
   ProfileActivationResult,
   ProfileListItem,
+  ProfileDeletionImpact,
   ProfileManagementRepository,
   ProfileStorageUsage,
 } from '../application/profile/profile-management-repository';
@@ -215,6 +216,23 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
             .byteLength,
         };
       }),
+    );
+  }
+
+  async getDeletionImpact(profileId: string): Promise<ProfileDeletionImpact> {
+    await this.database.open();
+    return this.database.transaction(
+      'r',
+      [this.database.profiles, this.database.bookmarks, this.database.folders],
+      async () => {
+        if (!(await this.database.profiles.get(profileId)))
+          throw new Error('profile-not-found');
+        const [bookmarkCount, folderCount] = await Promise.all([
+          this.database.bookmarks.where('profileId').equals(profileId).count(),
+          this.database.folders.where('profileId').equals(profileId).count(),
+        ]);
+        return { bookmarkCount, folderCount, profileId };
+      },
     );
   }
 

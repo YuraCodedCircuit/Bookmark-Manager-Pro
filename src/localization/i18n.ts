@@ -493,6 +493,8 @@ void i18n.use(initReactI18next).init({
             profileCreateFailed: 'A local profile could not be created.',
             profileDeleted: 'A local profile was deleted.',
             profileDeleteFailed: 'A local profile could not be deleted.',
+            profileDeletePreviewFailed:
+              'The profile contents could not be counted before deletion.',
             profileDuplicated: 'A local profile was duplicated.',
             profileDuplicateFailed: 'A local profile could not be duplicated.',
             profileSwitched: 'The active local profile changed.',
@@ -1246,9 +1248,16 @@ void i18n.use(initReactI18next).init({
           createTitle: 'Create profile',
           created: 'Created {{date}}',
           delete: 'Delete',
+          deleteConfirmation:
+            'This profile currently contains {{bookmarks}} and {{folders}}. Deleting it removes that content from Bookmark Manager Pro. A safety backup will be kept.',
+          deletePreviewError:
+            'The profile contents could not be counted, so deletion was canceled.',
+          deleteTitle: 'Delete profile?',
+          bookmarksAffected_one: '{{count}} bookmark',
+          bookmarksAffected_other: '{{count}} bookmarks',
+          foldersAffected_one: '{{count}} folder',
+          foldersAffected_other: '{{count}} folders',
           duplicate: 'Duplicate',
-          confirmDelete: 'Confirm delete',
-          cancelDelete: 'Cancel',
           edit: 'Edit',
           editTitle: 'Edit profile',
           iconError: 'Choose a PNG, JPEG, or BMP image smaller than 1 MB.',

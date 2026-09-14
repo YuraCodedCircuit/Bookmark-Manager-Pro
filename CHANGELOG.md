@@ -6,6 +6,18 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.4.1 - 2026-09-14
+
+### Improved
+
+- New profiles now use Home's Card view, Small cards, Comfortable spacing,
+  Manual order, Ascending direction, and no grouping as the initial Settings
+  defaults for new folders. Later Bookmark display changes still apply to
+  folders created afterward.
+- Profile deletion confirmation now opens above Manage profiles and shows how
+  many bookmarks and folders, including Home, will be removed. Canceling keeps
+  Manage profiles open and returns focus to Delete.
+
 ## 0.4.0 - 2026-09-12
 
 ### New

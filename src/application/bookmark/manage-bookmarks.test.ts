@@ -370,6 +370,12 @@ describe('ManageBookmarks', () => {
     expect(repo.addFolder).toHaveBeenCalledWith(
       expect.objectContaining({
         backgroundAppearance: root.backgroundAppearance,
+        bookmarkGroupBy: 'none',
+        bookmarkSortBy: 'manual',
+        bookmarkSortDirection: 'ascending',
+        bookmarkView: 'card',
+        cardSize: 'small',
+        cardSpacing: 'comfortable',
         includeNavigationBackground: true,
         navigationTransparency: 70,
         cardAppearance: { kind: 'color', value: '#123456' },

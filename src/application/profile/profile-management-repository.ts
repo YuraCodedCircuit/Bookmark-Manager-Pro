@@ -12,6 +12,12 @@ export interface ProfileStorageUsage {
   sizeBytes: number;
 }
 
+export interface ProfileDeletionImpact {
+  profileId: string;
+  bookmarkCount: number;
+  folderCount: number;
+}
+
 export interface ProfileActivationResult {
   changed: boolean;
   profileId: string;
@@ -30,6 +36,7 @@ export interface ProfileManagementRepository {
   ): Promise<void>;
   getSettings(profileId: string): Promise<ProfileSettings>;
   getStorageUsage(): Promise<readonly ProfileStorageUsage[]>;
+  getDeletionImpact(profileId: string): Promise<ProfileDeletionImpact>;
   updateSettings(settings: ProfileSettings): Promise<void>;
   update(profile: Profile): Promise<void>;
   delete(profileId: string): Promise<void>;

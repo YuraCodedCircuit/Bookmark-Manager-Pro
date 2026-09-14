@@ -65,7 +65,10 @@ import {
 } from '../application/notification/notification-service';
 import { NotificationViewport } from '../features/notifications/NotificationViewport';
 import { classifyBookmarkInputError } from '../application/bookmark/bookmark-input-error';
-import { defaultNotificationPreferences } from '../domain/profile-settings';
+import {
+  defaultFolderDisplaySettings,
+  defaultNotificationPreferences,
+} from '../domain/profile-settings';
 import { addHttpsToHostLikeUrl } from '../domain/bookmark-url';
 import { ConfirmationService } from '../application/confirmation/confirmation-service';
 import { ConfirmationDialog } from '../features/confirmation/ConfirmationDialog';
@@ -164,6 +167,7 @@ interface AppProps {
     | 'delete'
     | 'duplicate'
     | 'switchTo'
+    | 'getDeletionImpact'
     | 'getStorageUsage'
     | 'updateBookmarkDisplay'
     | 'updateProfileSettings'
@@ -225,13 +229,17 @@ export function App({
     undoHistory.store.getInitialState,
   );
   const requestConfirmation = useCallback(
-    async (message: string, action: ConfirmationAction) => {
+    async (
+      message: string,
+      action: ConfirmationAction,
+      title = t('confirmation.title'),
+    ) => {
       try {
         return await confirmationService.request({
           cancelLabel: t('confirmation.cancel'),
           confirmLabel: t(`confirmation.actions.${action}`),
           message,
-          title: t('confirmation.title'),
+          title,
           variant: action === 'delete' ? 'danger' : 'primary',
         });
       } catch {
@@ -1602,28 +1610,28 @@ export function App({
             bookmarkGroupBy:
               currentInitializationState.status === 'ready'
                 ? (currentInitializationState.settings.bookmarkGroupBy ??
-                  'none')
-                : 'none',
+                  defaultFolderDisplaySettings.bookmarkGroupBy)
+                : defaultFolderDisplaySettings.bookmarkGroupBy,
             bookmarkSortBy:
               currentInitializationState.status === 'ready'
                 ? (currentInitializationState.settings.bookmarkSortBy ??
-                  'manual')
-                : 'manual',
+                  defaultFolderDisplaySettings.bookmarkSortBy)
+                : defaultFolderDisplaySettings.bookmarkSortBy,
             bookmarkSortDirection:
               currentInitializationState.status === 'ready'
                 ? (currentInitializationState.settings.bookmarkSortDirection ??
-                  'ascending')
-                : 'ascending',
+                  defaultFolderDisplaySettings.bookmarkSortDirection)
+                : defaultFolderDisplaySettings.bookmarkSortDirection,
             cardAppearance: preparedValue.cardAppearance,
             cardSize:
               currentInitializationState.status === 'ready'
                 ? currentInitializationState.settings.cardSize
-                : 'medium',
+                : defaultFolderDisplaySettings.cardSize,
             cardSpacing:
               currentInitializationState.status === 'ready'
                 ? (currentInitializationState.settings.cardSpacing ??
-                  'comfortable')
-                : 'comfortable',
+                  defaultFolderDisplaySettings.cardSpacing)
+                : defaultFolderDisplaySettings.cardSpacing,
             note: preparedValue.note,
             parentId: currentFolderId,
             profileId: readyProfileId,
@@ -1632,7 +1640,7 @@ export function App({
             bookmarkView:
               currentInitializationState.status === 'ready'
                 ? currentInitializationState.settings.bookmarkView
-                : 'card',
+                : defaultFolderDisplaySettings.bookmarkView,
           });
         }
         const undoAfter = await bookmarkManager
@@ -3248,12 +3256,6 @@ export function App({
         }}
       />
       <ProfileManagerDialog
-        confirmDeletion={
-          currentInitializationState.status === 'ready'
-            ? (currentInitializationState.settings.profilePreferences
-                ?.confirmProfileDeletion ?? true)
-            : true
-        }
         defaultProfileIcon={
           currentInitializationState.status === 'ready'
             ? (currentInitializationState.settings.profilePreferences
@@ -3277,6 +3279,48 @@ export function App({
           );
         }}
         onDelete={async (profileId) => {
+          const confirmDeletion =
+            currentInitializationState.status === 'ready'
+              ? (currentInitializationState.settings.profilePreferences
+                  ?.confirmProfileDeletion ?? true)
+              : true;
+          if (confirmDeletion) {
+            let impact;
+            try {
+              impact = await profileManager.getDeletionImpact(profileId);
+            } catch {
+              if (readyProfileId)
+                await recordEventForProfile(readyProfileId, {
+                  action: 'Load',
+                  category: 'Profiles',
+                  dataChanged: false,
+                  durationMs: 0,
+                  eventCode: 'PROFILE-DELETE-PREVIEW-FAILED',
+                  itemType: 'Profile content counts',
+                  itemsAffected: 0,
+                  kind: 'DIAGNOSTIC',
+                  level: 'ERROR',
+                  message: t('activityLog.messages.profileDeletePreviewFailed'),
+                  outcome: 'Failed',
+                  source: 'Profile manager',
+                });
+              notifyOperationError(t('profiles.deletePreviewError'));
+              return;
+            }
+            const confirmed = await requestConfirmation(
+              t('profiles.deleteConfirmation', {
+                bookmarks: t('profiles.bookmarksAffected', {
+                  count: impact.bookmarkCount,
+                }),
+                folders: t('profiles.foldersAffected', {
+                  count: impact.folderCount,
+                }),
+              }),
+              'delete',
+              t('profiles.deleteTitle'),
+            );
+            if (!confirmed) return;
+          }
           await runLoggedProfileAction(
             async () => {
               await backupService.create({
@@ -3435,7 +3479,7 @@ export function App({
                 cardSpacing:
                   currentFolder?.cardSpacing ??
                   currentInitializationState.settings.cardSpacing ??
-                  'comfortable',
+                  defaultFolderDisplaySettings.cardSpacing,
                 cardSize:
                   currentFolder?.cardSize ??
                   currentInitializationState.settings.cardSize,
@@ -3447,25 +3491,20 @@ export function App({
                 bookmarkSortBy:
                   currentFolder?.bookmarkSortBy ??
                   currentInitializationState.settings.bookmarkSortBy ??
-                  'manual',
+                  defaultFolderDisplaySettings.bookmarkSortBy,
                 bookmarkSortDirection:
                   currentFolder?.bookmarkSortDirection ??
                   currentInitializationState.settings.bookmarkSortDirection ??
-                  'ascending',
+                  defaultFolderDisplaySettings.bookmarkSortDirection,
                 bookmarkGroupBy:
                   currentFolder?.bookmarkGroupBy ??
                   currentInitializationState.settings.bookmarkGroupBy ??
-                  'none',
+                  defaultFolderDisplaySettings.bookmarkGroupBy,
               }
             : {
-                bookmarkView: 'card',
-                cardSize: 'medium',
-                cardSpacing: 'comfortable',
+                ...defaultFolderDisplaySettings,
                 detailsTableTransparency: 0,
                 dragAndDropEnabled: true,
-                bookmarkSortBy: 'manual',
-                bookmarkSortDirection: 'ascending',
-                bookmarkGroupBy: 'none',
               }
         }
       />
@@ -3477,35 +3516,35 @@ export function App({
             (currentInitializationState.status === 'ready'
               ? currentInitializationState.settings.bookmarkGroupBy
               : undefined) ??
-            'none'
+            defaultFolderDisplaySettings.bookmarkGroupBy
           }
           bookmarkSortBy={
             currentFolder.bookmarkSortBy ??
             (currentInitializationState.status === 'ready'
               ? currentInitializationState.settings.bookmarkSortBy
               : undefined) ??
-            'manual'
+            defaultFolderDisplaySettings.bookmarkSortBy
           }
           bookmarkSortDirection={
             currentFolder.bookmarkSortDirection ??
             (currentInitializationState.status === 'ready'
               ? currentInitializationState.settings.bookmarkSortDirection
               : undefined) ??
-            'ascending'
+            defaultFolderDisplaySettings.bookmarkSortDirection
           }
           bookmarkView={currentFolder.bookmarkView}
           cardSize={
             currentFolder.cardSize ??
             (currentInitializationState.status === 'ready'
               ? currentInitializationState.settings.cardSize
-              : 'medium')
+              : defaultFolderDisplaySettings.cardSize)
           }
           cardSpacing={
             currentFolder.cardSpacing ??
             (currentInitializationState.status === 'ready'
               ? currentInitializationState.settings.cardSpacing
               : undefined) ??
-            'comfortable'
+            defaultFolderDisplaySettings.cardSpacing
           }
           detailsTableTransparency={currentFolder.detailsTableTransparency}
           folderName={currentFolder.title}

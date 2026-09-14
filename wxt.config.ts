@@ -3,7 +3,10 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   manifestVersion: 3,
   vite: () => ({
-    build: { modulePreload: false },
+    build: {
+      chunkSizeWarningLimit: 600,
+      modulePreload: false,
+    },
   }),
   zip: {
     artifactTemplate:

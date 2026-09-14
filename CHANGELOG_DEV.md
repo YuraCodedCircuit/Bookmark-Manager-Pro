@@ -6,6 +6,21 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.4.1 - 2026-09-14
+
+### Changed
+
+- Set the WXT production chunk-size warning budget to 600 kB, keeping the
+  existing bundle composition while reserving warnings for larger regressions.
+- Added `defaultFolderDisplaySettings` as the shared Home-aligned source for
+  first-profile, later-profile, and settings-free duplicate creation; Home and
+  new-folder fallbacks; and Bookmark display fallbacks. The New folder flow
+  continues to copy user-customized profile display settings at creation.
+- Replaced `ProfileManagerDialog`'s inline deletion state with the shared
+  top-layer confirmation service. `ProfileManagementRepository` now reads
+  profile-scoped bookmark and folder counts in one read-only transaction;
+  preview failures fail closed with a privacy-safe diagnostic and notification.
+
 ## 0.4.0 - 2026-09-12
 
 ### Added

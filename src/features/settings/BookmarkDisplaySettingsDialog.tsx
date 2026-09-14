@@ -5,6 +5,7 @@ import type { ProfileSettings } from '../../domain/profile-settings';
 import type { ActivityLogSettings } from '../../domain/activity-log';
 import {
   defaultBackupPreferences,
+  defaultFolderDisplaySettings,
   defaultNotificationPreferences,
   defaultProfilePreferences,
 } from '../../domain/profile-settings';
@@ -80,7 +81,7 @@ export function BookmarkDisplaySettingsDialog({
     settings.startupLocation ?? 'home',
   );
   const [bookmarkSortBy, setBookmarkSortBy] = useState(
-    settings.bookmarkSortBy ?? 'manual',
+    settings.bookmarkSortBy ?? defaultFolderDisplaySettings.bookmarkSortBy,
   );
   const [searchPreferences, setSearchPreferences] = useState(
     settings.searchPreferences ?? defaultSearchPreferences,
@@ -140,7 +141,9 @@ export function BookmarkDisplaySettingsDialog({
       setError(false);
       setStartupLocation(settings.startupLocation ?? 'home');
       setAccentColorMode(settings.accentColorMode ?? 'system');
-      setBookmarkSortBy(settings.bookmarkSortBy ?? 'manual');
+      setBookmarkSortBy(
+        settings.bookmarkSortBy ?? defaultFolderDisplaySettings.bookmarkSortBy,
+      );
       setSearchPreferences(
         settings.searchPreferences ?? defaultSearchPreferences,
       );
@@ -729,7 +732,10 @@ export function BookmarkDisplaySettingsDialog({
                   <label>
                     <span>{t('displaySettings.view')}</span>
                     <select
-                      defaultValue={settings.bookmarkView}
+                      defaultValue={
+                        settings.bookmarkView ??
+                        defaultFolderDisplaySettings.bookmarkView
+                      }
                       name="bookmarkView"
                     >
                       <option value="card">{t('displaySettings.card')}</option>
@@ -741,7 +747,13 @@ export function BookmarkDisplaySettingsDialog({
                   </label>
                   <label>
                     <span>{t('displaySettings.size')}</span>
-                    <select defaultValue={settings.cardSize} name="cardSize">
+                    <select
+                      defaultValue={
+                        settings.cardSize ??
+                        defaultFolderDisplaySettings.cardSize
+                      }
+                      name="cardSize"
+                    >
                       <option value="small">
                         {t('displaySettings.small')}
                       </option>
@@ -756,7 +768,10 @@ export function BookmarkDisplaySettingsDialog({
                   <label>
                     <span>{t('displaySettings.spacing')}</span>
                     <select
-                      defaultValue={settings.cardSpacing ?? 'comfortable'}
+                      defaultValue={
+                        settings.cardSpacing ??
+                        defaultFolderDisplaySettings.cardSpacing
+                      }
                       name="cardSpacing"
                     >
                       <option value="compact">
@@ -802,7 +817,8 @@ export function BookmarkDisplaySettingsDialog({
                     <span>{t('displaySettings.direction')}</span>
                     <select
                       defaultValue={
-                        settings.bookmarkSortDirection ?? 'ascending'
+                        settings.bookmarkSortDirection ??
+                        defaultFolderDisplaySettings.bookmarkSortDirection
                       }
                       disabled={bookmarkSortBy === 'manual'}
                       name="bookmarkSortDirection"
@@ -818,7 +834,10 @@ export function BookmarkDisplaySettingsDialog({
                   <label>
                     <span>{t('displaySettings.groupBy')}</span>
                     <select
-                      defaultValue={settings.bookmarkGroupBy ?? 'none'}
+                      defaultValue={
+                        settings.bookmarkGroupBy ??
+                        defaultFolderDisplaySettings.bookmarkGroupBy
+                      }
                       name="bookmarkGroupBy"
                     >
                       <option value="none">{t('displaySettings.none')}</option>

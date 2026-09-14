@@ -232,6 +232,14 @@ describe('DexieProfileManagementRepository', () => {
       kind: 'bookmark',
       profileId: secondId,
     });
+    await expect(repository.getDeletionImpact(secondId)).resolves.toEqual({
+      bookmarkCount: 1,
+      folderCount: 1,
+      profileId: secondId,
+    });
+    await expect(
+      repository.getDeletionImpact('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+    ).rejects.toThrow('profile-not-found');
     await expect(repository.delete(firstId)).rejects.toThrow(
       'active-profile-cannot-be-deleted',
     );

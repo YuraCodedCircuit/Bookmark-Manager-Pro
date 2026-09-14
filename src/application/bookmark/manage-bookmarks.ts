@@ -22,6 +22,7 @@ import {
   bookmarkViewSchema,
   cardSizeSchema,
   cardSpacingSchema,
+  defaultFolderDisplaySettings,
   type ProfileSettings,
 } from '../../domain/profile-settings';
 import type { BookmarkRepository, FolderContents } from './bookmark-repository';
@@ -120,12 +121,7 @@ export class ManageBookmarks {
     const timestamp = this.now();
     const root = folderSchema.parse({
       ...DEFAULT_FOLDER_STYLE,
-      bookmarkView: 'card',
-      cardSize: 'small',
-      cardSpacing: 'comfortable',
-      bookmarkSortBy: 'manual',
-      bookmarkSortDirection: 'ascending',
-      bookmarkGroupBy: 'none',
+      ...defaultFolderDisplaySettings,
       detailsTableTransparency: 0,
       cardAppearance: { kind: 'color', value: '#2f7de1' },
       createdAt: timestamp,
@@ -494,12 +490,18 @@ export class ManageBookmarks {
     await this.repository.addFolder(
       folderSchema.parse({
         ...DEFAULT_FOLDER_STYLE,
-        bookmarkView: value.bookmarkView ?? 'card',
-        cardSize: value.cardSize ?? 'medium',
-        cardSpacing: value.cardSpacing ?? 'comfortable',
-        bookmarkSortBy: value.bookmarkSortBy ?? 'manual',
-        bookmarkSortDirection: value.bookmarkSortDirection ?? 'ascending',
-        bookmarkGroupBy: value.bookmarkGroupBy ?? 'none',
+        bookmarkView:
+          value.bookmarkView ?? defaultFolderDisplaySettings.bookmarkView,
+        cardSize: value.cardSize ?? defaultFolderDisplaySettings.cardSize,
+        cardSpacing:
+          value.cardSpacing ?? defaultFolderDisplaySettings.cardSpacing,
+        bookmarkSortBy:
+          value.bookmarkSortBy ?? defaultFolderDisplaySettings.bookmarkSortBy,
+        bookmarkSortDirection:
+          value.bookmarkSortDirection ??
+          defaultFolderDisplaySettings.bookmarkSortDirection,
+        bookmarkGroupBy:
+          value.bookmarkGroupBy ?? defaultFolderDisplaySettings.bookmarkGroupBy,
         detailsTableTransparency: 0,
         cardAppearance: value.cardAppearance,
         createdAt: timestamp,

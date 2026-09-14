@@ -1,26 +1,18 @@
-# What's New in 0.4.0
+# What's New in 0.4.1
 
-Released September 12, 2026.
+Released September 14, 2026.
 
-This release adds local recovery snapshots for protecting profile data before
-important changes.
+This release aligns new-folder display defaults with Home and makes profile
+deletion clearer before any content is removed.
 
 ## Highlights
 
-- Open Backup from the profile menu to create, inspect, filter, sort, restore,
-  or delete snapshots for current profiles and retained deleted profiles.
-- Optional automatic snapshots can protect a profile before bookmark
-  synchronization. Settings control whether this trigger runs and how many
-  automatic snapshots it retains.
-- Restoring an existing profile first creates a verified safety snapshot.
-  Synchronization connections remain paused until they are reviewed.
-- Snapshots remain local to the browser profile and are removed if the extension
-  is uninstalled or its data is cleared.
-
-## Bug Fixes
-
-- Opening or closing the profile menu no longer restarts notification
-  countdowns or triggers a disconnected notification popover error.
+- New profiles start with Home's Card view, Small cards, Comfortable spacing,
+  Manual order, Ascending direction, and no grouping as the Bookmark display
+  defaults for folders created afterward.
+- Deleting an inactive profile now opens a confirmation window above Manage
+  profiles. It reports how many bookmarks and folders, including Home, will be
+  removed while confirming that the safety backup will be retained.
 
 ## Full changelog
 

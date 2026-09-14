@@ -15,7 +15,6 @@ import { formatDateTime } from '../../shared/date-time-format';
 import type { DateTimeFormatPreference } from '../../shared/date-time-format';
 
 interface Props {
-  confirmDeletion?: boolean;
   defaultProfileIcon?: ProfilePreferences['defaultProfileIcon'];
   isOpen: boolean;
   language: string;
@@ -30,7 +29,6 @@ interface Props {
 
 /** Provides create/edit controls above the durable profile list. */
 export function ProfileManagerDialog({
-  confirmDeletion = true,
   defaultProfileIcon = 'built-in',
   isOpen,
   language,
@@ -48,7 +46,6 @@ export function ProfileManagerDialog({
   const [username, setUsername] = useState('');
   const [icon, setIcon] = useState<string>();
   const [error, setError] = useState('');
-  const [pendingDeleteId, setPendingDeleteId] = useState<string>();
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
@@ -232,39 +229,14 @@ export function ProfileManagerDialog({
               >
                 {t('profiles.duplicate')}
               </button>
-              {pendingDeleteId === profile.id ? (
-                <>
-                  <button
-                    className="profile-button profile-button--danger"
-                    onClick={() => {
-                      setPendingDeleteId(undefined);
-                      void onDelete(profile.id).catch(() => undefined);
-                    }}
-                    type="button"
-                  >
-                    {t('profiles.confirmDelete')}
-                  </button>
-                  <button
-                    className="profile-button"
-                    onClick={() => setPendingDeleteId(undefined)}
-                    type="button"
-                  >
-                    {t('profiles.cancelDelete')}
-                  </button>
-                </>
-              ) : (
-                <button
-                  className="profile-button profile-button--danger"
-                  disabled={isActive || profiles.length === 1}
-                  onClick={() => {
-                    if (confirmDeletion) setPendingDeleteId(profile.id);
-                    else void onDelete(profile.id).catch(() => undefined);
-                  }}
-                  type="button"
-                >
-                  {t('profiles.delete')}
-                </button>
-              )}
+              <button
+                className="profile-button profile-button--danger"
+                disabled={isActive || profiles.length === 1}
+                onClick={() => void onDelete(profile.id).catch(() => undefined)}
+                type="button"
+              >
+                {t('profiles.delete')}
+              </button>
             </article>
           ))}
         </div>

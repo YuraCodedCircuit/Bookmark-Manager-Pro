@@ -124,6 +124,11 @@ const profileManager = {
   create: vi.fn(),
   delete: vi.fn(),
   duplicate: vi.fn(),
+  getDeletionImpact: vi.fn().mockResolvedValue({
+    bookmarkCount: 0,
+    folderCount: 1,
+    profileId: createdProfile.profile.id,
+  }),
   getStorageUsage: vi.fn().mockResolvedValue([]),
   list: vi.fn().mockResolvedValue([]),
   switchTo: vi.fn(async (profileId: string) => ({
@@ -223,6 +228,11 @@ afterEach(() => {
   }));
   bookmarkManager.setFavorite.mockResolvedValue(undefined);
   profileManager.list.mockResolvedValue([]);
+  profileManager.getDeletionImpact.mockResolvedValue({
+    bookmarkCount: 0,
+    folderCount: 1,
+    profileId: createdProfile.profile.id,
+  });
   Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
     value: originalClipboard,
@@ -1191,6 +1201,98 @@ describe('App', () => {
     ).toBeVisible();
   });
 
+  it('shows profile content counts in a top-layer deletion confirmation', async () => {
+    const user = userEvent.setup();
+    const inactiveProfile = {
+      createdAt: 2,
+      id: '85923bcb-cfd7-45a4-bf10-12f6162cad44',
+      updatedAt: 2,
+      username: 'Archive',
+    };
+    profileManager.list.mockResolvedValue([
+      { isActive: true, profile: createdProfile.profile },
+      { isActive: false, profile: inactiveProfile },
+    ]);
+    profileManager.getDeletionImpact.mockResolvedValue({
+      bookmarkCount: 12,
+      folderCount: 4,
+      profileId: inactiveProfile.id,
+    });
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+
+    await user.click(screen.getByRole('button', { name: 'Open profile menu' }));
+    await user.click(screen.getByRole('button', { name: 'Manage profiles' }));
+    const manager = await screen.findByRole('dialog', {
+      name: 'Manage profiles',
+    });
+    const row = within(manager).getByText('Archive').closest('article');
+    if (!row) throw new Error('profile-row-not-found');
+    const deleteButton = within(row).getByRole('button', { name: 'Delete' });
+    await user.click(deleteButton);
+
+    const confirmation = await screen.findByRole('dialog', {
+      name: 'Delete profile?',
+    });
+    expect(confirmation).toHaveTextContent('12 bookmarks and 4 folders');
+    expect(
+      within(confirmation).getByRole('button', { name: 'Cancel' }),
+    ).toHaveFocus();
+    expect(manager).toBeVisible();
+
+    await user.click(
+      within(confirmation).getByRole('button', { name: 'Cancel' }),
+    );
+    expect(deleteButton).toHaveFocus();
+    expect(profileManager.delete).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when profile deletion counts cannot be loaded', async () => {
+    const user = userEvent.setup();
+    const inactiveProfile = {
+      createdAt: 2,
+      id: '85923bcb-cfd7-45a4-bf10-12f6162cad44',
+      updatedAt: 2,
+      username: 'Archive',
+    };
+    profileManager.list.mockResolvedValue([
+      { isActive: true, profile: createdProfile.profile },
+      { isActive: false, profile: inactiveProfile },
+    ]);
+    profileManager.getDeletionImpact.mockRejectedValue(
+      new Error('storage-unavailable'),
+    );
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+
+    await user.click(screen.getByRole('button', { name: 'Open profile menu' }));
+    await user.click(screen.getByRole('button', { name: 'Manage profiles' }));
+    const manager = await screen.findByRole('dialog', {
+      name: 'Manage profiles',
+    });
+    const row = within(manager).getByText('Archive').closest('article');
+    if (!row) throw new Error('profile-row-not-found');
+    await user.click(within(row).getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() =>
+      expect(activityLog.record).toHaveBeenCalledWith(
+        createdProfile.profile.id,
+        expect.objectContaining({
+          dataChanged: false,
+          eventCode: 'PROFILE-DELETE-PREVIEW-FAILED',
+          level: 'ERROR',
+        }),
+      ),
+    );
+    expect(
+      await screen.findByText(
+        'The profile contents could not be counted, so deletion was canceled.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('dialog', { name: 'Delete profile?' }),
+    ).not.toBeInTheDocument();
+    expect(profileManager.delete).not.toHaveBeenCalled();
+  });
+
   it('opens application information from the profile menu', async () => {
     const user = userEvent.setup();
     renderApp({ status: 'storage-unavailable' });
@@ -1736,7 +1838,19 @@ describe('App', () => {
 
   it('creates bookmarks and folders in the currently open folder', async () => {
     const user = userEvent.setup();
-    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+    const customizedProfile = {
+      ...createdProfile,
+      settings: {
+        ...createdProfile.settings,
+        bookmarkGroupBy: 'domain' as const,
+        bookmarkSortBy: 'updatedAt' as const,
+        bookmarkSortDirection: 'descending' as const,
+        bookmarkView: 'details' as const,
+        cardSize: 'large' as const,
+        cardSpacing: 'spacious' as const,
+      },
+    };
+    renderApp({ status: 'ready', theme: 'dark', ...customizedProfile });
     await screen.findByRole('link', { name: 'Open Example' });
     const region = screen.getByRole('region', { name: 'Bookmarks' });
 
@@ -1804,6 +1918,14 @@ describe('App', () => {
           direction: 90,
           kind: 'gradient',
         },
+        note: '',
+        tags: [],
+        bookmarkGroupBy: 'domain',
+        bookmarkSortBy: 'updatedAt',
+        bookmarkSortDirection: 'descending',
+        bookmarkView: 'details',
+        cardSize: 'large',
+        cardSpacing: 'spacious',
       }),
     );
   });

@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { profileSchema } from '../../domain/profile';
 import {
+  defaultFolderDisplaySettings,
   defaultProfilePreferences,
   profilePreferencesSchema,
   profileSettingsSchema,
@@ -45,6 +46,11 @@ export class ManageProfiles {
     return this.repository.getStorageUsage();
   }
 
+  /** Counts profile-owned content for a deletion confirmation without reading it. */
+  getDeletionImpact(profileId: string) {
+    return this.repository.getDeletionImpact(z.uuid().parse(profileId));
+  }
+
   async create(input: ManagedProfileInput): Promise<void> {
     const validated = profileInputSchema.parse(input);
     await this.assertProfileCapacity();
@@ -62,7 +68,7 @@ export class ManageProfiles {
         theme: 'system',
         accentColorMode: 'system',
         animationPreference: 'system',
-        cardSpacing: 'comfortable',
+        ...defaultFolderDisplaySettings,
         customAccentColor: '#88bdf2',
         confirmExternalLinks: false,
         dateTimeFormat: 'browser',
@@ -129,12 +135,10 @@ export class ManageProfiles {
         ...(preferences.duplicateSettings
           ? sourceSettings
           : {
-              bookmarkView: 'card',
+              ...defaultFolderDisplaySettings,
               accentColorMode: 'system',
               animationPreference: 'system',
               bookmarkOpening: 'current-tab',
-              cardSize: 'medium',
-              cardSpacing: 'comfortable',
               customAccentColor: '#88bdf2',
               confirmExternalLinks: false,
               dateTimeFormat: 'browser',

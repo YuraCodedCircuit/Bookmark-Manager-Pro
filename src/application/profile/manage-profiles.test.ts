@@ -3,6 +3,43 @@ import type { ProfileManagementRepository } from './profile-management-repositor
 import { ManageProfiles } from './manage-profiles';
 
 describe('ManageProfiles', () => {
+  it('creates profiles with Home-aligned folder-view defaults', async () => {
+    const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
+    const repository: ProfileManagementRepository = {
+      create: vi.fn(),
+      copyOwnedData: vi.fn(),
+      delete: vi.fn(),
+      getDeletionImpact: vi.fn(),
+      getSettings: vi.fn(),
+      isProfileIdAvailable: vi.fn(async () => true),
+      getStorageUsage: vi.fn(async () => []),
+      list: vi.fn(async () => []),
+      switchTo: vi.fn(),
+      update: vi.fn(),
+      updateSettings: vi.fn(),
+    };
+    const service = new ManageProfiles(
+      repository,
+      () => profileId,
+      () => 42,
+    );
+
+    await service.create({ language: 'en-US', username: 'Local user' });
+
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ id: profileId }),
+      expect.objectContaining({
+        bookmarkView: 'card',
+        bookmarkGroupBy: 'none',
+        bookmarkSortBy: 'manual',
+        bookmarkSortDirection: 'ascending',
+        cardSize: 'small',
+        cardSpacing: 'comfortable',
+        profileId,
+      }),
+    );
+  });
+
   it('duplicates identity fields and settings under a new ID and timestamps', async () => {
     const sourceId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
     const duplicateId = '85923bcb-cfd7-45a4-bf10-12f6162cad44';
@@ -10,6 +47,7 @@ describe('ManageProfiles', () => {
       create: vi.fn(),
       copyOwnedData: vi.fn(),
       delete: vi.fn(),
+      getDeletionImpact: vi.fn(),
       getSettings: vi.fn(async () => ({
         bookmarkView: 'card' as const,
         cardSize: 'medium' as const,

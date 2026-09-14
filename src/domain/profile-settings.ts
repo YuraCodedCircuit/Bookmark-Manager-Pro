@@ -16,6 +16,17 @@ export const bookmarkSortBySchema = z.enum([
 ]);
 export const bookmarkSortDirectionSchema = z.enum(['ascending', 'descending']);
 export const bookmarkGroupBySchema = z.enum(['none', 'type', 'domain']);
+
+/** Defines Home-aligned display defaults that Settings may override for new folders. */
+export const defaultFolderDisplaySettings = {
+  bookmarkView: 'card',
+  cardSize: 'small',
+  cardSpacing: 'comfortable',
+  bookmarkSortBy: 'manual',
+  bookmarkSortDirection: 'ascending',
+  bookmarkGroupBy: 'none',
+} as const;
+
 export const folderDropHoverDelaySchema = z.union([
   z.literal(400),
   z.literal(600),
@@ -145,8 +156,10 @@ export const profileSettingsSchema = z.object({
   profileId: z.uuid(),
   theme: themePreferenceSchema,
   language: z.string().trim().min(2).max(35).optional(),
-  bookmarkView: bookmarkViewSchema.default('card'),
-  cardSize: cardSizeSchema.default('medium'),
+  bookmarkView: bookmarkViewSchema.default(
+    defaultFolderDisplaySettings.bookmarkView,
+  ),
+  cardSize: cardSizeSchema.default(defaultFolderDisplaySettings.cardSize),
   cardSpacing: cardSpacingSchema.optional(),
   bookmarkSortBy: bookmarkSortBySchema.optional(),
   bookmarkSortDirection: bookmarkSortDirectionSchema.optional(),
