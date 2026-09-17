@@ -1,3 +1,664 @@
+.profile-menu__items button > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.profile-menu__items button > span:first-child svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.notes-workspace {
+  display: grid;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  grid-template-rows: auto minmax(0, 1fr);
+  color: var(--text);
+  background: var(--background);
+}
+
+.top-navigation[hidden],
+.bookmark-grid[hidden] {
+  display: none !important;
+}
+
+.notes-workspace button,
+.notes-workspace input,
+.notes-workspace textarea,
+.notes-workspace select {
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.6rem;
+  font: inherit;
+}
+
+.notes-workspace button {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+}
+
+.notes-workspace button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.notes-workspace :is(button, input, textarea, select):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.notes-workspace__topbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.notes-workspace__topbar h1,
+.notes-workspace__topbar p {
+  margin: 0;
+}
+
+.notes-workspace__topbar h1 {
+  font-size: var(--window-title-font-size);
+  font-weight: var(--window-title-font-weight);
+}
+
+.notes-workspace__topbar p {
+  color: var(--window-info-color);
+  font-size: var(--window-info-font-size);
+}
+
+.notes-prototype-warning {
+  max-width: min(38rem, 48vw);
+  padding: 0.7rem 0.9rem;
+  margin: 0 0 0 auto !important;
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border: 1px solid var(--border-strong);
+  border-radius: 0.65rem;
+  text-align: left;
+}
+
+.notes-workspace__panes {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: minmax(15rem, 0.25fr) minmax(17rem, 0.3fr) minmax(
+      22rem,
+      1fr
+    );
+}
+
+.notes-navigation,
+.notes-list,
+.notes-editor {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.notes-navigation {
+  overflow: hidden;
+}
+
+.notes-navigation,
+.notes-list {
+  border-right: 1px solid var(--border);
+}
+
+.notes-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.notes-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  color: var(--background) !important;
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  font-weight: 700 !important;
+}
+
+.notes-new svg {
+  width: 1.2rem;
+}
+
+.notes-search,
+.notes-editor__body {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+
+.notes-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+}
+
+.notes-navigation__views {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.notes-navigation button[aria-current],
+.notes-list button[aria-current] {
+  border-color: var(--accent);
+  box-shadow: inset 4px 0 var(--accent);
+}
+
+.notes-navigation h2,
+.notes-list h2 {
+  margin: 0.4rem 0 0;
+  font-size: 1rem;
+}
+
+.notes-folder-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.notes-folder-heading button {
+  min-height: 2.25rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.notes-folder-tree,
+.notes-list ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.notes-folder-tree-scroll {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.notes-folder-tree {
+  width: max-content;
+  min-width: 100%;
+}
+
+.notes-folder-tree li {
+  margin-left: calc(var(--note-folder-depth) * 1rem);
+}
+
+.notes-folder-tree__row {
+  position: relative;
+  display: grid;
+  min-width: max-content;
+  align-items: center;
+  grid-template-columns: 1.9rem minmax(0, 1fr) 2.25rem;
+}
+
+.notes-folder-tree .notes-folder-tree__toggle,
+.notes-folder-tree .notes-folder-tree__folder,
+.notes-folder-tree .notes-folder-tree__menu-trigger {
+  min-height: 0;
+  border: 0;
+  background: transparent;
+}
+
+.notes-folder-tree .notes-folder-tree__menu-trigger {
+  min-height: 2.25rem;
+  padding: 0.25rem;
+}
+
+.notes-context-menu {
+  position: fixed;
+  z-index: 1000;
+  display: grid;
+  min-width: 12rem;
+  padding: 0.35rem;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.55rem;
+  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 28%);
+}
+
+.notes-context-menu button {
+  min-height: 2.25rem;
+  padding: 0.55rem 0.75rem;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 0.4rem;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notes-context-menu button:hover {
+  background: var(--highlight-background);
+}
+
+.notes-context-menu button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.notes-context-menu button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.notes-folder-tree .notes-folder-tree__toggle,
+.notes-folder-tree__spacer {
+  display: grid;
+  width: 1.9rem;
+  height: 2.45rem;
+  padding: 0;
+  color: var(--text-muted);
+  place-items: center;
+}
+
+.notes-folder-tree__toggle svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 140ms ease;
+}
+
+.notes-folder-tree__toggle svg[data-expanded='true'] {
+  transform: rotate(90deg);
+}
+
+.notes-folder-tree .notes-folder-tree__folder {
+  display: grid;
+  min-width: max-content;
+  min-height: 2.45rem;
+  align-items: center;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.4rem;
+  gap: 0.55rem;
+  grid-template-columns: 1.25rem max-content;
+  text-align: left;
+}
+
+.notes-folder-tree__folder svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #d5b35f;
+}
+
+.notes-folder-tree__folder span {
+  white-space: nowrap;
+}
+
+.notes-folder-tree .notes-folder-tree__folder[aria-current='page'] {
+  background: var(--highlight-background);
+  box-shadow: inset 0 0 0 1px var(--highlight-border);
+}
+
+.notes-folder-tree
+  :is(.notes-folder-tree__toggle, .notes-folder-tree__folder):hover {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+.notes-folder-tree
+  :is(.notes-folder-tree__toggle, .notes-folder-tree__folder):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.notes-folder-dialog__backdrop {
+  position: fixed;
+  z-index: 20;
+  display: grid;
+  background: rgb(0 0 0 / 55%);
+  inset: 0;
+  place-items: center;
+}
+
+.notes-folder-dialog {
+  display: grid;
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 1rem;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.75rem;
+  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 28%);
+}
+
+.notes-folder-dialog h2,
+.notes-folder-dialog p {
+  margin: 0;
+}
+
+.notes-folder-dialog input {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.75rem;
+}
+
+.notes-folder-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.notes-move-dialog__backdrop {
+  z-index: 1100;
+}
+
+.notes-move-dialog button {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.8rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.6rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.notes-move-dialog button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.notes-move-tree {
+  max-height: min(24rem, 55vh);
+  padding: 0;
+  margin: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.notes-move-tree li {
+  margin-left: calc(var(--note-folder-depth) * 1rem);
+}
+
+.notes-move-tree .notes-move-tree__folder {
+  display: grid;
+  width: 100%;
+  align-items: center;
+  border-color: transparent;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: 0.55rem;
+  text-align: left;
+}
+
+.notes-move-tree__folder svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #d5b35f;
+}
+
+.notes-move-tree li[aria-selected='true'] .notes-move-tree__folder {
+  background: var(--highlight-background);
+  border-color: var(--highlight-border);
+}
+
+.notes-list header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.notes-list li + li {
+  margin-top: 0.55rem;
+}
+
+.notes-list__item {
+  display: grid;
+  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) 2.75rem;
+}
+
+.notes-list__item > button {
+  border-radius: 0;
+}
+
+.notes-list__item > button:first-child {
+  border-radius: 0.6rem 0 0 0.6rem;
+}
+
+.notes-list__item > button:last-child {
+  border-left: 0;
+  border-radius: 0 0.6rem 0.6rem 0;
+}
+
+.notes-list__note {
+  display: grid;
+  width: 100%;
+  gap: 0.35rem;
+  padding: 0.8rem;
+  text-align: left;
+}
+
+.notes-list__note > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.notes-list small,
+.notes-list time,
+.notes-editor__actions small {
+  color: var(--text-muted);
+}
+
+.notes-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notes-empty {
+  color: var(--text-muted);
+}
+
+.notes-list__empty,
+.notes-editor__empty {
+  display: grid;
+  min-height: 16rem;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.notes-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.notes-editor__header {
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+}
+
+.notes-editor__header label input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.55rem 0.8rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.notes-editor__header > button {
+  height: 3rem;
+}
+
+.notes-breadcrumbs {
+  color: var(--text-muted);
+}
+
+.notes-breadcrumbs button {
+  min-height: 2rem;
+  padding: 0.2rem 0.4rem;
+  background: transparent;
+  border-color: transparent;
+}
+
+.notes-editor__actions,
+.notes-editor__mode-row,
+.notes-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.notes-editor__mode-row {
+  align-items: stretch;
+}
+
+.notes-toolbar-slot {
+  min-width: 0;
+  min-height: 3.875rem;
+  flex: 1;
+}
+
+.notes-toolbar {
+  width: 100%;
+  min-height: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+}
+
+.notes-mode-toggle {
+  width: 5.5rem;
+  min-height: 3.875rem;
+  flex: 0 0 auto;
+}
+
+.notes-toolbar button {
+  min-width: 2.75rem;
+  padding: 0.4rem;
+}
+
+.notes-editor__body {
+  min-height: 20rem;
+  flex: 1;
+}
+
+.notes-editor__body textarea,
+.notes-preview {
+  width: 100%;
+  min-height: 20rem;
+  height: 100%;
+  padding: 1rem;
+  resize: none;
+}
+
+.notes-preview {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+}
+
+.notes-preview p,
+.notes-preview blockquote {
+  line-height: 1.55;
+}
+
+.notes-preview blockquote {
+  padding-left: 1rem;
+  margin-left: 0;
+  border-left: 4px solid var(--accent);
+}
+
+.notes-preview pre,
+.notes-preview code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.notes-preview pre {
+  overflow: auto;
+  padding: 0.8rem;
+  background: var(--surface-muted);
+  border-radius: 0.5rem;
+}
+
+.notes-preview__list-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding-left: 1rem;
+}
+
+.notes-preview__link {
+  min-height: 0 !important;
+  padding: 0 !important;
+  color: var(--accent) !important;
+  background: transparent !important;
+  border: 0 !important;
+  text-decoration: underline;
+}
+
+.notes-pane-back {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .notes-workspace__topbar {
+    flex-wrap: wrap;
+  }
+
+  .notes-prototype-warning {
+    width: 100%;
+    max-width: none;
+    margin-left: 0 !important;
+  }
+
+  .notes-workspace__panes {
+    display: block;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .notes-workspace__panes > * {
+    display: none;
+    height: 100%;
+    min-height: 0;
+    border-right: 0;
+  }
+
+  .notes-workspace__panes[data-pane='navigation'] > .notes-navigation,
+  .notes-workspace__panes[data-pane='list'] > .notes-list,
+  .notes-workspace__panes[data-pane='editor'] > .notes-editor {
+    display: flex;
+  }
+
+  .notes-pane-back {
+    display: inline-block;
+    align-self: flex-start;
+  }
+}
+
+@media (forced-colors: active) {
+  .notes-prototype-warning,
+  .notes-navigation button[aria-current],
+  .notes-list button[aria-current] {
+    border: 2px solid Highlight;
+  }
+}
+
 .sync-dialog {
   width: min(94vw, 940px);
   max-width: none;
@@ -2542,6 +3203,11 @@ main {
   color: var(--text);
 }
 
+.profile-menu__items button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
 .profile-menu__items button:disabled {
   color: var(--text);
   cursor: not-allowed;
@@ -3308,6 +3974,248 @@ main {
 .profile-window__header svg {
   width: 100%;
   height: 100%;
+}
+
+.password-generator[open] {
+  display: grid;
+  width: min(92vw, 760px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.password-generator__content {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem 1.875rem;
+  overflow-y: auto;
+}
+
+.password-generator__output {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 0.75rem;
+}
+
+.password-generator__password-scroll {
+  min-width: 0;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+}
+
+.password-generator__password-scroll span {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.password-generator__output button {
+  display: grid;
+  place-items: center;
+  padding: 0.7rem;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+}
+
+.password-generator__output button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.password-generator__strength {
+  display: grid;
+  grid-template-columns: auto auto minmax(8rem, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.password-generator__strength strong {
+  color: var(--password-strength-color, var(--text));
+}
+
+.password-generator__strength progress {
+  width: 100%;
+  height: 0.75rem;
+  accent-color: var(--password-strength-color);
+}
+
+.password-generator fieldset {
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.password-generator legend {
+  margin-bottom: 0.65rem;
+  font-weight: 700;
+}
+
+.password-generator__length {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.password-generator__length legend {
+  grid-column: 1 / -1;
+}
+
+.password-generator__length input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.password-generator__length input[type='number'] {
+  appearance: textfield;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem;
+  color: var(--text);
+  text-align: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+}
+
+.password-generator__length input[type='number']::-webkit-inner-spin-button,
+.password-generator__length input[type='number']::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.password-generator__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.5rem;
+}
+
+.password-generator__options legend {
+  grid-column: 1 / -1;
+}
+
+.password-generator__options label,
+.password-generator__symbols label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.password-generator__options input,
+.password-generator__symbols input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--accent);
+}
+
+.password-generator__symbols > div {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+}
+
+.password-generator__symbols label {
+  justify-content: center;
+  min-height: 2.75rem;
+  cursor: pointer;
+  background: var(--surface-raised);
+}
+
+.password-generator__symbols label:has(input:checked) {
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface-raised));
+}
+
+.password-generator__symbols p,
+.password-generator__status p {
+  margin: 0.55rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.password-generator__status {
+  min-height: 1.25rem;
+}
+
+.password-generator__status .password-generator__error {
+  color: #ff9c9c;
+}
+
+.password-generator__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.875rem;
+  border-top: 1px solid var(--border);
+}
+
+.password-generator__actions button {
+  min-width: 7rem;
+  padding: 0.65rem 1rem;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+}
+
+.password-generator__actions button[type='submit'] {
+  color: #07111b;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.password-generator button:not(:disabled):hover {
+  background: color-mix(in srgb, var(--surface-raised) 88%, var(--text));
+}
+
+.password-generator__actions button[type='submit']:not(:disabled):hover {
+  background: color-mix(in srgb, var(--accent) 88%, white);
+}
+
+@media (max-width: 34rem) {
+  .password-generator__content {
+    padding: 1.25rem;
+  }
+
+  .password-generator__strength {
+    grid-template-columns: 1fr auto;
+  }
+
+  .password-generator__strength progress,
+  .password-generator__options legend {
+    grid-column: 1 / -1;
+  }
+
+  .password-generator__options {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (forced-colors: active) {
+  .password-generator__symbols label:has(input:checked),
+  .password-generator__actions button[type='submit'] {
+    color: CanvasText;
+    background: Highlight;
+    border-color: Highlight;
+    forced-color-adjust: none;
+  }
+
+  .password-generator button:not(:disabled):hover {
+    color: HighlightText;
+    background: Highlight;
+    border-color: Highlight;
+    forced-color-adjust: none;
+  }
 }
 
 .about-window[open] {

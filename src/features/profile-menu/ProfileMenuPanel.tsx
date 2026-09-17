@@ -5,6 +5,10 @@ import { animate } from 'motion/mini';
 import type { InitializationState } from '../../application/initialization/initialization-state';
 import { ClearIcon } from '../../components/icons/ClearIcon';
 import { ProfileIcon } from '../../components/icons/ProfileIcon';
+import {
+  ProfileMenuItemIcon,
+  type ProfileMenuItem,
+} from '../../components/icons/ProfileMenuItemIcon';
 import { useAnimatedSidePanel } from '../../components/side-panel/use-animated-side-panel';
 import {
   useMotionPreference,
@@ -21,6 +25,8 @@ interface ProfileMenuPanelProps {
   onOpenChangelog: () => void;
   onOpenHelp: () => void;
   onOpenLegal: () => void;
+  onOpenNotes: () => void;
+  onOpenPasswordGenerator: () => void;
   onOpenUndoHistory: () => void;
   onOpenSynchronization: () => void;
   onClose: () => void;
@@ -36,7 +42,7 @@ const menuSections = [
   },
   {
     heading: 'profileMenu.sections.application',
-    items: ['settings'],
+    items: ['notes', 'passwordGenerator', 'settings'],
   },
   {
     heading: 'profileMenu.sections.data',
@@ -50,7 +56,10 @@ const menuSections = [
     heading: 'profileMenu.sections.information',
     items: ['help', 'changelog', 'legal', 'about'],
   },
-] as const;
+] as const satisfies ReadonlyArray<{
+  heading: string;
+  items: readonly ProfileMenuItem[];
+}>;
 
 export function ProfileMenuPanel({
   initializationState,
@@ -64,6 +73,8 @@ export function ProfileMenuPanel({
   onOpenChangelog,
   onOpenHelp,
   onOpenLegal,
+  onOpenNotes,
+  onOpenPasswordGenerator,
   onOpenUndoHistory,
   onOpenSynchronization,
   onOpenSettings,
@@ -115,6 +126,7 @@ export function ProfileMenuPanel({
       });
     },
     onBeforeOpen: () => {
+      setHighlightedItem(undefined);
       profileSummaryElements().forEach((element) => {
         element.style.opacity = motionPreference === 'none' ? '1' : '0';
         element.style.transform = prefersReducedMotion
@@ -203,7 +215,10 @@ export function ProfileMenuPanel({
                   item === 'changelog' ||
                   item === 'help' ||
                   item === 'legal' ||
+                  item === 'passwordGenerator' ||
                   (item === 'settings' &&
+                    initializationState.status === 'ready') ||
+                  (item === 'notes' &&
                     initializationState.status === 'ready') ||
                   (item === 'bookmarkActivityLog' &&
                     initializationState.status === 'ready') ||
@@ -229,23 +244,27 @@ export function ProfileMenuPanel({
                           ? onManageProfiles
                           : item === 'settings'
                             ? onOpenSettings
-                            : item === 'changelog'
-                              ? onOpenChangelog
-                              : item === 'help'
-                                ? onOpenHelp
-                                : item === 'legal'
-                                  ? onOpenLegal
-                                  : item === 'about'
-                                    ? onOpenAbout
-                                    : item === 'bookmarkActivityLog'
-                                      ? onOpenBookmarkActivityLog
-                                      : item === 'backup'
-                                        ? onOpenBackup
-                                        : item === 'undoHistory'
-                                          ? onOpenUndoHistory
-                                          : item === 'synchronization'
-                                            ? onOpenSynchronization
-                                            : undefined
+                            : item === 'notes'
+                              ? onOpenNotes
+                              : item === 'passwordGenerator'
+                                ? onOpenPasswordGenerator
+                                : item === 'changelog'
+                                  ? onOpenChangelog
+                                  : item === 'help'
+                                    ? onOpenHelp
+                                    : item === 'legal'
+                                      ? onOpenLegal
+                                      : item === 'about'
+                                        ? onOpenAbout
+                                        : item === 'bookmarkActivityLog'
+                                          ? onOpenBookmarkActivityLog
+                                          : item === 'backup'
+                                            ? onOpenBackup
+                                            : item === 'undoHistory'
+                                              ? onOpenUndoHistory
+                                              : item === 'synchronization'
+                                                ? onOpenSynchronization
+                                                : undefined
                     }
                     onMouseEnter={() => {
                       if (isAvailableCommand) setHighlightedItem(item);
@@ -256,7 +275,10 @@ export function ProfileMenuPanel({
                     }}
                     type="button"
                   >
-                    <span>{t(`profileMenu.items.${item}`)}</span>
+                    <span>
+                      <ProfileMenuItemIcon item={item} />
+                      {t(`profileMenu.items.${item}`)}
+                    </span>
                     {!isAvailableCommand ? (
                       <small>{t('profileMenu.comingSoon')}</small>
                     ) : null}

@@ -43,6 +43,8 @@ describe('ProfileMenuPanel', () => {
         onOpenChangelog={vi.fn()}
         onOpenHelp={vi.fn()}
         onOpenLegal={vi.fn()}
+        onOpenNotes={vi.fn()}
+        onOpenPasswordGenerator={vi.fn()}
         onOpenUndoHistory={vi.fn()}
         onOpenSynchronization={onOpenSynchronization}
         onOpenSettings={vi.fn()}
@@ -57,9 +59,35 @@ describe('ProfileMenuPanel', () => {
     fireEvent.click(synchronization);
     expect(onOpenSynchronization).toHaveBeenCalledOnce();
     const enabled = within(menu).getByRole('button', { name: 'Settings' });
+    expect(within(menu).getByRole('button', { name: 'Notes' })).toBeEnabled();
     const disabled = within(menu).getByRole('button', {
       name: 'ImportComing soon',
     });
+    const commands = within(menu)
+      .getAllByRole('button')
+      .filter((button) => !button.getAttribute('aria-label'));
+    expect(commands).toHaveLength(15);
+    commands.forEach((command) => {
+      expect(command.querySelector('svg')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      );
+    });
+    expect(
+      within(menu).getByRole('button', { name: 'Settings' }),
+    ).toContainHTML('<circle');
+    expect(within(menu).getByRole('button', { name: 'Backup' })).toContainHTML(
+      '<ellipse',
+    );
+    expect(
+      within(menu).getByRole('button', { name: 'Undo and redo history' }),
+    ).toContainHTML('M5.3 7.2');
+    expect(
+      within(menu).getByRole('button', { name: 'Bookmark activity log' }),
+    ).toHaveTextContent('LOG');
+    expect(
+      within(menu).getByRole('button', { name: /^What/ }),
+    ).toHaveTextContent('NEW');
 
     fireEvent.mouseEnter(enabled);
     expect(enabled).toHaveAttribute('data-highlighted', 'true');
@@ -86,6 +114,8 @@ describe('ProfileMenuPanel', () => {
         onOpenChangelog={onOpenChangelog}
         onOpenHelp={onOpenHelp}
         onOpenLegal={onOpenLegal}
+        onOpenNotes={vi.fn()}
+        onOpenPasswordGenerator={vi.fn()}
         onOpenUndoHistory={vi.fn()}
         onOpenSynchronization={vi.fn()}
         onOpenSettings={vi.fn()}
@@ -99,5 +129,8 @@ describe('ProfileMenuPanel', () => {
     expect(onOpenHelp).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: 'Legal & privacy' }));
     expect(onOpenLegal).toHaveBeenCalledOnce();
+    expect(
+      screen.getByRole('button', { name: 'NotesComing soon' }),
+    ).toBeDisabled();
   });
 });

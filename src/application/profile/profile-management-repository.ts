@@ -16,6 +16,8 @@ export interface ProfileDeletionImpact {
   profileId: string;
   bookmarkCount: number;
   folderCount: number;
+  noteCount: number;
+  noteFolderCount: number;
 }
 
 export interface ProfileActivationResult {

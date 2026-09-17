@@ -31,8 +31,9 @@ exported data formats, URL navigation, search integration, and communication
 between extension surfaces.
 
 Security-sensitive assets include bookmark and profile data, settings, local
-images, undo and activity records, encryption material for future protected
-exports, and the integrity of user-requested mutations.
+images, generated passwords, clipboard content, undo and activity records,
+encryption material for future protected exports, and the integrity of
+user-requested mutations.
 
 ## Threat model and trust boundaries
 
@@ -52,6 +53,9 @@ capabilities.
   integrity and fail without leaving partial state.
 - Sensitive bookmark content, search text, personal data, and cryptographic
   material must not appear in logs or notifications.
+- Generated passwords must remain transient, use Web Crypto randomness, and
+  never appear in storage, logs, diagnostics, or notifications. Clipboard writes
+  require an explicit user action, and the extension never reads the clipboard.
 - Browser permissions and remote communication must remain limited to documented
   product behavior.
 - Background work must tolerate worker suspension and safe retry.

@@ -36,6 +36,7 @@ import {
 import { FolderTreePanel } from '../features/folder-tree/FolderTreePanel';
 import { BookmarkActivityLogDialog } from '../features/activity-log/BookmarkActivityLogDialog';
 import { ProfileMenuPanel } from '../features/profile-menu/ProfileMenuPanel';
+import { PasswordGeneratorDialog } from '../features/password-generator/PasswordGeneratorDialog';
 import { ProfileManagerDialog } from '../features/profile-manager/ProfileManagerDialog';
 import { ProfileSwitcherDialog } from '../features/profile-manager/ProfileSwitcherDialog';
 import { UndoHistoryDialog } from '../features/undo-history/UndoHistoryDialog';
@@ -109,6 +110,10 @@ import type { ManageBackups } from '../application/backup/manage-backups';
 import { createBackupManager } from '../application/backup/create-backup-manager';
 import { BackupDialog } from '../features/backup/BackupDialog';
 import type { BackupUiEvent } from '../features/backup/BackupDialog';
+import {
+  NotesWorkspace,
+  type NotesMutationAction,
+} from '../features/notes/NotesWorkspace';
 
 const browserSearch = createBrowserSearchAdapter();
 
@@ -186,7 +191,14 @@ interface AppProps {
 }
 
 type ConfirmationAction =
-  'clearAll' | 'addHttps' | 'delete' | 'move' | 'open' | 'save' | 'saveCopy';
+  | 'clearAll'
+  | 'addHttps'
+  | 'delete'
+  | 'discard'
+  | 'move'
+  | 'open'
+  | 'save'
+  | 'saveCopy';
 
 type InternalClipboard = {
   itemId: string;
@@ -303,6 +315,12 @@ export function App({
   const [openSyncAfterMenuClose, setOpenSyncAfterMenuClose] = useState(false);
   const [openBackupAfterMenuClose, setOpenBackupAfterMenuClose] =
     useState(false);
+  const [openNotesAfterMenuClose, setOpenNotesAfterMenuClose] = useState(false);
+  const [
+    openPasswordGeneratorAfterMenuClose,
+    setOpenPasswordGeneratorAfterMenuClose,
+  ] = useState(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [profileWindow, setProfileWindow] = useState<
     | 'about'
     | 'activity-log'
@@ -310,6 +328,7 @@ export function App({
     | 'legal'
     | 'help'
     | 'manage'
+    | 'password-generator'
     | 'settings'
     | 'switch'
     | 'undo-history'
@@ -2514,6 +2533,7 @@ export function App({
       }
     >
       <TopNavigation
+        hidden={isNotesOpen}
         onNavigate={(index) => {
           if (!currentFolderId || !readyProfileId) return;
           const target = findFolderChain(allFolders, currentFolderId)[index];
@@ -2552,6 +2572,16 @@ export function App({
         initializationState={currentInitializationState}
         isOpen={isProfileMenuOpen}
         onAfterClose={() => {
+          if (openPasswordGeneratorAfterMenuClose) {
+            setOpenPasswordGeneratorAfterMenuClose(false);
+            setProfileWindow('password-generator');
+            return;
+          }
+          if (openNotesAfterMenuClose) {
+            setOpenNotesAfterMenuClose(false);
+            setIsNotesOpen(true);
+            return;
+          }
           if (openBackupAfterMenuClose) {
             setOpenBackupAfterMenuClose(false);
             setProfileWindow('backup');
@@ -2600,7 +2630,9 @@ export function App({
           }
           profileButtonRef.current?.focus();
         }}
-        onClose={() => setIsProfileMenuOpen(false)}
+        onClose={() => {
+          setIsProfileMenuOpen(false);
+        }}
         onManageProfiles={() =>
           void openProfileWindow('manage').catch(() => undefined)
         }
@@ -2641,6 +2673,14 @@ export function App({
         }}
         onOpenLegal={() => {
           setOpenLegalAfterMenuClose(true);
+          setIsProfileMenuOpen(false);
+        }}
+        onOpenNotes={() => {
+          setOpenNotesAfterMenuClose(true);
+          setIsProfileMenuOpen(false);
+        }}
+        onOpenPasswordGenerator={() => {
+          setOpenPasswordGeneratorAfterMenuClose(true);
           setIsProfileMenuOpen(false);
         }}
         onOpenHelp={() => {
@@ -2962,6 +3002,80 @@ export function App({
           void openExternalAppLink(url).catch(() =>
             console.error('external-app-link-open-failed'),
           );
+        }}
+      />
+      <PasswordGeneratorDialog
+        isOpen={profileWindow === 'password-generator'}
+        onClose={() => {
+          setProfileWindow(null);
+          requestAnimationFrame(() => profileButtonRef.current?.focus());
+        }}
+        onCopy={async (password) => {
+          await writeClipboardText(password);
+          const notification = {
+            id: 'password-generator-feedback',
+            level: 'success' as const,
+            message: t('passwordGenerator.passwordCopied'),
+            title: t('notifications.copiedTitle'),
+          };
+          if (currentInitializationState.status === 'ready')
+            notifyForActiveProfile(notification);
+          else showNotification(notification);
+        }}
+        onFailure={(kind) => {
+          const message = t(`passwordGenerator.${kind}Failed`);
+          console.error(`password-generator-${kind}-failed`);
+          if (readyProfileId)
+            void recordEventForProfile(readyProfileId, {
+              action: kind === 'clipboard' ? 'Copy' : 'Create',
+              category: 'Application',
+              dataChanged: false,
+              durationMs: 0,
+              eventCode:
+                kind === 'clipboard'
+                  ? 'PASSWORD-GENERATOR-COPY-FAILED'
+                  : 'PASSWORD-GENERATOR-CREATE-FAILED',
+              itemType: 'Generated password',
+              itemsAffected: 0,
+              kind: 'DIAGNOSTIC',
+              level: 'ERROR',
+              message,
+              outcome: 'Failed',
+              source: 'Password generator',
+            });
+          const notification = {
+            id: 'password-generator-feedback',
+            level: 'error' as const,
+            message,
+            title: t('notifications.errorTitle'),
+          };
+          if (currentInitializationState.status === 'ready')
+            notifyForActiveProfile(notification);
+          else showNotification(notification);
+        }}
+        onGenerated={() => {
+          const notification = {
+            id: 'password-generator-feedback',
+            level: 'success' as const,
+            message: t('passwordGenerator.generatedMessage'),
+            title: t('passwordGenerator.generatedTitle'),
+          };
+          if (currentInitializationState.status === 'ready')
+            notifyForActiveProfile(notification);
+          else showNotification(notification);
+        }}
+        onValidationFailure={(requiredLength) => {
+          const notification = {
+            id: 'password-generator-feedback',
+            level: 'error' as const,
+            message: t('passwordGenerator.lengthTooShort', {
+              count: requiredLength,
+            }),
+            title: t('notifications.errorTitle'),
+          };
+          if (currentInitializationState.status === 'ready')
+            notifyForActiveProfile(notification);
+          else showNotification(notification);
         }}
       />
       {currentInitializationState.status === 'ready' ? (
@@ -3315,6 +3429,12 @@ export function App({
                 folders: t('profiles.foldersAffected', {
                   count: impact.folderCount,
                 }),
+                notes: t('profiles.notesAffected', {
+                  count: impact.noteCount,
+                }),
+                noteFolders: t('profiles.noteFoldersAffected', {
+                  count: impact.noteFolderCount,
+                }),
               }),
               'delete',
               t('profiles.deleteTitle'),
@@ -3364,7 +3484,122 @@ export function App({
         }}
         profiles={profiles}
       />
+      {isNotesOpen && currentInitializationState.status === 'ready' ? (
+        <NotesWorkspace
+          dateTimeFormat={activeSettings?.dateTimeFormat ?? 'browser'}
+          profileId={currentInitializationState.profile.id}
+          shortcutPreferences={
+            currentInitializationState.settings.shortcutPreferences
+          }
+          onBack={async (changed) => {
+            if (
+              changed &&
+              !(await requestConfirmation(
+                t('notes.discardConfirm'),
+                'discard',
+                t('notes.discardTitle'),
+              ))
+            )
+              return false;
+            setIsNotesOpen(false);
+            requestAnimationFrame(() => profileButtonRef.current?.focus());
+            return true;
+          }}
+          onConfirm={(kind) =>
+            requestConfirmation(
+              t(
+                kind === 'delete'
+                  ? 'notes.deleteConfirm'
+                  : kind === 'deleteFolder'
+                    ? 'notes.deleteFolderConfirm'
+                    : 'notes.discardConfirm',
+              ),
+              kind === 'discard' ? 'discard' : 'delete',
+              t(
+                kind === 'delete'
+                  ? 'notes.deleteTitle'
+                  : kind === 'deleteFolder'
+                    ? 'notes.deleteFolderTitle'
+                    : 'notes.discardTitle',
+              ),
+            )
+          }
+          onOpenLink={async (url, changed) => {
+            const disposition =
+              activeSettings?.bookmarkOpening ?? 'current-tab';
+            let parsed: URL;
+            try {
+              parsed = new URL(url);
+            } catch {
+              return;
+            }
+            if (!['http:', 'https:'].includes(parsed.protocol)) return;
+            const losesChanges = disposition === 'current-tab' && changed;
+            if (
+              (losesChanges || activeSettings?.confirmExternalLinks) &&
+              !(await requestConfirmation(
+                t(
+                  losesChanges
+                    ? 'notes.linkDiscardConfirm'
+                    : 'security.confirmExternalLink',
+                ),
+                'open',
+                t('notes.openLinkTitle'),
+              ))
+            )
+              return;
+            if (disposition === 'new-tab')
+              window.open(parsed.href, '_blank', 'noopener,noreferrer');
+            else window.location.assign(parsed.href);
+          }}
+          onMutation={(action: NotesMutationAction) => {
+            const isRepair = action === 'storage-repaired';
+            void recordEventForProfile(currentInitializationState.profile.id, {
+              action: isRepair ? 'Repair' : 'Update',
+              category: 'Notes',
+              dataChanged: true,
+              durationMs: 0,
+              eventCode: `NOTES-${action.toUpperCase().replaceAll('-', '-')}`,
+              itemType: 'Note data',
+              itemsAffected: 1,
+              kind: isRepair ? 'DIAGNOSTIC' : 'ACTIVITY',
+              level: isRepair ? 'WARN' : 'INFO',
+              message: t(
+                isRepair
+                  ? 'activityLog.messages.notesStorageRepaired'
+                  : 'activityLog.messages.notesChanged',
+              ),
+              outcome: 'Succeeded',
+              source: 'Notes workspace',
+            });
+            if (!isRepair)
+              notifyForActiveProfile({
+                level: 'success',
+                message: t('notes.changeSaved'),
+                title: t('notes.savedTitle'),
+              });
+          }}
+          onMutationError={() => {
+            void recordEventForProfile(currentInitializationState.profile.id, {
+              action: 'Update',
+              category: 'Notes',
+              dataChanged: false,
+              durationMs: 0,
+              eventCode: 'NOTES-CHANGE-FAILED',
+              itemType: 'Note data',
+              itemsAffected: 0,
+              kind: 'DIAGNOSTIC',
+              level: 'ERROR',
+              message: t('activityLog.messages.notesChangeFailed'),
+              outcome: 'Failed',
+              source: 'Notes workspace',
+            });
+            notifyOperationError(t('notes.saveFailed'));
+          }}
+        />
+      ) : null}
       <BookmarkGrid
+        hidden={isNotesOpen}
         bookmarkOpening={
           currentInitializationState.status === 'ready'
             ? (currentInitializationState.settings.bookmarkOpening ??

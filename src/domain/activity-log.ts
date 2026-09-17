@@ -5,6 +5,7 @@ export const activityLogKindSchema = z.enum(['ACTIVITY', 'DIAGNOSTIC']);
 export const activityLogCategorySchema = z.enum([
   'Application',
   'Bookmarks',
+  'Notes',
   'Profiles',
 ]);
 

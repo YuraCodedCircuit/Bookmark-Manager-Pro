@@ -6,6 +6,42 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.5.0 - 2026-09-17
+
+### New
+
+- Added a profile-independent password generator with secure random generation,
+  animated reveal, strength feedback, configurable character sets, generation
+  confirmation after explicit generation, validation error feedback, and
+  explicit clipboard copy with a clearer confirmation. Passwords and generator
+  options are never saved, logged, or included in notification text.
+- Added local, profile-owned Notes from the active profile menu. Notes use
+  explicit saving, detect conflicting edits, support duplicate titles, and can
+  be found by title without changing the visible folder tree.
+- Added a Home-rooted Notes folder hierarchy with nested folder creation,
+  renaming, note relocation, and deletion. Folder deletion can move contained
+  notes to Home or permanently delete them after confirmation.
+- Added Markdown editing and safe previewing for notes, including configurable
+  formatting shortcuts and validated HTTP and HTTPS links that follow the
+  profile's link-opening preference.
+- Included notes and note folders in profile backups, restores, storage counts,
+  and profile deletion.
+
+### UI/UX
+
+- Added a distinct, recognizable icon to every profile-menu destination,
+  including gear, database backup, history clock, LOG, and NEW designs, while
+  preserving each command's text and status.
+- Matched profile-menu command focus outlines to the accent-colored close-button
+  focus treatment instead of the browser's default black outline.
+- Added accessible top-layer context menus and modal folder trees for Notes so
+  folder actions and note relocation are not clipped by workspace panels.
+- Kept the Notes editor controls in a stable order and position across Edit and
+  Preview modes, with breadcrumbs above the title and Delete and Save below the
+  note body.
+- Confined horizontal and vertical scrolling to the Notes folder tree while
+  keeping the full navigation panel and narrow-screen layouts usable.
+
 ## 0.4.1 - 2026-09-14
 
 ### Improved

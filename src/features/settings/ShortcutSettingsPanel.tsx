@@ -27,7 +27,7 @@ export function ShortcutSettingsPanel({
     kind: 'conflict' | 'invalid' | 'reserved';
   }>();
 
-  const updateBinding = (action: ShortcutAction, binding: string) => {
+  const updateBinding = (action: ShortcutAction, binding: string | null) => {
     onChange({
       ...preferences,
       bindings: { ...preferences.bindings, [action]: binding },
@@ -124,6 +124,13 @@ export function ShortcutSettingsPanel({
                               setRecording(undefined);
                               return;
                             }
+                            if (
+                              event.key === 'Backspace' ||
+                              event.key === 'Delete'
+                            ) {
+                              updateBinding(action, null);
+                              return;
+                            }
                             const binding = bindingFromKeyboardEvent(
                               event.nativeEvent,
                             );
@@ -151,11 +158,20 @@ export function ShortcutSettingsPanel({
                           <kbd>
                             {recording === action
                               ? t('displaySettings.shortcuts.pressKeys')
-                              : preferences.bindings[action]}
+                              : (preferences.bindings[action] ??
+                                t('displaySettings.shortcuts.none'))}
                           </kbd>
                         </button>
                       </td>
                       <td>
+                        <button
+                          className="shortcut-settings__button shortcut-settings__restore"
+                          disabled={preferences.bindings[action] === null}
+                          onClick={() => updateBinding(action, null)}
+                          type="button"
+                        >
+                          {t('displaySettings.shortcuts.disable')}
+                        </button>{' '}
                         <button
                           className="shortcut-settings__button shortcut-settings__restore"
                           disabled={!changed}

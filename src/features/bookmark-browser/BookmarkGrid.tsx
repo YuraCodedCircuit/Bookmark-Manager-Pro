@@ -45,6 +45,7 @@ type DropIntent = {
 };
 
 interface BookmarkGridProps {
+  hidden?: boolean;
   bookmarks: readonly Bookmark[];
   contentRef: Ref<HTMLElement>;
   folders: readonly Folder[];
@@ -88,6 +89,7 @@ interface BookmarkGridProps {
 }
 
 export function BookmarkGrid({
+  hidden,
   bookmarks,
   contentRef,
   folders,
@@ -323,6 +325,7 @@ export function BookmarkGrid({
         aria-keyshortcuts="Shift+F10"
         aria-label={t('bookmarks.label')}
         className="bookmark-grid bookmark-grid--details"
+        hidden={hidden}
         ref={contentRef}
         tabIndex={0}
       >
@@ -348,6 +351,7 @@ export function BookmarkGrid({
       aria-keyshortcuts="Shift+F10"
       aria-label={t('bookmarks.label')}
       className={`bookmark-grid bookmark-grid--${view.bookmarkView} bookmark-grid--${view.cardSize} bookmark-grid--spacing-${view.cardSpacing ?? 'comfortable'}`}
+      hidden={hidden}
       ref={contentRef}
       tabIndex={0}
     >

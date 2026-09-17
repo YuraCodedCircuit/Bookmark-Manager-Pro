@@ -10,6 +10,7 @@ import type {
   ActivityLogSettings,
 } from '../domain/activity-log';
 import type { UndoHistoryRecord } from './undo-history-record';
+import type { Note, NoteFolder } from '../domain/note';
 
 export interface MetadataRecord {
   key: string;
@@ -26,6 +27,8 @@ export class BookmarkManagerDatabase extends Dexie {
   readonly folders!: EntityTable<Folder, 'id'>;
   readonly favoriteItems!: Table<FavoriteItem, [string, string]>;
   readonly undoHistory!: EntityTable<UndoHistoryRecord, 'id'>;
+  readonly notes!: EntityTable<Note, 'id'>;
+  readonly noteFolders!: EntityTable<NoteFolder, 'id'>;
 
   constructor(name = 'bookmark-manager-pro') {
     super(name);
@@ -706,6 +709,50 @@ export class BookmarkManagerDatabase extends Dexie {
               beforeSynchronization: true,
               retentionPerTrigger: 5,
             };
+          }),
+      );
+    this.version(29)
+      .stores({
+        profiles: 'id, username, createdAt, updatedAt',
+        profileSettings: '&profileId',
+        metadata: '&key',
+        activity:
+          '&id, profileId, [profileId+timestamp], [profileId+level], category',
+        activityLogSettings: '&profileId',
+        bookmarks:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index]',
+        folders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index]',
+        favoriteItems: '&[profileId+itemId], profileId, itemId, favoritedAt',
+        undoHistory:
+          '&id, sessionId, [sessionId+profileId], [sessionId+position], [sessionId+createdAt]',
+        notes:
+          '&id, profileId, folderId, [profileId+folderId], [profileId+modifiedAt]',
+        noteFolders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+createdAt], [profileId+isHome]',
+      })
+      .upgrade((transaction) =>
+        transaction
+          .table('profileSettings')
+          .toCollection()
+          .modify((settings) => {
+            const bindings = settings.shortcutPreferences?.bindings;
+            if (!bindings) return;
+            bindings.noteNew ??= 'Alt+N';
+            bindings.noteSave ??= 'Control+S';
+            bindings.notePreview ??= 'Alt+P';
+            bindings.noteImportant ??= 'Alt+I';
+            bindings.noteHeading ??= 'Alt+H';
+            bindings.noteBold ??= 'Control+B';
+            bindings.noteItalic ??= 'Control+I';
+            bindings.noteStrike ??= 'Alt+S';
+            bindings.noteBullet ??= 'Alt+B';
+            bindings.noteNumbered ??= 'Alt+1';
+            bindings.noteTask ??= 'Alt+T';
+            bindings.noteQuote ??= 'Alt+Q';
+            bindings.noteInlineCode ??= 'Alt+C';
+            bindings.noteCodeBlock ??= 'Alt+Shift+C';
+            bindings.noteLink ??= 'Control+K';
           }),
       );
   }

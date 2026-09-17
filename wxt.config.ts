@@ -12,6 +12,7 @@ export default defineConfig({
     artifactTemplate:
       '{{name}}-{{version}}-{{browser}}-{{manifestVersion}}.zip',
     excludeSources: [
+      '*.log',
       'AGENTS.md',
       'codex-internal/**',
       'design/**',

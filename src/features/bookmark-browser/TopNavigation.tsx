@@ -8,6 +8,7 @@ import { TreeIcon } from '../../components/icons/TreeIcon';
 import type { PathSeparator } from '../../platform/navigation/path-separator';
 
 interface TopNavigationProps {
+  hidden?: boolean;
   path: readonly string[];
   pathSeparator: PathSeparator;
   onNavigate: (index: number) => void;
@@ -20,6 +21,7 @@ interface TopNavigationProps {
 }
 
 export function TopNavigation({
+  hidden,
   path,
   pathSeparator,
   onNavigate,
@@ -41,7 +43,7 @@ export function TopNavigation({
   }, [path]);
 
   return (
-    <header className="top-navigation">
+    <header className="top-navigation" hidden={hidden}>
       <button
         aria-label={t('navigation.openFolderTree')}
         className="icon-button"

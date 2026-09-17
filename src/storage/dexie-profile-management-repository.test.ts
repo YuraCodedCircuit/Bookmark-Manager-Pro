@@ -235,6 +235,8 @@ describe('DexieProfileManagementRepository', () => {
     await expect(repository.getDeletionImpact(secondId)).resolves.toEqual({
       bookmarkCount: 1,
       folderCount: 1,
+      noteCount: 0,
+      noteFolderCount: 0,
       profileId: secondId,
     });
     await expect(

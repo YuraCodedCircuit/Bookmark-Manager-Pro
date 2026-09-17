@@ -8,6 +8,21 @@ export const shortcutActions = [
   'undo',
   'redo',
   'history',
+  'noteNew',
+  'noteSave',
+  'notePreview',
+  'noteImportant',
+  'noteHeading',
+  'noteBold',
+  'noteItalic',
+  'noteStrike',
+  'noteBullet',
+  'noteNumbered',
+  'noteTask',
+  'noteQuote',
+  'noteInlineCode',
+  'noteCodeBlock',
+  'noteLink',
 ] as const;
 
 export type ShortcutAction = (typeof shortcutActions)[number];
@@ -16,7 +31,8 @@ const shortcutBindingSchema = z
   .string()
   .regex(
     /^(?=.*(?:Control|Alt|Shift)\+)(?:(?:Control|Alt|Shift)\+)+(?:[A-Z0-9])$/,
-  );
+  )
+  .nullable();
 
 export const shortcutBindingsSchema = z.object({
   search: shortcutBindingSchema,
@@ -26,6 +42,21 @@ export const shortcutBindingsSchema = z.object({
   undo: shortcutBindingSchema,
   redo: shortcutBindingSchema,
   history: shortcutBindingSchema,
+  noteNew: shortcutBindingSchema.default('Alt+N'),
+  noteSave: shortcutBindingSchema.default('Control+S'),
+  notePreview: shortcutBindingSchema.default('Alt+P'),
+  noteImportant: shortcutBindingSchema.default('Alt+I'),
+  noteHeading: shortcutBindingSchema.default('Alt+H'),
+  noteBold: shortcutBindingSchema.default('Control+B'),
+  noteItalic: shortcutBindingSchema.default('Control+I'),
+  noteStrike: shortcutBindingSchema.default('Alt+S'),
+  noteBullet: shortcutBindingSchema.default('Alt+B'),
+  noteNumbered: shortcutBindingSchema.default('Alt+1'),
+  noteTask: shortcutBindingSchema.default('Alt+T'),
+  noteQuote: shortcutBindingSchema.default('Alt+Q'),
+  noteInlineCode: shortcutBindingSchema.default('Alt+C'),
+  noteCodeBlock: shortcutBindingSchema.default('Alt+Shift+C'),
+  noteLink: shortcutBindingSchema.default('Control+K'),
 });
 
 export const shortcutPreferencesSchema = z.object({
@@ -44,6 +75,21 @@ export const defaultShortcutBindings: ShortcutBindings = {
   undo: 'Control+Z',
   redo: 'Control+Y',
   history: 'Control+Shift+Z',
+  noteNew: 'Alt+N',
+  noteSave: 'Control+S',
+  notePreview: 'Alt+P',
+  noteImportant: 'Alt+I',
+  noteHeading: 'Alt+H',
+  noteBold: 'Control+B',
+  noteItalic: 'Control+I',
+  noteStrike: 'Alt+S',
+  noteBullet: 'Alt+B',
+  noteNumbered: 'Alt+1',
+  noteTask: 'Alt+T',
+  noteQuote: 'Alt+Q',
+  noteInlineCode: 'Alt+C',
+  noteCodeBlock: 'Alt+Shift+C',
+  noteLink: 'Control+K',
 };
 
 export const defaultShortcutPreferences: ShortcutPreferences = {
@@ -78,7 +124,8 @@ export function isReservedShortcut(binding: string) {
   return reservedBindings.has(binding);
 }
 
-export function matchesShortcut(event: KeyboardEvent, binding: string) {
+export function matchesShortcut(event: KeyboardEvent, binding: string | null) {
+  if (!binding) return false;
   const parts = new Set(binding.split('+'));
   return (
     !event.metaKey &&

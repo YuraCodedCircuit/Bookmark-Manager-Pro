@@ -6,6 +6,68 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.5.0 - 2026-09-17
+
+### Added
+
+- Added a transient `PasswordGeneratorDialog` and domain generator using
+  unbiased Web Crypto sampling, required character-group coverage, bounded
+  length validation, reference-compatible strength classification, a
+  motion-preference-aware 600-millisecond reveal, click-scoped privacy-safe
+  generation notifications, expected-validation error notifications without
+  diagnostic logging, a stable feedback notification slot that keeps later Copy
+  confirmation visible, and close-time focus restoration without reopening the
+  menu.
+- Added a profile-scoped `NotesWorkspace` with three-region responsive
+  navigation, title-only filtering, All notes and Important views, and a
+  recursive Home-rooted folder tree.
+- Added `NoteRepository` and `DexieNoteRepository` persistence boundaries with
+  profile ownership checks, validated limits, revision-checked saves, hierarchy
+  repair, transactional folder deletion, and note relocation.
+- Added configurable Notes commands to `ShortcutPreferences`, including
+  per-command disabling and duplicate-binding validation across bookmark and
+  Notes actions.
+- Added privacy-safe Notes activity records and profile-aware success and error
+  notifications without recording note titles, bodies, folder names, or search
+  text.
+
+### Changed
+
+- Excluded local log files from the Firefox source archive generated for
+  release submission.
+- Applied the shared `--focus` token to profile-menu destination
+  `:focus-visible` outlines while preserving enabled-only pointer highlighting
+  and disabled command behavior.
+- Advanced the application database to schema 29 with `notes` and `noteFolders`
+  stores and defaulted Notes shortcut bindings for existing profile settings.
+- Advanced backup payloads to version 2 so snapshots, replacement restores, and
+  restore-as-new operations include remapped Notes data while preserving version
+  1 checksum compatibility.
+- Extended profile deletion previews, storage estimates, and transactional
+  cleanup to include profile-owned notes and note folders.
+
+### Security
+
+- Kept generated passwords out of persistence, activity records, diagnostics,
+  and notification content; clipboard writes occur only after explicit user
+  activation, with privacy-safe failure categories.
+- Rendered Markdown through an allowlisted React preview and limited note-link
+  navigation to validated HTTP and HTTPS URLs.
+
+### UI/UX
+
+- Added decorative, code-native SVG icons for all 14 `ProfileMenuPanel`
+  destinations, including dedicated Settings, Backup, Undo history, activity
+  log, and What's new glyphs, while preserving localized button names and
+  disabled states.
+- Portal-rendered, outside-dismissible folder and note menus avoid pane clipping,
+  and note relocation uses a focus-contained modal tree with a highlighted
+  pending destination.
+- Kept the editor DOM order aligned with its visual order and reserved a stable
+  Preview/Edit control slot so switching modes does not shift the editor panel.
+- Constrained workspace overflow so the navigation shell remains fixed while
+  the folder tree owns both scroll axes at wide and narrow viewport sizes.
+
 ## 0.4.1 - 2026-09-14
 
 ### Changed

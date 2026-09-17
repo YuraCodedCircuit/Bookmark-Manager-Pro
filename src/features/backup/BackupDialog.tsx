@@ -548,6 +548,14 @@ function SnapshotDetails({
             value={snapshot.payload.folders.length}
           />
           <DetailRow
+            label={t('backup.notes')}
+            value={snapshot.payload.notes?.length ?? 0}
+          />
+          <DetailRow
+            label={t('backup.noteFolders')}
+            value={snapshot.payload.noteFolders?.length ?? 0}
+          />
+          <DetailRow
             label={t('backup.favorites')}
             value={snapshot.payload.favorites.length}
           />
@@ -632,6 +640,14 @@ function RestoreSnapshot({
           <DetailRow
             label={t('backup.folders')}
             value={snapshot.payload.folders.length}
+          />
+          <DetailRow
+            label={t('backup.notes')}
+            value={snapshot.payload.notes?.length ?? 0}
+          />
+          <DetailRow
+            label={t('backup.noteFolders')}
+            value={snapshot.payload.noteFolders?.length ?? 0}
           />
           <DetailRow
             label={t('backup.favorites')}

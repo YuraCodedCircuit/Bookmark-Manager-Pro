@@ -14,6 +14,7 @@ import type { WebPreflightSnapshot } from '../application/preflight/preflight-st
 import type { Bookmark } from '../domain/bookmark';
 import { safeBookmarkUrlSchema } from '../domain/bookmark-url';
 import type { Folder } from '../domain/folder';
+import { defaultShortcutPreferences } from '../domain/keyboard-shortcuts';
 import type { NavigationItems } from '../application/bookmark/manage-bookmarks';
 import '../localization/i18n';
 import { App } from './App';
@@ -127,6 +128,8 @@ const profileManager = {
   getDeletionImpact: vi.fn().mockResolvedValue({
     bookmarkCount: 0,
     folderCount: 1,
+    noteCount: 0,
+    noteFolderCount: 0,
     profileId: createdProfile.profile.id,
   }),
   getStorageUsage: vi.fn().mockResolvedValue([]),
@@ -231,6 +234,8 @@ afterEach(() => {
   profileManager.getDeletionImpact.mockResolvedValue({
     bookmarkCount: 0,
     folderCount: 1,
+    noteCount: 0,
+    noteFolderCount: 0,
     profileId: createdProfile.profile.id,
   });
   Object.defineProperty(navigator, 'clipboard', {
@@ -746,6 +751,7 @@ describe('App', () => {
         ...createdProfile.settings,
         shortcutPreferences: {
           bindings: {
+            ...defaultShortcutPreferences.bindings,
             copy: 'Control+C',
             cut: 'Control+X',
             history: 'Control+Shift+Z',
@@ -1216,6 +1222,8 @@ describe('App', () => {
     profileManager.getDeletionImpact.mockResolvedValue({
       bookmarkCount: 12,
       folderCount: 4,
+      noteCount: 3,
+      noteFolderCount: 2,
       profileId: inactiveProfile.id,
     });
     renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
@@ -1233,7 +1241,9 @@ describe('App', () => {
     const confirmation = await screen.findByRole('dialog', {
       name: 'Delete profile?',
     });
-    expect(confirmation).toHaveTextContent('12 bookmarks and 4 folders');
+    expect(confirmation).toHaveTextContent(
+      '12 bookmarks, 4 folders, 3 notes, and 2 note folders',
+    );
     expect(
       within(confirmation).getByRole('button', { name: 'Cancel' }),
     ).toHaveFocus();
@@ -1308,6 +1318,101 @@ describe('App', () => {
     expect(about).toBeVisible();
     expect(within(about).getByText('Alpha')).toBeVisible();
     expect(within(about).getByRole('button', { name: 'Close' })).toHaveFocus();
+  });
+
+  it('opens and closes the temporary Notes workspace from the active profile menu', async () => {
+    const user = userEvent.setup();
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+
+    await user.click(screen.getByRole('button', { name: 'Open profile menu' }));
+    await user.click(screen.getByRole('button', { name: 'Notes' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Notes', level: 1 }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'Open profile menu' }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Back to bookmarks' }));
+    expect(
+      await screen.findByRole('button', { name: 'Open profile menu' }),
+    ).toHaveFocus();
+    expect(
+      screen.queryByRole('heading', { name: 'Notes', level: 1 }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('opens the transient password generator and closes without reopening the profile menu', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+
+    await user.click(screen.getByRole('button', { name: 'Open profile menu' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Password generator' }),
+    );
+
+    const generator = await screen.findByRole('dialog', {
+      name: 'Password generator',
+    });
+    const output = within(generator).getByRole('textbox', {
+      name: 'Generated password',
+    });
+    const copyButton = within(generator).getByRole('button', {
+      name: 'Copy password',
+    });
+    await waitFor(() => expect(copyButton).toBeEnabled());
+    expect(
+      screen.queryByText('A new random password was generated.'),
+    ).not.toBeInTheDocument();
+
+    const length = within(generator).getByRole('spinbutton', {
+      name: 'Password length',
+    });
+    fireEvent.change(length, { target: { value: '3' } });
+    await user.click(
+      within(generator).getByRole('button', { name: 'Generate' }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getAllByText(
+          'Choose at least 4 characters for the selected character sets.',
+        ),
+      ).toHaveLength(3),
+    );
+
+    fireEvent.change(length, { target: { value: '16' } });
+    await user.click(
+      within(generator).getByRole('button', { name: 'Generate' }),
+    );
+    expect(
+      await screen.findByText('A new random password was generated.'),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(copyButton).toBeEnabled());
+    await user.click(copyButton);
+    expect(writeText).toHaveBeenCalledWith(output.textContent);
+    expect(
+      await screen.findByText('Password copied to your clipboard.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('A new random password was generated.'),
+    ).not.toBeInTheDocument();
+
+    await user.click(within(generator).getByRole('button', { name: 'Cancel' }));
+    expect(
+      await screen.findByRole('button', { name: 'Open profile menu' }),
+    ).toHaveFocus();
+    expect(
+      screen.queryByRole('dialog', { name: 'Password generator' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Password generator' }),
+    ).not.toBeInTheDocument();
   });
 
   it('opens the activity-log preview from the profile menu', async () => {

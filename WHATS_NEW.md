@@ -1,18 +1,27 @@
-# What's New in 0.4.1
+# What's New in 0.5.0
 
-Released September 14, 2026.
+Released September 17, 2026.
 
-This release aligns new-folder display defaults with Home and makes profile
-deletion clearer before any content is removed.
+This release adds profile-owned Notes, a private random password generator, and
+clearer profile-menu navigation.
 
 ## Highlights
 
-- New profiles start with Home's Card view, Small cards, Comfortable spacing,
-  Manual order, Ascending direction, and no grouping as the Bookmark display
-  defaults for folders created afterward.
-- Deleting an inactive profile now opens a confirmation window above Manage
-  profiles. It reports how many bookmarks and folders, including Home, will be
-  removed while confirming that the safety backup will be retained.
+- **Notes** - Create, organize, search, edit, and preview Markdown notes inside
+  the active profile. Notes support nested folders, Important status, explicit
+  saving, conflict detection, and safe HTTP and HTTPS links.
+- **Password generator** - Generate strong random passwords without storing or
+  logging them. Configure character groups and length, review strength, reveal
+  the result with reduced-motion support, and copy it explicitly.
+- **Profile-menu clarity** - Every destination now has a distinct icon, with
+  improved focus and highlight treatment for easier navigation.
+
+## Improvements
+
+- Notes and note folders are included in profile backups, restores, storage
+  counts, and profile deletion.
+- Notes folder and action menus stay usable above workspace panels, and the
+  folder tree owns its scrolling on wide and narrow layouts.
 
 ## Full changelog
 

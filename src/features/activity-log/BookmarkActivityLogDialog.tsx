@@ -430,6 +430,7 @@ export function BookmarkActivityLogDialog({
             <option value="Bookmarks">
               {t('activityLog.categories.bookmarks')}
             </option>
+            <option value="Notes">{t('activityLog.categories.notes')}</option>
             <option value="Profiles">
               {t('activityLog.categories.profiles')}
             </option>

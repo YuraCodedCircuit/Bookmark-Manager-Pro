@@ -184,6 +184,8 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
           bookmarks,
           folders,
           favorites,
+          notes,
+          noteFolders,
         ] = await Promise.all([
           this.database.profileSettings.get(profile.id),
           this.database.activity
@@ -200,6 +202,11 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
             .where('profileId')
             .equals(profile.id)
             .toArray(),
+          this.database.notes.where('profileId').equals(profile.id).toArray(),
+          this.database.noteFolders
+            .where('profileId')
+            .equals(profile.id)
+            .toArray(),
         ]);
         const payload = [
           profile,
@@ -209,6 +216,8 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
           ...bookmarks,
           ...folders,
           ...favorites,
+          ...notes,
+          ...noteFolders,
         ].filter(Boolean);
         return {
           profileId: profile.id,
@@ -223,15 +232,36 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
     await this.database.open();
     return this.database.transaction(
       'r',
-      [this.database.profiles, this.database.bookmarks, this.database.folders],
+      [
+        this.database.profiles,
+        this.database.bookmarks,
+        this.database.folders,
+        this.database.notes,
+        this.database.noteFolders,
+      ],
       async () => {
         if (!(await this.database.profiles.get(profileId)))
           throw new Error('profile-not-found');
-        const [bookmarkCount, folderCount] = await Promise.all([
-          this.database.bookmarks.where('profileId').equals(profileId).count(),
-          this.database.folders.where('profileId').equals(profileId).count(),
-        ]);
-        return { bookmarkCount, folderCount, profileId };
+        const [bookmarkCount, folderCount, noteCount, noteFolderCount] =
+          await Promise.all([
+            this.database.bookmarks
+              .where('profileId')
+              .equals(profileId)
+              .count(),
+            this.database.folders.where('profileId').equals(profileId).count(),
+            this.database.notes.where('profileId').equals(profileId).count(),
+            this.database.noteFolders
+              .where('profileId')
+              .equals(profileId)
+              .count(),
+          ]);
+        return {
+          bookmarkCount,
+          folderCount,
+          noteCount,
+          noteFolderCount,
+          profileId,
+        };
       },
     );
   }
@@ -262,6 +292,8 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
         this.database.folders,
         this.database.favoriteItems,
         this.database.metadata,
+        this.database.notes,
+        this.database.noteFolders,
       ],
       async () => {
         const metadata = activeMetadataSchema.parse(
@@ -287,6 +319,11 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
           .equals(profileId)
           .delete();
         await this.database.favoriteItems
+          .where('profileId')
+          .equals(profileId)
+          .delete();
+        await this.database.notes.where('profileId').equals(profileId).delete();
+        await this.database.noteFolders
           .where('profileId')
           .equals(profileId)
           .delete();

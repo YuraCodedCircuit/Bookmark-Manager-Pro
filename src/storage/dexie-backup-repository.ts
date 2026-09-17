@@ -26,6 +26,8 @@ export class DexieBackupRepository implements BackupRepository {
         this.primary.favoriteItems,
         this.primary.activity,
         this.primary.metadata,
+        this.primary.notes,
+        this.primary.noteFolders,
       ],
       async () => {
         const [
@@ -37,6 +39,8 @@ export class DexieBackupRepository implements BackupRepository {
           favorites,
           activity,
           syncRecord,
+          notes,
+          noteFolders,
         ] = await Promise.all([
           this.primary.profiles.get(profileId),
           this.primary.profileSettings.get(profileId),
@@ -49,10 +53,15 @@ export class DexieBackupRepository implements BackupRepository {
             .toArray(),
           this.primary.activity.where('profileId').equals(profileId).toArray(),
           this.primary.metadata.get(`sync:v1:${profileId}`),
+          this.primary.notes.where('profileId').equals(profileId).toArray(),
+          this.primary.noteFolders
+            .where('profileId')
+            .equals(profileId)
+            .toArray(),
         ]);
         if (!profile || !settings) throw new Error('backup-profile-not-found');
         return backupPayloadSchema.parse({
-          formatVersion: 1,
+          formatVersion: 2,
           databaseSchemaVersion: this.primary.verno,
           applicationVersion: packageMetadata.version,
           profile,
@@ -65,6 +74,8 @@ export class DexieBackupRepository implements BackupRepository {
           synchronization: syncRecord
             ? syncConnectionSchema.parse(syncRecord.value)
             : null,
+          notes,
+          noteFolders,
         });
       },
     );
@@ -106,6 +117,8 @@ export class DexieBackupRepository implements BackupRepository {
         this.primary.favoriteItems,
         this.primary.activity,
         this.primary.metadata,
+        this.primary.notes,
+        this.primary.noteFolders,
       ],
       async () => {
         if (!(await this.primary.profiles.get(profileId)))
@@ -118,6 +131,11 @@ export class DexieBackupRepository implements BackupRepository {
             .equals(profileId)
             .delete(),
           this.primary.activity.where('profileId').equals(profileId).delete(),
+          this.primary.notes.where('profileId').equals(profileId).delete(),
+          this.primary.noteFolders
+            .where('profileId')
+            .equals(profileId)
+            .delete(),
         ]);
         await this.primary.profiles.put(payload.profile);
         await this.primary.profileSettings.put(payload.settings);
@@ -130,6 +148,8 @@ export class DexieBackupRepository implements BackupRepository {
         await this.primary.folders.bulkPut(payload.folders);
         await this.primary.favoriteItems.bulkPut(payload.favorites);
         await this.primary.activity.bulkPut(payload.activity);
+        await this.primary.notes.bulkPut(payload.notes ?? []);
+        await this.primary.noteFolders.bulkPut(payload.noteFolders ?? []);
         if (payload.synchronization)
           await this.primary.metadata.put({
             key: `sync:v1:${profileId}`,
@@ -149,9 +169,12 @@ export class DexieBackupRepository implements BackupRepository {
     const profileId = crypto.randomUUID();
     const ids = new Map<string, string>([
       [payload.profile.id, profileId],
-      ...[...payload.folders, ...payload.bookmarks].map(
-        (item) => [item.id, crypto.randomUUID()] as const,
-      ),
+      ...[
+        ...payload.folders,
+        ...payload.bookmarks,
+        ...(payload.noteFolders ?? []),
+        ...(payload.notes ?? []),
+      ].map((item) => [item.id, crypto.randomUUID()] as const),
     ]);
     const remap = (id: string) => ids.get(id) ?? id;
     const now = Date.now();
@@ -169,6 +192,8 @@ export class DexieBackupRepository implements BackupRepository {
         this.primary.favoriteItems,
         this.primary.activity,
         this.primary.metadata,
+        this.primary.notes,
+        this.primary.noteFolders,
       ],
       async () => {
         await this.primary.profiles.add({
@@ -219,6 +244,22 @@ export class DexieBackupRepository implements BackupRepository {
             id: crypto.randomUUID(),
             operationId: `op-${crypto.randomUUID()}`,
             profileId,
+          })),
+        );
+        await this.primary.noteFolders.bulkAdd(
+          (payload.noteFolders ?? []).map((item) => ({
+            ...item,
+            id: remap(item.id),
+            profileId,
+            parentId: item.parentId ? remap(item.parentId) : null,
+          })),
+        );
+        await this.primary.notes.bulkAdd(
+          (payload.notes ?? []).map((item) => ({
+            ...item,
+            id: remap(item.id),
+            profileId,
+            folderId: remap(item.folderId),
           })),
         );
         if (payload.synchronization)

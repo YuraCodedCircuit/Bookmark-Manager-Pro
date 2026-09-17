@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -73,5 +79,30 @@ describe('ShortcutSettingsPanel', () => {
     expect(
       screen.getByRole('button', { name: 'Restore all defaults' }),
     ).toBeVisible();
+  });
+
+  it('allows an action shortcut to be disabled', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <ShortcutSettingsPanel
+        onChange={onChange}
+        preferences={defaultShortcutPreferences}
+      />,
+    );
+
+    const searchBinding = screen.getByRole('button', {
+      name: 'Change shortcut for Search',
+    });
+    const row = searchBinding.closest('tr');
+    expect(row).not.toBeNull();
+    if (!row) throw new Error('Search shortcut row was not rendered.');
+    await user.click(within(row).getByRole('button', { name: 'Disable' }));
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bindings: expect.objectContaining({ search: null }),
+      }),
+    );
   });
 });
