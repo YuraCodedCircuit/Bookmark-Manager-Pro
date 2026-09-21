@@ -189,7 +189,7 @@ export function ProfileManagerDialog({
           <span>{t('profiles.count', { count: profiles.length })}</span>
         </div>
         <div className="profile-list">
-          {profiles.map(({ profile, isActive }) => (
+          {profiles.map(({ bookmarkCount, folderCount, profile, isActive }) => (
             <article className="profile-row" key={profile.id}>
               <ProfileAvatar fallback={defaultProfileIcon} profile={profile} />
               <div className="profile-row__details">
@@ -204,7 +204,25 @@ export function ProfileManagerDialog({
                     ),
                   })}
                 </span>
-                <small>{profile.id}</small>
+                <small
+                  aria-label={t('profiles.contentCountsAccessible', {
+                    bookmarks: t('profiles.bookmarksAffected', {
+                      count: bookmarkCount,
+                    }),
+                    folders: t('profiles.foldersAffected', {
+                      count: folderCount,
+                    }),
+                  })}
+                >
+                  {t('profiles.contentCounts', {
+                    bookmarks: t('profiles.bookmarksAffected', {
+                      count: bookmarkCount,
+                    }),
+                    folders: t('profiles.foldersAffected', {
+                      count: folderCount,
+                    }),
+                  })}
+                </small>
               </div>
               {isActive ? (
                 <span className="profile-status">{t('profiles.active')}</span>

@@ -132,11 +132,7 @@ export function SaveCurrentPagePopup({
   const [decisionError, setDecisionError] = useState('');
   const [isDecisionSaving, setIsDecisionSaving] = useState(false);
   const [view, setView] = useState<DuplicateView>(() => {
-    if (
-      initialDuplicateLocations.length === 0 ||
-      ready.settings.duplicateHandling === 'allow'
-    )
-      return 'editor';
+    if (initialDuplicateLocations.length === 0) return 'editor';
     return ready.settings.duplicateHandling === 'prevent'
       ? 'initial-prevented'
       : 'initial-warning';

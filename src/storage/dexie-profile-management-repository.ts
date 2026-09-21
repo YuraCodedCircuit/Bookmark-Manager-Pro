@@ -27,15 +27,44 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
 
   async list(): Promise<readonly ProfileListItem[]> {
     await this.database.open();
-    const [profiles, metadata] = await Promise.all([
-      this.database.profiles.orderBy('createdAt').reverse().toArray(),
-      this.database.metadata.get('activeProfileId'),
-    ]);
-    const activeId = activeMetadataSchema.parse(metadata).value;
-    return profiles.map((stored) => {
-      const profile = profileSchema.parse(stored);
-      return { profile, isActive: profile.id === activeId };
-    });
+    return this.database.transaction(
+      'r',
+      [
+        this.database.profiles,
+        this.database.metadata,
+        this.database.bookmarks,
+        this.database.folders,
+      ],
+      async () => {
+        const [profiles, metadata] = await Promise.all([
+          this.database.profiles.orderBy('createdAt').reverse().toArray(),
+          this.database.metadata.get('activeProfileId'),
+        ]);
+        const activeId = activeMetadataSchema.parse(metadata).value;
+        return Promise.all(
+          profiles.map(async (stored) => {
+            const profile = profileSchema.parse(stored);
+            const [bookmarkCount, folderCount] = await Promise.all([
+              this.database.bookmarks
+                .where('profileId')
+                .equals(profile.id)
+                .count(),
+              this.database.folders
+                .where('profileId')
+                .equals(profile.id)
+                .and((folder) => !folder.isRoot)
+                .count(),
+            ]);
+            return {
+              bookmarkCount,
+              folderCount,
+              profile,
+              isActive: profile.id === activeId,
+            };
+          }),
+        );
+      },
+    );
   }
 
   async isProfileIdAvailable(profileId: string): Promise<boolean> {

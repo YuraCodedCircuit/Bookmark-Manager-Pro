@@ -73,7 +73,7 @@ export function ProfileSwitcherDialog({
         </button>
       </header>
       <div className="profile-list">
-        {profiles.map(({ profile, isActive }) => (
+        {profiles.map(({ bookmarkCount, folderCount, profile, isActive }) => (
           <article
             className={`profile-row${isActive ? ' profile-row--active' : ''}`}
             key={profile.id}
@@ -91,7 +91,25 @@ export function ProfileSwitcherDialog({
                   ),
                 })}
               </span>
-              <small>{profile.id}</small>
+              <small
+                aria-label={t('profiles.contentCountsAccessible', {
+                  bookmarks: t('profiles.bookmarksAffected', {
+                    count: bookmarkCount,
+                  }),
+                  folders: t('profiles.foldersAffected', {
+                    count: folderCount,
+                  }),
+                })}
+              >
+                {t('profiles.contentCounts', {
+                  bookmarks: t('profiles.bookmarksAffected', {
+                    count: bookmarkCount,
+                  }),
+                  folders: t('profiles.foldersAffected', {
+                    count: folderCount,
+                  }),
+                })}
+              </small>
             </div>
             {isActive ? (
               <span className="profile-status">{t('profiles.active')}</span>

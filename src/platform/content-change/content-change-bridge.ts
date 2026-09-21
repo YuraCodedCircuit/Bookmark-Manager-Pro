@@ -23,7 +23,10 @@ export class ContentChangeBridge {
       ? undefined
       : new BroadcastChannel(CHANNEL);
 
-  constructor(private readonly database = new BookmarkManagerDatabase()) {}
+  constructor(
+    private readonly database = new BookmarkManagerDatabase(),
+    private readonly notifyBackground: () => void = () => undefined,
+  ) {}
 
   async publish(input: ContentChangeInput): Promise<ContentChange> {
     const validated = contentChangeSchema
@@ -47,6 +50,7 @@ export class ContentChangeBridge {
       type: 'content.changed',
     });
     this.channel?.postMessage(change);
+    this.notifyBackground();
     return change;
   }
 
@@ -66,6 +70,7 @@ export class ContentChangeBridge {
       type: 'profile.activated',
     });
     this.channel?.postMessage(activation);
+    this.notifyBackground();
     return activation;
   }
 

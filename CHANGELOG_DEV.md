@@ -6,6 +6,48 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.5.1 - 2026-09-21
+
+### Added
+
+- Added a Firefox-only `chrome_settings_overrides.homepage` declaration for the
+  bundled `newtab.html` page; Chrome and Edge manifests remain unchanged.
+- Added a restart-safe toolbar saved-status controller with per-tab Action API
+  badges and titles, an optional `tabs` permission, and privacy-safe refresh
+  messages for navigation, profile activation, and bookmark mutations. Settings
+  now requests the permission through an explicit accent action before exposing
+  the profile-owned checkbox, emits preference-aware result notifications, and
+  records privacy-safe INFO, WARN, or ERROR permission outcomes.
+
+### Changed
+
+- Advanced IndexedDB to schema 30, defaulting the profile-owned toolbar-status
+  preference off and adding `[profileId+url]` for exact saved-URL counts.
+- Extended profile-list reads with profile-scoped bookmark and non-root folder
+  counts so the profile manager and switcher can show localized content
+  summaries instead of UUIDs.
+- Changed `FolderStyleDialog` disclosures to controlled single-open state that
+  resets to fully collapsed whenever the window opens.
+- Added localized random color and three-color gradient controls with polite
+  assistive-technology announcements to `FolderStyleDialog`.
+
+### Fixed
+
+- Restored an explicit 640 by 600 pixel toolbar-popup surface after Firefox
+  collapsed viewport-relative intrinsic sizing, retained vertical-only overflow
+  for duplicate decisions, and applied the profile-owned scrollbar behavior in
+  the popup through a capture-phase scroll activity controller.
+- Made the first-run `WelcomeDialog` content pane the definite overflow
+  container and forced its scrollbar track and thumb to remain visible
+  independently of the profile-owned scrollbar preference.
+- Lazy-loaded the extension-only toolbar permission adapter from the webpage
+  bootstrap so local preview and browser smoke-test startup remain available.
+- Removed the `allow`-mode bypass from popup initialization so every supported
+  current URL receives the same profile-scoped duplicate lookup before render.
+- Routed rejected folder-background image selections through a failure-isolated
+  Warning notification and cleared stale inline validation state before loading
+  a valid replacement.
+
 ## 0.5.0 - 2026-09-17
 
 ### Added

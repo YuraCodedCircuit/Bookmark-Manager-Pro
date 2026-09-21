@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { ManageBackups } from '../../application/backup/manage-backups';
 import type {
-  ProfileListItem,
+  ProfileIdentityListItem,
   ProfileStorageUsage,
 } from '../../application/profile/profile-management-repository';
 import type { BackupSnapshot } from '../../domain/backup';
@@ -18,7 +18,7 @@ interface BackupDialogProps {
   onClose: () => void;
   onRestored: (profileId: string) => Promise<void>;
   onReport?: (event: BackupUiEvent) => void;
-  profiles: readonly ProfileListItem[];
+  profiles: readonly ProfileIdentityListItem[];
   storageUsage: readonly ProfileStorageUsage[];
   service: Pick<ManageBackups, 'create' | 'delete' | 'list' | 'restore'>;
 }

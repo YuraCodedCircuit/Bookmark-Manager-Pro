@@ -20,6 +20,17 @@ WXT generates browser-specific manifests and packages. Shared code uses the
 promise-based `browser` API through `webextension-polyfill`. Direct `chrome.*`
 calls are limited to documented Chromium adapters.
 
+Firefox packages use the permanent AMO add-on ID
+`{3a1de31b-582d-4add-aa01-7b6ac6f7e4bb}` so signed releases remain associated
+with the existing Bookmark Manager Pro listing. Chrome and Edge manifests do
+not include the Firefox-specific ID.
+
+Firefox packages declare `chrome_settings_overrides.homepage` for the bundled
+`newtab.html` page so ordinary new windows can open Bookmark Manager Pro. This
+browser-specific setting requires Firefox's approval prompt and does not replace
+tabs restored by Firefox session recovery. Chrome and Edge do not receive the
+homepage override; their existing new-tab behavior remains unchanged.
+
 Generated manifests request the WebExtensions `search` permission. Search
 submission is routed through a capability-checked adapter and uses the default
 provider with current-tab or new-tab disposition. The supported browser API does
@@ -39,6 +50,11 @@ worker suspension. Each batch checks the active profile, permission, and roots.
 Revocation pauses the connection without deleting content. The standalone
 webpage cannot access native bookmarks or run synchronization.
 
+Toolbar saved status declares `tabs` as an optional permission in every target.
+It is requested only after the user enables the profile-owned setting. Chrome,
+Edge, and Firefox use a per-tab action badge and accessible title; denial or
+revocation clears the indicator without preventing the save popup from working.
+
 After a committed synchronization, toolbar-popup, or app content change,
 installed Chrome, Edge, and Firefox surfaces receive the same profile-scoped
 content-change message. Each tab reloads only an affected visible folder,
@@ -55,7 +71,8 @@ bookmark sync.
   in IndexedDB and uses a typed session adapter only for the opaque session ID;
   the webpage preview uses a tab-session marker. IndexedDB capacity errors use
   the same oldest-first retention behavior across targets.
-- Extension windows, new-tab overrides, and popup sizing may differ.
+- Extension windows, new-tab overrides, Firefox's consent-based homepage
+  override, and popup sizing may differ.
 - Privileged browser pages may hide the active tab URL from extensions. The
   current-URL popup treats a hidden or unsupported URL as an expected condition,
   explains that the page cannot be saved, and offers Close without a retry.
@@ -87,7 +104,8 @@ event-driven background script while Chrome and Edge use service workers.
 Each release candidate must verify:
 
 - Installation, startup, upgrade, disable, enable, and removal
-- New-tab, popup, settings, and focused-window surfaces
+- New-tab, Firefox new-window homepage, popup, settings, and focused-window
+  surfaces
 - Bookmark permissions and native synchronization
 - Commands, context menus, notifications, tabs, and downloads
 - IndexedDB persistence across worker restarts and browser restarts

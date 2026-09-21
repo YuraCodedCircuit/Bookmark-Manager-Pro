@@ -10,7 +10,7 @@ import {
   defaultProfilePreferences,
 } from '../../domain/profile-settings';
 import type {
-  ProfileListItem,
+  ProfileIdentityListItem,
   ProfileStorageUsage,
 } from '../../application/profile/profile-management-repository';
 import { SettingsCategoryIcon } from './SettingsCategoryIcon';
@@ -28,6 +28,8 @@ import {
   getSettingsCategoryMatches,
   highlightSettingsMatches,
 } from './settings-search';
+import { ToolbarSavedStatusPermissionDeniedError } from '../../platform/browser/toolbar-saved-status-error';
+import { PermissionIcon } from '../../components/icons/PermissionIcon';
 
 const FEATURE_REQUEST_URL =
   'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues/new';
@@ -39,7 +41,8 @@ interface BookmarkDisplaySettingsDialogProps {
   onSaveActivitySettings: (value: ActivityLogSettings) => Promise<void>;
   onSaveUpdateAnnouncements?: (enabled: boolean) => Promise<void>;
   onOpenExternalLink?: (url: string) => void;
-  profiles: readonly ProfileListItem[];
+  onRequestToolbarSavedStatusPermission?: () => Promise<void>;
+  profiles: readonly ProfileIdentityListItem[];
   activityLogSettings: ActivityLogSettings;
   settings: ProfileSettings;
   storageUsage: readonly ProfileStorageUsage[];
@@ -60,6 +63,7 @@ export function BookmarkDisplaySettingsDialog({
   onSaveActivitySettings,
   onSaveUpdateAnnouncements = async () => undefined,
   onOpenExternalLink = () => undefined,
+  onRequestToolbarSavedStatusPermission = async () => undefined,
   profiles,
   settings,
   storageUsage,
@@ -73,7 +77,18 @@ export function BookmarkDisplaySettingsDialog({
   const [selectedCategory, setSelectedCategory] =
     useState<SettingsCategory>('general');
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(false);
+  const [requestingToolbarPermission, setRequestingToolbarPermission] =
+    useState(false);
+  const [
+    toolbarSavedStatusPermissionAvailable,
+    setToolbarSavedStatusPermissionAvailable,
+  ] = useState(settings.showSavedStatusOnToolbar ?? false);
+  const [toolbarSavedStatusEnabled, setToolbarSavedStatusEnabled] = useState(
+    settings.showSavedStatusOnToolbar ?? false,
+  );
+  const [error, setError] = useState<'save' | 'toolbar-permission' | null>(
+    null,
+  );
   const [accentColorMode, setAccentColorMode] = useState(
     settings.accentColorMode ?? 'system',
   );
@@ -138,7 +153,12 @@ export function BookmarkDisplaySettingsDialog({
     if (isOpen && !dialog.open) {
       setSearch('');
       setSelectedCategory('general');
-      setError(false);
+      setError(null);
+      setRequestingToolbarPermission(false);
+      setToolbarSavedStatusPermissionAvailable(
+        settings.showSavedStatusOnToolbar ?? false,
+      );
+      setToolbarSavedStatusEnabled(settings.showSavedStatusOnToolbar ?? false);
       setStartupLocation(settings.startupLocation ?? 'home');
       setAccentColorMode(settings.accentColorMode ?? 'system');
       setBookmarkSortBy(
@@ -174,7 +194,26 @@ export function BookmarkDisplaySettingsDialog({
     settings.shortcutPreferences,
     settings.startupLocation,
     settings.notificationPreferences,
+    settings.showSavedStatusOnToolbar,
   ]);
+
+  const requestToolbarSavedStatusPermission = async () => {
+    setRequestingToolbarPermission(true);
+    setError(null);
+    try {
+      await onRequestToolbarSavedStatusPermission();
+      setToolbarSavedStatusPermissionAvailable(true);
+      setToolbarSavedStatusEnabled(true);
+    } catch (caught) {
+      setError(
+        caught instanceof ToolbarSavedStatusPermissionDeniedError
+          ? 'toolbar-permission'
+          : 'save',
+      );
+    } finally {
+      setRequestingToolbarPermission(false);
+    }
+  };
 
   useEffect(() => {
     const content = contentRef.current;
@@ -203,7 +242,7 @@ export function BookmarkDisplaySettingsDialog({
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     setSaving(true);
-    setError(false);
+    setError(null);
     try {
       const currentPreferences =
         settings.profilePreferences ?? defaultProfilePreferences;
@@ -299,6 +338,9 @@ export function BookmarkDisplaySettingsDialog({
                           : data.get('duplicateHandling') === 'prevent'
                             ? 'prevent'
                             : 'allow',
+                      showSavedStatusOnToolbar: data.has(
+                        'showSavedStatusOnToolbar',
+                      ),
                       urlNormalization:
                         data.get('urlNormalization') === 'add' ? 'add' : 'ask',
                       faviconDisplay:
@@ -467,8 +509,12 @@ export function BookmarkDisplaySettingsDialog({
       if (showGeneral)
         await onSaveUpdateAnnouncements(data.has('showWhatsNewAfterUpdate'));
       onClose();
-    } catch {
-      setError(true);
+    } catch (caught) {
+      setError(
+        caught instanceof ToolbarSavedStatusPermissionDeniedError
+          ? 'toolbar-permission'
+          : 'save',
+      );
     } finally {
       setSaving(false);
     }
@@ -970,6 +1016,49 @@ export function BookmarkDisplaySettingsDialog({
                       </option>
                     </select>
                   </label>
+                  {toolbarSavedStatusPermissionAvailable ? (
+                    <label className="settings-checkbox-row">
+                      <input
+                        aria-describedby="toolbar-saved-status-help"
+                        checked={toolbarSavedStatusEnabled}
+                        name="showSavedStatusOnToolbar"
+                        onChange={(event) =>
+                          setToolbarSavedStatusEnabled(
+                            event.currentTarget.checked,
+                          )
+                        }
+                        type="checkbox"
+                      />
+                      <span>
+                        {t(
+                          'displaySettings.bookmarkBehavior.showSavedStatusOnToolbar',
+                        )}
+                      </span>
+                    </label>
+                  ) : (
+                    <button
+                      aria-describedby="toolbar-saved-status-help"
+                      className="settings-dialog__permission"
+                      disabled={requestingToolbarPermission}
+                      onClick={() => void requestToolbarSavedStatusPermission()}
+                      type="button"
+                    >
+                      <PermissionIcon />
+                      {t(
+                        requestingToolbarPermission
+                          ? 'displaySettings.bookmarkBehavior.requestingSavedStatusPermission'
+                          : 'displaySettings.bookmarkBehavior.allowSavedStatusPermission',
+                      )}
+                    </button>
+                  )}
+                  <p
+                    className="settings-dialog__help"
+                    id="toolbar-saved-status-help"
+                  >
+                    {t(
+                      'displaySettings.bookmarkBehavior.savedStatusPermissionHelp',
+                    )}
+                  </p>
                   <label>
                     <span>
                       {t('displaySettings.bookmarkBehavior.normalization')}
@@ -1470,7 +1559,11 @@ export function BookmarkDisplaySettingsDialog({
 
             {error ? (
               <p className="content-editor__error" role="alert">
-                {t('displaySettings.error')}
+                {t(
+                  error === 'toolbar-permission'
+                    ? 'displaySettings.bookmarkBehavior.savedStatusPermissionDenied'
+                    : 'displaySettings.error',
+                )}
               </p>
             ) : null}
           </section>

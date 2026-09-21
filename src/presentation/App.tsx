@@ -92,6 +92,7 @@ import { getPublishedVersionSection } from '../features/changelog/changelog-sect
 import { LegalDialog } from '../features/legal/LegalDialog';
 import { HelpDialog } from '../features/help/HelpDialog';
 import { createBrowserSearchAdapter } from '../platform/search/browser-search';
+import { ToolbarSavedStatusPermissionDeniedError } from '../platform/browser/toolbar-saved-status-error';
 import {
   defaultShortcutPreferences,
   matchesShortcut,
@@ -188,6 +189,11 @@ interface AppProps {
     | 'markUnavailable'
     | 'updatePreferences'
   >;
+  toolbarSavedStatus?: {
+    refresh(): Promise<void>;
+    removePermissionIfUnused(): Promise<void>;
+    requestPermission(): Promise<boolean>;
+  };
 }
 
 type ConfirmationAction =
@@ -224,6 +230,11 @@ export function App({
   resumePreflight,
   undoHistory,
   updateAnnouncements,
+  toolbarSavedStatus = {
+    refresh: async () => undefined,
+    removePermissionIfUnused: async () => undefined,
+    requestPermission: async () => false,
+  },
 }: AppProps) {
   const { t } = useTranslation();
   const [confirmationService] = useState(() => new ConfirmationService());
@@ -3171,8 +3182,80 @@ export function App({
             }
             isOpen={profileWindow === 'settings'}
             onClose={() => setProfileWindow(null)}
-            onSave={async (display) => {
+            onRequestToolbarSavedStatusPermission={async () => {
               try {
+                await toolbarSavedStatus.requestPermission();
+                await recordEventForProfile(
+                  currentInitializationState.profile.id,
+                  {
+                    action: 'Request permission',
+                    category: 'Application',
+                    dataChanged: false,
+                    durationMs: 0,
+                    eventCode: 'TOOLBAR-SAVED-STATUS-PERMISSION-GRANTED',
+                    itemType: 'Browser permission',
+                    itemsAffected: 1,
+                    kind: 'ACTIVITY',
+                    level: 'INFO',
+                    message: 'Toolbar saved-status permission was granted.',
+                    outcome: 'Succeeded',
+                    source: 'Settings',
+                  },
+                );
+                notifyForActiveProfile({
+                  level: 'success',
+                  message: t(
+                    'notifications.toolbarSavedStatusPermissionGrantedMessage',
+                  ),
+                  title: t(
+                    'notifications.toolbarSavedStatusPermissionGrantedTitle',
+                  ),
+                });
+              } catch (error) {
+                const denied =
+                  error instanceof ToolbarSavedStatusPermissionDeniedError;
+                await recordEventForProfile(
+                  currentInitializationState.profile.id,
+                  {
+                    action: 'Request permission',
+                    category: 'Application',
+                    dataChanged: false,
+                    durationMs: 0,
+                    eventCode: denied
+                      ? 'TOOLBAR-SAVED-STATUS-PERMISSION-DENIED'
+                      : 'TOOLBAR-SAVED-STATUS-PERMISSION-REQUEST-FAILED',
+                    itemType: 'Browser permission',
+                    itemsAffected: 0,
+                    kind: 'DIAGNOSTIC',
+                    level: denied ? 'WARN' : 'ERROR',
+                    message: denied
+                      ? 'Toolbar saved-status permission was not granted.'
+                      : 'Toolbar saved-status permission request failed.',
+                    outcome: denied ? 'Skipped' : 'Failed',
+                    source: 'Settings',
+                  },
+                );
+                notifyForActiveProfile({
+                  level: 'error',
+                  message: t(
+                    'notifications.toolbarSavedStatusPermissionDeniedMessage',
+                  ),
+                  title: t(
+                    'notifications.toolbarSavedStatusPermissionDeniedTitle',
+                  ),
+                });
+                throw error;
+              }
+            }}
+            onSave={async (display) => {
+              let newlyGrantedToolbarPermission = false;
+              try {
+                if (
+                  display.showSavedStatusOnToolbar &&
+                  !currentInitializationState.settings.showSavedStatusOnToolbar
+                )
+                  newlyGrantedToolbarPermission =
+                    await toolbarSavedStatus.requestPermission();
                 await runLoggedProfileAction(
                   async () => {
                     await profileManager.updateProfileSettings(
@@ -3187,6 +3270,19 @@ export function App({
                   t('activityLog.messages.profileUpdateFailed'),
                   false,
                 );
+                if (!display.showSavedStatusOnToolbar)
+                  await toolbarSavedStatus
+                    .removePermissionIfUnused()
+                    .catch(() =>
+                      console.error(
+                        'toolbar-saved-status-permission-remove-failed',
+                      ),
+                    );
+                await toolbarSavedStatus
+                  .refresh()
+                  .catch(() =>
+                    console.error('toolbar-saved-status-request-failed'),
+                  );
                 if (
                   (
                     display.notificationPreferences ??
@@ -3199,6 +3295,16 @@ export function App({
                     title: t('notifications.settingsSavedTitle'),
                   });
               } catch (error) {
+                if (newlyGrantedToolbarPermission)
+                  await toolbarSavedStatus
+                    .removePermissionIfUnused()
+                    .catch(() =>
+                      console.error(
+                        'toolbar-saved-status-permission-rollback-failed',
+                      ),
+                    );
+                if (error instanceof ToolbarSavedStatusPermissionDeniedError)
+                  throw error;
                 notifyOperationError(
                   t('activityLog.messages.profileUpdateFailed'),
                 );
@@ -3790,6 +3896,13 @@ export function App({
           key={currentFolder.id}
           navigationTransparency={currentFolder.navigationTransparency}
           onClose={() => setIsFolderStyleOpen(false)}
+          onImageRejected={() =>
+            notifyForActiveProfile({
+              level: 'warning',
+              message: t('contentEditor.imageError'),
+              title: t('notifications.imageNotSelectedTitle'),
+            })
+          }
           onSave={async ({
             appearance,
             bookmarkGroupBy,

@@ -22,6 +22,8 @@ import {
 } from '../../src/platform/tabs/current-tab';
 import { findNewestNonRootFolder } from '../../src/features/folder-tree/folder-tree-data';
 import { createContentChangeBridge } from '../../src/platform/content-change/create-content-change-bridge';
+import { refreshToolbarSavedStatus } from '../../src/platform/browser/toolbar-saved-status-permission';
+import { createPopupScrollbarVisibility } from '../../src/features/save-current-page/popup-scrollbar-visibility';
 import '../../src/styles/global.css';
 import './popup.css';
 
@@ -29,7 +31,16 @@ const activityLog = createActivityLogService();
 const bookmarkManager = createBookmarkManager();
 const preflight = createWebPreflight(activityLog);
 const undoHistory = createUndoHistoryService(bookmarkManager);
-const contentChanges = createContentChangeBridge();
+const contentChanges = createContentChangeBridge(() => {
+  void refreshToolbarSavedStatus().catch(() =>
+    console.error('toolbar-saved-status-request-failed'),
+  );
+});
+const popupScrollbarVisibility = createPopupScrollbarVisibility(
+  document.documentElement,
+  window,
+);
+popupScrollbarVisibility.setBehavior('scrolling');
 const popupDependencies = {
   activityLog,
   bookmarkManager,
@@ -57,7 +68,16 @@ async function loadReadyState(): Promise<{
   ready: SaveCurrentPageReadyState;
 }> {
   const [snapshot, tab] = await withTimeout(
-    Promise.all([preflight.execute(), getCurrentTab()]),
+    Promise.all([
+      preflight.execute().then((value) => {
+        if (value.initialization.status === 'ready')
+          popupScrollbarVisibility.setBehavior(
+            value.initialization.settings.scrollbarBehavior ?? 'scrolling',
+          );
+        return value;
+      }),
+      getCurrentTab(),
+    ]),
     8_000,
   );
   if (snapshot.initialization.status !== 'ready')
@@ -78,34 +98,32 @@ async function loadReadyState(): Promise<{
   const folder = findNewestNonRootFolder(folders) ?? root;
   let initialDuplicateLocations: Awaited<
     ReturnType<typeof bookmarkManager.listBookmarkLocationsByUrl>
-  > = [];
-  if (settings.duplicateHandling !== 'allow') {
+  >;
+  try {
+    initialDuplicateLocations = await withTimeout(
+      bookmarkManager.listBookmarkLocationsByUrl(profile.id, tab.url),
+      8_000,
+    );
+  } catch (error) {
     try {
-      initialDuplicateLocations = await withTimeout(
-        bookmarkManager.listBookmarkLocationsByUrl(profile.id, tab.url),
-        8_000,
-      );
-    } catch (error) {
-      try {
-        await activityLog.record(profile.id, {
-          action: 'Read',
-          category: 'Bookmarks',
-          dataChanged: false,
-          durationMs: 0,
-          eventCode: 'CURRENT-TAB-DUPLICATE-CHECK-FAILED',
-          itemType: 'Bookmark',
-          itemsAffected: 0,
-          kind: 'DIAGNOSTIC',
-          level: 'ERROR',
-          message: 'Current page duplicate check failed.',
-          outcome: 'Failed',
-          source: 'Toolbar popup',
-        });
-      } catch {
-        console.error('current-tab-popup-activity-log-write-failed');
-      }
-      throw new Error('popup-duplicate-check-failed', { cause: error });
+      await activityLog.record(profile.id, {
+        action: 'Read',
+        category: 'Bookmarks',
+        dataChanged: false,
+        durationMs: 0,
+        eventCode: 'CURRENT-TAB-DUPLICATE-CHECK-FAILED',
+        itemType: 'Bookmark',
+        itemsAffected: 0,
+        kind: 'DIAGNOSTIC',
+        level: 'ERROR',
+        message: 'Current page duplicate check failed.',
+        outcome: 'Failed',
+        source: 'Toolbar popup',
+      });
+    } catch {
+      console.error('current-tab-popup-activity-log-write-failed');
     }
+    throw new Error('popup-duplicate-check-failed', { cause: error });
   }
   return {
     initialDuplicateLocations,

@@ -755,6 +755,34 @@ export class BookmarkManagerDatabase extends Dexie {
             bindings.noteLink ??= 'Control+K';
           }),
       );
+    this.version(30)
+      .stores({
+        profiles: 'id, username, createdAt, updatedAt',
+        profileSettings: '&profileId',
+        metadata: '&key',
+        activity:
+          '&id, profileId, [profileId+timestamp], [profileId+level], category',
+        activityLogSettings: '&profileId',
+        bookmarks:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+url]',
+        folders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index]',
+        favoriteItems: '&[profileId+itemId], profileId, itemId, favoritedAt',
+        undoHistory:
+          '&id, sessionId, [sessionId+profileId], [sessionId+position], [sessionId+createdAt]',
+        notes:
+          '&id, profileId, folderId, [profileId+folderId], [profileId+modifiedAt]',
+        noteFolders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+createdAt], [profileId+isHome]',
+      })
+      .upgrade((transaction) =>
+        transaction
+          .table('profileSettings')
+          .toCollection()
+          .modify((settings) => {
+            settings.showSavedStatusOnToolbar ??= false;
+          }),
+      );
   }
 }
 

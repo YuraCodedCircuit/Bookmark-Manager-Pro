@@ -2591,6 +2591,34 @@ main {
   accent-color: var(--accent);
 }
 
+.settings-dialog .settings-dialog__permission {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.9rem;
+  color: var(--background);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 0.65rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settings-dialog__permission svg {
+  flex: 0 0 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.settings-dialog__permission:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .settings-dialog input[type='number'] {
   min-width: 0;
   padding: 11px 12px;
@@ -3587,15 +3615,31 @@ main {
 
 .welcome-dialog {
   width: min(52rem, calc(100vw - 2rem));
-  max-height: min(44rem, calc(100dvh - 2rem));
+  height: min(44rem, calc(100dvh - 2rem));
   padding: 0;
-  overflow: hidden auto;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--focus) 30%, var(--border-strong));
   border-radius: 1.25rem;
   background: var(--surface-raised);
   box-shadow: 0 2rem 6rem rgb(0 0 0 / 55%);
   color: var(--text);
   grid-template-columns: minmax(16rem, 0.85fr) minmax(0, 1.15fr);
+}
+
+.welcome-dialog__content::-webkit-scrollbar {
+  width: 14px;
+}
+
+.welcome-dialog__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.welcome-dialog__content::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  background: var(--border-strong);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
 }
 
 .welcome-dialog[open] {
@@ -3649,9 +3693,14 @@ main {
 
 .welcome-dialog__content {
   display: flex;
+  min-height: 0;
   flex-direction: column;
   justify-content: center;
   padding: clamp(2rem, 5vw, 3.75rem);
+  overflow-y: scroll;
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
 }
 
 .welcome-dialog__content h1 {

@@ -159,6 +159,84 @@ describe('DexieProfileManagementRepository', () => {
     ).toBe('Renamed');
   });
 
+  it('lists profile-owned bookmark and user-created folder counts', async () => {
+    const { database, repository } = await setup();
+    const homeId = '11111111-1111-4111-8111-111111111111';
+    const folderId = '22222222-2222-4222-8222-222222222222';
+    await database.folders.bulkAdd([
+      {
+        backgroundAppearance: { kind: 'color', value: '#0b121a' },
+        bookmarkView: 'card',
+        cardAppearance: { kind: 'color', value: '#2f7de1' },
+        createdAt: 1,
+        detailsTableTransparency: 0,
+        id: homeId,
+        includeNavigationBackground: false,
+        index: 0,
+        isRoot: true,
+        navigationTransparency: 45,
+        note: '',
+        parentId: null,
+        profileId: firstId,
+        tags: [],
+        title: 'Home',
+        updatedAt: 1,
+      },
+      {
+        backgroundAppearance: { kind: 'color', value: '#0b121a' },
+        bookmarkView: 'card',
+        cardAppearance: { kind: 'color', value: '#2f7de1' },
+        createdAt: 2,
+        detailsTableTransparency: 0,
+        id: folderId,
+        includeNavigationBackground: false,
+        index: 0,
+        isRoot: false,
+        navigationTransparency: 45,
+        note: '',
+        parentId: homeId,
+        profileId: firstId,
+        tags: [],
+        title: 'Projects',
+        updatedAt: 2,
+      },
+    ]);
+    await database.bookmarks.add({
+      cardAppearance: { kind: 'color', value: '#123456' },
+      createdAt: 3,
+      id: '33333333-3333-4333-8333-333333333333',
+      index: 0,
+      note: '',
+      parentId: folderId,
+      profileId: firstId,
+      tags: [],
+      title: 'Example',
+      updatedAt: 3,
+      url: 'https://example.com/',
+    });
+    await database.profiles.add({
+      createdAt: 2,
+      id: secondId,
+      updatedAt: 2,
+      username: 'Empty',
+    });
+
+    await expect(repository.list()).resolves.toEqual([
+      expect.objectContaining({
+        bookmarkCount: 0,
+        folderCount: 0,
+        isActive: false,
+        profile: expect.objectContaining({ id: secondId }),
+      }),
+      expect.objectContaining({
+        bookmarkCount: 1,
+        folderCount: 1,
+        isActive: true,
+        profile: expect.objectContaining({ id: firstId }),
+      }),
+    ]);
+  });
+
   it('protects the active profile and deletes an inactive profile with its settings', async () => {
     const { database, repository } = await setup();
     await repository.create(

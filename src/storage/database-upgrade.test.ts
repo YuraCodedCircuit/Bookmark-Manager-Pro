@@ -11,14 +11,14 @@ afterEach(async () =>
 );
 
 describe('BookmarkManagerDatabase schema upgrades', () => {
-  it('opens schema 29 with Notes stores, backup preferences, and session undo history', async () => {
+  it('opens schema 30 with Notes stores, URL status lookup, and session undo history', async () => {
     const name = `search-preferences-schema-${crypto.randomUUID()}`;
     names.push(name);
     const database = new BookmarkManagerDatabase(name);
 
     await database.open();
 
-    expect(database.verno).toBe(29);
+    expect(database.verno).toBe(30);
     expect(database.notes.schema.primKey.name).toBe('id');
     expect(database.noteFolders.schema.primKey.name).toBe('id');
     expect(database.undoHistory.schema.indexes.map(({ name }) => name)).toEqual(
@@ -28,7 +28,28 @@ describe('BookmarkManagerDatabase schema upgrades', () => {
         '[sessionId+position]',
       ]),
     );
+    expect(database.bookmarks.schema.indexes.map(({ name }) => name)).toContain(
+      '[profileId+url]',
+    );
     database.close();
+  });
+
+  it('disables toolbar saved status for schema-29 profiles', async () => {
+    const name = `upgrade-toolbar-status-${crypto.randomUUID()}`;
+    names.push(name);
+    const versionTwentyNine = new Dexie(name);
+    versionTwentyNine.version(29).stores({ profileSettings: '&profileId' });
+    const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
+    await versionTwentyNine.table('profileSettings').add({ profileId });
+    versionTwentyNine.close();
+
+    const upgraded = new BookmarkManagerDatabase(name);
+    await upgraded.open();
+
+    await expect(upgraded.profileSettings.get(profileId)).resolves.toEqual(
+      expect.objectContaining({ showSavedStatusOnToolbar: false }),
+    );
+    upgraded.close();
   });
 
   it('adds default backup preferences to schema-27 profiles', async () => {

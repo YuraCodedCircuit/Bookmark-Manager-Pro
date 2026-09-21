@@ -19,11 +19,13 @@ import {
   ensureSaveUrlContextMenu,
   SAVE_CURRENT_URL_MENU_ID,
 } from '../src/platform/browser/save-url-context-menu';
+import { ToolbarSavedStatusController } from '../src/platform/browser/toolbar-saved-status';
 
 const background: ReturnType<typeof defineBackground> = defineBackground(() => {
   const syncCommand = registerSynchronizationBackground();
   const preflight = createBackgroundPreflight();
   const updateAnnouncements = createUpdateAnnouncementManager();
+  const toolbarSavedStatus = new ToolbarSavedStatusController();
   let activePreflight: Promise<unknown> | undefined;
   let activeMenuRegistration: Promise<void> | undefined;
 
@@ -47,10 +49,21 @@ const background: ReturnType<typeof defineBackground> = defineBackground(() => {
     );
   };
 
+  const refreshToolbarStatusSafely = (tabId?: number, url?: string) => {
+    const refresh =
+      tabId === undefined
+        ? toolbarSavedStatus.refreshActiveTabs()
+        : toolbarSavedStatus.refreshTab(tabId, url);
+    void refresh.catch(() =>
+      console.error('toolbar-saved-status-refresh-failed'),
+    );
+  };
+
   // Register every listener synchronously before starting asynchronous work.
   browser.runtime.onInstalled.addListener((details) => {
     registerSaveUrlContextMenuSafely();
     void runPreflight();
+    refreshToolbarStatusSafely();
     if (details.reason === 'update' && details.previousVersion) {
       void updateAnnouncements
         .recordUpgrade(
@@ -63,6 +76,7 @@ const background: ReturnType<typeof defineBackground> = defineBackground(() => {
   browser.runtime.onStartup.addListener(() => {
     registerSaveUrlContextMenuSafely();
     void runPreflight();
+    refreshToolbarStatusSafely();
   });
   browser.runtime.onMessage.addListener(
     async (
@@ -80,6 +94,14 @@ const background: ReturnType<typeof defineBackground> = defineBackground(() => {
           protocolVersion: BACKGROUND_PROTOCOL_VERSION,
           type: 'request.invalid',
           errorCode: 'INVALID_REQUEST',
+        };
+      }
+
+      if (request.data.type === 'toolbar-saved-status.refresh') {
+        refreshToolbarStatusSafely();
+        return {
+          protocolVersion: BACKGROUND_PROTOCOL_VERSION,
+          type: 'toolbar-saved-status.accepted',
         };
       }
 
@@ -110,9 +132,26 @@ const background: ReturnType<typeof defineBackground> = defineBackground(() => {
       });
     });
   });
+  browser.tabs.onActivated.addListener(({ tabId }) => {
+    refreshToolbarStatusSafely(tabId);
+  });
+  browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    if (changeInfo.url || changeInfo.status === 'complete')
+      refreshToolbarStatusSafely(tabId, changeInfo.url);
+  });
+  browser.windows.onFocusChanged.addListener(() => {
+    refreshToolbarStatusSafely();
+  });
+  browser.permissions.onAdded.addListener((permissions) => {
+    if (permissions.permissions?.includes('tabs')) refreshToolbarStatusSafely();
+  });
+  browser.permissions.onRemoved.addListener((permissions) => {
+    if (permissions.permissions?.includes('tabs')) refreshToolbarStatusSafely();
+  });
 
   registerSaveUrlContextMenuSafely();
   void runPreflight();
+  refreshToolbarStatusSafely();
 });
 
 export default background;

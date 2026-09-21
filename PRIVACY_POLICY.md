@@ -1,6 +1,6 @@
 # Bookmark Manager Pro Privacy Policy
 
-**Effective date:** September 12, 2026
+**Effective date:** September 21, 2026
 **Publisher:** YuraCodedCircuit
 
 Bookmark Manager Pro is a local-first browser extension for organizing browser
@@ -53,6 +53,11 @@ Structured application information is stored locally using browser-managed
 IndexedDB. A temporary, opaque undo-session identifier may be stored in
 browser-managed session storage. The information is used only to provide the
 extension features requested by the user.
+
+The optional toolbar saved-status feature reads the active tab address after
+the user enables it. The address is compared locally with bookmarks in the
+active profile to set a per-tab toolbar badge and title. Browsed addresses are
+not stored as history, included in activity records, or transmitted.
 
 Recovery snapshots are stored in a separate browser-managed IndexedDB database.
 A snapshot can contain the selected profile's bookmarks, folders, favorites,
@@ -109,6 +114,11 @@ synchronization is enabled. Access can be revoked through the browser's
 extension controls. **Alarms** resumes active-profile synchronization work after
 background suspension, without requiring an application tab to remain open.
 Browser-specific manifests may express equivalent capabilities differently.
+Optional **Tabs** access is requested only when Show saved status on the toolbar
+is enabled. It allows the extension to read active tab addresses as tabs are
+selected or navigated so saved status can be shown before the toolbar popup is
+opened. The feature can be disabled in application settings, and the permission
+can be revoked through browser extension controls.
 
 ## Retention and deletion
 

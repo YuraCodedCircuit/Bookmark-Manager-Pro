@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../localization/i18n';
 import { defaultActivityLogSettings } from '../../application/activity-log/manage-activity-log';
 import { BookmarkDisplaySettingsDialog } from './BookmarkDisplaySettingsDialog';
+import { ToolbarSavedStatusPermissionDeniedError } from '../../platform/browser/toolbar-saved-status-error';
 
 afterEach(cleanup);
 
@@ -416,6 +417,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
   it('saves file-manager drag and drop preferences in Bookmarks', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async () => undefined);
+    const onRequestToolbarSavedStatusPermission = vi.fn(async () => undefined);
     render(
       <BookmarkDisplaySettingsDialog
         activityLogSettings={activityLogSettings}
@@ -423,6 +425,9 @@ describe('BookmarkDisplaySettingsDialog', () => {
         onClose={vi.fn()}
         onSave={onSave}
         onSaveActivitySettings={vi.fn(async () => undefined)}
+        onRequestToolbarSavedStatusPermission={
+          onRequestToolbarSavedStatusPermission
+        }
         profiles={[]}
         settings={settings}
         storageUsage={[]}
@@ -434,6 +439,15 @@ describe('BookmarkDisplaySettingsDialog', () => {
     expect(within(dialog).getByLabelText('Duplicate handling')).toHaveValue(
       'allow',
     );
+    const permissionButton = within(dialog).getByRole('button', {
+      name: 'Allow tab access',
+    });
+    expect(permissionButton).toHaveAccessibleDescription(
+      /optional access to tab addresses is required/i,
+    );
+    expect(
+      within(dialog).queryByLabelText('Show saved status on the toolbar'),
+    ).not.toBeInTheDocument();
     const protocolSetting = within(dialog).getByLabelText(
       'Missing web protocol',
     );
@@ -464,6 +478,11 @@ describe('BookmarkDisplaySettingsDialog', () => {
       within(dialog).getByLabelText('Duplicate handling'),
       'prevent',
     );
+    await user.click(permissionButton);
+    expect(onRequestToolbarSavedStatusPermission).toHaveBeenCalledOnce();
+    expect(
+      within(dialog).getByLabelText('Show saved status on the toolbar'),
+    ).toBeChecked();
     await user.selectOptions(
       within(dialog).getByLabelText('Tag order'),
       'alphabetical',
@@ -475,11 +494,48 @@ describe('BookmarkDisplaySettingsDialog', () => {
         dragAndDropEnabled: true,
         dropIntoFoldersEnabled: true,
         duplicateHandling: 'prevent',
+        showSavedStatusOnToolbar: true,
         folderDropHoverDelay: 900,
         openFolderAfterDrop: true,
         tagOrder: 'alphabetical',
       }),
     );
+  });
+
+  it('keeps Settings open and explains denied toolbar permission', async () => {
+    const user = userEvent.setup();
+    const onRequestToolbarSavedStatusPermission = vi.fn(async () => {
+      throw new ToolbarSavedStatusPermissionDeniedError();
+    });
+    render(
+      <BookmarkDisplaySettingsDialog
+        activityLogSettings={activityLogSettings}
+        isOpen
+        onClose={vi.fn()}
+        onSave={vi.fn(async () => undefined)}
+        onSaveActivitySettings={vi.fn(async () => undefined)}
+        onRequestToolbarSavedStatusPermission={
+          onRequestToolbarSavedStatusPermission
+        }
+        profiles={[]}
+        settings={settings}
+        storageUsage={[]}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+    await user.click(within(dialog).getByRole('button', { name: 'Bookmarks' }));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Allow tab access' }),
+    );
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      'Tab-address access was not granted. The toolbar saved-status setting was not changed.',
+    );
+    expect(onRequestToolbarSavedStatusPermission).toHaveBeenCalledOnce();
+    expect(
+      within(dialog).queryByLabelText('Show saved status on the toolbar'),
+    ).not.toBeInTheDocument();
+    expect(dialog).toBeVisible();
   });
 
   it('saves the available Language preferences', async () => {

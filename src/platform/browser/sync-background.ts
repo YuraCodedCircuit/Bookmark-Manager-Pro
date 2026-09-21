@@ -11,7 +11,14 @@ import { createContentChangeBridge } from '../content-change/create-content-chan
 export function registerSynchronizationBackground() {
   const repository = new SyncRepository(new BookmarkManagerDatabase());
   const activity = createActivityLogService();
-  const contentChanges = createContentChangeBridge();
+  const contentChanges = createContentChangeBridge(() => {
+    void browser.runtime
+      .sendMessage({
+        protocolVersion: 1,
+        type: 'toolbar-saved-status.refresh',
+      })
+      .catch(() => console.error('toolbar-saved-status-request-failed'));
+  });
   const service = new SyncService(
     repository,
     {

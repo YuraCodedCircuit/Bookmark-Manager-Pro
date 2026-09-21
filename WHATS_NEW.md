@@ -1,28 +1,31 @@
-# What's New in 0.5.0
+# What's New in 0.5.1
 
-Released September 17, 2026.
+Released September 21, 2026.
 
-This release adds profile-owned Notes, a private random password generator, and
-clearer profile-menu navigation.
+This release makes saved pages easier to recognize, improves profile and folder
+customization, and refines Firefox behavior.
 
 ## Highlights
 
-- **Notes** - Create, organize, search, edit, and preview Markdown notes inside
-  the active profile. Notes support nested folders, Important status, explicit
-  saving, conflict detection, and safe HTTP and HTTPS links.
-- **Password generator** - Generate strong random passwords without storing or
-  logging them. Configure character groups and length, review strength, reveal
-  the result with reduced-motion support, and copy it explicitly.
-- **Profile-menu clarity** - Every destination now has a distinct icon, with
-  improved focus and highlight treatment for easier navigation.
+- **Saved-page toolbar status** - After optional tab-address access is approved,
+  a check badge can show when the current page is already saved in the active
+  profile. URL comparison remains local to the device.
+- **Firefox new-window support** - Firefox can use Bookmark Manager Pro as its
+  homepage as well as its new-tab page after approval in Firefox settings.
+- **Clearer profiles** - Profile windows now show bookmark and user-created
+  folder counts instead of internal identifiers.
+- **Faster folder styling** - Generate random colors or gradients and move
+  through one expanded customization section at a time.
 
-## Improvements
+## Bug Fixes
 
-- Notes and note folders are included in profile backups, restores, storage
-  counts, and profile deletion.
-- Notes folder and action menus stay usable above workspace panels, and the
-  folder tree owns its scrolling on wide and narrow layouts.
+- The toolbar popup now recognizes saved URLs consistently, remains usable at a
+  stable size, and follows the selected scrollbar behavior in Firefox.
+- The first-run welcome content remains reachable with a visible scrollbar in
+  Firefox.
+- Invalid oversized folder-background images now produce an app notification
+  without leaving a stale error after a valid replacement is selected.
 
-## Full changelog
+## Full Changelog
 
 See the [complete changelog](./CHANGELOG.md) for the permanent release history.

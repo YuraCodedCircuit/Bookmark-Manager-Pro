@@ -779,6 +779,13 @@ void i18n.use(initReactI18next).init({
             dropIntoFolders: 'Allow dropping items into folders',
             enable: 'Enable drag and drop',
             duplicates: 'Duplicate handling',
+            showSavedStatusOnToolbar: 'Show saved status on the toolbar',
+            allowSavedStatusPermission: 'Allow tab access',
+            requestingSavedStatusPermission: 'Requesting tab access...',
+            savedStatusPermissionHelp:
+              'Shows a check badge when the current page is saved in the active profile. Optional access to tab addresses is required. Addresses are checked locally and are not logged or transmitted.',
+            savedStatusPermissionDenied:
+              'Tab-address access was not granted. The toolbar saved-status setting was not changed.',
             faviconDisplay: 'Favicon display',
             folderIcon: 'Folder icon',
             help: 'Manual reordering is available with Manual order. When grouping is active, items can be reordered within the same group. Moving into folders remains available across groups and in sorted views.',
@@ -1039,6 +1046,7 @@ void i18n.use(initReactI18next).init({
           folderCreatedTitle: 'Folder created',
           folderStyleSavedTitle: 'Folder style saved',
           folderUpdatedTitle: 'Folder saved',
+          imageNotSelectedTitle: 'Image not selected',
           limitedDataTitle: 'Some information is unavailable',
           localContentChangePublishFailedMessage:
             'The item was saved, but other open tabs may need to be refreshed manually.',
@@ -1053,6 +1061,12 @@ void i18n.use(initReactI18next).init({
           retry: 'Retry',
           settingsSavedMessage: 'Your settings are now in use.',
           settingsSavedTitle: 'Settings saved',
+          toolbarSavedStatusPermissionDeniedMessage:
+            'Tab access was not granted. Saved-page status remains disabled.',
+          toolbarSavedStatusPermissionDeniedTitle: 'Tab access not granted',
+          toolbarSavedStatusPermissionGrantedMessage:
+            'Saved-page status can now appear on the toolbar.',
+          toolbarSavedStatusPermissionGrantedTitle: 'Tab access allowed',
         },
         folderStyle: {
           background: 'Folder background',
@@ -1427,6 +1441,8 @@ void i18n.use(initReactI18next).init({
           close: 'Close profile window',
           count: '{{count}} profile',
           count_other: '{{count}} profiles',
+          contentCounts: '{{bookmarks}} · {{folders}}',
+          contentCountsAccessible: '{{bookmarks}}, {{folders}}',
           create: 'Create profile',
           createTitle: 'Create profile',
           created: 'Created {{date}}',

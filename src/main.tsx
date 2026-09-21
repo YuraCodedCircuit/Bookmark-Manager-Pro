@@ -16,6 +16,7 @@ import { createBackupManager } from './application/backup/create-backup-manager'
 import packageMetadata from '../package.json';
 import { i18n } from './localization/i18n';
 import { App } from './presentation/App';
+import { createContentChangeBridge } from './platform/content-change/create-content-change-bridge';
 import './styles/global.css';
 
 const rootElement = document.querySelector<HTMLDivElement>('#root');
@@ -23,6 +24,10 @@ const rootElement = document.querySelector<HTMLDivElement>('#root');
 if (rootElement === null) {
   throw new Error('Application root element was not found.');
 }
+
+/** Defers the extension-only polyfill until a toolbar-status action needs it. */
+const loadToolbarSavedStatusPermission = () =>
+  import('./platform/browser/toolbar-saved-status-permission');
 
 /**
  * Completes webpage preflight before mounting React so untranslated or partially
@@ -37,6 +42,11 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
   const profileManager = createProfileManager();
   const updateAnnouncements = createUpdateAnnouncementManager();
   const backupManager = createBackupManager();
+  const contentChanges = createContentChangeBridge(() => {
+    void loadToolbarSavedStatusPermission()
+      .then(({ refreshToolbarSavedStatus }) => refreshToolbarSavedStatus())
+      .catch(() => console.error('toolbar-saved-status-request-failed'));
+  });
   const preflightSnapshot = await preflight.execute();
   const undoHistoryReady = await undoHistory.initialize();
   if (
@@ -79,11 +89,26 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
           backupManager={backupManager}
           applicationVersion={packageMetadata.version}
           bookmarkManager={bookmarkManager}
+          contentChanges={contentChanges}
           createProfileAndResumePreflight={createProfileAndResumePreflight}
           initialPreflightSnapshot={preflightSnapshot}
           onUiReady={(operationId) => preflight.markUiReady(operationId)}
           profileManager={profileManager}
           resumePreflight={() => preflight.execute()}
+          toolbarSavedStatus={{
+            refresh: async () =>
+              (
+                await loadToolbarSavedStatusPermission()
+              ).refreshToolbarSavedStatus(),
+            removePermissionIfUnused: async () =>
+              (
+                await loadToolbarSavedStatusPermission()
+              ).removeToolbarSavedStatusPermissionIfUnused(),
+            requestPermission: async () =>
+              (
+                await loadToolbarSavedStatusPermission()
+              ).requestToolbarSavedStatusPermission(),
+          }}
           undoHistory={undoHistory}
           updateAnnouncements={updateAnnouncements}
         />

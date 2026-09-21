@@ -23,6 +23,8 @@ describe('ProfileManagerDialog', () => {
         onUpdate={vi.fn()}
         profiles={[
           {
+            bookmarkCount: 12,
+            folderCount: 3,
             isActive: false,
             profile: {
               createdAt: 1,
@@ -32,6 +34,8 @@ describe('ProfileManagerDialog', () => {
             },
           },
           {
+            bookmarkCount: 0,
+            folderCount: 0,
             isActive: true,
             profile: {
               createdAt: 2,
@@ -54,6 +58,17 @@ describe('ProfileManagerDialog', () => {
     expect(
       within(row).queryByRole('button', { name: 'Confirm delete' }),
     ).not.toBeInTheDocument();
+    expect(
+      within(row).getByText('12 bookmarks · 3 folders'),
+    ).toHaveAccessibleName('12 bookmarks, 3 folders');
+    expect(
+      within(row).queryByText('df6f88b6-10c7-43d7-b516-a063b77db6c6'),
+    ).not.toBeInTheDocument();
+    const activeRow = screen.getByText('Active profile').closest('article');
+    if (!activeRow) throw new Error('active-profile-row-not-found');
+    expect(
+      within(activeRow).getByText('0 bookmarks · 0 folders'),
+    ).toBeVisible();
   });
 
   it('removes an existing profile icon before saving an edit', async () => {
@@ -71,6 +86,8 @@ describe('ProfileManagerDialog', () => {
         onUpdate={onUpdate}
         profiles={[
           {
+            bookmarkCount: 0,
+            folderCount: 0,
             isActive: true,
             profile: {
               createdAt: 1,

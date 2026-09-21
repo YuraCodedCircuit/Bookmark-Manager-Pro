@@ -2,7 +2,7 @@ import { useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type {
-  ProfileListItem,
+  ProfileIdentityListItem,
   ProfileStorageUsage,
 } from '../../application/profile/profile-management-repository';
 import {
@@ -12,7 +12,7 @@ import {
 
 interface ProfilesSettingsPanelProps {
   preferences?: ProfilePreferences;
-  profiles: readonly ProfileListItem[];
+  profiles: readonly ProfileIdentityListItem[];
   storageUsage: readonly ProfileStorageUsage[];
 }
 

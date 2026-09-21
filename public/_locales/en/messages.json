@@ -1,5 +1,10 @@
 {
   "appName": { "message": "Bookmark Manager Pro" },
   "appDescription": { "message": "A local-first bookmark manager." },
-  "saveCurrentUrl": { "message": "Save URL to Bookmark Manager Pro" }
+  "saveCurrentUrl": { "message": "Save URL to Bookmark Manager Pro" },
+  "toolbarSavedStatusOne": { "message": "Saved in Bookmark Manager Pro" },
+  "toolbarSavedStatusMany": {
+    "message": "Saved in Bookmark Manager Pro - $COUNT$ copies",
+    "placeholders": { "count": { "content": "$1" } }
+  }
 }

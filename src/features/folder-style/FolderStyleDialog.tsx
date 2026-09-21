@@ -35,8 +35,14 @@ interface FolderStyleDialogProps {
   includeNavigationBackground: boolean;
   navigationTransparency: number;
   onClose: () => void;
+  onImageRejected?: () => void | Promise<void>;
   onSave: (value: FolderStyleValue) => Promise<void>;
 }
+
+const createRandomColor = (): string =>
+  `#${Math.floor(Math.random() * 0x1000000)
+    .toString(16)
+    .padStart(6, '0')}`;
 
 /** Edits the local background appearance of the currently open folder. */
 export function FolderStyleDialog({
@@ -53,6 +59,7 @@ export function FolderStyleDialog({
   includeNavigationBackground,
   navigationTransparency,
   onClose,
+  onImageRejected,
   onSave,
 }: FolderStyleDialogProps) {
   const { t } = useTranslation();
@@ -92,6 +99,10 @@ export function FolderStyleDialog({
     includeNavigationBackground,
   );
   const [transparency, setTransparency] = useState(navigationTransparency);
+  const [openSection, setOpenSection] = useState<
+    'view' | 'background' | 'navigation' | null
+  >(null);
+  const [appearanceAnnouncement, setAppearanceAnnouncement] = useState('');
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -149,6 +160,43 @@ export function FolderStyleDialog({
     }
   };
 
+  const reportImageRejection = () => {
+    setImage(undefined);
+    setError('');
+    try {
+      void Promise.resolve(onImageRejected?.()).catch(() =>
+        console.error('A privacy-safe image warning could not be displayed.'),
+      );
+    } catch {
+      console.error('A privacy-safe image warning could not be displayed.');
+    }
+  };
+
+  const randomizeColor = () => {
+    const nextColor = createRandomColor();
+    setColor(nextColor);
+    setAppearanceAnnouncement(
+      t('contentEditor.randomColorGenerated', { color: nextColor }),
+    );
+  };
+
+  const randomizeGradient = () => {
+    const nextColors: [string, string, string] = [
+      createRandomColor(),
+      createRandomColor(),
+      createRandomColor(),
+    ];
+    const nextDirection = String(Math.floor(Math.random() * 360));
+    setColors(nextColors);
+    setDirection(nextDirection);
+    setAppearanceAnnouncement(
+      t('contentEditor.randomGradientGenerated', {
+        colors: nextColors.join(', '),
+        direction: nextDirection,
+      }),
+    );
+  };
+
   return (
     <dialog
       aria-labelledby="folder-style-title"
@@ -157,6 +205,7 @@ export function FolderStyleDialog({
         event.preventDefault();
         if (!saving) onClose();
       }}
+      onClose={() => setOpenSection(null)}
       ref={dialogRef}
     >
       <form onSubmit={(event) => void submit(event)}>
@@ -173,7 +222,16 @@ export function FolderStyleDialog({
             ×
           </button>
         </header>
-        <details className="folder-style__section" open>
+        <details
+          className="folder-style__section"
+          onToggle={(event) => {
+            const isOpen = event.currentTarget.open;
+            setOpenSection((current) =>
+              isOpen ? 'view' : current === 'view' ? null : current,
+            );
+          }}
+          open={openSection === 'view'}
+        >
           <summary>{t('folderStyle.view')}</summary>
           <div className="folder-style__section-content">
             <label>
@@ -333,7 +391,16 @@ export function FolderStyleDialog({
             ) : null}
           </div>
         </details>
-        <details className="folder-style__section">
+        <details
+          className="folder-style__section"
+          onToggle={(event) => {
+            const isOpen = event.currentTarget.open;
+            setOpenSection((current) =>
+              isOpen ? 'background' : current === 'background' ? null : current,
+            );
+          }}
+          open={openSection === 'background'}
+        >
           <summary>{t('folderStyle.background')}</summary>
           <div className="folder-style__section-content">
             <div className="content-editor__appearance-options">
@@ -343,7 +410,10 @@ export function FolderStyleDialog({
                     <input
                       checked={kind === option}
                       name="folder-style"
-                      onChange={() => setKind(option)}
+                      onChange={() => {
+                        setKind(option);
+                        setAppearanceAnnouncement('');
+                      }}
                       type="radio"
                     />
                     {option === 'none'
@@ -354,12 +424,21 @@ export function FolderStyleDialog({
               )}
             </div>
             {kind === 'color' ? (
-              <input
-                aria-label={t('folderStyle.color')}
-                onChange={(event) => setColor(event.target.value)}
-                type="color"
-                value={color}
-              />
+              <div className="content-editor__color-controls">
+                <input
+                  aria-label={t('folderStyle.color')}
+                  onChange={(event) => setColor(event.target.value)}
+                  type="color"
+                  value={color}
+                />
+                <button
+                  className="content-editor__randomize-button"
+                  onClick={randomizeColor}
+                  type="button"
+                >
+                  {t('contentEditor.randomColor')}
+                </button>
+              </div>
             ) : null}
             {kind === 'gradient' ? (
               <div className="content-editor__gradient-controls">
@@ -398,6 +477,13 @@ export function FolderStyleDialog({
                     background: `linear-gradient(${direction}deg, ${colors.join(', ')})`,
                   }}
                 />
+                <button
+                  className="content-editor__randomize-button"
+                  onClick={randomizeGradient}
+                  type="button"
+                >
+                  {t('contentEditor.randomGradient')}
+                </button>
               </div>
             ) : null}
             {kind === 'image' ? (
@@ -408,11 +494,17 @@ export function FolderStyleDialog({
                   aria-label={t('folderStyle.image')}
                   onChange={(event) => {
                     const file = event.target.files?.[0];
-                    if (!file || file.size > 1_000_000) {
-                      setImage(undefined);
-                      setError(t('contentEditor.imageError'));
+                    if (
+                      !file ||
+                      file.size > 1_000_000 ||
+                      !['image/png', 'image/jpeg', 'image/bmp'].includes(
+                        file.type,
+                      )
+                    ) {
+                      reportImageRejection();
                       return;
                     }
+                    setError('');
                     const reader = new FileReader();
                     reader.onload = () =>
                       setImage(
@@ -420,8 +512,7 @@ export function FolderStyleDialog({
                           ? reader.result
                           : undefined,
                       );
-                    reader.onerror = () =>
-                      setError(t('contentEditor.imageError'));
+                    reader.onerror = reportImageRejection;
                     reader.readAsDataURL(file);
                   }}
                   required={!image}
@@ -432,9 +523,21 @@ export function FolderStyleDialog({
                 ) : null}
               </div>
             ) : null}
+            <span aria-live="polite" className="visually-hidden">
+              {appearanceAnnouncement}
+            </span>
           </div>
         </details>
-        <details className="folder-style__section">
+        <details
+          className="folder-style__section"
+          onToggle={(event) => {
+            const isOpen = event.currentTarget.open;
+            setOpenSection((current) =>
+              isOpen ? 'navigation' : current === 'navigation' ? null : current,
+            );
+          }}
+          open={openSection === 'navigation'}
+        >
           <summary>{t('folderStyle.navigationPanel')}</summary>
           <div className="folder-style__section-content">
             <label className="folder-style__navigation-toggle">

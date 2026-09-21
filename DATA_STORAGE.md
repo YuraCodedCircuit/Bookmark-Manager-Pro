@@ -29,6 +29,11 @@ the language selected by webpage preflight. When no language is stored, prefligh
 uses the browser language with an American English fallback. Language selection
 is validated and applied before the main interface is rendered.
 
+Schema version 30 stores the profile-owned toolbar saved-status preference with
+a default of disabled and adds the `[profileId+url]` bookmark index used for
+local exact-URL counts. The current tab address is transient input to that
+lookup; it is not persisted as browsing history or written to diagnostics.
+
 Packaged-extension preflight stores a schema-validated snapshot in
 `browser.storage.session` for the current browser session. The snapshot contains
 only stable startup metadata: operation and completion identifiers, locale,

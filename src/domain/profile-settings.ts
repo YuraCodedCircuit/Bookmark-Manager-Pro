@@ -170,6 +170,7 @@ export const profileSettingsSchema = z.object({
   confirmFolderDrop: z.boolean().optional(),
   openFolderAfterDrop: z.boolean().optional(),
   duplicateHandling: duplicateHandlingSchema.optional(),
+  showSavedStatusOnToolbar: z.boolean().optional(),
   urlNormalization: urlNormalizationSchema.optional(),
   faviconDisplay: faviconDisplaySchema.optional(),
   missingFavicon: missingFaviconSchema.optional(),

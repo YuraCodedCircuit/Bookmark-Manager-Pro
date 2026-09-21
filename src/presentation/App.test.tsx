@@ -21,6 +21,8 @@ import { App } from './App';
 import { defaultActivityLogSettings } from '../application/activity-log/manage-activity-log';
 import { UndoHistoryService } from '../application/undo-history/undo-history-service';
 import type { ContentChange } from '../messaging/content-change-protocol';
+import { ToolbarSavedStatusPermissionDeniedError } from '../platform/browser/toolbar-saved-status-error';
+import { NotificationService } from '../application/notification/notification-service';
 
 const createdProfile = {
   profile: {
@@ -175,6 +177,9 @@ function renderApp(
   contentChanges?: Partial<
     NonNullable<Parameters<typeof App>[0]['contentChanges']>
   >,
+  toolbarSavedStatus?: NonNullable<
+    Parameters<typeof App>[0]['toolbarSavedStatus']
+  >,
 ) {
   const changeBridge = {
     profileActivation: vi.fn(async () => ({
@@ -211,6 +216,7 @@ function renderApp(
       })}
       undoHistory={undoHistory}
       updateAnnouncements={updateAnnouncements}
+      {...(toolbarSavedStatus ? { toolbarSavedStatus } : {})}
     />,
   );
   return { ...rendered, changeBridge };
@@ -1476,6 +1482,186 @@ describe('App', () => {
     expect(screen.getByText('Settings saved')).toBeInTheDocument();
   });
 
+  it('notifies when toolbar tab access is granted', async () => {
+    const user = userEvent.setup();
+    const toolbarSavedStatus = {
+      refresh: vi.fn(async () => undefined),
+      removePermissionIfUnused: vi.fn(async () => undefined),
+      requestPermission: vi.fn(async () => true),
+    };
+    renderApp(
+      { status: 'ready', theme: 'dark', ...createdProfile },
+      undefined,
+      undefined,
+      undefined,
+      toolbarSavedStatus,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open profile menu' }));
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    await user.click(within(dialog).getByRole('button', { name: 'Bookmarks' }));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Allow tab access' }),
+    );
+
+    expect(toolbarSavedStatus.requestPermission).toHaveBeenCalledOnce();
+    expect(
+      await within(dialog).findByLabelText('Show saved status on the toolbar'),
+    ).toBeChecked();
+    expect(screen.getByText('Tab access allowed')).toBeInTheDocument();
+    expect(
+      screen.getByText('Saved-page status can now appear on the toolbar.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Tab access allowed').closest('[role="status"]'),
+    ).toBeInTheDocument();
+    expect(activityLog.record).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      expect.objectContaining({
+        eventCode: 'TOOLBAR-SAVED-STATUS-PERMISSION-GRANTED',
+        level: 'INFO',
+        outcome: 'Succeeded',
+      }),
+    );
+  });
+
+  it('notifies and preserves recovery when toolbar tab access is denied', async () => {
+    const user = userEvent.setup();
+    const toolbarSavedStatus = {
+      refresh: vi.fn(async () => undefined),
+      removePermissionIfUnused: vi.fn(async () => undefined),
+      requestPermission: vi.fn(async () => {
+        throw new ToolbarSavedStatusPermissionDeniedError();
+      }),
+    };
+    renderApp(
+      { status: 'ready', theme: 'dark', ...createdProfile },
+      undefined,
+      undefined,
+      undefined,
+      toolbarSavedStatus,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open profile menu' }));
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    await user.click(within(dialog).getByRole('button', { name: 'Bookmarks' }));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Allow tab access' }),
+    );
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      'Tab-address access was not granted.',
+    );
+    expect(screen.getByText('Tab access not granted')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Tab access was not granted. Saved-page status remains disabled.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Tab access not granted').closest('[role="alert"]'),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('button', { name: 'Allow tab access' }),
+    ).toBeEnabled();
+    expect(activityLog.record).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      expect.objectContaining({
+        eventCode: 'TOOLBAR-SAVED-STATUS-PERMISSION-DENIED',
+        level: 'WARN',
+        outcome: 'Skipped',
+      }),
+    );
+  });
+
+  it('honors disabled notifications when toolbar tab access is granted', async () => {
+    const user = userEvent.setup();
+    const toolbarSavedStatus = {
+      refresh: vi.fn(async () => undefined),
+      removePermissionIfUnused: vi.fn(async () => undefined),
+      requestPermission: vi.fn(async () => true),
+    };
+    renderApp(
+      {
+        status: 'ready',
+        theme: 'dark',
+        ...createdProfile,
+        settings: {
+          ...createdProfile.settings,
+          notificationPreferences: {
+            countdownLineColor: null,
+            enabled: false,
+            order: 'newest',
+            position: 'bottom-right',
+            stackLimit: 3,
+          },
+        },
+      },
+      undefined,
+      undefined,
+      undefined,
+      toolbarSavedStatus,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open profile menu' }));
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    await user.click(within(dialog).getByRole('button', { name: 'Bookmarks' }));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Allow tab access' }),
+    );
+
+    expect(
+      await within(dialog).findByLabelText('Show saved status on the toolbar'),
+    ).toBeChecked();
+    expect(
+      screen.queryByRole('region', { name: 'Notifications' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps granted tab access usable when notification delivery fails', async () => {
+    const user = userEvent.setup();
+    activityLog.record.mockRejectedValueOnce(new Error('activity-log-failed'));
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const notificationShow = vi
+      .spyOn(NotificationService.prototype, 'show')
+      .mockImplementationOnce(() => {
+        throw new Error('notification-failed');
+      });
+    const toolbarSavedStatus = {
+      refresh: vi.fn(async () => undefined),
+      removePermissionIfUnused: vi.fn(async () => undefined),
+      requestPermission: vi.fn(async () => true),
+    };
+    renderApp(
+      { status: 'ready', theme: 'dark', ...createdProfile },
+      undefined,
+      undefined,
+      undefined,
+      toolbarSavedStatus,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open profile menu' }));
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    await user.click(within(dialog).getByRole('button', { name: 'Bookmarks' }));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Allow tab access' }),
+    );
+
+    expect(
+      await within(dialog).findByLabelText('Show saved status on the toolbar'),
+    ).toBeChecked();
+    expect(consoleError).toHaveBeenCalledWith(
+      'A privacy-safe notification could not be displayed.',
+    );
+    expect(consoleError).toHaveBeenCalledWith(
+      'profile-activity-log-write-failed',
+    );
+    notificationShow.mockRestore();
+    consoleError.mockRestore();
+  });
+
   it('records an error when bookmark display settings cannot be saved', async () => {
     const user = userEvent.setup();
     profileManager.updateProfileSettings.mockRejectedValueOnce(
@@ -1939,6 +2125,41 @@ describe('App', () => {
       navigationChanged: true,
       profileId: createdProfile.profile.id,
     });
+  });
+
+  it('shows an app notification when a folder background image is rejected', async () => {
+    const user = userEvent.setup();
+    renderApp({
+      status: 'ready',
+      theme: 'dark',
+      ...createdProfile,
+    });
+    const region = await screen.findByRole('region', { name: 'Bookmarks' });
+
+    await user.pointer({ keys: '[MouseRight]', target: region });
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Customize folder style' }),
+    );
+    const dialog = screen.getByRole('dialog', {
+      name: 'Customize folder style',
+    });
+    await user.click(within(dialog).getByText('Folder background'));
+    await user.click(within(dialog).getByLabelText('Image'));
+    fireEvent.change(within(dialog).getByLabelText('Choose background image'), {
+      target: {
+        files: [
+          new File([new Uint8Array(1_000_001)], 'large.png', {
+            type: 'image/png',
+          }),
+        ],
+      },
+    });
+
+    expect(screen.getByText('Image not selected')).toBeInTheDocument();
+    expect(
+      screen.getByText('Choose a PNG, JPEG, or BMP image smaller than 1 MB.'),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('creates bookmarks and folders in the currently open folder', async () => {

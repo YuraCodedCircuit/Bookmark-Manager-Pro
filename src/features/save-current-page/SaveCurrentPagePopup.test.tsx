@@ -323,12 +323,16 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
     ).toBeVisible();
   });
 
-  it('does not apply duplicate checks when the profile allows copies', async () => {
+  it('reports an existing URL before allowing another copy in allow mode', async () => {
     const user = userEvent.setup();
     const listBookmarkLocationsByUrl = vi.fn(async () => [
       { folderId: rootId, folderTitle: root.title },
     ]);
     const dependencies = setup('allow', true, listBookmarkLocationsByUrl);
+
+    expect(screen.getByText('URL already saved')).toBeVisible();
+    expect(screen.getByText('Home')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Save another copy' }));
 
     const editor = screen.getByRole('dialog', { name: 'Save current URL' });
     await user.click(

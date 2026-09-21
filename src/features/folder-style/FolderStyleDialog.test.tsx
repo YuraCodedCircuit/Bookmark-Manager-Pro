@@ -11,9 +11,186 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../localization/i18n';
 import { FolderStyleDialog } from './FolderStyleDialog';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe('FolderStyleDialog', () => {
+  it('keeps every section collapsed initially and opens at most one', async () => {
+    const user = userEvent.setup();
+    render(
+      <FolderStyleDialog
+        appearance={{ kind: 'color', value: '#0b121a' }}
+        bookmarkGroupBy="none"
+        bookmarkSortBy="manual"
+        bookmarkSortDirection="ascending"
+        bookmarkView="card"
+        cardSize="medium"
+        cardSpacing="comfortable"
+        detailsTableTransparency={0}
+        folderName="Home"
+        isOpen
+        includeNavigationBackground={false}
+        navigationTransparency={45}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', {
+      name: 'Customize folder style',
+    });
+    const view = within(dialog).getByText('Folder view').closest('details');
+    const background = within(dialog)
+      .getByText('Folder background')
+      .closest('details');
+    const navigation = within(dialog)
+      .getByText('Navigation panel')
+      .closest('details');
+    if (!view || !background || !navigation)
+      throw new Error('folder-style-section-not-found');
+
+    expect(view).not.toHaveAttribute('open');
+    expect(background).not.toHaveAttribute('open');
+    expect(navigation).not.toHaveAttribute('open');
+
+    await user.click(within(dialog).getByText('Folder view'));
+    expect(view).toHaveAttribute('open');
+    await user.click(within(dialog).getByText('Folder background'));
+    expect(view).not.toHaveAttribute('open');
+    expect(background).toHaveAttribute('open');
+    expect(navigation).not.toHaveAttribute('open');
+
+    await user.click(within(dialog).getByText('Folder background'));
+    expect(background).not.toHaveAttribute('open');
+
+    await user.click(within(dialog).getByText('Navigation panel'));
+    expect(navigation).toHaveAttribute('open');
+    fireEvent(dialog, new Event('close'));
+    expect(navigation).not.toHaveAttribute('open');
+  });
+
+  it('reports an oversized image without retaining an inline error', async () => {
+    const user = userEvent.setup();
+    const onImageRejected = vi.fn(() => {
+      throw new Error('notification-unavailable');
+    });
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    render(
+      <FolderStyleDialog
+        appearance={{ kind: 'color', value: '#0b121a' }}
+        bookmarkGroupBy="none"
+        bookmarkSortBy="manual"
+        bookmarkSortDirection="ascending"
+        bookmarkView="card"
+        cardSize="medium"
+        cardSpacing="comfortable"
+        detailsTableTransparency={0}
+        folderName="Home"
+        isOpen
+        includeNavigationBackground={false}
+        navigationTransparency={45}
+        onClose={vi.fn()}
+        onImageRejected={onImageRejected}
+        onSave={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', {
+      name: 'Customize folder style',
+    });
+    await user.click(within(dialog).getByText('Folder background'));
+    await user.click(within(dialog).getByLabelText('Image'));
+    const input = within(dialog).getByLabelText('Choose background image');
+    fireEvent.change(input, {
+      target: {
+        files: [
+          new File([new Uint8Array(1_000_001)], 'large.png', {
+            type: 'image/png',
+          }),
+        ],
+      },
+    });
+
+    expect(onImageRejected).toHaveBeenCalledOnce();
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: {
+        files: [new File(['text'], 'not-an-image.txt', { type: 'text/plain' })],
+      },
+    });
+    expect(onImageRejected).toHaveBeenCalledTimes(2);
+
+    fireEvent.change(input, {
+      target: {
+        files: [new File(['small'], 'small.png', { type: 'image/png' })],
+      },
+    });
+    expect(
+      await within(dialog).findByAltText('Selected folder background image'),
+    ).toHaveAttribute('src', 'data:image/png;base64,c21hbGw=');
+  });
+
+  it('generates random color and gradient values', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0.5)
+      .mockReturnValueOnce(0.75)
+      .mockReturnValueOnce(0.25);
+    render(
+      <FolderStyleDialog
+        appearance={{ kind: 'color', value: '#0b121a' }}
+        bookmarkGroupBy="none"
+        bookmarkSortBy="manual"
+        bookmarkSortDirection="ascending"
+        bookmarkView="card"
+        cardSize="medium"
+        cardSpacing="comfortable"
+        detailsTableTransparency={0}
+        folderName="Home"
+        isOpen
+        includeNavigationBackground={false}
+        navigationTransparency={45}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', {
+      name: 'Customize folder style',
+    });
+    await user.click(within(dialog).getByText('Folder background'));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Generate random color' }),
+    );
+    expect(within(dialog).getByLabelText('Background color')).toHaveValue(
+      '#000000',
+    );
+
+    await user.click(within(dialog).getByLabelText('Gradient'));
+    await user.click(
+      within(dialog).getByRole('button', {
+        name: 'Generate random gradient',
+      }),
+    );
+    expect(within(dialog).getByLabelText('Gradient color 1')).toHaveValue(
+      '#000000',
+    );
+    expect(within(dialog).getByLabelText('Gradient color 2')).toHaveValue(
+      '#800000',
+    );
+    expect(within(dialog).getByLabelText('Gradient color 3')).toHaveValue(
+      '#c00000',
+    );
+    expect(within(dialog).getByLabelText('Gradient direction')).toHaveValue(90);
+    expect(
+      within(dialog).getByText(
+        'Random gradient generated: #000000, #800000, #c00000 at 90 degrees.',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('prefills and saves a three-color gradient for the open folder', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async () => undefined);
@@ -50,6 +227,7 @@ describe('FolderStyleDialog', () => {
     );
     expect(within(imageFit).getAllByRole('option')).toHaveLength(6);
     expect(imageFit).toHaveValue('fill');
+    await user.click(within(dialog).getByText('Folder view'));
     await user.selectOptions(
       within(dialog).getByLabelText('Card size'),
       'large',
@@ -72,6 +250,7 @@ describe('FolderStyleDialog', () => {
       'Table background transparency: 0%',
     );
     fireEvent.change(tableTransparency, { target: { value: '35' } });
+    await user.click(within(dialog).getByText('Folder background'));
     await user.click(within(dialog).getByLabelText('Gradient'));
     fireEvent.change(within(dialog).getByLabelText('Gradient color 1'), {
       target: { value: '#112233' },
@@ -139,6 +318,7 @@ describe('FolderStyleDialog', () => {
     expect(
       within(dialog).queryByText('Table background transparency: 20%'),
     ).not.toBeInTheDocument();
+    await user.click(within(dialog).getByText('Folder view'));
     await user.selectOptions(within(dialog).getByLabelText('View'), 'details');
     expect(
       within(dialog).getByLabelText('Table background transparency: 20%'),
@@ -198,7 +378,9 @@ describe('FolderStyleDialog', () => {
     const dialog = screen.getByRole('dialog', {
       name: 'Customize folder style',
     });
+    await user.click(within(dialog).getByText('Folder view'));
     await user.selectOptions(within(dialog).getByLabelText('View'), 'list');
+    await user.click(within(dialog).getByText('Folder background'));
     await user.click(within(dialog).getByLabelText('No background'));
 
     const nextFolderProps = {
@@ -224,6 +406,7 @@ describe('FolderStyleDialog', () => {
     const reopenedDialog = screen.getByRole('dialog', {
       name: 'Customize folder style',
     });
+    await user.click(within(reopenedDialog).getByText('Folder view'));
     expect(within(reopenedDialog).getByLabelText('View')).toHaveValue(
       'details',
     );

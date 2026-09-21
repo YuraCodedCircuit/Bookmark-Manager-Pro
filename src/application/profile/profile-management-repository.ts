@@ -2,9 +2,14 @@ import type { Profile } from '../../domain/profile';
 import type { ProfileSettings } from '../../domain/profile-settings';
 import type { ProfilePreferences } from '../../domain/profile-settings';
 
-export interface ProfileListItem {
+export interface ProfileIdentityListItem {
   profile: Profile;
   isActive: boolean;
+}
+
+export interface ProfileListItem extends ProfileIdentityListItem {
+  bookmarkCount: number;
+  folderCount: number;
 }
 
 export interface ProfileStorageUsage {

@@ -41,6 +41,10 @@ export const backgroundRequestSchema = z.discriminatedUnion('type', [
     protocolVersion: z.literal(BACKGROUND_PROTOCOL_VERSION),
     type: z.literal('preflight.get'),
   }),
+  z.object({
+    protocolVersion: z.literal(BACKGROUND_PROTOCOL_VERSION),
+    type: z.literal('toolbar-saved-status.refresh'),
+  }),
 ]);
 
 export type BackgroundRequest = z.infer<typeof backgroundRequestSchema>;
@@ -55,4 +59,8 @@ export type BackgroundResponse =
       protocolVersion: typeof BACKGROUND_PROTOCOL_VERSION;
       type: 'request.invalid' | 'preflight.failed';
       errorCode: string;
+    }
+  | {
+      protocolVersion: typeof BACKGROUND_PROTOCOL_VERSION;
+      type: 'toolbar-saved-status.accepted';
     };

@@ -35,6 +35,9 @@ body {
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 32px;
   padding: 32px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   background: var(--background);
   color: var(--text, #f3f6fa);
 }

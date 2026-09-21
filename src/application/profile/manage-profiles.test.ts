@@ -59,6 +59,8 @@ describe('ManageProfiles', () => {
       getStorageUsage: vi.fn(async () => []),
       list: vi.fn(async () => [
         {
+          bookmarkCount: 0,
+          folderCount: 0,
           isActive: true,
           profile: {
             createdAt: 1,

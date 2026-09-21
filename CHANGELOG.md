@@ -6,6 +6,38 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.5.1 - 2026-09-21
+
+### New
+
+- Added an optional Firefox homepage override so ordinary new windows can open
+  Bookmark Manager Pro after approval in Firefox's browser prompt.
+- Added an optional toolbar check badge that shows when the current page is
+  already saved in the active profile, with local-only URL comparison and a
+  Bookmarks setting that requests tab-address access through a dedicated button
+  before showing the saved-status checkbox and reports whether the request
+  succeeded.
+
+### UI/UX
+
+- Replaced internal profile IDs in the profile windows with each profile's
+  current bookmark and user-created folder counts.
+- Made Customize folder style start with every section collapsed and keep no
+  more than one section open at a time.
+- Added random color and gradient generation to Customize folder style.
+
+### Fixed
+
+- Kept the saved-URL popup visible at a consistent size, made its actions
+  vertically scrollable when they do not fit, and applied the selected
+  scrollbar visibility behavior consistently in Firefox.
+- Made the Welcome window's content scrollbar visible from first run in Firefox
+  so its complete introduction and actions are easier to discover.
+- Made the toolbar popup report an already-saved current URL before opening the
+  editor, including when duplicate handling allows another copy.
+- Replaced the persistent inline folder-background image error with an app
+  notification that does not remain after a valid image is selected.
+
 ## 0.5.0 - 2026-09-17
 
 ### New
