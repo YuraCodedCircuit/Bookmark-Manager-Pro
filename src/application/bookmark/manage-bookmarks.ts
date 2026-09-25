@@ -23,6 +23,7 @@ import {
   cardSizeSchema,
   cardSpacingSchema,
   defaultFolderDisplaySettings,
+  defaultFolderAppearanceSettings,
   type ProfileSettings,
 } from '../../domain/profile-settings';
 import type { BookmarkRepository, FolderContents } from './bookmark-repository';
@@ -31,15 +32,7 @@ import type { UndoProfileState } from '../../domain/undo-history';
 const MAX_ID_ATTEMPTS = 5;
 
 // Applied only during creation; schema parsing gives each folder its own values.
-const DEFAULT_FOLDER_STYLE = {
-  backgroundAppearance: {
-    colors: ['#2f80c9', '#185a82', '#0b1f3a'],
-    direction: 135,
-    kind: 'gradient',
-  },
-  includeNavigationBackground: true,
-  navigationTransparency: 70,
-} satisfies Pick<
+const DEFAULT_FOLDER_STYLE = defaultFolderAppearanceSettings satisfies Pick<
   Folder,
   | 'backgroundAppearance'
   | 'includeNavigationBackground'
@@ -59,6 +52,10 @@ const creationInputSchema = z.object({
   bookmarkSortBy: bookmarkSortBySchema.optional(),
   bookmarkSortDirection: bookmarkSortDirectionSchema.optional(),
   bookmarkGroupBy: bookmarkGroupBySchema.optional(),
+  backgroundAppearance: folderBackgroundAppearanceSchema.optional(),
+  detailsTableTransparency: detailsTableTransparencySchema.optional(),
+  includeNavigationBackground: z.boolean().optional(),
+  navigationTransparency: navigationTransparencySchema.optional(),
 });
 const bookmarkInputSchema = creationInputSchema.extend({
   url: safeBookmarkUrlSchema,
@@ -77,6 +74,10 @@ export interface CreateFolderInput {
   bookmarkSortBy?: ProfileSettings['bookmarkSortBy'];
   bookmarkSortDirection?: ProfileSettings['bookmarkSortDirection'];
   bookmarkGroupBy?: ProfileSettings['bookmarkGroupBy'];
+  backgroundAppearance?: FolderBackgroundAppearance | undefined;
+  detailsTableTransparency?: number | undefined;
+  includeNavigationBackground?: boolean | undefined;
+  navigationTransparency?: number | undefined;
 }
 
 export interface CreateBookmarkInput extends CreateFolderInput {
@@ -142,6 +143,10 @@ export class ManageBookmarks {
     return this.repository.listFolders(profileId);
   }
 
+  listFolderTreeSummaries(profileId: string) {
+    return this.repository.listFolderTreeSummaries(z.uuid().parse(profileId));
+  }
+
   listBookmarks(profileId: string): Promise<readonly Bookmark[]> {
     return this.repository.listBookmarks(profileId);
   }
@@ -172,11 +177,18 @@ export class ManageBookmarks {
     );
   }
 
-  async listNavigationItems(profileId: string): Promise<NavigationItems> {
+  async listNavigationItems(
+    profileId: string,
+    knownFolders?: readonly Folder[],
+  ): Promise<NavigationItems> {
     const validatedProfileId = z.uuid().parse(profileId);
     const [bookmarks, folders, favorites] = await Promise.all([
       this.repository.listBookmarks(validatedProfileId),
-      this.repository.listFolders(validatedProfileId),
+      knownFolders
+        ? Promise.resolve(
+            knownFolders.map((folder) => folderSchema.parse(folder)),
+          )
+        : this.repository.listFolders(validatedProfileId),
       this.repository.listFavorites(validatedProfileId),
     ]);
     const items = new Map<string, NavigationItem>([
@@ -466,8 +478,8 @@ export class ManageBookmarks {
     const validatedProfileId = z.uuid().parse(profileId);
     const normalizedUrl = safeBookmarkUrlSchema.parse(url);
     const [bookmarks, folders] = await Promise.all([
-      this.repository.listBookmarks(validatedProfileId),
-      this.repository.listFolders(validatedProfileId),
+      this.repository.listBookmarksByUrl(validatedProfileId, normalizedUrl),
+      this.repository.listFolderTreeSummaries(validatedProfileId),
     ]);
     const foldersById = new Map(folders.map((folder) => [folder.id, folder]));
     const matchingFolderIds = new Set(
@@ -502,7 +514,18 @@ export class ManageBookmarks {
           defaultFolderDisplaySettings.bookmarkSortDirection,
         bookmarkGroupBy:
           value.bookmarkGroupBy ?? defaultFolderDisplaySettings.bookmarkGroupBy,
-        detailsTableTransparency: 0,
+        backgroundAppearance:
+          value.backgroundAppearance ??
+          DEFAULT_FOLDER_STYLE.backgroundAppearance,
+        detailsTableTransparency:
+          value.detailsTableTransparency ??
+          DEFAULT_FOLDER_STYLE.detailsTableTransparency,
+        includeNavigationBackground:
+          value.includeNavigationBackground ??
+          DEFAULT_FOLDER_STYLE.includeNavigationBackground,
+        navigationTransparency:
+          value.navigationTransparency ??
+          DEFAULT_FOLDER_STYLE.navigationTransparency,
         cardAppearance: value.cardAppearance,
         createdAt: timestamp,
         id: await this.createUniqueItemId(),

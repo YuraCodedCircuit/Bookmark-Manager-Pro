@@ -7,6 +7,7 @@ import { parseGradientDirection } from '../../shared/gradient-direction';
 import { GradientDirectionControl } from '../../components/GradientDirectionControl';
 import { ImageFitSelect } from '../../components/ImageFitSelect';
 import type { ProfileSettings } from '../../domain/profile-settings';
+import { optimizeFolderWallpaper } from '../../shared/optimize-folder-wallpaper';
 
 export interface FolderStyleValue {
   appearance: FolderBackgroundAppearance;
@@ -22,6 +23,7 @@ export interface FolderStyleValue {
 }
 
 interface FolderStyleDialogProps {
+  allowLargeWallpaperImports?: boolean;
   appearance: FolderBackgroundAppearance;
   bookmarkGroupBy: NonNullable<ProfileSettings['bookmarkGroupBy']>;
   bookmarkSortBy: NonNullable<ProfileSettings['bookmarkSortBy']>;
@@ -46,6 +48,7 @@ const createRandomColor = (): string =>
 
 /** Edits the local background appearance of the currently open folder. */
 export function FolderStyleDialog({
+  allowLargeWallpaperImports = false,
   appearance,
   bookmarkGroupBy,
   bookmarkSortBy,
@@ -86,6 +89,7 @@ export function FolderStyleDialog({
   );
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [processingImage, setProcessingImage] = useState(false);
   const [view, setView] = useState(bookmarkView);
   const [size, setSize] = useState(cardSize);
   const [spacing, setSpacing] = useState(cardSpacing);
@@ -492,28 +496,28 @@ export function FolderStyleDialog({
                 <input
                   accept="image/png,image/jpeg,image/bmp"
                   aria-label={t('folderStyle.image')}
+                  disabled={processingImage}
                   onChange={(event) => {
                     const file = event.target.files?.[0];
-                    if (
-                      !file ||
-                      file.size > 1_000_000 ||
-                      !['image/png', 'image/jpeg', 'image/bmp'].includes(
-                        file.type,
-                      )
-                    ) {
+                    if (!file) {
                       reportImageRejection();
                       return;
                     }
                     setError('');
-                    const reader = new FileReader();
-                    reader.onload = () =>
-                      setImage(
-                        typeof reader.result === 'string'
-                          ? reader.result
-                          : undefined,
-                      );
-                    reader.onerror = reportImageRejection;
-                    reader.readAsDataURL(file);
+                    setProcessingImage(true);
+                    setAppearanceAnnouncement(t('folderStyle.imageProcessing'));
+                    void optimizeFolderWallpaper(
+                      file,
+                      allowLargeWallpaperImports,
+                    )
+                      .then((optimized) => {
+                        setImage(optimized);
+                        setAppearanceAnnouncement(
+                          t('folderStyle.imageOptimized'),
+                        );
+                      })
+                      .catch(reportImageRejection)
+                      .finally(() => setProcessingImage(false));
                   }}
                   required={!image}
                   type="file"
@@ -578,10 +582,14 @@ export function FolderStyleDialog({
           </p>
         ) : null}
         <footer>
-          <button disabled={saving} onClick={onClose} type="button">
+          <button
+            disabled={saving || processingImage}
+            onClick={onClose}
+            type="button"
+          >
             {t('folderStyle.cancel')}
           </button>
-          <button disabled={saving} type="submit">
+          <button disabled={saving || processingImage} type="submit">
             {saving ? t('folderStyle.saving') : t('folderStyle.save')}
           </button>
         </footer>

@@ -14,7 +14,7 @@ export const imageFitSchema = z.enum([
 export type ImageFit = z.infer<typeof imageFitSchema>;
 
 /** Local-only presentation applied to a bookmark or folder card. */
-export const itemAppearanceSchema = z.discriminatedUnion('kind', [
+export const nonImageItemAppearanceSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('color'),
     value: z.string().regex(/^#[0-9a-f]{6}$/i),
@@ -28,12 +28,16 @@ export const itemAppearanceSchema = z.discriminatedUnion('kind', [
     ]),
     direction: gradientDirectionSchema,
   }),
+]);
+
+export const itemAppearanceSchema = z.discriminatedUnion('kind', [
+  ...nonImageItemAppearanceSchema.options,
   z.object({
     kind: z.literal('image'),
     value: z
       .string()
-      .max(1_500_000)
-      .regex(/^data:image\/(?:bmp|jpeg|png);base64,/),
+      .max(6_000_000)
+      .regex(/^data:image\/(?:bmp|jpeg|png|webp);base64,/),
     fit: imageFitSchema.default('fill'),
   }),
 ]);

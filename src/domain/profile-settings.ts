@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { itemAppearanceSchema } from './bookmark';
+import { itemAppearanceSchema, nonImageItemAppearanceSchema } from './bookmark';
 import { searchPreferencesSchema } from './bookmark-search';
 import { shortcutPreferencesSchema } from './keyboard-shortcuts';
+import { imageFitSchema } from './bookmark';
 
 export const themePreferenceSchema = z.enum(['system', 'light', 'dark']);
 export const bookmarkViewSchema = z.enum(['card', 'list', 'details']);
@@ -26,6 +27,36 @@ export const defaultFolderDisplaySettings = {
   bookmarkSortDirection: 'ascending',
   bookmarkGroupBy: 'none',
 } as const;
+
+export const defaultFolderAppearanceSettings = {
+  backgroundAppearance: {
+    colors: ['#2f80c9', '#185a82', '#0b1f3a'] as [string, string, string],
+    direction: 135,
+    kind: 'gradient',
+  },
+  detailsTableTransparency: 0,
+  includeNavigationBackground: true,
+  navigationTransparency: 70,
+} as const;
+
+const defaultFolderBackgroundAppearanceSchema = z.union([
+  nonImageItemAppearanceSchema,
+  z
+    .object({
+      fit: imageFitSchema.default('fill'),
+      imageId: z.uuid().optional(),
+      kind: z.literal('image'),
+      value: z
+        .string()
+        .max(6_000_000)
+        .regex(/^data:image\/(?:bmp|jpeg|png|webp);base64,/)
+        .optional(),
+    })
+    .refine(
+      ({ imageId, value }) => imageId !== undefined || value !== undefined,
+    ),
+  z.object({ kind: z.literal('none') }),
+]);
 
 export const folderDropHoverDelaySchema = z.union([
   z.literal(400),
@@ -198,6 +229,22 @@ export const profileSettingsSchema = z.object({
   confirmExternalLinks: z.boolean().optional(),
   animationPreference: animationPreferenceSchema.optional(),
   highContrast: z.boolean().optional(),
+  allowLargeWallpaperImports: z.boolean().optional(),
+  defaultFolderBackgroundAppearance:
+    defaultFolderBackgroundAppearanceSchema.optional(),
+  defaultFolderDetailsTableTransparency: z
+    .number()
+    .int()
+    .min(0)
+    .max(100)
+    .optional(),
+  defaultFolderIncludeNavigationBackground: z.boolean().optional(),
+  defaultFolderNavigationTransparency: z
+    .number()
+    .int()
+    .min(0)
+    .max(100)
+    .optional(),
   shortcutPreferences: shortcutPreferencesSchema.optional(),
   backupPreferences: backupPreferencesSchema.optional(),
 });

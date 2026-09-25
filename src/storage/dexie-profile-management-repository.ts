@@ -14,6 +14,11 @@ import {
   type ProfileSettings,
 } from '../domain/profile-settings';
 import type { BookmarkManagerDatabase } from './database';
+import {
+  hydrateFolderBackground,
+  persistFolderBackground,
+  deleteUnusedFolderWallpapers,
+} from './folder-wallpapers';
 
 const activeMetadataSchema = z.object({
   key: z.literal('activeProfileId'),
@@ -75,10 +80,16 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
   async create(profile: Profile, settings: ProfileSettings): Promise<void> {
     await this.database.transaction(
       'rw',
-      [this.database.profiles, this.database.profileSettings],
+      [
+        this.database.profiles,
+        this.database.profileSettings,
+        this.database.folderWallpapers,
+      ],
       async () => {
         await this.database.profiles.add(profile);
-        await this.database.profileSettings.add(settings);
+        await this.database.profileSettings.add(
+          await this.toStoredSettings(settings),
+        );
       },
     );
   }
@@ -97,6 +108,7 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
         this.database.bookmarks,
         this.database.folders,
         this.database.favoriteItems,
+        this.database.folderWallpapers,
       ],
       async () => {
         if (preferences.duplicateBookmarks) {
@@ -113,6 +125,20 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
           const idMap = new Map<string, string>();
           for (const item of [...folders, ...bookmarks])
             idMap.set(item.id, crypto.randomUUID());
+          const wallpaperIdMap = new Map<string, string>();
+          if (preferences.duplicateAppearance && preferences.duplicateImages) {
+            const wallpapers = await this.database.folderWallpapers
+              .where('profileId')
+              .equals(sourceProfileId)
+              .toArray();
+            await this.database.folderWallpapers.bulkAdd(
+              wallpapers.map((wallpaper) => {
+                const id = crypto.randomUUID();
+                wallpaperIdMap.set(wallpaper.id, id);
+                return { ...wallpaper, id, profileId: targetProfileId };
+              }),
+            );
+          }
           const copyAppearance = <T extends { kind: string }>(
             appearance: T,
           ): T | { kind: 'color'; value: string } => {
@@ -121,6 +147,15 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
               (!preferences.duplicateImages && appearance.kind === 'image')
             )
               return { kind: 'color', value: '#2f7de1' };
+            if (
+              appearance.kind === 'image' &&
+              'imageId' in appearance &&
+              typeof appearance.imageId === 'string'
+            )
+              return {
+                ...appearance,
+                imageId: wallpaperIdMap.get(appearance.imageId),
+              } as T;
             return appearance;
           };
           await this.database.folders.bulkAdd(
@@ -195,9 +230,18 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
 
   async getSettings(profileId: string): Promise<ProfileSettings> {
     await this.database.open();
-    return profileSettingsSchema.parse(
+    const settings = profileSettingsSchema.parse(
       await this.database.profileSettings.get(profileId),
     );
+    if (!settings.defaultFolderBackgroundAppearance) return settings;
+    return profileSettingsSchema.parse({
+      ...settings,
+      defaultFolderBackgroundAppearance: await hydrateFolderBackground(
+        this.database,
+        profileId,
+        settings.defaultFolderBackgroundAppearance,
+      ),
+    });
   }
 
   /** Estimates profile-owned payload sizes without exposing record contents. */
@@ -215,6 +259,7 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
           favorites,
           notes,
           noteFolders,
+          wallpapers,
         ] = await Promise.all([
           this.database.profileSettings.get(profile.id),
           this.database.activity
@@ -236,6 +281,10 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
             .where('profileId')
             .equals(profile.id)
             .toArray(),
+          this.database.folderWallpapers
+            .where('profileId')
+            .equals(profile.id)
+            .toArray(),
         ]);
         const payload = [
           profile,
@@ -247,6 +296,7 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
           ...favorites,
           ...notes,
           ...noteFolders,
+          ...wallpapers,
         ].filter(Boolean);
         return {
           profileId: profile.id,
@@ -297,11 +347,28 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
 
   async updateSettings(settings: ProfileSettings): Promise<void> {
     const validated = profileSettingsSchema.parse(settings);
+    const stored = await this.database.transaction(
+      'rw',
+      [this.database.profileSettings, this.database.folderWallpapers],
+      async () => {
+        const value = await this.toStoredSettings(validated);
+        return value;
+      },
+    );
     const changed = await this.database.profileSettings.update(
       validated.profileId,
-      validated,
+      stored,
     );
     if (changed !== 1) throw new Error('profile-settings-not-found');
+    await this.database.transaction(
+      'rw',
+      [
+        this.database.profileSettings,
+        this.database.folders,
+        this.database.folderWallpapers,
+      ],
+      () => deleteUnusedFolderWallpapers(this.database, validated.profileId),
+    );
   }
 
   async update(profile: Profile): Promise<void> {
@@ -323,6 +390,7 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
         this.database.metadata,
         this.database.notes,
         this.database.noteFolders,
+        this.database.folderWallpapers,
       ],
       async () => {
         const metadata = activeMetadataSchema.parse(
@@ -356,8 +424,26 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
           .where('profileId')
           .equals(profileId)
           .delete();
+        await this.database.folderWallpapers
+          .where('profileId')
+          .equals(profileId)
+          .delete();
       },
     );
+  }
+
+  private async toStoredSettings(
+    settings: ProfileSettings,
+  ): Promise<ProfileSettings> {
+    if (!settings.defaultFolderBackgroundAppearance) return settings;
+    return profileSettingsSchema.parse({
+      ...settings,
+      defaultFolderBackgroundAppearance: await persistFolderBackground(
+        this.database,
+        settings.profileId,
+        settings.defaultFolderBackgroundAppearance,
+      ),
+    });
   }
 
   async switchTo(profileId: string): Promise<ProfileActivationResult> {

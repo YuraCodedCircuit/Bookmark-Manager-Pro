@@ -28,6 +28,7 @@ export class DexieBackupRepository implements BackupRepository {
         this.primary.metadata,
         this.primary.notes,
         this.primary.noteFolders,
+        this.primary.folderWallpapers,
       ],
       async () => {
         const [
@@ -41,6 +42,7 @@ export class DexieBackupRepository implements BackupRepository {
           syncRecord,
           notes,
           noteFolders,
+          folderWallpapers,
         ] = await Promise.all([
           this.primary.profiles.get(profileId),
           this.primary.profileSettings.get(profileId),
@@ -58,10 +60,14 @@ export class DexieBackupRepository implements BackupRepository {
             .where('profileId')
             .equals(profileId)
             .toArray(),
+          this.primary.folderWallpapers
+            .where('profileId')
+            .equals(profileId)
+            .toArray(),
         ]);
         if (!profile || !settings) throw new Error('backup-profile-not-found');
         return backupPayloadSchema.parse({
-          formatVersion: 2,
+          formatVersion: 3,
           databaseSchemaVersion: this.primary.verno,
           applicationVersion: packageMetadata.version,
           profile,
@@ -76,6 +82,7 @@ export class DexieBackupRepository implements BackupRepository {
             : null,
           notes,
           noteFolders,
+          folderWallpapers,
         });
       },
     );
@@ -119,6 +126,7 @@ export class DexieBackupRepository implements BackupRepository {
         this.primary.metadata,
         this.primary.notes,
         this.primary.noteFolders,
+        this.primary.folderWallpapers,
       ],
       async () => {
         if (!(await this.primary.profiles.get(profileId)))
@@ -136,6 +144,10 @@ export class DexieBackupRepository implements BackupRepository {
             .where('profileId')
             .equals(profileId)
             .delete(),
+          this.primary.folderWallpapers
+            .where('profileId')
+            .equals(profileId)
+            .delete(),
         ]);
         await this.primary.profiles.put(payload.profile);
         await this.primary.profileSettings.put(payload.settings);
@@ -150,6 +162,9 @@ export class DexieBackupRepository implements BackupRepository {
         await this.primary.activity.bulkPut(payload.activity);
         await this.primary.notes.bulkPut(payload.notes ?? []);
         await this.primary.noteFolders.bulkPut(payload.noteFolders ?? []);
+        await this.primary.folderWallpapers.bulkPut(
+          payload.folderWallpapers ?? [],
+        );
         if (payload.synchronization)
           await this.primary.metadata.put({
             key: `sync:v1:${profileId}`,
@@ -174,6 +189,7 @@ export class DexieBackupRepository implements BackupRepository {
         ...payload.bookmarks,
         ...(payload.noteFolders ?? []),
         ...(payload.notes ?? []),
+        ...(payload.folderWallpapers ?? []),
       ].map((item) => [item.id, crypto.randomUUID()] as const),
     ]);
     const remap = (id: string) => ids.get(id) ?? id;
@@ -194,6 +210,7 @@ export class DexieBackupRepository implements BackupRepository {
         this.primary.metadata,
         this.primary.notes,
         this.primary.noteFolders,
+        this.primary.folderWallpapers,
       ],
       async () => {
         await this.primary.profiles.add({
@@ -206,6 +223,17 @@ export class DexieBackupRepository implements BackupRepository {
         await this.primary.profileSettings.add({
           ...payload.settings,
           profileId,
+          defaultFolderBackgroundAppearance:
+            payload.settings.defaultFolderBackgroundAppearance?.kind ===
+              'image' &&
+            payload.settings.defaultFolderBackgroundAppearance.imageId
+              ? {
+                  ...payload.settings.defaultFolderBackgroundAppearance,
+                  imageId: remap(
+                    payload.settings.defaultFolderBackgroundAppearance.imageId,
+                  ),
+                }
+              : payload.settings.defaultFolderBackgroundAppearance,
           lastOpenedFolderId: payload.settings.lastOpenedFolderId
             ? remap(payload.settings.lastOpenedFolderId)
             : undefined,
@@ -221,6 +249,14 @@ export class DexieBackupRepository implements BackupRepository {
             id: remap(item.id),
             profileId,
             parentId: item.parentId ? remap(item.parentId) : null,
+            backgroundAppearance:
+              item.backgroundAppearance.kind === 'image' &&
+              item.backgroundAppearance.imageId
+                ? {
+                    ...item.backgroundAppearance,
+                    imageId: remap(item.backgroundAppearance.imageId),
+                  }
+                : item.backgroundAppearance,
           })),
         );
         await this.primary.bookmarks.bulkAdd(
@@ -252,6 +288,13 @@ export class DexieBackupRepository implements BackupRepository {
             id: remap(item.id),
             profileId,
             parentId: item.parentId ? remap(item.parentId) : null,
+          })),
+        );
+        await this.primary.folderWallpapers.bulkAdd(
+          (payload.folderWallpapers ?? []).map((item) => ({
+            ...item,
+            id: remap(item.id),
+            profileId,
           })),
         );
         await this.primary.notes.bulkAdd(

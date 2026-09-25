@@ -20,6 +20,8 @@ _See the [screenshot gallery](screenshots/) for more views of the extension._
 - Card, list, and sortable details views stored per folder.
 - Bookmark and folder colors, gradients, images, layout, spacing, sorting, and
   navigation-background controls.
+- Locally optimized folder wallpapers with profile defaults and shared storage
+  when multiple folders use the same image.
 - Local bookmark search with configurable fields, matching, location, sorting,
   and cross-profile grouping.
 - Capability-checked Web search suggestions through the browser Search API.

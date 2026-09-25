@@ -141,6 +141,9 @@ remain UI-surface responsibilities because extension workers have no DOM or
 
 - IndexedDB owns profiles, profile-scoped activity logs and logging settings,
   bookmark trees, customization, recovery snapshots, and jobs.
+- The schema-32 `folderWallpapers` store owns optimized profile-local folder
+  background data. Folder and default-style records store opaque references;
+  repositories hydrate appearance reads and remove unreferenced images.
 - Recovery snapshots reside in a separate versioned IndexedDB database behind
   `BackupRepository`. `ManageBackups` owns capture, validation, integrity
   verification, retention, and restore orchestration; React receives that

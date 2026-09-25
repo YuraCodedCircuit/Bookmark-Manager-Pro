@@ -886,6 +886,56 @@ describe('App', () => {
     expect(within(bookmarkRegion).queryAllByRole('link')).toHaveLength(0);
   });
 
+  it('shows a neutral loading state and reuses the startup folder list', async () => {
+    let finishContents:
+      | ((value: {
+          bookmarks: readonly Bookmark[];
+          folders: readonly Folder[];
+        }) => void)
+      | undefined;
+    bookmarkManager.listContents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishContents = resolve;
+        }),
+    );
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading folder...');
+    expect(
+      screen.queryByRole('region', { name: 'Bookmarks' }),
+    ).not.toBeInTheDocument();
+    await waitFor(() => expect(finishContents).toBeTypeOf('function'));
+    finishContents?.({ bookmarks: [storedBookmark], folders: [] });
+
+    expect(
+      await screen.findByRole('region', { name: 'Bookmarks' }),
+    ).toBeVisible();
+    expect(bookmarkManager.listFolders).toHaveBeenCalledOnce();
+    expect(bookmarkManager.listNavigationItems).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      [rootFolder],
+    );
+  });
+
+  it('keeps folder content available when secondary navigation loading fails', async () => {
+    bookmarkManager.listNavigationItems.mockRejectedValueOnce(
+      new Error('navigation-unavailable'),
+    );
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+
+    expect(await screen.findByText('Example')).toBeVisible();
+    await waitFor(() =>
+      expect(activityLog.record).toHaveBeenCalledWith(
+        createdProfile.profile.id,
+        expect.objectContaining({
+          eventCode: 'NAVIGATION-ITEMS-LOAD-FAILED',
+          level: 'WARN',
+        }),
+      ),
+    );
+  });
+
   it('displays the active profile image in the top-right control', () => {
     renderApp({
       status: 'ready',
@@ -2155,11 +2205,20 @@ describe('App', () => {
       },
     });
 
-    expect(screen.getByText('Image not selected')).toBeInTheDocument();
+    expect(await screen.findByText('Image not selected')).toBeInTheDocument();
     expect(
-      screen.getByText('Choose a PNG, JPEG, or BMP image smaller than 1 MB.'),
+      screen.getByText(
+        'Choose a valid PNG, JPEG, or BMP image no larger than 1 MB and 7680 by 4320 pixels.',
+      ),
     ).toBeInTheDocument();
     expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+    expect(activityLog.record).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      expect.objectContaining({
+        eventCode: 'FOLDER-WALLPAPER-IMPORT-REJECTED',
+        level: 'WARN',
+      }),
+    );
   });
 
   it('creates bookmarks and folders in the currently open folder', async () => {

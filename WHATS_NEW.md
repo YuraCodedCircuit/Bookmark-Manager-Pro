@@ -1,30 +1,31 @@
-# What's New in 0.5.1
+# What's New in 0.5.2
 
-Released September 21, 2026.
+Released September 25, 2026.
 
-This release makes saved pages easier to recognize, improves profile and folder
-customization, and refines Firefox behavior.
+This release improves folder loading on older computers and expands the default
+appearance controls used when new folders are created.
 
 ## Highlights
 
-- **Saved-page toolbar status** - After optional tab-address access is approved,
-  a check badge can show when the current page is already saved in the active
-  profile. URL comparison remains local to the device.
-- **Firefox new-window support** - Firefox can use Bookmark Manager Pro as its
-  homepage as well as its new-tab page after approval in Firefox settings.
-- **Clearer profiles** - Profile windows now show bookmark and user-created
-  folder counts instead of internal identifiers.
-- **Faster folder styling** - Generate random colors or gradients and move
-  through one expanded customization section at a time.
+- **Faster new tabs** - The app waits for the current folder before displaying
+  its saved style, avoids repeated folder reads, and no longer flashes Home's
+  appearance first.
+- **More reliable Save current URL popup** - The folder picker loads lightweight
+  folder information, validates branches as they are opened, and keeps Home
+  available with a Retry action if the complete tree cannot be loaded.
+- **Smaller, reusable folder wallpapers** - Folder background images are resized
+  and compressed locally before saving. Identical wallpapers are stored once
+  and shared by folders that use them.
+- **Complete new-folder style defaults** - Appearance settings now include the
+  folder view, background, and navigation options from Customize folder style.
+  These defaults apply to newly created folders without changing existing ones.
 
-## Bug Fixes
+## Appearance Improvements
 
-- The toolbar popup now recognizes saved URLs consistently, remains usable at a
-  stable size, and follows the selected scrollbar behavior in Firefox.
-- The first-run welcome content remains reachable with a visible scrollbar in
-  Firefox.
-- Invalid oversized folder-background images now produce an app notification
-  without leaving a stale error after a valid replacement is selected.
+- An optional setting accepts folder wallpaper source files up to 10 MB instead
+  of the default 1 MB limit while retaining local processing and safety limits.
+- Background choices use a segmented control, and Color and Gradient include
+  random-generation actions.
 
 ## Full Changelog
 

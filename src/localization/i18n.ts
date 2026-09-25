@@ -472,6 +472,10 @@ void i18n.use(initReactI18next).init({
             folderOpenFailed: 'A folder could not be opened.',
             folderOpenRequested: 'A folder open request was sent.',
             folderStyleUpdated: 'The folder style was updated.',
+            folderWallpaperImportRejected:
+              'A folder background image was rejected during local validation or optimization.',
+            navigationItemsLoadFailed:
+              'Favorite and recent navigation items could not be loaded.',
             folderStyleUpdateFailed: 'The folder style could not be updated.',
             folderCreateFailed: 'A folder could not be created.',
             folderUpdated: 'A folder was updated.',
@@ -667,8 +671,11 @@ void i18n.use(initReactI18next).init({
           url: 'URL',
         },
         saveCurrentPage: {
+          checkingDuplicate: 'Checking whether this URL is already saved...',
           close: 'Close',
           destination: 'Save to folder',
+          duplicateCheckFailed:
+            'The saved-URL check could not be completed. Try again before saving.',
           duplicateMessage: 'This URL is already saved in this profile.',
           duplicateMoreFolders: 'and {{count}} more',
           duplicatePrevented:
@@ -678,9 +685,13 @@ void i18n.use(initReactI18next).init({
           duplicateTitle: 'URL already saved',
           firstRun:
             'Create a profile in Bookmark Manager Pro before saving pages.',
+          folderTreeFailed:
+            'Other folders could not be loaded. This bookmark can still be saved to Home.',
+          folderTreeLoading: 'Loading folders...',
           goBack: 'Go back',
           loadError: 'The current page could not be loaded.',
           retry: 'Retry',
+          retryFolders: 'Retry loading folders',
           saveAnother: 'Save another copy',
           savingAnother: 'Saving...',
           title: 'Save current URL',
@@ -760,6 +771,9 @@ void i18n.use(initReactI18next).init({
           ascending: 'Ascending',
           accentColor: 'Accent color',
           alwaysVisible: 'Always visible',
+          allowLargeWallpaperImports: 'Allow larger background images',
+          allowLargeWallpaperImportsHelp:
+            'Allows background images up to 10 MB. Images are resized and compressed on this device before being saved.',
           appearance: 'Application appearance',
           bookmarkDisplay: 'Bookmark display',
           bookmarkBehavior: {
@@ -1078,6 +1092,10 @@ void i18n.use(initReactI18next).init({
             'This controls the Details table background for the current folder.',
           error: 'The folder style could not be saved.',
           image: 'Choose background image',
+          imageError:
+            'Choose a valid PNG, JPEG, or BMP image no larger than {{max}} MB and 7680 by 4320 pixels.',
+          imageOptimized: 'Background image optimized and ready to save.',
+          imageProcessing: 'Optimizing background image...',
           imagePreview: 'Selected folder background image',
           includeNavigation: 'Include the navigation panel',
           navigationHelp:
@@ -1090,6 +1108,9 @@ void i18n.use(initReactI18next).init({
           summary: 'Customize the display and background for {{name}}.',
           title: 'Customize folder style',
           view: 'Folder view',
+        },
+        bookmarkBrowser: {
+          loadingFolder: 'Loading folder...',
         },
         contextMenu: {
           items: {

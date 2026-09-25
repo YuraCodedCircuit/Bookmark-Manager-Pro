@@ -9,9 +9,7 @@
 - Recoverable destructive operations
 - No sensitive content in logs
 
-## Planned IndexedDB stores
-
-Exact fields and indexes will be finalized before implementation.
+## IndexedDB stores and schema
 
 Schema version 1 establishes `profiles`, `profileSettings`, and `metadata`.
 The `metadata` store owns the active profile ID so initialization works in both
@@ -33,6 +31,16 @@ Schema version 30 stores the profile-owned toolbar saved-status preference with
 a default of disabled and adds the `[profileId+url]` bookmark index used for
 local exact-URL counts. The current tab address is transient input to that
 lookup; it is not persisted as browsing history or written to diagnostics.
+
+Schema version 31 adds the key-only folder-tree index used by navigation-only
+surfaces so they can read folder IDs, titles, parent relationships, creation
+times, and root status without loading appearance payloads.
+
+Schema version 32 adds `folderWallpapers`. During upgrade, embedded folder
+wallpapers are moved into profile-owned records and identical image data within
+one profile is stored once. Folder records retain only the wallpaper ID and fit
+mode. Repository reads hydrate the image only for surfaces that need the full
+folder appearance.
 
 Packaged-extension preflight stores a schema-validated snapshot in
 `browser.storage.session` for the current browser session. The snapshot contains
@@ -64,6 +72,8 @@ folder display choices.
 - `profiles`: profile identity, display metadata, and timestamps
 - `folders`: parent relationship, profile, order, per-folder display choices,
   and background/navigation customization
+- `folderWallpapers`: schema-32 optimized folder-background image data, owned by
+  one profile and referenced by folder and default-style records
 - `bookmarks`: folder, profile, URL, title, order, display metadata, and optional
   per-item card appearance overrides
 - `appearance`: versioned per-profile bookmark-area defaults and reusable card
@@ -133,16 +143,33 @@ deleted-profile restore remaps record identifiers into a new profile. Restored
 synchronization configuration is always paused and native bookmark links are
 not reactivated automatically.
 
+Backup format 3 includes shared folder-wallpaper records. Restoring as a new
+profile remaps wallpaper IDs together with folder and content IDs so references
+remain profile-local.
+
 Snapshot deletion affects only the chosen snapshot. Uninstalling the extension
 or clearing its browser-managed data removes both primary data and the separate
 snapshot database.
 
 ## Image storage and quota behavior
 
-User-selected images are stored locally as data URLs. Accepted uploads are PNG,
-JPEG, or BMP files no larger than 1,000,000 bytes. Domain validation limits the
-stored encoded value to 1,500,000 characters so all write paths enforce a
-consistent upper bound even when browser file metadata is unavailable.
+Profile icons, favicons, bookmark-card images, and folder icons remain bounded
+local data URLs. Their existing schema-specific encoded limits remain separate
+from folder-wallpaper processing.
+
+Folder wallpapers accept PNG, JPEG, or BMP source files up to 1 MB by default.
+The off-by-default Allow larger background images setting raises the source
+limit to 10 MB. Processing occurs locally: sources above 7680 by 4320 pixels are
+rejected, accepted images are resized to fit within 3840 by 2160 pixels, opaque
+images are encoded as WebP at approximately 85-percent quality, and PNG is kept
+only when transparency is present. The original source is discarded and only a
+validated result of at most 4.4 MB is saved.
+
+Optimized folder wallpapers are stored in `folderWallpapers` as profile-owned
+data URLs. Folder and default-style records store an opaque wallpaper ID and fit
+mode. Reusing an existing default wallpaper does not duplicate its data for each
+new folder. An image is removed after no folder or default-style record in that
+profile references it.
 
 Visible-page captures use JPEG. A capture that exceeds the encoded limit is
 resized and recompressed, then rejected if it still exceeds 1,500,000

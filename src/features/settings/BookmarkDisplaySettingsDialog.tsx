@@ -6,6 +6,7 @@ import type { ActivityLogSettings } from '../../domain/activity-log';
 import {
   defaultBackupPreferences,
   defaultFolderDisplaySettings,
+  defaultFolderAppearanceSettings,
   defaultNotificationPreferences,
   defaultProfilePreferences,
 } from '../../domain/profile-settings';
@@ -30,9 +31,20 @@ import {
 } from './settings-search';
 import { ToolbarSavedStatusPermissionDeniedError } from '../../platform/browser/toolbar-saved-status-error';
 import { PermissionIcon } from '../../components/icons/PermissionIcon';
+import type { FolderBackgroundAppearance } from '../../domain/folder';
+import type { ImageFit } from '../../domain/bookmark';
+import { GradientDirectionControl } from '../../components/GradientDirectionControl';
+import { ImageFitSelect } from '../../components/ImageFitSelect';
+import { optimizeFolderWallpaper } from '../../shared/optimize-folder-wallpaper';
+import { parseGradientDirection } from '../../shared/gradient-direction';
 
 const FEATURE_REQUEST_URL =
   'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues/new';
+
+const createRandomColor = (): string =>
+  `#${Math.floor(Math.random() * 0x1000000)
+    .toString(16)
+    .padStart(6, '0')}`;
 
 interface BookmarkDisplaySettingsDialogProps {
   isOpen: boolean;
@@ -42,6 +54,7 @@ interface BookmarkDisplaySettingsDialogProps {
   onSaveUpdateAnnouncements?: (enabled: boolean) => Promise<void>;
   onOpenExternalLink?: (url: string) => void;
   onRequestToolbarSavedStatusPermission?: () => Promise<void>;
+  onWallpaperRejected?: () => void | Promise<void>;
   profiles: readonly ProfileIdentityListItem[];
   activityLogSettings: ActivityLogSettings;
   settings: ProfileSettings;
@@ -64,6 +77,7 @@ export function BookmarkDisplaySettingsDialog({
   onSaveUpdateAnnouncements = async () => undefined,
   onOpenExternalLink = () => undefined,
   onRequestToolbarSavedStatusPermission = async () => undefined,
+  onWallpaperRejected,
   profiles,
   settings,
   storageUsage,
@@ -97,6 +111,50 @@ export function BookmarkDisplaySettingsDialog({
   );
   const [bookmarkSortBy, setBookmarkSortBy] = useState(
     settings.bookmarkSortBy ?? defaultFolderDisplaySettings.bookmarkSortBy,
+  );
+  const initialFolderBackground =
+    settings.defaultFolderBackgroundAppearance ??
+    defaultFolderAppearanceSettings.backgroundAppearance;
+  const [bookmarkView, setBookmarkView] = useState(settings.bookmarkView);
+  const [folderBackgroundKind, setFolderBackgroundKind] = useState<
+    FolderBackgroundAppearance['kind']
+  >(initialFolderBackground.kind);
+  const [folderBackgroundColor, setFolderBackgroundColor] = useState(
+    initialFolderBackground.kind === 'color'
+      ? initialFolderBackground.value
+      : '#0b121a',
+  );
+  const [folderBackgroundColors, setFolderBackgroundColors] = useState<
+    [string, string, string]
+  >(
+    initialFolderBackground.kind === 'gradient'
+      ? [...initialFolderBackground.colors]
+      : ['#0b121a', '#2f7de1', '#9250bd'],
+  );
+  const [folderBackgroundDirection, setFolderBackgroundDirection] = useState(
+    initialFolderBackground.kind === 'gradient'
+      ? String(initialFolderBackground.direction)
+      : '135',
+  );
+  const [folderBackgroundImage, setFolderBackgroundImage] = useState(
+    initialFolderBackground.kind === 'image'
+      ? initialFolderBackground.value
+      : undefined,
+  );
+  const [folderBackgroundImageId, setFolderBackgroundImageId] = useState(
+    initialFolderBackground.kind === 'image'
+      ? initialFolderBackground.imageId
+      : undefined,
+  );
+  const [folderBackgroundFit, setFolderBackgroundFit] = useState<ImageFit>(
+    initialFolderBackground.kind === 'image'
+      ? initialFolderBackground.fit
+      : 'fill',
+  );
+  const [processingWallpaper, setProcessingWallpaper] = useState(false);
+  const [appearanceAnnouncement, setAppearanceAnnouncement] = useState('');
+  const [allowLargeWallpaperImports, setAllowLargeWallpaperImports] = useState(
+    settings.allowLargeWallpaperImports ?? false,
   );
   const [searchPreferences, setSearchPreferences] = useState(
     settings.searchPreferences ?? defaultSearchPreferences,
@@ -164,6 +222,42 @@ export function BookmarkDisplaySettingsDialog({
       setBookmarkSortBy(
         settings.bookmarkSortBy ?? defaultFolderDisplaySettings.bookmarkSortBy,
       );
+      setBookmarkView(settings.bookmarkView);
+      setAllowLargeWallpaperImports(
+        settings.allowLargeWallpaperImports ?? false,
+      );
+      const defaultBackground =
+        settings.defaultFolderBackgroundAppearance ??
+        defaultFolderAppearanceSettings.backgroundAppearance;
+      setFolderBackgroundKind(defaultBackground.kind);
+      setFolderBackgroundColor(
+        defaultBackground.kind === 'color'
+          ? defaultBackground.value
+          : '#0b121a',
+      );
+      setFolderBackgroundColors(
+        defaultBackground.kind === 'gradient'
+          ? [...defaultBackground.colors]
+          : ['#0b121a', '#2f7de1', '#9250bd'],
+      );
+      setFolderBackgroundDirection(
+        defaultBackground.kind === 'gradient'
+          ? String(defaultBackground.direction)
+          : '135',
+      );
+      setFolderBackgroundImage(
+        defaultBackground.kind === 'image'
+          ? defaultBackground.value
+          : undefined,
+      );
+      setFolderBackgroundImageId(
+        defaultBackground.kind === 'image'
+          ? defaultBackground.imageId
+          : undefined,
+      );
+      setFolderBackgroundFit(
+        defaultBackground.kind === 'image' ? defaultBackground.fit : 'fill',
+      );
       setSearchPreferences(
         settings.searchPreferences ?? defaultSearchPreferences,
       );
@@ -195,6 +289,9 @@ export function BookmarkDisplaySettingsDialog({
     settings.startupLocation,
     settings.notificationPreferences,
     settings.showSavedStatusOnToolbar,
+    settings.bookmarkView,
+    settings.allowLargeWallpaperImports,
+    settings.defaultFolderBackgroundAppearance,
   ]);
 
   const requestToolbarSavedStatusPermission = async () => {
@@ -241,6 +338,28 @@ export function BookmarkDisplaySettingsDialog({
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    let defaultFolderBackgroundAppearance: FolderBackgroundAppearance = {
+      kind: 'none',
+    };
+    if (showAppearance) {
+      defaultFolderBackgroundAppearance =
+        folderBackgroundKind === 'color'
+          ? { kind: 'color', value: folderBackgroundColor }
+          : folderBackgroundKind === 'gradient'
+            ? {
+                colors: folderBackgroundColors,
+                direction: parseGradientDirection(folderBackgroundDirection),
+                kind: 'gradient',
+              }
+            : folderBackgroundKind === 'image' && folderBackgroundImage
+              ? {
+                  fit: folderBackgroundFit,
+                  imageId: folderBackgroundImageId,
+                  kind: 'image',
+                  value: folderBackgroundImage,
+                }
+              : { kind: 'none' };
+    }
     setSaving(true);
     setError(null);
     try {
@@ -444,12 +563,24 @@ export function BookmarkDisplaySettingsDialog({
                               : {
                                   ...settings,
                                   accentColorMode,
-                                  bookmarkView:
-                                    data.get('bookmarkView') === 'list'
-                                      ? 'list'
-                                      : data.get('bookmarkView') === 'details'
-                                        ? 'details'
-                                        : 'card',
+                                  allowLargeWallpaperImports,
+                                  defaultFolderBackgroundAppearance,
+                                  defaultFolderDetailsTableTransparency: Number(
+                                    data.get(
+                                      'defaultFolderDetailsTableTransparency',
+                                    ) ?? 0,
+                                  ),
+                                  defaultFolderIncludeNavigationBackground:
+                                    folderBackgroundKind !== 'none' &&
+                                    data.has(
+                                      'defaultFolderIncludeNavigationBackground',
+                                    ),
+                                  defaultFolderNavigationTransparency: Number(
+                                    data.get(
+                                      'defaultFolderNavigationTransparency',
+                                    ) ?? 70,
+                                  ),
+                                  bookmarkView: bookmarkView,
                                   cardSize:
                                     data.get('cardSize') === 'small'
                                       ? 'small'
@@ -629,7 +760,7 @@ export function BookmarkDisplaySettingsDialog({
                 </div>
                 <fieldset>
                   <legend>{t('displaySettings.general.startup')}</legend>
-                  <label>
+                  <label className="settings-checkbox-row">
                     <span>{t('displaySettings.general.startupLocation')}</span>
                     <select
                       onChange={(event) => {
@@ -772,16 +903,37 @@ export function BookmarkDisplaySettingsDialog({
                       </option>
                     </select>
                   </label>
+                  <label className="settings-checkbox-row">
+                    <input
+                      checked={allowLargeWallpaperImports}
+                      name="allowLargeWallpaperImports"
+                      onChange={(event) =>
+                        setAllowLargeWallpaperImports(event.target.checked)
+                      }
+                      type="checkbox"
+                    />
+                    <span>
+                      {t('displaySettings.allowLargeWallpaperImports')}
+                    </span>
+                  </label>
+                  <p className="settings-dialog__help">
+                    {t('displaySettings.allowLargeWallpaperImportsHelp')}
+                  </p>
                 </fieldset>
                 <fieldset>
-                  <legend>{t('displaySettings.bookmarkDisplay')}</legend>
+                  <legend>{t('folderStyle.view')}</legend>
                   <label>
                     <span>{t('displaySettings.view')}</span>
                     <select
-                      defaultValue={
-                        settings.bookmarkView ??
-                        defaultFolderDisplaySettings.bookmarkView
+                      onChange={(event) =>
+                        setBookmarkView(
+                          event.target.value === 'list' ||
+                            event.target.value === 'details'
+                            ? event.target.value
+                            : 'card',
+                        )
                       }
+                      value={bookmarkView}
                       name="bookmarkView"
                     >
                       <option value="card">{t('displaySettings.card')}</option>
@@ -898,6 +1050,225 @@ export function BookmarkDisplaySettingsDialog({
                   </p>
                   <p className="settings-dialog__help">
                     {t('displaySettings.displayHelp')}
+                  </p>
+                  {bookmarkView === 'details' ? (
+                    <label>
+                      <span>
+                        {t('folderStyle.detailsTableTransparency', {
+                          value:
+                            settings.defaultFolderDetailsTableTransparency ??
+                            defaultFolderAppearanceSettings.detailsTableTransparency,
+                        })}
+                      </span>
+                      <input
+                        defaultValue={
+                          settings.defaultFolderDetailsTableTransparency ??
+                          defaultFolderAppearanceSettings.detailsTableTransparency
+                        }
+                        max={100}
+                        min={0}
+                        name="defaultFolderDetailsTableTransparency"
+                        type="range"
+                      />
+                    </label>
+                  ) : null}
+                </fieldset>
+                <fieldset>
+                  <legend>{t('folderStyle.background')}</legend>
+                  <div className="settings-dialog__background-options">
+                    {(['none', 'color', 'gradient', 'image'] as const).map(
+                      (kind) => (
+                        <label key={kind}>
+                          <input
+                            checked={folderBackgroundKind === kind}
+                            name="defaultFolderBackgroundKind"
+                            onChange={() => setFolderBackgroundKind(kind)}
+                            type="radio"
+                          />
+                          {kind === 'none'
+                            ? t('folderStyle.noBackground')
+                            : t(`contentEditor.appearanceKinds.${kind}`)}
+                        </label>
+                      ),
+                    )}
+                  </div>
+                  {folderBackgroundKind === 'color' ? (
+                    <div className="settings-dialog__appearance-controls">
+                      <label>
+                        <span>{t('folderStyle.color')}</span>
+                        <input
+                          onChange={(event) =>
+                            setFolderBackgroundColor(event.target.value)
+                          }
+                          type="color"
+                          value={folderBackgroundColor}
+                        />
+                      </label>
+                      <button
+                        className="content-editor__randomize-button"
+                        onClick={() => {
+                          const color = createRandomColor();
+                          setFolderBackgroundColor(color);
+                          setAppearanceAnnouncement(
+                            t('contentEditor.randomColorGenerated', { color }),
+                          );
+                        }}
+                        type="button"
+                      >
+                        {t('contentEditor.randomColor')}
+                      </button>
+                    </div>
+                  ) : null}
+                  {folderBackgroundKind === 'gradient' ? (
+                    <div className="content-editor__gradient-controls">
+                      {folderBackgroundColors.map((color, index) => (
+                        <label key={index}>
+                          <span>
+                            {t('contentEditor.gradientColor', {
+                              number: index + 1,
+                            })}
+                          </span>
+                          <input
+                            onChange={(event) => {
+                              const next = [...folderBackgroundColors] as [
+                                string,
+                                string,
+                                string,
+                              ];
+                              next[index] = event.target.value;
+                              setFolderBackgroundColors(next);
+                            }}
+                            type="color"
+                            value={color}
+                          />
+                        </label>
+                      ))}
+                      <GradientDirectionControl
+                        onChange={setFolderBackgroundDirection}
+                        value={folderBackgroundDirection}
+                      />
+                      <button
+                        className="content-editor__randomize-button"
+                        onClick={() => {
+                          const colors: [string, string, string] = [
+                            createRandomColor(),
+                            createRandomColor(),
+                            createRandomColor(),
+                          ];
+                          const direction = String(
+                            Math.floor(Math.random() * 360),
+                          );
+                          setFolderBackgroundColors(colors);
+                          setFolderBackgroundDirection(direction);
+                          setAppearanceAnnouncement(
+                            t('contentEditor.randomGradientGenerated', {
+                              colors: colors.join(', '),
+                              direction,
+                            }),
+                          );
+                        }}
+                        type="button"
+                      >
+                        {t('contentEditor.randomGradient')}
+                      </button>
+                    </div>
+                  ) : null}
+                  {folderBackgroundKind === 'image' ? (
+                    <div className="content-editor__image-input">
+                      <ImageFitSelect
+                        onChange={setFolderBackgroundFit}
+                        value={folderBackgroundFit}
+                      />
+                      <input
+                        accept="image/png,image/jpeg,image/bmp"
+                        aria-label={t('folderStyle.image')}
+                        disabled={processingWallpaper}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (!file) return;
+                          setProcessingWallpaper(true);
+                          void optimizeFolderWallpaper(
+                            file,
+                            allowLargeWallpaperImports,
+                          )
+                            .then((value) => {
+                              setFolderBackgroundImage(value);
+                              setFolderBackgroundImageId(undefined);
+                            })
+                            .catch(() => {
+                              setFolderBackgroundImage(undefined);
+                              try {
+                                void Promise.resolve(
+                                  onWallpaperRejected?.(),
+                                ).catch(() =>
+                                  console.error(
+                                    'settings-wallpaper-warning-failed',
+                                  ),
+                                );
+                              } catch {
+                                console.error(
+                                  'settings-wallpaper-warning-failed',
+                                );
+                              }
+                            })
+                            .finally(() => setProcessingWallpaper(false));
+                        }}
+                        required={!folderBackgroundImage}
+                        type="file"
+                      />
+                      {folderBackgroundImage ? (
+                        <img
+                          alt={t('folderStyle.imagePreview')}
+                          src={folderBackgroundImage}
+                        />
+                      ) : null}
+                      <span aria-live="polite" className="visually-hidden">
+                        {processingWallpaper
+                          ? t('folderStyle.imageProcessing')
+                          : ''}
+                      </span>
+                    </div>
+                  ) : null}
+                  <span aria-live="polite" className="visually-hidden">
+                    {appearanceAnnouncement}
+                  </span>
+                </fieldset>
+                <fieldset>
+                  <legend>{t('folderStyle.navigationPanel')}</legend>
+                  <label className="settings-checkbox-row">
+                    <input
+                      defaultChecked={
+                        settings.defaultFolderIncludeNavigationBackground ??
+                        defaultFolderAppearanceSettings.includeNavigationBackground
+                      }
+                      disabled={folderBackgroundKind === 'none'}
+                      name="defaultFolderIncludeNavigationBackground"
+                      type="checkbox"
+                    />
+                    <span>{t('folderStyle.includeNavigation')}</span>
+                  </label>
+                  <label>
+                    <span>
+                      {t('folderStyle.navigationTransparency', {
+                        value:
+                          settings.defaultFolderNavigationTransparency ??
+                          defaultFolderAppearanceSettings.navigationTransparency,
+                      })}
+                    </span>
+                    <input
+                      defaultValue={
+                        settings.defaultFolderNavigationTransparency ??
+                        defaultFolderAppearanceSettings.navigationTransparency
+                      }
+                      disabled={folderBackgroundKind === 'none'}
+                      max={100}
+                      min={0}
+                      name="defaultFolderNavigationTransparency"
+                      type="range"
+                    />
+                  </label>
+                  <p className="settings-dialog__help">
+                    {t('folderStyle.navigationHelp')}
                   </p>
                 </fieldset>
               </section>
@@ -1576,6 +1947,7 @@ export function BookmarkDisplaySettingsDialog({
           <button
             disabled={
               saving ||
+              processingWallpaper ||
               (!showGeneral &&
                 !showAppearance &&
                 !showProfiles &&

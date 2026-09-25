@@ -217,7 +217,10 @@ spacing, and background settings.
 ### 40. Which backgrounds can a folder or card use?
 
 An item can use no background, a solid color, a three-color directional
-gradient, or a local PNG, JPEG, or BMP image up to 1 MB.
+gradient, or a local PNG, JPEG, or BMP image. Folder wallpaper sources are
+limited to 1 MB by default. Appearance settings can allow sources up to 10 MB;
+they are resized and compressed locally before only the processed result is
+saved.
 
 ### 41. Can the folder background extend behind navigation?
 
@@ -226,8 +229,9 @@ bar, and a transparency control adds a readability overlay.
 
 ### 42. Are local images uploaded?
 
-No. Selected profile and appearance images are stored locally with application
-data.
+No. Selected profile and appearance images are processed and stored locally
+with application data. Original folder-wallpaper files are discarded after
+local processing, and folders can share one stored optimized wallpaper.
 
 ### 43. Which animation settings are available?
 

@@ -13,7 +13,10 @@ import { defaultActivityLogSettings } from '../../application/activity-log/manag
 import { BookmarkDisplaySettingsDialog } from './BookmarkDisplaySettingsDialog';
 import { ToolbarSavedStatusPermissionDeniedError } from '../../platform/browser/toolbar-saved-status-error';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 const settings = {
   bookmarkView: 'list' as const,
@@ -109,6 +112,16 @@ describe('BookmarkDisplaySettingsDialog', () => {
     expect(within(dialog).getByLabelText('Card size')).toHaveValue('small');
     expect(within(dialog).getByLabelText('Sort by')).toHaveValue('manual');
     expect(within(dialog).getByLabelText('Direction')).toBeDisabled();
+    expect(
+      within(dialog).getByRole('group', { name: 'Folder background' }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('group', { name: 'Navigation panel' }),
+    ).toBeInTheDocument();
+    const largeWallpaperImports = within(dialog).getByLabelText(
+      'Allow larger background images',
+    );
+    expect(largeWallpaperImports).not.toBeChecked();
 
     await user.selectOptions(within(dialog).getByLabelText('View'), 'details');
     await user.selectOptions(
@@ -140,11 +153,21 @@ describe('BookmarkDisplaySettingsDialog', () => {
       within(dialog).getByLabelText('Scrollbars'),
       'always',
     );
+    await user.click(largeWallpaperImports);
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
         bookmarkView: 'details',
+        allowLargeWallpaperImports: true,
+        defaultFolderBackgroundAppearance: {
+          colors: ['#2f80c9', '#185a82', '#0b1f3a'],
+          direction: 135,
+          kind: 'gradient',
+        },
+        defaultFolderDetailsTableTransparency: 0,
+        defaultFolderIncludeNavigationBackground: true,
+        defaultFolderNavigationTransparency: 70,
         cardSize: 'large',
         accentColorMode: 'custom',
         cardSpacing: 'compact',
@@ -153,6 +176,65 @@ describe('BookmarkDisplaySettingsDialog', () => {
         bookmarkGroupBy: 'type',
         scrollbarBehavior: 'always',
         theme: 'light',
+      }),
+    );
+  });
+
+  it('uses segmented background choices and generates random defaults', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const user = userEvent.setup();
+    const onSave = vi.fn(async () => undefined);
+    render(
+      <BookmarkDisplaySettingsDialog
+        activityLogSettings={activityLogSettings}
+        isOpen
+        onClose={vi.fn()}
+        onSave={onSave}
+        onSaveActivitySettings={vi.fn(async () => undefined)}
+        profiles={[]}
+        settings={settings}
+        storageUsage={[]}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Appearance' }),
+    );
+    const background = within(dialog).getByRole('group', {
+      name: 'Folder background',
+    });
+
+    expect(within(background).getAllByRole('radio')).toHaveLength(4);
+    await user.click(within(background).getByRole('radio', { name: 'Color' }));
+    await user.click(
+      within(background).getByRole('button', {
+        name: 'Generate random color',
+      }),
+    );
+    expect(within(background).getByLabelText('Background color')).toHaveValue(
+      '#800000',
+    );
+
+    await user.click(
+      within(background).getByRole('radio', { name: 'Gradient' }),
+    );
+    await user.click(
+      within(background).getByRole('button', {
+        name: 'Generate random gradient',
+      }),
+    );
+    expect(
+      within(background).getByText(/Random gradient generated/),
+    ).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        defaultFolderBackgroundAppearance: {
+          colors: ['#800000', '#800000', '#800000'],
+          direction: 180,
+          kind: 'gradient',
+        },
       }),
     );
   });

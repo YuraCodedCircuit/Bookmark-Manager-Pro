@@ -1,5 +1,5 @@
 import type { Bookmark } from '../../domain/bookmark';
-import type { Folder } from '../../domain/folder';
+import type { Folder, FolderTreeSummary } from '../../domain/folder';
 import type { FavoriteItem } from '../../domain/favorite-item';
 import type { UndoProfileState } from '../../domain/undo-history';
 
@@ -20,7 +20,14 @@ export interface BookmarkRepository {
   getFolder(profileId: string, folderId: string): Promise<Folder | undefined>;
   isItemIdAvailable(id: string): Promise<boolean>;
   listFolders(profileId: string): Promise<readonly Folder[]>;
+  listFolderTreeSummaries(
+    profileId: string,
+  ): Promise<readonly FolderTreeSummary[]>;
   listBookmarks(profileId: string): Promise<readonly Bookmark[]>;
+  listBookmarksByUrl(
+    profileId: string,
+    url: string,
+  ): Promise<readonly Bookmark[]>;
   listFavorites(profileId: string): Promise<readonly FavoriteItem[]>;
   listContents(profileId: string, parentId: string): Promise<FolderContents>;
   nextIndex(profileId: string, parentId: string): Promise<number>;

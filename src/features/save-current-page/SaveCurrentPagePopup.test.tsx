@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../localization/i18n';
 import type { BookmarkUrlLocation } from '../../application/bookmark/manage-bookmarks';
 import { profileSettingsSchema } from '../../domain/profile-settings';
+import type { FolderTreeSummary } from '../../domain/folder';
 import { isSaveableCurrentPageUrl } from './current-page-url';
 import {
   SaveCurrentPagePopup,
@@ -61,6 +62,10 @@ function setup(
     profileId: string,
     url: string,
   ) => Promise<readonly BookmarkUrlLocation[]> = vi.fn(async () => []),
+  loadFolderTree: () => Promise<readonly FolderTreeSummary[]> = vi.fn(
+    async () => [root],
+  ),
+  initializeUndo = vi.fn(async () => true),
 ) {
   const createdBookmark = {
     cardAppearance: { kind: 'color' as const, value: '#2f7de1' },
@@ -103,25 +108,28 @@ function setup(
       })),
       subscribeProfileActivation: vi.fn(() => () => undefined),
     },
+    initializeUndo,
+    loadDuplicateLocations: vi.fn(async () =>
+      typeof initialDuplicate !== 'boolean'
+        ? initialDuplicate
+        : initialDuplicate
+          ? [{ folderId: rootId, folderTitle: root.title }]
+          : [],
+    ),
+    loadFolderTree,
     undoHistory: {
       record: vi.fn(async () => undefined),
-      runMutation: async <T,>(operation: () => Promise<T>) => operation(),
+      runMutation: vi.fn(async <T,>(operation: () => Promise<T>): Promise<T> =>
+        operation(),
+      ) as <T>(operation: () => Promise<T>) => Promise<T>,
     },
   };
   render(
     <SaveCurrentPagePopup
       dependencies={dependencies}
-      initialDuplicateLocations={
-        typeof initialDuplicate !== 'boolean'
-          ? initialDuplicate
-          : initialDuplicate
-            ? [{ folderId: rootId, folderTitle: root.title }]
-            : []
-      }
       ready={{
-        folder: root,
-        folders: [root],
         profileId,
+        root,
         settings: profileSettingsSchema.parse({
           duplicateHandling,
           profileId,
@@ -173,7 +181,7 @@ describe('unsupported current pages', () => {
 });
 
 describe('SaveCurrentPagePopup duplicate handling', () => {
-  it('shows up to three complete matching folder names and summarizes the rest', () => {
+  it('shows up to three complete matching folder names and summarizes the rest', async () => {
     const longFolderName = `Reference ${'collection '.repeat(15)}`.trim();
     setup('warn', [
       { folderId: rootId, folderTitle: longFolderName },
@@ -191,7 +199,7 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
       },
     ]);
 
-    expect(screen.getByText('Saved in:')).toBeVisible();
+    expect(await screen.findByText('Saved in:')).toBeVisible();
     expect(screen.getByText(longFolderName)).toHaveAttribute(
       'title',
       longFolderName,
@@ -210,7 +218,7 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
     expect(
       screen.queryByRole('dialog', { name: 'Save current URL' }),
     ).not.toBeInTheDocument();
-    const closeButton = screen.getByRole('button', { name: 'Close' });
+    const closeButton = await screen.findByRole('button', { name: 'Close' });
     expect(closeButton).toHaveFocus();
     expect(closeButton.closest('footer')).not.toBeNull();
 
@@ -229,11 +237,11 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
     expect(listBookmarkLocationsByUrl).toHaveBeenCalledOnce();
   });
 
-  it('blocks an initial duplicate when the profile prevents copies', () => {
+  it('blocks an initial duplicate when the profile prevents copies', async () => {
     setup('prevent', true);
 
     expect(
-      screen.getByText(
+      await screen.findByText(
         'Your duplicate settings prevent another copy from being saved.',
       ),
     ).toBeVisible();
@@ -249,7 +257,9 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
       false,
       vi.fn(async () => [{ folderId: rootId, folderTitle: root.title }]),
     );
-    const editor = screen.getByRole('dialog', { name: 'Save current URL' });
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
 
     await user.clear(within(editor).getByLabelText('Title'));
     await user.type(within(editor).getByLabelText('Title'), 'Edited title');
@@ -281,7 +291,9 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
       false,
       vi.fn(async () => [{ folderId: rootId, folderTitle: root.title }]),
     );
-    const editor = screen.getByRole('dialog', { name: 'Save current URL' });
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
 
     await user.click(
       within(editor).getByRole('button', { name: 'Save bookmark' }),
@@ -305,7 +317,9 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
       false,
       vi.fn(async () => [{ folderId: rootId, folderTitle: root.title }]),
     );
-    const editor = screen.getByRole('dialog', { name: 'Save current URL' });
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
 
     await user.click(
       within(editor).getByRole('button', { name: 'Save bookmark' }),
@@ -323,18 +337,16 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
     ).toBeVisible();
   });
 
-  it('reports an existing URL before allowing another copy in allow mode', async () => {
+  it('skips duplicate lookup when the profile allows copies', async () => {
     const user = userEvent.setup();
     const listBookmarkLocationsByUrl = vi.fn(async () => [
       { folderId: rootId, folderTitle: root.title },
     ]);
     const dependencies = setup('allow', true, listBookmarkLocationsByUrl);
 
-    expect(screen.getByText('URL already saved')).toBeVisible();
-    expect(screen.getByText('Home')).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Save another copy' }));
-
-    const editor = screen.getByRole('dialog', { name: 'Save current URL' });
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
     await user.click(
       within(editor).getByRole('button', { name: 'Save bookmark' }),
     );
@@ -345,5 +357,113 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
       ).toHaveBeenCalledOnce(),
     );
     expect(listBookmarkLocationsByUrl).not.toHaveBeenCalled();
+  });
+});
+
+describe('SaveCurrentPagePopup folder loading', () => {
+  const recentFolder = {
+    createdAt: 20,
+    id: '33333333-3333-4333-8333-333333333333',
+    isRoot: false,
+    parentId: rootId,
+    profileId,
+    title: 'Recent',
+  };
+
+  it('selects the newest non-Home folder after summaries load', async () => {
+    setup(
+      'allow',
+      false,
+      undefined,
+      vi.fn(async () => [root, recentFolder]),
+    );
+
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
+    expect(await within(editor).findByText('Stored in Recent.')).toBeVisible();
+    expect(
+      within(editor).getByRole('button', { name: 'Recent' }),
+    ).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('keeps Home usable and records a privacy-safe warning when the tree fails', async () => {
+    const dependencies = setup(
+      'allow',
+      false,
+      undefined,
+      vi.fn(async () => {
+        throw new Error('synthetic private folder title');
+      }),
+    );
+
+    expect(
+      await screen.findByText(
+        'Other folders could not be loaded. This bookmark can still be saved to Home.',
+      ),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+    expect(dependencies.activityLog.record).toHaveBeenCalledWith(
+      profileId,
+      expect.objectContaining({
+        eventCode: 'POPUP-FOLDER-TREE-LOAD-DEGRADED',
+        level: 'WARN',
+        message: 'Popup folder tree was unavailable. Home remains available.',
+      }),
+    );
+    expect(
+      JSON.stringify(dependencies.activityLog.record.mock.calls),
+    ).not.toContain('synthetic private folder title');
+  });
+
+  it('retries a failed folder-tree load', async () => {
+    const user = userEvent.setup();
+    const loadFolderTree = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('temporary'))
+      .mockResolvedValueOnce([root, recentFolder]);
+    setup('allow', false, undefined, loadFolderTree);
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Retry loading folders' }),
+    );
+
+    expect(await screen.findByRole('button', { name: 'Recent' })).toBeVisible();
+    expect(loadFolderTree).toHaveBeenCalledTimes(2);
+  });
+
+  it('saves without undo when undo initialization fails and records degradation', async () => {
+    const user = userEvent.setup();
+    const dependencies = setup(
+      'allow',
+      false,
+      undefined,
+      undefined,
+      vi.fn(async () => false),
+    );
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
+
+    await user.click(
+      within(editor).getByRole('button', { name: 'Save bookmark' }),
+    );
+
+    await waitFor(() =>
+      expect(
+        dependencies.bookmarkManager.createBookmark,
+      ).toHaveBeenCalledOnce(),
+    );
+    expect(dependencies.undoHistory.runMutation).not.toHaveBeenCalled();
+    expect(dependencies.activityLog.record).toHaveBeenCalledWith(
+      profileId,
+      expect.objectContaining({
+        eventCode: 'CURRENT-TAB-UNDO-HISTORY-DEGRADED',
+        level: 'WARN',
+      }),
+    );
   });
 });

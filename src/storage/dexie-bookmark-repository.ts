@@ -1,31 +1,48 @@
+import Dexie from 'dexie';
+
 import type {
   BookmarkRepository,
   FolderContents,
 } from '../application/bookmark/bookmark-repository';
 import { bookmarkSchema, type Bookmark } from '../domain/bookmark';
-import { folderSchema, type Folder } from '../domain/folder';
+import {
+  folderSchema,
+  folderTreeIndexKeySchema,
+  folderTreeSummarySchema,
+  type Folder,
+  type FolderTreeSummary,
+} from '../domain/folder';
 import { favoriteItemSchema, type FavoriteItem } from '../domain/favorite-item';
 import {
   undoProfileStateSchema,
   type UndoProfileState,
 } from '../domain/undo-history';
 import type { BookmarkManagerDatabase } from './database';
+import {
+  hydrateFolderBackground,
+  persistFolderBackground,
+  deleteUnusedFolderWallpapers,
+} from './folder-wallpapers';
 
 /** Stores validated profile content in IndexedDB. */
 export class DexieBookmarkRepository implements BookmarkRepository {
   constructor(private readonly database: BookmarkManagerDatabase) {}
 
   async ensureRoot(profileId: string, root: Folder): Promise<Folder> {
-    return this.database.transaction('rw', this.database.folders, async () => {
-      const existing = await this.database.folders
-        .where('profileId')
-        .equals(profileId)
-        .filter((folder) => folder.isRoot)
-        .first();
-      if (existing) return folderSchema.parse(existing);
-      await this.database.folders.add(root);
-      return root;
-    });
+    return this.database.transaction(
+      'rw',
+      [this.database.folders, this.database.folderWallpapers],
+      async () => {
+        const existing = await this.database.folders
+          .where('profileId')
+          .equals(profileId)
+          .filter((folder) => folder.isRoot)
+          .first();
+        if (existing) return this.hydrateFolder(folderSchema.parse(existing));
+        await this.database.folders.add(await this.toStoredFolder(root));
+        return root;
+      },
+    );
   }
 
   async getFolder(
@@ -34,7 +51,7 @@ export class DexieBookmarkRepository implements BookmarkRepository {
   ): Promise<Folder | undefined> {
     const stored = await this.database.folders.get(folderId);
     return stored?.profileId === profileId
-      ? folderSchema.parse(stored)
+      ? this.hydrateFolder(folderSchema.parse(stored))
       : undefined;
   }
 
@@ -57,9 +74,50 @@ export class DexieBookmarkRepository implements BookmarkRepository {
   }
 
   async listFolders(profileId: string): Promise<readonly Folder[]> {
-    return (
-      await this.database.folders.where('profileId').equals(profileId).toArray()
-    ).map((item) => folderSchema.parse(item));
+    return Promise.all(
+      (
+        await this.database.folders
+          .where('profileId')
+          .equals(profileId)
+          .toArray()
+      ).map((item) => this.hydrateFolder(folderSchema.parse(item))),
+    );
+  }
+
+  async listFolderTreeSummaries(
+    profileId: string,
+  ): Promise<readonly FolderTreeSummary[]> {
+    const [root, keys] = await Promise.all([
+      this.database.folders
+        .where('profileId')
+        .equals(profileId)
+        .filter((folder) => folder.isRoot)
+        .first(),
+      this.database.folders
+        .where('[profileId+parentId+createdAt+id+title]')
+        .between(
+          [profileId, Dexie.minKey],
+          [profileId, Dexie.maxKey],
+          true,
+          true,
+        )
+        .keys(),
+    ]);
+    const summaries = keys.map((key) => {
+      const [storedProfileId, parentId, createdAt, id, title] =
+        folderTreeIndexKeySchema.parse(key);
+      return folderTreeSummarySchema.parse({
+        createdAt,
+        id,
+        isRoot: false,
+        parentId,
+        profileId: storedProfileId,
+        title,
+      });
+    });
+    return root
+      ? [folderTreeSummarySchema.parse(root), ...summaries]
+      : summaries;
   }
 
   async listBookmarks(profileId: string): Promise<readonly Bookmark[]> {
@@ -67,6 +125,18 @@ export class DexieBookmarkRepository implements BookmarkRepository {
       await this.database.bookmarks
         .where('profileId')
         .equals(profileId)
+        .toArray()
+    ).map((item) => bookmarkSchema.parse(item));
+  }
+
+  async listBookmarksByUrl(
+    profileId: string,
+    url: string,
+  ): Promise<readonly Bookmark[]> {
+    return (
+      await this.database.bookmarks
+        .where('[profileId+url]')
+        .equals([profileId, url])
         .toArray()
     ).map((item) => bookmarkSchema.parse(item));
   }
@@ -99,9 +169,11 @@ export class DexieBookmarkRepository implements BookmarkRepository {
       bookmarks: bookmarks
         .map((item) => bookmarkSchema.parse(item))
         .sort((a, b) => a.index - b.index),
-      folders: folders
-        .map((item) => folderSchema.parse(item))
-        .sort((a, b) => a.index - b.index),
+      folders: (
+        await Promise.all(
+          folders.map((item) => this.hydrateFolder(folderSchema.parse(item))),
+        )
+      ).sort((a, b) => a.index - b.index),
     };
   }
 
@@ -119,7 +191,11 @@ export class DexieBookmarkRepository implements BookmarkRepository {
   async addBookmark(bookmark: Bookmark): Promise<void> {
     await this.database.transaction(
       'rw',
-      [this.database.bookmarks, this.database.folders],
+      [
+        this.database.bookmarks,
+        this.database.folders,
+        this.database.folderWallpapers,
+      ],
       async () => {
         const parent = await this.database.folders.get(bookmark.parentId);
         if (!parent || parent.profileId !== bookmark.profileId)
@@ -148,7 +224,10 @@ export class DexieBookmarkRepository implements BookmarkRepository {
         if (!parent || parent.profileId !== folder.profileId)
           throw new Error('parent-folder-not-found');
         const index = await this.nextIndex(folder.profileId, folder.parentId);
-        await this.database.folders.add({ ...folder, index });
+        await this.database.folders.add({
+          ...(await this.toStoredFolder(folder)),
+          index,
+        });
         if (folder.parentId) {
           await this.touchAncestorsInTransaction(
             folder.profileId,
@@ -174,7 +253,11 @@ export class DexieBookmarkRepository implements BookmarkRepository {
       'rw',
       [this.database.bookmarks, this.database.folders],
       async () => {
-        await this.database.folders.bulkAdd(validatedFolders);
+        await this.database.folders.bulkAdd(
+          await Promise.all(
+            validatedFolders.map((folder) => this.toStoredFolder(folder)),
+          ),
+        );
         await this.database.bookmarks.bulkAdd(validatedBookmarks);
         const profileId =
           validatedFolders[0]?.profileId ?? validatedBookmarks[0]?.profileId;
@@ -219,24 +302,56 @@ export class DexieBookmarkRepository implements BookmarkRepository {
     folder: Folder,
     expectedUpdatedAt?: number,
   ): Promise<void> {
-    await this.database.transaction('rw', this.database.folders, async () => {
-      const existing = await this.database.folders.get(folder.id);
-      if (!existing || existing.profileId !== folder.profileId) {
-        throw new Error('folder-not-found');
-      }
-      if (
-        expectedUpdatedAt !== undefined &&
-        existing.updatedAt !== expectedUpdatedAt
-      )
-        throw new Error('content-changed');
-      await this.database.folders.put(folder);
-      if (folder.parentId) {
-        await this.touchAncestorsInTransaction(
-          folder.profileId,
-          folder.parentId,
-          folder.updatedAt,
-        );
-      }
+    await this.database.transaction(
+      'rw',
+      [
+        this.database.folders,
+        this.database.folderWallpapers,
+        this.database.profileSettings,
+      ],
+      async () => {
+        const existing = await this.database.folders.get(folder.id);
+        if (!existing || existing.profileId !== folder.profileId) {
+          throw new Error('folder-not-found');
+        }
+        if (
+          expectedUpdatedAt !== undefined &&
+          existing.updatedAt !== expectedUpdatedAt
+        )
+          throw new Error('content-changed');
+        await this.database.folders.put(await this.toStoredFolder(folder));
+        if (folder.parentId) {
+          await this.touchAncestorsInTransaction(
+            folder.profileId,
+            folder.parentId,
+            folder.updatedAt,
+          );
+        }
+        await deleteUnusedFolderWallpapers(this.database, folder.profileId);
+      },
+    );
+  }
+
+  private async hydrateFolder(folder: Folder): Promise<Folder> {
+    return folderSchema.parse({
+      ...folder,
+      backgroundAppearance: await hydrateFolderBackground(
+        this.database,
+        folder.profileId,
+        folder.backgroundAppearance,
+      ),
+    });
+  }
+
+  private async toStoredFolder(folder: Folder): Promise<Folder> {
+    return folderSchema.parse({
+      ...folder,
+      backgroundAppearance: await persistFolderBackground(
+        this.database,
+        folder.profileId,
+        folder.backgroundAppearance,
+        folder.updatedAt,
+      ),
     });
   }
 
@@ -255,6 +370,8 @@ export class DexieBookmarkRepository implements BookmarkRepository {
         this.database.bookmarks,
         this.database.folders,
         this.database.favoriteItems,
+        this.database.folderWallpapers,
+        this.database.profileSettings,
       ],
       async () => {
         const bookmark = await this.database.bookmarks.get(itemId);
@@ -301,6 +418,7 @@ export class DexieBookmarkRepository implements BookmarkRepository {
               bookmarks.includes(favorite.itemId),
           )
           .delete();
+        await deleteUnusedFolderWallpapers(this.database, profileId);
       },
     );
   }

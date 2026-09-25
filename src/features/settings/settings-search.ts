@@ -20,6 +20,8 @@ const APPEARANCE_KEYS = [
   'systemScrollbars',
   'alwaysVisible',
   'whileScrolling',
+  'allowLargeWallpaperImports',
+  'allowLargeWallpaperImportsHelp',
   'bookmarkDisplay',
   'view',
   'card',

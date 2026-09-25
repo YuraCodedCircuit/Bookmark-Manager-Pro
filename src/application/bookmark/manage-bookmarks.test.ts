@@ -52,9 +52,11 @@ function repository(): BookmarkRepository {
     ),
     isItemIdAvailable: vi.fn(async () => true),
     listBookmarks: vi.fn(async () => []),
+    listBookmarksByUrl: vi.fn(async () => []),
     listContents: vi.fn(async () => ({ bookmarks: [], folders: [] })),
     listFavorites: vi.fn(async () => []),
     listFolders: vi.fn(async () => [root]),
+    listFolderTreeSummaries: vi.fn(async () => [root]),
     moveItem: vi.fn(async () => undefined),
     nextIndex: vi.fn(async () => 0),
     removeFavorite: vi.fn(async () => undefined),
@@ -114,7 +116,7 @@ describe('ManageBookmarks', () => {
       updatedAt: 1,
       url: 'https://example.com/',
     };
-    vi.mocked(repo.listBookmarks).mockResolvedValue([
+    vi.mocked(repo.listBookmarksByUrl).mockResolvedValue([
       bookmark,
       { ...bookmark, id: '44444444-4444-4444-8444-444444444444' },
       {
@@ -128,7 +130,10 @@ describe('ManageBookmarks', () => {
         url: 'https://different.example/',
       },
     ]);
-    vi.mocked(repo.listFolders).mockResolvedValue([root, secondFolder]);
+    vi.mocked(repo.listFolderTreeSummaries).mockResolvedValue([
+      root,
+      secondFolder,
+    ]);
 
     await expect(
       new ManageBookmarks(repo).listBookmarkLocationsByUrl(
@@ -308,6 +313,7 @@ describe('ManageBookmarks', () => {
       url: 'https://example.com/',
     });
     await service.createFolder({
+      backgroundAppearance: { kind: 'color', value: '#654321' },
       bookmarkGroupBy: 'domain',
       bookmarkSortBy: 'title',
       bookmarkSortDirection: 'descending',
@@ -318,6 +324,9 @@ describe('ManageBookmarks', () => {
       },
       cardSize: 'large',
       cardSpacing: 'spacious',
+      detailsTableTransparency: 35,
+      includeNavigationBackground: false,
+      navigationTransparency: 20,
       note: '',
       parentId: rootId,
       profileId,
@@ -329,9 +338,10 @@ describe('ManageBookmarks', () => {
     );
     expect(repo.addFolder).toHaveBeenCalledWith(
       expect.objectContaining({
-        backgroundAppearance: root.backgroundAppearance,
-        includeNavigationBackground: true,
-        navigationTransparency: 70,
+        backgroundAppearance: { kind: 'color', value: '#654321' },
+        detailsTableTransparency: 35,
+        includeNavigationBackground: false,
+        navigationTransparency: 20,
         bookmarkGroupBy: 'domain',
         bookmarkSortBy: 'title',
         bookmarkSortDirection: 'descending',
@@ -552,6 +562,12 @@ describe('ManageBookmarks', () => {
     );
     expect(result.favorites).toEqual([{ kind: 'bookmark', value: bookmark }]);
     expect(result.recent).toEqual([{ kind: 'bookmark', value: bookmark }]);
+  });
+
+  it('reuses an already loaded folder tree for navigation items', async () => {
+    const repo = repository();
+    await new ManageBookmarks(repo).listNavigationItems(profileId, [root]);
+    expect(repo.listFolders).not.toHaveBeenCalled();
   });
 
   it('validates ownership before adding or removing a favorite', async () => {

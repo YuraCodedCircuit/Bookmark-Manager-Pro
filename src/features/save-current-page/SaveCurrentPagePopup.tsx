@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ManageActivityLog } from '../../application/activity-log/manage-activity-log';
@@ -11,7 +11,7 @@ import {
   addHttpsToHostLikeUrl,
   normalizeBookmarkUrl,
 } from '../../domain/bookmark-url';
-import type { Folder } from '../../domain/folder';
+import type { FolderTreeSummary } from '../../domain/folder';
 import type { ProfileSettings } from '../../domain/profile-settings';
 import type { ContentChangeBridge } from '../../platform/content-change/content-change-bridge';
 import type { CurrentTab } from '../../platform/tabs/current-tab';
@@ -23,12 +23,12 @@ import { FolderTreePicker } from '../folder-tree/FolderTreePicker';
 import {
   buildFolderTree,
   findFolderAncestorIds,
+  findNewestNonRootFolder,
 } from '../folder-tree/folder-tree-data';
 
 export interface SaveCurrentPageReadyState {
-  folder: Folder;
-  folders: readonly Folder[];
   profileId: string;
+  root: FolderTreeSummary;
   settings: ProfileSettings;
   tab: CurrentTab;
 }
@@ -45,17 +45,24 @@ export interface SaveCurrentPagePopupDependencies {
     ContentChangeBridge,
     'profileActivation' | 'publish' | 'subscribeProfileActivation'
   >;
+  initializeUndo(): Promise<boolean>;
+  loadDuplicateLocations(
+    profileId: string,
+    url: string,
+  ): Promise<readonly BookmarkUrlLocation[]>;
+  loadFolderTree(profileId: string): Promise<readonly FolderTreeSummary[]>;
   undoHistory: Pick<UndoHistoryService, 'record' | 'runMutation'>;
 }
 
 interface SaveCurrentPagePopupProps {
   dependencies: SaveCurrentPagePopupDependencies;
-  initialDuplicateLocations: readonly BookmarkUrlLocation[];
   ready: SaveCurrentPageReadyState;
 }
 
 type DuplicateView =
   | 'editor'
+  | 'checking-duplicate'
+  | 'duplicate-check-failed'
   | 'initial-prevented'
   | 'initial-warning'
   | 'late-prevented'
@@ -107,11 +114,18 @@ export function UnsupportedCurrentPage({
 /** Coordinates duplicate decisions and persistence for the toolbar save popup. */
 export function SaveCurrentPagePopup({
   dependencies,
-  initialDuplicateLocations,
   ready,
 }: SaveCurrentPagePopupProps) {
   const { t } = useTranslation();
-  const [selectedFolderId, setSelectedFolderId] = useState(ready.folder.id);
+  const [folders, setFolders] = useState<readonly FolderTreeSummary[]>([
+    ready.root,
+  ]);
+  const [selectedFolderId, setSelectedFolderId] = useState(ready.root.id);
+  const [treeStatus, setTreeStatus] = useState<'loading' | 'ready' | 'failed'>(
+    'loading',
+  );
+  const userSelectedFolderRef = useRef(false);
+  const startupStartedRef = useRef(false);
   const [approvedCanonicalUrl, setApprovedCanonicalUrl] = useState<
     string | undefined
   >();
@@ -126,19 +140,103 @@ export function SaveCurrentPagePopup({
     url: ready.tab.url,
   }));
   const [pendingValue, setPendingValue] = useState<PreparedContentValue>();
-  const [duplicateLocations, setDuplicateLocations] = useState(
-    initialDuplicateLocations,
-  );
+  const [duplicateLocations, setDuplicateLocations] = useState<
+    readonly BookmarkUrlLocation[]
+  >([]);
   const [decisionError, setDecisionError] = useState('');
   const [isDecisionSaving, setIsDecisionSaving] = useState(false);
-  const [view, setView] = useState<DuplicateView>(() => {
-    if (initialDuplicateLocations.length === 0) return 'editor';
-    return ready.settings.duplicateHandling === 'prevent'
-      ? 'initial-prevented'
-      : 'initial-warning';
-  });
+  const [view, setView] = useState<DuplicateView>(() =>
+    ready.settings.duplicateHandling === 'allow'
+      ? 'editor'
+      : 'checking-duplicate',
+  );
   const selectedFolder =
-    ready.folders.find(({ id }) => id === selectedFolderId) ?? ready.folder;
+    folders.find(({ id }) => id === selectedFolderId) ?? ready.root;
+
+  const recordDiagnostic = useCallback(
+    async (eventCode: string, level: 'WARN' | 'ERROR', message: string) => {
+      try {
+        await dependencies.activityLog.record(ready.profileId, {
+          action: 'Read',
+          category: 'Application',
+          dataChanged: false,
+          durationMs: 0,
+          eventCode,
+          itemType: 'Popup state',
+          itemsAffected: 0,
+          kind: 'DIAGNOSTIC',
+          level,
+          message,
+          outcome: level === 'WARN' ? 'Skipped' : 'Failed',
+          source: 'Toolbar popup',
+        });
+      } catch {
+        console.error('current-tab-popup-activity-log-write-failed');
+      }
+    },
+    [dependencies.activityLog, ready.profileId],
+  );
+
+  const loadFolderTree = useCallback(async () => {
+    setTreeStatus('loading');
+    try {
+      const loadedFolders = await dependencies.loadFolderTree(ready.profileId);
+      const hasRoot = loadedFolders.some(
+        ({ id, isRoot }) => id === ready.root.id && isRoot,
+      );
+      if (!hasRoot) throw new Error('popup-folder-tree-root-missing');
+      setFolders(loadedFolders);
+      if (!userSelectedFolderRef.current) {
+        setSelectedFolderId(
+          (findNewestNonRootFolder(loadedFolders) ?? ready.root).id,
+        );
+      }
+      setTreeStatus('ready');
+    } catch {
+      setFolders([ready.root]);
+      setSelectedFolderId(ready.root.id);
+      setTreeStatus('failed');
+      await recordDiagnostic(
+        'POPUP-FOLDER-TREE-LOAD-DEGRADED',
+        'WARN',
+        'Popup folder tree was unavailable. Home remains available.',
+      );
+    }
+  }, [dependencies, ready.profileId, ready.root, recordDiagnostic]);
+
+  useEffect(() => {
+    if (startupStartedRef.current) return;
+    startupStartedRef.current = true;
+    void loadFolderTree();
+    if (ready.settings.duplicateHandling === 'allow') return;
+    void dependencies
+      .loadDuplicateLocations(ready.profileId, ready.tab.url)
+      .then((locations) => {
+        setDuplicateLocations(locations);
+        setView(
+          locations.length === 0
+            ? 'editor'
+            : ready.settings.duplicateHandling === 'prevent'
+              ? 'initial-prevented'
+              : 'initial-warning',
+        );
+      })
+      .catch(async () => {
+        setView('duplicate-check-failed');
+        await recordDiagnostic(
+          'CURRENT-TAB-DUPLICATE-CHECK-FAILED',
+          'ERROR',
+          'Current page duplicate check failed.',
+        );
+      });
+  }, [
+    dependencies,
+    loadFolderTree,
+    ready.profileId,
+    ready.settings.duplicateHandling,
+    ready.tab.url,
+    recordDiagnostic,
+  ]);
 
   useEffect(
     () =>
@@ -182,7 +280,7 @@ export function SaveCurrentPagePopup({
       dependencies.close();
       throw new Error('popup-profile-changed');
     }
-    await dependencies.undoHistory.runMutation(async () => {
+    const mutate = async () => {
       const before = await dependencies.bookmarkManager.captureUndoState(
         ready.profileId,
       );
@@ -210,7 +308,25 @@ export function SaveCurrentPagePopup({
           profileId: ready.profileId,
         });
       }
-    });
+    };
+    const undoReady = await dependencies.initializeUndo();
+    if (undoReady) await dependencies.undoHistory.runMutation(mutate);
+    else {
+      await recordDiagnostic(
+        'CURRENT-TAB-UNDO-HISTORY-DEGRADED',
+        'WARN',
+        'Current page save continued without undo history.',
+      );
+      await dependencies.bookmarkManager.createBookmark({
+        ...value,
+        parentId: selectedFolder.id,
+        profileId: ready.profileId,
+        tags:
+          ready.settings.tagOrder === 'alphabetical'
+            ? [...value.tags].sort((left, right) => left.localeCompare(right))
+            : value.tags,
+      });
+    }
     await dependencies.contentChanges
       .publish({
         affectedParentIds: [selectedFolder.id],
@@ -301,6 +417,51 @@ export function SaveCurrentPagePopup({
     setView('editor');
   };
 
+  if (view === 'checking-duplicate') {
+    return (
+      <main className="save-current-page__status" role="status">
+        {t('saveCurrentPage.checkingDuplicate')}
+      </main>
+    );
+  }
+
+  if (view === 'duplicate-check-failed') {
+    return (
+      <main className="save-current-page__decision save-current-page__load-error">
+        <div className="save-current-page__decision-content">
+          <p role="alert">{t('saveCurrentPage.duplicateCheckFailed')}</p>
+        </div>
+        <footer>
+          <button onClick={dependencies.close} type="button">
+            {t('saveCurrentPage.close')}
+          </button>
+          <button
+            autoFocus
+            onClick={() => {
+              setView('checking-duplicate');
+              void dependencies
+                .loadDuplicateLocations(ready.profileId, ready.tab.url)
+                .then((locations) => {
+                  setDuplicateLocations(locations);
+                  setView(
+                    locations.length === 0
+                      ? 'editor'
+                      : ready.settings.duplicateHandling === 'prevent'
+                        ? 'initial-prevented'
+                        : 'initial-warning',
+                  );
+                })
+                .catch(() => setView('duplicate-check-failed'));
+            }}
+            type="button"
+          >
+            {t('saveCurrentPage.retry')}
+          </button>
+        </footer>
+      </main>
+    );
+  }
+
   if (view !== 'editor') {
     const isInitial = view.startsWith('initial');
     const isPrevented = view.endsWith('prevented');
@@ -332,15 +493,30 @@ export function SaveCurrentPagePopup({
             {t('saveCurrentPage.destination')}
           </h2>
           <FolderTreePicker
-            folderTree={buildFolderTree(ready.folders)}
+            folderTree={buildFolderTree(folders)}
             idPrefix="save-current-page"
             initiallyExpandedFolderIds={findFolderAncestorIds(
-              ready.folders,
+              folders,
               selectedFolder.id,
             )}
-            onSelect={(_path, folderId) => setSelectedFolderId(folderId)}
+            onSelect={(_path, folderId) => {
+              userSelectedFolderRef.current = true;
+              setSelectedFolderId(folderId);
+            }}
             selectedFolderId={selectedFolder.id}
+            key={treeStatus}
           />
+          {treeStatus === 'loading' ? (
+            <p role="status">{t('saveCurrentPage.folderTreeLoading')}</p>
+          ) : null}
+          {treeStatus === 'failed' ? (
+            <div className="save-current-page__tree-error">
+              <p role="alert">{t('saveCurrentPage.folderTreeFailed')}</p>
+              <button onClick={() => void loadFolderTree()} type="button">
+                {t('saveCurrentPage.retryFolders')}
+              </button>
+            </div>
+          ) : null}
         </section>
       }
       defaultAppearance={ready.settings.lastBookmarkAppearance}

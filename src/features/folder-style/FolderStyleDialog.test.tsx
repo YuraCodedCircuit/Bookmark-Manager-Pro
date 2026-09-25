@@ -3,6 +3,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -10,6 +11,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import '../../localization/i18n';
 import { FolderStyleDialog } from './FolderStyleDialog';
+
+vi.mock('../../shared/optimize-folder-wallpaper', () => ({
+  optimizeFolderWallpaper: vi.fn(
+    async (file: File, allowLargeSource: boolean) => {
+      if (
+        !['image/png', 'image/jpeg', 'image/bmp'].includes(file.type) ||
+        file.size > (allowLargeSource ? 10_000_000 : 1_000_000)
+      ) {
+        throw new Error('wallpaper-rejected');
+      }
+      return 'data:image/webp;base64,b3B0aW1pemVk';
+    },
+  ),
+}));
 
 afterEach(() => {
   cleanup();
@@ -111,7 +126,7 @@ describe('FolderStyleDialog', () => {
       },
     });
 
-    expect(onImageRejected).toHaveBeenCalledOnce();
+    await waitFor(() => expect(onImageRejected).toHaveBeenCalledOnce());
     expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
 
     fireEvent.change(input, {
@@ -119,7 +134,7 @@ describe('FolderStyleDialog', () => {
         files: [new File(['text'], 'not-an-image.txt', { type: 'text/plain' })],
       },
     });
-    expect(onImageRejected).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(onImageRejected).toHaveBeenCalledTimes(2));
 
     fireEvent.change(input, {
       target: {
@@ -128,7 +143,49 @@ describe('FolderStyleDialog', () => {
     });
     expect(
       await within(dialog).findByAltText('Selected folder background image'),
-    ).toHaveAttribute('src', 'data:image/png;base64,c21hbGw=');
+    ).toHaveAttribute('src', 'data:image/webp;base64,b3B0aW1pemVk');
+  });
+
+  it('accepts a larger source only when the profile setting allows it', async () => {
+    const onImageRejected = vi.fn();
+    render(
+      <FolderStyleDialog
+        allowLargeWallpaperImports
+        appearance={{ kind: 'color', value: '#0b121a' }}
+        bookmarkGroupBy="none"
+        bookmarkSortBy="manual"
+        bookmarkSortDirection="ascending"
+        bookmarkView="card"
+        cardSize="medium"
+        cardSpacing="comfortable"
+        detailsTableTransparency={0}
+        folderName="Home"
+        isOpen
+        includeNavigationBackground={false}
+        navigationTransparency={45}
+        onClose={vi.fn()}
+        onImageRejected={onImageRejected}
+        onSave={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', {
+      name: 'Customize folder style',
+    });
+    await userEvent.click(within(dialog).getByText('Folder background'));
+    await userEvent.click(within(dialog).getByLabelText('Image'));
+    fireEvent.change(within(dialog).getByLabelText('Choose background image'), {
+      target: {
+        files: [
+          new File([new Uint8Array(1_000_001)], 'large.jpg', {
+            type: 'image/jpeg',
+          }),
+        ],
+      },
+    });
+    expect(
+      await within(dialog).findByAltText('Selected folder background image'),
+    ).toHaveAttribute('src', 'data:image/webp;base64,b3B0aW1pemVk');
+    expect(onImageRejected).not.toHaveBeenCalled();
   });
 
   it('generates random color and gradient values', async () => {

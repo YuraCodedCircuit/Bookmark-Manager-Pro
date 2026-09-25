@@ -621,21 +621,47 @@ export function App({
     ],
   );
 
-  /** Reloads the current folder and complete navigation tree after mutations. */
+  /** Reloads the current folder while reusing an authoritative tree when available. */
   const loadFolderContent = useCallback(
-    async (profileId: string, folderId: string) => {
-      const [contents, profileFolders, navigationItems] = await Promise.all([
+    async (
+      profileId: string,
+      folderId: string,
+      knownFolders?: readonly Folder[],
+    ) => {
+      const [contents, profileFolders] = await Promise.all([
         bookmarkManager.listContents(profileId, folderId),
-        bookmarkManager.listFolders(profileId),
-        bookmarkManager.listNavigationItems(profileId),
+        knownFolders
+          ? Promise.resolve(knownFolders)
+          : bookmarkManager.listFolders(profileId),
       ]);
       setBookmarks(contents.bookmarks);
       setFolders(contents.folders);
       setAllFolders(profileFolders);
-      setFavoriteItems(navigationItems.favorites);
-      setRecentItems(navigationItems.recent);
+      void bookmarkManager
+        .listNavigationItems(profileId, profileFolders)
+        .then((navigationItems) => {
+          if (readyProfileIdRef.current !== profileId) return;
+          setFavoriteItems(navigationItems.favorites);
+          setRecentItems(navigationItems.recent);
+        })
+        .catch(async () => {
+          await recordEventForProfile(profileId, {
+            action: 'Load',
+            category: 'Bookmarks',
+            dataChanged: false,
+            durationMs: 0,
+            eventCode: 'NAVIGATION-ITEMS-LOAD-FAILED',
+            itemType: 'Navigation items',
+            itemsAffected: 0,
+            kind: 'DIAGNOSTIC',
+            level: 'WARN',
+            message: t('activityLog.messages.navigationItemsLoadFailed'),
+            outcome: 'Skipped',
+            source: 'Bookmark navigation',
+          });
+        });
     },
-    [bookmarkManager],
+    [bookmarkManager, recordEventForProfile, t],
   );
 
   const refreshExternalContent = useCallback(
@@ -1289,9 +1315,13 @@ export function App({
           ? root
           : (requestedFolder ?? configuredFolder ?? rememberedFolder ?? root);
         if (forceHome) forceHomeProfileIdRef.current = undefined;
-        setCurrentFolderId(initialFolder.id);
         setCurrentPath(findFolderPath(profileFolders, initialFolder.id));
-        await loadFolderContent(readyProfileId, initialFolder.id);
+        await loadFolderContent(
+          readyProfileId,
+          initialFolder.id,
+          profileFolders,
+        );
+        setCurrentFolderId(initialFolder.id);
         initializedProfileIdRef.current = readyProfileId;
       })
       .catch(async () => {
@@ -1637,6 +1667,11 @@ export function App({
           });
         } else {
           await bookmarkManager.createFolder({
+            backgroundAppearance:
+              currentInitializationState.status === 'ready'
+                ? currentInitializationState.settings
+                    .defaultFolderBackgroundAppearance
+                : undefined,
             bookmarkGroupBy:
               currentInitializationState.status === 'ready'
                 ? (currentInitializationState.settings.bookmarkGroupBy ??
@@ -1662,6 +1697,21 @@ export function App({
                 ? (currentInitializationState.settings.cardSpacing ??
                   defaultFolderDisplaySettings.cardSpacing)
                 : defaultFolderDisplaySettings.cardSpacing,
+            detailsTableTransparency:
+              currentInitializationState.status === 'ready'
+                ? currentInitializationState.settings
+                    .defaultFolderDetailsTableTransparency
+                : undefined,
+            includeNavigationBackground:
+              currentInitializationState.status === 'ready'
+                ? currentInitializationState.settings
+                    .defaultFolderIncludeNavigationBackground
+                : undefined,
+            navigationTransparency:
+              currentInitializationState.status === 'ready'
+                ? currentInitializationState.settings
+                    .defaultFolderNavigationTransparency
+                : undefined,
             note: preparedValue.note,
             parentId: currentFolderId,
             profileId: readyProfileId,
@@ -3311,6 +3361,37 @@ export function App({
                 throw error;
               }
             }}
+            onWallpaperRejected={async () => {
+              notifyForActiveProfile({
+                level: 'warning',
+                message: t('folderStyle.imageError', {
+                  max: currentInitializationState.settings
+                    .allowLargeWallpaperImports
+                    ? 10
+                    : 1,
+                }),
+                title: t('notifications.imageNotSelectedTitle'),
+              });
+              await recordEventForProfile(
+                currentInitializationState.profile.id,
+                {
+                  action: 'Load',
+                  category: 'Application',
+                  dataChanged: false,
+                  durationMs: 0,
+                  eventCode: 'DEFAULT-FOLDER-WALLPAPER-IMPORT-REJECTED',
+                  itemType: 'Default folder background image',
+                  itemsAffected: 0,
+                  kind: 'DIAGNOSTIC',
+                  level: 'WARN',
+                  message: t(
+                    'activityLog.messages.folderWallpaperImportRejected',
+                  ),
+                  outcome: 'Skipped',
+                  source: 'Settings',
+                },
+              );
+            }}
             onSaveActivitySettings={async (next) => {
               const {
                 activityEnabled,
@@ -3704,153 +3785,164 @@ export function App({
           }}
         />
       ) : null}
-      <BookmarkGrid
-        hidden={isNotesOpen}
-        bookmarkOpening={
-          currentInitializationState.status === 'ready'
-            ? (currentInitializationState.settings.bookmarkOpening ??
-              'current-tab')
-            : 'current-tab'
-        }
-        bookmarks={bookmarks}
-        contentRef={bookmarkContentRef}
-        folders={folders}
-        currentFolderId={currentFolderId}
-        folderOpening={
-          currentInitializationState.status === 'ready'
-            ? (currentInitializationState.settings.folderOpening ??
-              'single-click')
-            : 'single-click'
-        }
-        interactionLocked={undoHistoryState.busy}
-        onOpenFolder={(folder) =>
-          void openFolder(folder.id, 'Bookmark content').catch(() => undefined)
-        }
-        onOpenBookmark={(bookmark) =>
-          void openBookmark(
-            bookmark.url,
+      {currentFolder || currentInitializationState.status !== 'ready' ? (
+        <BookmarkGrid
+          hidden={isNotesOpen}
+          bookmarkOpening={
             currentInitializationState.status === 'ready'
               ? (currentInitializationState.settings.bookmarkOpening ??
-                  'current-tab')
-              : 'current-tab',
-            'Bookmark content',
-          ).catch(() => undefined)
-        }
-        requestConfirmation={requestConfirmation}
-        onMoveItem={async ({
-          destinationIndex,
-          destinationParentId,
-          itemId,
-          onValidated,
-          openDestination,
-        }) => {
-          if (!readyProfileId) throw new Error('active-profile-not-ready');
-          const startedAt = performance.now();
-          try {
-            const movedItemType: UndoHistoryItemType = folders.some(
-              ({ id }) => id === itemId,
-            )
-              ? 'folder'
-              : 'bookmark';
-            await runUndoable(
-              readyProfileId,
-              itemId,
-              movedItemType,
-              'moved',
-              () =>
-                bookmarkManager.moveItem(
-                  readyProfileId,
-                  itemId,
-                  destinationParentId,
-                  destinationIndex,
-                  onValidated,
-                ),
-            );
-            await loadFolderContent(
-              readyProfileId,
-              currentFolderId ?? destinationParentId,
-            );
-            await recordEventForProfile(readyProfileId, {
-              action: 'Move',
-              category: 'Bookmarks',
-              dataChanged: true,
-              durationMs: Math.round(performance.now() - startedAt),
-              eventCode: 'ITEM-MOVE-COMPLETE',
-              itemType: 'Bookmark or folder',
-              itemsAffected: 1,
-              kind: 'ACTIVITY',
-              level: 'INFO',
-              message: t('bookmarks.moveSucceeded'),
-              outcome: 'Succeeded',
-              source: 'Bookmark browser',
-            });
-            notifyForActiveProfile({
-              level: 'success',
-              message: t('bookmarks.moveSucceeded'),
-              title: t('notifications.operationCompletedTitle'),
-            });
-            if (openDestination)
-              await openFolder(destinationParentId, 'Drag and drop');
-          } catch (error) {
-            await recordEventForProfile(readyProfileId, {
-              action: 'Move',
-              category: 'Bookmarks',
-              dataChanged: false,
-              durationMs: Math.round(performance.now() - startedAt),
-              eventCode: 'ITEM-MOVE-FAILED',
-              itemType: 'Bookmark or folder',
-              itemsAffected: 0,
-              kind: 'DIAGNOSTIC',
-              level: 'ERROR',
-              message: t('bookmarks.moveFailed'),
-              outcome: 'Failed',
-              source: 'Bookmark browser',
-            });
-            notifyOperationError(t('bookmarks.moveFailed'));
-            throw error;
+                'current-tab')
+              : 'current-tab'
           }
-        }}
-        view={
-          currentInitializationState.status === 'ready'
-            ? {
-                ...currentInitializationState.settings,
-                bookmarkView:
-                  currentFolder?.bookmarkView ??
-                  currentInitializationState.settings.bookmarkView,
-                cardSpacing:
-                  currentFolder?.cardSpacing ??
-                  currentInitializationState.settings.cardSpacing ??
-                  defaultFolderDisplaySettings.cardSpacing,
-                cardSize:
-                  currentFolder?.cardSize ??
-                  currentInitializationState.settings.cardSize,
-                dateTimeFormat:
-                  currentInitializationState.settings.dateTimeFormat ??
-                  'browser',
-                detailsTableTransparency:
-                  currentFolder?.detailsTableTransparency ?? 0,
-                bookmarkSortBy:
-                  currentFolder?.bookmarkSortBy ??
-                  currentInitializationState.settings.bookmarkSortBy ??
-                  defaultFolderDisplaySettings.bookmarkSortBy,
-                bookmarkSortDirection:
-                  currentFolder?.bookmarkSortDirection ??
-                  currentInitializationState.settings.bookmarkSortDirection ??
-                  defaultFolderDisplaySettings.bookmarkSortDirection,
-                bookmarkGroupBy:
-                  currentFolder?.bookmarkGroupBy ??
-                  currentInitializationState.settings.bookmarkGroupBy ??
-                  defaultFolderDisplaySettings.bookmarkGroupBy,
-              }
-            : {
-                ...defaultFolderDisplaySettings,
-                detailsTableTransparency: 0,
-                dragAndDropEnabled: true,
-              }
-        }
-      />
+          bookmarks={bookmarks}
+          contentRef={bookmarkContentRef}
+          folders={folders}
+          currentFolderId={currentFolderId}
+          folderOpening={
+            currentInitializationState.status === 'ready'
+              ? (currentInitializationState.settings.folderOpening ??
+                'single-click')
+              : 'single-click'
+          }
+          interactionLocked={undoHistoryState.busy}
+          onOpenFolder={(folder) =>
+            void openFolder(folder.id, 'Bookmark content').catch(
+              () => undefined,
+            )
+          }
+          onOpenBookmark={(bookmark) =>
+            void openBookmark(
+              bookmark.url,
+              currentInitializationState.status === 'ready'
+                ? (currentInitializationState.settings.bookmarkOpening ??
+                    'current-tab')
+                : 'current-tab',
+              'Bookmark content',
+            ).catch(() => undefined)
+          }
+          requestConfirmation={requestConfirmation}
+          onMoveItem={async ({
+            destinationIndex,
+            destinationParentId,
+            itemId,
+            onValidated,
+            openDestination,
+          }) => {
+            if (!readyProfileId) throw new Error('active-profile-not-ready');
+            const startedAt = performance.now();
+            try {
+              const movedItemType: UndoHistoryItemType = folders.some(
+                ({ id }) => id === itemId,
+              )
+                ? 'folder'
+                : 'bookmark';
+              await runUndoable(
+                readyProfileId,
+                itemId,
+                movedItemType,
+                'moved',
+                () =>
+                  bookmarkManager.moveItem(
+                    readyProfileId,
+                    itemId,
+                    destinationParentId,
+                    destinationIndex,
+                    onValidated,
+                  ),
+              );
+              await loadFolderContent(
+                readyProfileId,
+                currentFolderId ?? destinationParentId,
+              );
+              await recordEventForProfile(readyProfileId, {
+                action: 'Move',
+                category: 'Bookmarks',
+                dataChanged: true,
+                durationMs: Math.round(performance.now() - startedAt),
+                eventCode: 'ITEM-MOVE-COMPLETE',
+                itemType: 'Bookmark or folder',
+                itemsAffected: 1,
+                kind: 'ACTIVITY',
+                level: 'INFO',
+                message: t('bookmarks.moveSucceeded'),
+                outcome: 'Succeeded',
+                source: 'Bookmark browser',
+              });
+              notifyForActiveProfile({
+                level: 'success',
+                message: t('bookmarks.moveSucceeded'),
+                title: t('notifications.operationCompletedTitle'),
+              });
+              if (openDestination)
+                await openFolder(destinationParentId, 'Drag and drop');
+            } catch (error) {
+              await recordEventForProfile(readyProfileId, {
+                action: 'Move',
+                category: 'Bookmarks',
+                dataChanged: false,
+                durationMs: Math.round(performance.now() - startedAt),
+                eventCode: 'ITEM-MOVE-FAILED',
+                itemType: 'Bookmark or folder',
+                itemsAffected: 0,
+                kind: 'DIAGNOSTIC',
+                level: 'ERROR',
+                message: t('bookmarks.moveFailed'),
+                outcome: 'Failed',
+                source: 'Bookmark browser',
+              });
+              notifyOperationError(t('bookmarks.moveFailed'));
+              throw error;
+            }
+          }}
+          view={
+            currentInitializationState.status === 'ready'
+              ? {
+                  ...currentInitializationState.settings,
+                  bookmarkView:
+                    currentFolder?.bookmarkView ??
+                    currentInitializationState.settings.bookmarkView,
+                  cardSpacing:
+                    currentFolder?.cardSpacing ??
+                    currentInitializationState.settings.cardSpacing ??
+                    defaultFolderDisplaySettings.cardSpacing,
+                  cardSize:
+                    currentFolder?.cardSize ??
+                    currentInitializationState.settings.cardSize,
+                  dateTimeFormat:
+                    currentInitializationState.settings.dateTimeFormat ??
+                    'browser',
+                  detailsTableTransparency:
+                    currentFolder?.detailsTableTransparency ?? 0,
+                  bookmarkSortBy:
+                    currentFolder?.bookmarkSortBy ??
+                    currentInitializationState.settings.bookmarkSortBy ??
+                    defaultFolderDisplaySettings.bookmarkSortBy,
+                  bookmarkSortDirection:
+                    currentFolder?.bookmarkSortDirection ??
+                    currentInitializationState.settings.bookmarkSortDirection ??
+                    defaultFolderDisplaySettings.bookmarkSortDirection,
+                  bookmarkGroupBy:
+                    currentFolder?.bookmarkGroupBy ??
+                    currentInitializationState.settings.bookmarkGroupBy ??
+                    defaultFolderDisplaySettings.bookmarkGroupBy,
+                }
+              : {
+                  ...defaultFolderDisplaySettings,
+                  detailsTableTransparency: 0,
+                  dragAndDropEnabled: true,
+                }
+          }
+        />
+      ) : (
+        <p className="bookmark-grid__loading" role="status">
+          {t('bookmarkBrowser.loadingFolder')}
+        </p>
+      )}
       {currentFolder && isFolderStyleOpen ? (
         <FolderStyleDialog
+          allowLargeWallpaperImports={
+            activeSettings?.allowLargeWallpaperImports ?? false
+          }
           appearance={currentFolder.backgroundAppearance}
           bookmarkGroupBy={
             currentFolder.bookmarkGroupBy ??
@@ -3896,13 +3988,30 @@ export function App({
           key={currentFolder.id}
           navigationTransparency={currentFolder.navigationTransparency}
           onClose={() => setIsFolderStyleOpen(false)}
-          onImageRejected={() =>
+          onImageRejected={async () => {
             notifyForActiveProfile({
               level: 'warning',
-              message: t('contentEditor.imageError'),
+              message: t('folderStyle.imageError', {
+                max: activeSettings?.allowLargeWallpaperImports ? 10 : 1,
+              }),
               title: t('notifications.imageNotSelectedTitle'),
-            })
-          }
+            });
+            if (!readyProfileId) return;
+            await recordEventForProfile(readyProfileId, {
+              action: 'Load',
+              category: 'Bookmarks',
+              dataChanged: false,
+              durationMs: 0,
+              eventCode: 'FOLDER-WALLPAPER-IMPORT-REJECTED',
+              itemType: 'Folder background image',
+              itemsAffected: 0,
+              kind: 'DIAGNOSTIC',
+              level: 'WARN',
+              message: t('activityLog.messages.folderWallpaperImportRejected'),
+              outcome: 'Skipped',
+              source: 'Folder style editor',
+            });
+          }}
           onSave={async ({
             appearance,
             bookmarkGroupBy,

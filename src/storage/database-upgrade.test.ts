@@ -11,14 +11,65 @@ afterEach(async () =>
 );
 
 describe('BookmarkManagerDatabase schema upgrades', () => {
-  it('opens schema 30 with Notes stores, URL status lookup, and session undo history', async () => {
+  it('extracts duplicate schema-31 folder images into one shared wallpaper', async () => {
+    const name = `upgrade-shared-wallpapers-${crypto.randomUUID()}`;
+    names.push(name);
+    const legacy = new Dexie(name);
+    legacy.version(31).stores({
+      folders:
+        '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+parentId+createdAt+id+title]',
+    });
+    const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
+    const image = 'data:image/png;base64,YQ==';
+    await legacy.table('folders').bulkAdd([
+      {
+        id: '11111111-1111-4111-8111-111111111111',
+        profileId,
+        parentId: null,
+        title: 'Home',
+        index: 0,
+        createdAt: 1,
+        updatedAt: 2,
+        backgroundAppearance: { fit: 'fill', kind: 'image', value: image },
+      },
+      {
+        id: '22222222-2222-4222-8222-222222222222',
+        profileId,
+        parentId: '11111111-1111-4111-8111-111111111111',
+        title: 'Child',
+        index: 0,
+        createdAt: 3,
+        updatedAt: 4,
+        backgroundAppearance: { fit: 'fit', kind: 'image', value: image },
+      },
+    ]);
+    legacy.close();
+
+    const upgraded = new BookmarkManagerDatabase(name);
+    await upgraded.open();
+    const folders = await upgraded.folders.toArray();
+    const wallpapers = await upgraded.folderWallpapers.toArray();
+
+    expect(wallpapers).toHaveLength(1);
+    expect(wallpapers[0]).toMatchObject({ dataUrl: image, profileId });
+    expect(
+      folders.map(({ backgroundAppearance }) => backgroundAppearance),
+    ).toEqual([
+      { fit: 'fill', imageId: wallpapers[0]?.id, kind: 'image' },
+      { fit: 'fit', imageId: wallpapers[0]?.id, kind: 'image' },
+    ]);
+    upgraded.close();
+  });
+
+  it('opens schema 32 with shared wallpapers, Notes stores, indexed popup reads, and session undo history', async () => {
     const name = `search-preferences-schema-${crypto.randomUUID()}`;
     names.push(name);
     const database = new BookmarkManagerDatabase(name);
 
     await database.open();
 
-    expect(database.verno).toBe(30);
+    expect(database.verno).toBe(32);
+    expect(database.folderWallpapers.schema.primKey.name).toBe('id');
     expect(database.notes.schema.primKey.name).toBe('id');
     expect(database.noteFolders.schema.primKey.name).toBe('id');
     expect(database.undoHistory.schema.indexes.map(({ name }) => name)).toEqual(
@@ -588,6 +639,56 @@ describe('BookmarkManagerDatabase schema upgrades', () => {
     await upgraded.open();
     await expect(upgraded.favoriteItems.count()).resolves.toBe(0);
     await expect(upgraded.folders.count()).resolves.toBe(1);
+    upgraded.close();
+  });
+
+  it('builds the key-only folder-tree index when upgrading schema 30', async () => {
+    const name = `upgrade-folder-tree-index-${crypto.randomUUID()}`;
+    names.push(name);
+    const versionThirty = new Dexie(name);
+    versionThirty.version(30).stores({
+      folders:
+        '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index]',
+    });
+    const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
+    const rootId = '11111111-1111-4111-8111-111111111111';
+    await versionThirty.table('folders').bulkAdd([
+      {
+        createdAt: 1,
+        id: rootId,
+        index: 0,
+        isRoot: true,
+        parentId: null,
+        profileId,
+        title: 'Home',
+      },
+      {
+        createdAt: 2,
+        id: '22222222-2222-4222-8222-222222222222',
+        index: 0,
+        isRoot: false,
+        parentId: rootId,
+        profileId,
+        title: 'Child',
+      },
+    ]);
+    versionThirty.close();
+
+    const upgraded = new BookmarkManagerDatabase(name);
+    await upgraded.open();
+    await expect(
+      upgraded.folders
+        .where('[profileId+parentId+createdAt+id+title]')
+        .between(
+          [profileId, Dexie.minKey],
+          [profileId, Dexie.maxKey],
+          true,
+          true,
+        )
+        .keys(),
+    ).resolves.toEqual([
+      [profileId, rootId, 2, '22222222-2222-4222-8222-222222222222', 'Child'],
+    ]);
     upgraded.close();
   });
 });

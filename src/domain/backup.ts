@@ -11,8 +11,9 @@ import { profileSchema } from './profile';
 import { profileSettingsSchema } from './profile-settings';
 import { syncConnectionSchema } from './synchronization';
 import { noteFolderSchema, noteSchema } from './note';
+import { folderWallpaperSchema } from './folder-wallpaper';
 
-export const BACKUP_FORMAT_VERSION = 2;
+export const BACKUP_FORMAT_VERSION = 3;
 export const snapshotTypeSchema = z.enum([
   'manual',
   'automatic',
@@ -30,7 +31,11 @@ export const snapshotTriggerSchema = z.enum([
   'restore',
 ]);
 export const backupPayloadSchema = z.object({
-  formatVersion: z.union([z.literal(1), z.literal(BACKUP_FORMAT_VERSION)]),
+  formatVersion: z.union([
+    z.literal(1),
+    z.literal(2),
+    z.literal(BACKUP_FORMAT_VERSION),
+  ]),
   databaseSchemaVersion: z.number().int().positive(),
   applicationVersion: z.string().trim().min(1).max(30),
   profile: profileSchema,
@@ -43,6 +48,7 @@ export const backupPayloadSchema = z.object({
   synchronization: syncConnectionSchema.nullable(),
   notes: z.array(noteSchema).max(10_000).optional(),
   noteFolders: z.array(noteFolderSchema).max(1_000).optional(),
+  folderWallpapers: z.array(folderWallpaperSchema).max(10_000).optional(),
 });
 export const backupSnapshotSchema = z.object({
   id: z.uuid(),
@@ -91,6 +97,7 @@ export function encodeBackupPayload(payload: BackupPayload): Uint8Array {
         delete bindings[action];
     }
   }
+  if (canonical.formatVersion < 3) delete canonical.folderWallpapers;
   return new TextEncoder().encode(JSON.stringify(canonical));
 }
 

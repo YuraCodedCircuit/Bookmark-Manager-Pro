@@ -20,7 +20,6 @@ import {
   CurrentTabUrlUnavailableError,
   getCurrentTab,
 } from '../../src/platform/tabs/current-tab';
-import { findNewestNonRootFolder } from '../../src/features/folder-tree/folder-tree-data';
 import { createContentChangeBridge } from '../../src/platform/content-change/create-content-change-bridge';
 import { refreshToolbarSavedStatus } from '../../src/platform/browser/toolbar-saved-status-permission';
 import { createPopupScrollbarVisibility } from '../../src/features/save-current-page/popup-scrollbar-visibility';
@@ -47,6 +46,14 @@ const popupDependencies = {
   captureCurrentTab,
   close: () => window.close(),
   contentChanges,
+  initializeUndo: () => undoHistory.initialize(),
+  loadDuplicateLocations: (profileId: string, url: string) =>
+    withTimeout(
+      bookmarkManager.listBookmarkLocationsByUrl(profileId, url),
+      8_000,
+    ),
+  loadFolderTree: (profileId: string) =>
+    withTimeout(bookmarkManager.listFolderTreeSummaries(profileId), 8_000),
   undoHistory,
 };
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
@@ -62,9 +69,6 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 }
 
 async function loadReadyState(): Promise<{
-  initialDuplicateLocations: Awaited<
-    ReturnType<typeof bookmarkManager.listBookmarkLocationsByUrl>
-  >;
   ready: SaveCurrentPageReadyState;
 }> {
   const [snapshot, tab] = await withTimeout(
@@ -85,49 +89,21 @@ async function loadReadyState(): Promise<{
   if (!isSaveableCurrentPageUrl(tab.url))
     throw new Error('popup-current-url-not-supported');
   const { profile, settings } = snapshot.initialization;
-  const [root, folders] = await withTimeout(
-    Promise.all([
-      bookmarkManager.ensureRoot(profile.id),
-      bookmarkManager.listFolders(profile.id),
-      undoHistory.initialize(),
-    ]).then(
-      ([rootFolder, profileFolders]) => [rootFolder, profileFolders] as const,
-    ),
-    8_000,
-  );
-  const folder = findNewestNonRootFolder(folders) ?? root;
-  let initialDuplicateLocations: Awaited<
-    ReturnType<typeof bookmarkManager.listBookmarkLocationsByUrl>
-  >;
-  try {
-    initialDuplicateLocations = await withTimeout(
-      bookmarkManager.listBookmarkLocationsByUrl(profile.id, tab.url),
-      8_000,
-    );
-  } catch (error) {
-    try {
-      await activityLog.record(profile.id, {
-        action: 'Read',
-        category: 'Bookmarks',
-        dataChanged: false,
-        durationMs: 0,
-        eventCode: 'CURRENT-TAB-DUPLICATE-CHECK-FAILED',
-        itemType: 'Bookmark',
-        itemsAffected: 0,
-        kind: 'DIAGNOSTIC',
-        level: 'ERROR',
-        message: 'Current page duplicate check failed.',
-        outcome: 'Failed',
-        source: 'Toolbar popup',
-      });
-    } catch {
-      console.error('current-tab-popup-activity-log-write-failed');
-    }
-    throw new Error('popup-duplicate-check-failed', { cause: error });
-  }
+  const root = await withTimeout(bookmarkManager.ensureRoot(profile.id), 8_000);
   return {
-    initialDuplicateLocations,
-    ready: { folder, folders, profileId: profile.id, settings, tab },
+    ready: {
+      profileId: profile.id,
+      root: {
+        createdAt: root.createdAt,
+        id: root.id,
+        isRoot: root.isRoot,
+        parentId: root.parentId,
+        profileId: root.profileId,
+        title: root.title,
+      },
+      settings,
+      tab,
+    },
   };
 }
 
@@ -141,13 +117,12 @@ async function bootstrap(): Promise<void> {
     <main className="save-current-page__status">Loading...</main>,
   );
   try {
-    const { initialDuplicateLocations, ready } = await loadReadyState();
+    const { ready } = await loadReadyState();
     reactRoot.render(
       <StrictMode>
         <I18nextProvider i18n={i18n}>
           <SaveCurrentPagePopup
             dependencies={popupDependencies}
-            initialDuplicateLocations={initialDuplicateLocations}
             ready={ready}
           />
         </I18nextProvider>

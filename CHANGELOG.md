@@ -6,6 +6,33 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.5.2 - 2026-09-25
+
+### Performance
+
+- Made the Save current URL popup load its folder tree from lightweight folder
+  information, skip unnecessary duplicate checks, and keep Home available when
+  other folders load slowly or fail, with an inline Retry action.
+- Prevented new tabs from briefly showing the wrong folder view while Home is
+  loading, reduced repeated folder reads, and optimized folder wallpapers to a
+  maximum 4K result before saving them. Optimized wallpapers are stored once
+  and shared by folders that use the same image.
+
+### New
+
+- Added an off-by-default Appearance setting that permits folder wallpaper
+  source images up to 10 MB while retaining local optimization and safety limits.
+- Expanded Appearance defaults with the same folder view, background, and
+  navigation choices available in Customize folder style. New folders receive
+  those defaults without changing existing folders.
+
+### UI/UX
+
+- Matched the larger-background-image checkbox to the other Settings checkboxes,
+  replaced its technical description with clearer local-processing text, styled
+  background choices as a segmented control, and added random Color and Gradient
+  actions.
+
 ## 0.5.1 - 2026-09-21
 
 ### New

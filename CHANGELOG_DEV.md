@@ -6,6 +6,37 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.5.2 - 2026-09-25
+
+### Optimized
+
+- Advanced IndexedDB through schema 32 with a key-only folder-tree index, added
+  validated folder summaries and indexed duplicate-location reads, and changed
+  toolbar-popup tree construction to linear time. Home now forms the minimal
+  startup path; folder loading and undo initialization no longer block it, and
+  failed tree reads retain Home with privacy-safe diagnostics and Retry.
+- Reused the authoritative startup folder list for navigation construction and
+  withheld the ready-profile bookmark grid until the current folder record is
+  available, preventing a fallback-view commit before the saved folder style.
+- Added bounded local wallpaper processing with encoded-size and 8K dimension
+  checks, 4K resizing, alpha-aware PNG retention, and WebP encoding at about 85
+  percent quality. Schema 32 extracts embedded folder images into a deduplicated
+  profile-owned `folderWallpapers` store; folder/default-style records use image
+  references, repositories hydrate presentation reads, orphan cleanup follows
+  updates and deletions, and backup format 3 preserves/remaps the shared assets.
+
+### Added
+
+- Added the optional `allowLargeWallpaperImports` profile setting, defaulting
+  missing values to disabled behavior, plus privacy-safe rejection diagnostics
+  and an accessible processing state in the folder-style editor.
+- Added profile-owned default folder background, Details transparency,
+  navigation-background, and navigation-transparency settings and applied them
+  during new-folder creation alongside the existing display defaults. The
+  background type remains a native radio group with Password Generator-aligned
+  segmented styling, forced-colors support, responsive wrapping, and announced
+  random Color and Gradient generation.
+
 ## 0.5.1 - 2026-09-21
 
 ### Added

@@ -36,6 +36,76 @@ afterEach(async () =>
 );
 
 describe('DexieBookmarkRepository', () => {
+  it('returns validated tree summaries without image-bearing appearance data', async () => {
+    const database = new BookmarkManagerDatabase(
+      `folder-summaries-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = new DexieBookmarkRepository(database);
+    await repository.ensureRoot(profileId, {
+      ...root,
+      backgroundAppearance: {
+        fit: 'fill',
+        kind: 'image',
+        value: `data:image/png;base64,${'a'.repeat(500_000)}`,
+      },
+    });
+
+    const storedRoot = await database.folders.get(rootId);
+    expect(storedRoot?.backgroundAppearance).toMatchObject({
+      fit: 'fill',
+      kind: 'image',
+    });
+    expect(storedRoot?.backgroundAppearance).not.toHaveProperty('value');
+    await expect(database.folderWallpapers.count()).resolves.toBe(1);
+
+    await expect(
+      repository.listFolderTreeSummaries(profileId),
+    ).resolves.toEqual([
+      {
+        createdAt: root.createdAt,
+        id: root.id,
+        isRoot: true,
+        parentId: null,
+        profileId,
+        title: 'Home',
+      },
+    ]);
+  });
+
+  it('uses the profile and URL index to return only matching bookmarks', async () => {
+    const database = new BookmarkManagerDatabase(
+      `bookmarks-by-url-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = new DexieBookmarkRepository(database);
+    await repository.ensureRoot(profileId, root);
+    const bookmark = (id: string, url: string) => ({
+      cardAppearance: { kind: 'color' as const, value: '#abcdef' },
+      createdAt: 2,
+      id,
+      index: 0,
+      note: '',
+      parentId: rootId,
+      profileId,
+      tags: [],
+      title: 'Bookmark',
+      updatedAt: 2,
+      url,
+    });
+    await database.bookmarks.bulkAdd([
+      bookmark('22222222-2222-4222-8222-222222222222', 'https://example.com/'),
+      bookmark(
+        '33333333-3333-4333-8333-333333333333',
+        'https://other.example/',
+      ),
+    ]);
+
+    await expect(
+      repository.listBookmarksByUrl(profileId, 'https://example.com/'),
+    ).resolves.toHaveLength(1);
+  });
+
   it('allocates unique append indexes inside concurrent creation transactions', async () => {
     const database = new BookmarkManagerDatabase(
       `concurrent-append-${crypto.randomUUID()}`,

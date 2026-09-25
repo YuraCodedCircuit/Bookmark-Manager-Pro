@@ -11,6 +11,7 @@ import type {
 } from '../domain/activity-log';
 import type { UndoHistoryRecord } from './undo-history-record';
 import type { Note, NoteFolder } from '../domain/note';
+import type { FolderWallpaper } from '../domain/folder-wallpaper';
 
 export interface MetadataRecord {
   key: string;
@@ -29,6 +30,7 @@ export class BookmarkManagerDatabase extends Dexie {
   readonly undoHistory!: EntityTable<UndoHistoryRecord, 'id'>;
   readonly notes!: EntityTable<Note, 'id'>;
   readonly noteFolders!: EntityTable<NoteFolder, 'id'>;
+  readonly folderWallpapers!: EntityTable<FolderWallpaper, 'id'>;
 
   constructor(name = 'bookmark-manager-pro') {
     super(name);
@@ -783,6 +785,78 @@ export class BookmarkManagerDatabase extends Dexie {
             settings.showSavedStatusOnToolbar ??= false;
           }),
       );
+    this.version(31).stores({
+      profiles: 'id, username, createdAt, updatedAt',
+      profileSettings: '&profileId',
+      metadata: '&key',
+      activity:
+        '&id, profileId, [profileId+timestamp], [profileId+level], category',
+      activityLogSettings: '&profileId',
+      bookmarks:
+        '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+url]',
+      folders:
+        '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+parentId+createdAt+id+title]',
+      favoriteItems: '&[profileId+itemId], profileId, itemId, favoritedAt',
+      undoHistory:
+        '&id, sessionId, [sessionId+profileId], [sessionId+position], [sessionId+createdAt]',
+      notes:
+        '&id, profileId, folderId, [profileId+folderId], [profileId+modifiedAt]',
+      noteFolders:
+        '&id, profileId, parentId, [profileId+parentId], [profileId+createdAt], [profileId+isHome]',
+    });
+    this.version(32)
+      .stores({
+        profiles: 'id, username, createdAt, updatedAt',
+        profileSettings: '&profileId',
+        metadata: '&key',
+        activity:
+          '&id, profileId, [profileId+timestamp], [profileId+level], category',
+        activityLogSettings: '&profileId',
+        bookmarks:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+url]',
+        folders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+parentId+createdAt+id+title]',
+        folderWallpapers: '&id, profileId, [profileId+createdAt]',
+        favoriteItems: '&[profileId+itemId], profileId, itemId, favoritedAt',
+        undoHistory:
+          '&id, sessionId, [sessionId+profileId], [sessionId+position], [sessionId+createdAt]',
+        notes:
+          '&id, profileId, folderId, [profileId+folderId], [profileId+modifiedAt]',
+        noteFolders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+createdAt], [profileId+isHome]',
+      })
+      .upgrade(async (transaction) => {
+        const wallpapers = transaction.table('folderWallpapers');
+        const folders = transaction.table('folders');
+        const idsByProfileAndData = new Map<string, string>();
+        const storedFolders = await folders.toArray();
+        for (const folder of storedFolders) {
+          const appearance = folder.backgroundAppearance;
+          if (
+            appearance?.kind !== 'image' ||
+            typeof appearance.value !== 'string'
+          )
+            continue;
+          const key = `${folder.profileId}\u0000${appearance.value}`;
+          let imageId = idsByProfileAndData.get(key);
+          if (!imageId) {
+            imageId = crypto.randomUUID();
+            idsByProfileAndData.set(key, imageId);
+            await wallpapers.add({
+              createdAt: folder.updatedAt ?? folder.createdAt ?? 0,
+              dataUrl: appearance.value,
+              id: imageId,
+              profileId: folder.profileId,
+            });
+          }
+          folder.backgroundAppearance = {
+            fit: appearance.fit ?? 'fill',
+            imageId,
+            kind: 'image',
+          };
+        }
+        await folders.bulkPut(storedFolders);
+      });
   }
 }
 

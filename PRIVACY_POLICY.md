@@ -1,6 +1,6 @@
 # Bookmark Manager Pro Privacy Policy
 
-**Effective date:** September 21, 2026
+**Effective date:** September 25, 2026
 **Publisher:** YuraCodedCircuit
 
 Bookmark Manager Pro is a local-first browser extension for organizing browser
@@ -53,6 +53,11 @@ Structured application information is stored locally using browser-managed
 IndexedDB. A temporary, opaque undo-session identifier may be stored in
 browser-managed session storage. The information is used only to provide the
 extension features requested by the user.
+
+Folder wallpaper files are decoded, resized, and compressed locally. The
+original selected file is discarded after processing. Only the processed image
+is saved, and folders within one profile may reference the same stored image to
+avoid unnecessary copies. No wallpaper content is written to diagnostics.
 
 The optional toolbar saved-status feature reads the active tab address after
 the user enables it. The address is compared locally with bookmarks in the
