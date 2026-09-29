@@ -108,6 +108,19 @@ snapshot ordering, identifier remapping, and paused synchronization state.
 Verify creation and restore separately in Chrome, Firefox, and Edge because one
 target's IndexedDB behavior does not establish another target's runtime result.
 
+Password Generator changes require domain tests for character-group coverage,
+length limits, rejection sampling, and strength classification, plus component
+tests for stale options, validation, focus, announcements, motion preferences,
+copy failures, and close-time state clearing. Never place generated values in
+test output, snapshots intended for publication, notifications, or diagnostics.
+
+Image-crop changes require focused tests for exact edge coordinates, zoom and
+selection updates, keyboard movement and resizing, transparent PNG and opaque
+WebP encoding, metadata removal through re-encoding, the 7680-by-4320 source
+limit, the 870-pixel output bound, no upscaling, automatic popup crop, fallback,
+and preservation of the original until the owning Save action. Manually verify
+pointer geometry and rendered output in Chrome, Firefox, and Edge.
+
 ## Branch and commit conventions
 
 Use focused branches and commits. Commit titles use imperative mood and describe
@@ -136,3 +149,7 @@ same value appears in every browser-specific `manifest.json` and artifact name.
 Chrome, Firefox, and Edge reject updates whose version does not advance beyond
 the version already published in their store. A version change is therefore a
 deliberate release action rather than a side effect of running a build command.
+
+Update-announcement comparison normalizes application versions to the first
+three numeric components. A browser-store form such as `0.5.3.0` therefore does
+not reopen the same `0.5.3` announcement.

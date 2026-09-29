@@ -25,6 +25,8 @@ _See the [screenshot gallery](screenshots/) for more views of the extension._
 - Local bookmark search with configurable fields, matching, location, sorting,
   and cross-profile grouping.
 - Capability-checked Web search suggestions through the browser Search API.
+- A profile-independent password generator with Web Crypto randomness,
+  configurable character sets, strength feedback, and explicit clipboard copy.
 - Copy, duplicate, cut, and one-shot paste with profile and folder-cycle safety.
 - Timestamp-based keyboard undo plus independent per-item undo from the history
   window.
@@ -34,9 +36,9 @@ _See the [screenshot gallery](screenshots/) for more views of the extension._
 - Offline Help & FAQ, changelog, privacy, terms, application-license, and
   third-party-license readers.
 
-| Card view and context actions                                                        | Details view                                                                                    |
-| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| ![Bookmark cards with the item context menu](screenshots/Bookmark-Manager-Pro_9.png) | ![Bookmarks and folders in the sortable details table](screenshots/Bookmark-Manager-Pro_10.png) |
+| Folder organization                                                     | Reorderable details columns                                                          |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| ![Visual folders in Card view](screenshots/Bookmark-Manager-Pro_12.png) | ![Folders in the reorderable Details table](screenshots/Bookmark-Manager-Pro_14.png) |
 
 ## Current status
 
@@ -49,6 +51,8 @@ profile, supports either or both directions, and reconciles the active profile
 in the background after a reviewed preview. Bookmark access is optional.
 Local recovery snapshots can be created, inspected, restored, and deleted from
 the profile menu. Optional automatic snapshots can run before synchronization.
+Bookmark and folder images can be cropped locally before saving, and bookmark
+context actions can copy an address or open it in a new browser window.
 
 This is a greenfield implementation. It does not currently migrate data from
 the legacy Bookmark Manager Pro extension. See the
@@ -136,6 +140,6 @@ Current behavior and limitations are described in the
 Bookmark Manager Pro is licensed under GNU GPLv3 only. See [LICENSE.md](LICENSE.md)
 and [third-party notices](THIRD_PARTY_LICENSES.md).
 
-Copyright © 2026 YuraCodedCircuit.
+Copyright (c) 2026 YuraCodedCircuit.
 
 Thank you for choosing Bookmark Manager Pro!

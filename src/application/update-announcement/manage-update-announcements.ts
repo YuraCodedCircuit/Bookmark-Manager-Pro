@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { UpdateAnnouncementRepository } from './update-announcement-repository';
 
-const versionSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
+const installedVersionSchema = z.string().regex(/^\d+\.\d+\.\d+(?:\.\d+)?$/);
 const CLAIM_EXPIRY_MS = 5 * 60 * 1_000;
 
 /** Coordinates installation-wide update announcements across extension tabs. */
@@ -25,15 +25,15 @@ export class ManageUpdateAnnouncements {
     previousVersion: string,
     version: string,
   ): Promise<boolean> {
-    const previous = versionSchema.parse(previousVersion);
-    const current = versionSchema.parse(version);
+    const previous = getAnnouncementVersion(previousVersion);
+    const current = getAnnouncementVersion(version);
     if (!isGreaterVersion(current, previous)) return false;
     await this.repository.recordUpgrade(previous, current, this.now());
     return true;
   }
 
   claim(version: string) {
-    const current = versionSchema.parse(version);
+    const current = getAnnouncementVersion(version);
     const claimedAt = this.now();
     return this.repository.claim(
       current,
@@ -45,17 +45,26 @@ export class ManageUpdateAnnouncements {
 
   markShown(version: string, claimId: string): Promise<void> {
     return this.repository.markShown(
-      versionSchema.parse(version),
+      getAnnouncementVersion(version),
       z.uuid().parse(claimId),
     );
   }
 
   markUnavailable(version: string, claimId: string): Promise<void> {
     return this.repository.markUnavailable(
-      versionSchema.parse(version),
+      getAnnouncementVersion(version),
       z.uuid().parse(claimId),
     );
   }
+}
+
+/** Returns the three-part release version used by announcements and changelog headings. */
+function getAnnouncementVersion(installedVersion: string): string {
+  return installedVersionSchema
+    .parse(installedVersion)
+    .split('.')
+    .slice(0, 3)
+    .join('.');
 }
 
 function isGreaterVersion(current: string, previous: string): boolean {

@@ -42,6 +42,25 @@ one profile is stored once. Folder records retain only the wallpaper ID and fit
 mode. Repository reads hydrate the image only for surfaces that need the full
 folder appearance.
 
+Schema version 33 adds the optional profile-owned
+`autoCropPopupScreenshots` setting. Existing profiles default to disabled, and
+new or duplicated profiles receive the same default.
+
+Schema version 34 adds a validated `detailsColumnOrder` permutation to profile
+settings and folder records. Existing profiles and folders receive the standard
+Appearance, Title, URL, Date modified, and Type order. Profile settings supply
+the default copied into newly created folders; later profile-default changes do
+not rewrite an existing folder's saved order.
+
+Schema version 35 adds the optional profile-owned
+`showDetailsColumnReorderControls` accessibility setting. Existing and new
+profiles default to hiding the explicit move toolbar; pointer and keyboard
+header reordering remain available.
+
+Schema version 36 adds the optional profile-owned
+`hideEmptyDetailsTableHeader` Appearance setting. Existing and new profiles
+default to hiding the Details header when a folder has no items.
+
 Packaged-extension preflight stores a schema-validated snapshot in
 `browser.storage.session` for the current browser session. The snapshot contains
 only stable startup metadata: operation and completion identifiers, locale,
@@ -171,9 +190,25 @@ mode. Reusing an existing default wallpaper does not duplicate its data for each
 new folder. An image is removed after no folder or default-style record in that
 profile references it.
 
-Visible-page captures use JPEG. A capture that exceeds the encoded limit is
-resized and recompressed, then rejected if it still exceeds 1,500,000
-characters. The app does not silently substitute an oversized or invalid image.
+Visible-page screenshots and selected bookmark-card images remain temporary
+data URLs together with the latest cropped result until the owning bookmark or
+folder is saved. The shared crop pipeline accepts sources up to 7680 by 4320
+pixels, produces an output with no edge larger than 870 pixels without
+upscaling, encodes opaque output as WebP at approximately 85-percent quality,
+and preserves transparency with PNG. Canvas re-encoding removes source image
+metadata. Processing failures preserve the original temporary image instead of
+silently saving a partial crop.
+
+The profile-owned automatic screenshot-crop preference applies a top-left Card
+crop after a popup capture. The uncropped screenshot remains available for
+manual editing until Save bookmark commits the selected result. Ordinary image
+selection and crop editing follow the same save boundary.
+
+Password Generator values and options exist only in React state while its
+dialog is open. They are never written to IndexedDB, browser storage, snapshots,
+exports, activity records, or diagnostics. Closing the dialog clears them. An
+explicit Copy action writes the generated value to the operating-system
+clipboard, which is outside extension storage.
 
 The browser controls the total IndexedDB quota. The app can show estimated
 profile storage, but the estimate excludes browser database overhead and is not

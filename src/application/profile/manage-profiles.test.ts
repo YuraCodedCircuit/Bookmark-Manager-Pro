@@ -35,6 +35,7 @@ describe('ManageProfiles', () => {
         bookmarkSortDirection: 'ascending',
         cardSize: 'small',
         cardSpacing: 'comfortable',
+        detailsColumnOrder: ['appearance', 'title', 'url', 'updatedAt', 'type'],
         profileId,
       }),
     );

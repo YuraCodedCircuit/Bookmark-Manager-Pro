@@ -12,6 +12,7 @@ import {
   bookmarkViewSchema,
   cardSizeSchema,
   cardSpacingSchema,
+  detailsColumnOrderSchema,
 } from './profile-settings';
 
 export const navigationTransparencySchema = z.number().int().min(0).max(100);
@@ -81,6 +82,7 @@ export const folderSchema = z.object({
   bookmarkSortBy: bookmarkSortBySchema.optional(),
   bookmarkSortDirection: bookmarkSortDirectionSchema.optional(),
   bookmarkGroupBy: bookmarkGroupBySchema.optional(),
+  detailsColumnOrder: detailsColumnOrderSchema.optional(),
   detailsTableTransparency: detailsTableTransparencySchema.default(0),
   includeNavigationBackground: z.boolean().default(false),
   navigationTransparency: navigationTransparencySchema.default(45),

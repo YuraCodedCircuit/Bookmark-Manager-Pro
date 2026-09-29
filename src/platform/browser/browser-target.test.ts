@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { getBrowserTarget, getOperatingSystemInfo } from './browser-target';
+import {
+  getBrowserFamily,
+  getBrowserTarget,
+  getOperatingSystemInfo,
+} from './browser-target';
 
 describe('getBrowserTarget', () => {
   it.each([
@@ -18,5 +22,16 @@ describe('getBrowserTarget', () => {
         'Win32',
       ),
     ).toEqual({ name: 'Windows', version: '10.0' });
+  });
+});
+
+describe('getBrowserFamily', () => {
+  it.each([
+    ['Chrome/140.0.1 Safari/537.36', 'chrome'],
+    ['Chrome/140.0.0 Edg/140.0.2', 'edge'],
+    ['Firefox/140.0', 'firefox'],
+    ['Bookmark Manager Pro preview', 'unknown'],
+  ] as const)('classifies %s as %s', (userAgent, expected) => {
+    expect(getBrowserFamily(userAgent)).toBe(expected);
   });
 });

@@ -40,6 +40,7 @@ const createdProfile = {
   },
 };
 const onUiReady = vi.fn();
+const openBookmarkWindow = vi.fn(async () => undefined);
 const originalClipboard = navigator.clipboard;
 const activityLog = {
   clear: vi.fn(),
@@ -121,6 +122,7 @@ const bookmarkManager = {
   setFavorite: vi.fn(),
   updateBookmark: vi.fn(),
   updateFolder: vi.fn(),
+  updateFolderDetailsColumnOrder: vi.fn(),
   updateFolderStyle: vi.fn(),
 };
 const profileManager = {
@@ -207,6 +209,7 @@ function renderApp(
         operationId: 'initial-operation',
       }}
       onUiReady={onUiReady}
+      openBookmarkWindow={openBookmarkWindow}
       profileManager={profileManager}
       resumePreflight={vi.fn().mockResolvedValue({
         capabilities: [],
@@ -244,6 +247,7 @@ afterEach(() => {
     noteFolderCount: 0,
     profileId: createdProfile.profile.id,
   });
+  openBookmarkWindow.mockResolvedValue(undefined);
   Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
     value: originalClipboard,
@@ -748,6 +752,46 @@ describe('App', () => {
     );
   });
 
+  it('opens the same focused Search window from the header and profile menu', async () => {
+    const user = userEvent.setup();
+    profileManager.list.mockResolvedValue([
+      { isActive: true, profile: createdProfile.profile },
+    ]);
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+    await screen.findByRole('link', { name: 'Open Example' });
+
+    const headerSearch = screen.getByRole('button', { name: 'Open search' });
+    const profileButton = screen.getByRole('button', {
+      name: 'Open profile menu',
+    });
+    expect(headerSearch.nextElementSibling).toBe(profileButton);
+
+    await user.click(headerSearch);
+    let searchDialog = await screen.findByRole('dialog', { name: 'Search' });
+    expect(within(searchDialog).getByRole('searchbox')).toHaveFocus();
+    await user.click(
+      within(searchDialog).getByRole('button', { name: 'Close search' }),
+    );
+
+    await user.click(profileButton);
+    const profileMenu = await screen.findByRole('dialog', {
+      name: 'Profile menu',
+    });
+    const applicationHeading = within(profileMenu).getByRole('heading', {
+      name: 'Application',
+    });
+    const applicationItems = applicationHeading.nextElementSibling;
+    const menuSearch = within(applicationItems as HTMLElement).getByRole(
+      'button',
+      { name: 'Search' },
+    );
+    expect(applicationItems?.firstElementChild).toBe(menuSearch);
+
+    await user.click(menuSearch);
+    searchDialog = await screen.findByRole('dialog', { name: 'Search' });
+    expect(within(searchDialog).getByRole('searchbox')).toHaveFocus();
+  });
+
   it('uses the saved app-local search binding instead of its default', async () => {
     renderApp({
       status: 'ready',
@@ -787,7 +831,7 @@ describe('App', () => {
 
   it('shows and operates the first-run welcome window', async () => {
     const user = userEvent.setup();
-    renderApp({ status: 'first-run', theme: 'dark' });
+    const { changeBridge } = renderApp({ status: 'first-run', theme: 'dark' });
 
     const welcome = screen.getByRole('dialog', {
       name: 'Welcome to Bookmark Manager Pro',
@@ -847,6 +891,10 @@ describe('App', () => {
       username: 'Local user',
     });
     expect(welcome).not.toHaveAttribute('open');
+    expect(changeBridge.publishProfileActivation).toHaveBeenCalledWith({
+      profileId: createdProfile.profile.id,
+      revision: 0,
+    });
     expect(document.documentElement.style.overflowY).toBe('');
     expect(onUiReady).toHaveBeenCalledWith('resumed-operation');
     expect(activityLog.record).toHaveBeenCalledWith(
@@ -857,6 +905,46 @@ describe('App', () => {
       }),
     );
     expect(screen.getByText('Profile created')).toBeInTheDocument();
+  });
+
+  it('closes Welcome and loads a profile created in another app tab', async () => {
+    let receiveActivation:
+      | ((activation: {
+          profileId: string;
+          protocolVersion: 1;
+          revision: number;
+          type: 'profile.activated';
+        }) => void)
+      | undefined;
+    renderApp(
+      { status: 'first-run', theme: 'dark' },
+      { status: 'ready', theme: 'dark', ...createdProfile },
+      undefined,
+      {
+        profileActivation: vi.fn(async () => ({
+          profileId: createdProfile.profile.id,
+          revision: 1,
+        })),
+        subscribeProfileActivation: vi.fn((receive) => {
+          receiveActivation = receive;
+          return () => undefined;
+        }),
+      },
+    );
+    const welcome = screen.getByRole('dialog', {
+      name: 'Welcome to Bookmark Manager Pro',
+    });
+    expect(welcome).toHaveAttribute('open');
+
+    receiveActivation?.({
+      profileId: createdProfile.profile.id,
+      protocolVersion: 1,
+      revision: 1,
+      type: 'profile.activated',
+    });
+
+    await waitFor(() => expect(welcome).not.toHaveAttribute('open'));
+    expect(await screen.findByText('Example')).toBeVisible();
   });
 
   it('does not show the welcome window outside first run', () => {
@@ -1503,11 +1591,15 @@ describe('App', () => {
     );
     await user.selectOptions(
       within(settingsDialog).getByLabelText('View'),
-      'details',
+      'card',
     );
     await user.selectOptions(
       within(settingsDialog).getByLabelText('Card size'),
       'large',
+    );
+    await user.selectOptions(
+      within(settingsDialog).getByLabelText('View'),
+      'details',
     );
     await user.click(
       within(settingsDialog).getByRole('button', { name: 'Save' }),
@@ -1760,7 +1852,15 @@ describe('App', () => {
     expect(
       within(menu).getByRole('menuitem', { name: 'Edit bookmark' }),
     ).toBeVisible();
-    expect(within(menu).getByRole('menuitem', { name: /^Copy/ })).toBeVisible();
+    expect(
+      within(menu).getByRole('menuitem', { name: /^CopyCtrl\+C$/ }),
+    ).toBeVisible();
+    expect(
+      within(menu).getByRole('menuitem', { name: 'Open in new window' }),
+    ).toBeVisible();
+    expect(
+      within(menu).getByRole('menuitem', { name: 'Copy URL' }),
+    ).toBeVisible();
     expect(
       within(menu).getByRole('menuitem', { name: 'Delete' }),
     ).toBeVisible();
@@ -1774,6 +1874,117 @@ describe('App', () => {
     expect(menu).not.toBeInTheDocument();
   });
 
+  it('opens a bookmark URL in a new browser window', async () => {
+    const user = userEvent.setup();
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+
+    await user.pointer({
+      keys: '[MouseRight]',
+      target: await screen.findByRole('link', { name: 'Open Example' }),
+    });
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Open in new window' }),
+    );
+
+    await waitFor(() =>
+      expect(openBookmarkWindow).toHaveBeenCalledWith(storedBookmark.url),
+    );
+    expect(activityLog.record).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      expect.objectContaining({
+        eventCode: 'BOOKMARK-OPEN-NEW-WINDOW-COMPLETE',
+        level: 'INFO',
+        outcome: 'Succeeded',
+      }),
+    );
+  });
+
+  it('reports a browser-window creation failure', async () => {
+    const user = userEvent.setup();
+    openBookmarkWindow.mockRejectedValueOnce(new Error('window-create-failed'));
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+
+    await user.pointer({
+      keys: '[MouseRight]',
+      target: await screen.findByRole('link', { name: 'Open Example' }),
+    });
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Open in new window' }),
+    );
+
+    expect(
+      await screen.findByText('A bookmark could not be opened.'),
+    ).toBeInTheDocument();
+    expect(activityLog.record).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      expect.objectContaining({
+        eventCode: 'BOOKMARK-OPEN-FAILED',
+        level: 'ERROR',
+        outcome: 'Failed',
+      }),
+    );
+  });
+
+  it('copies only the bookmark URL after explicit activation', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+
+    await user.pointer({
+      keys: '[MouseRight]',
+      target: await screen.findByRole('link', { name: 'Open Example' }),
+    });
+    await user.click(screen.getByRole('menuitem', { name: 'Copy URL' }));
+
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(storedBookmark.url),
+    );
+    expect(activityLog.record).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      expect.objectContaining({
+        eventCode: 'BOOKMARK-URL-COPY-COMPLETE',
+        level: 'INFO',
+        outcome: 'Succeeded',
+      }),
+    );
+    expect(await screen.findByText('Link copied.')).toBeInTheDocument();
+  });
+
+  it('reports a failed URL copy without exposing the URL', async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
+    });
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+
+    await user.pointer({
+      keys: '[MouseRight]',
+      target: await screen.findByRole('link', { name: 'Open Example' }),
+    });
+    await user.click(screen.getByRole('menuitem', { name: 'Copy URL' }));
+
+    expect(
+      await screen.findByText('The link could not be copied.'),
+    ).toBeInTheDocument();
+    expect(activityLog.record).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      expect.objectContaining({
+        eventCode: 'BOOKMARK-URL-COPY-FAILED',
+        level: 'ERROR',
+        message: 'A bookmark URL could not be copied.',
+        outcome: 'Failed',
+      }),
+    );
+    expect(JSON.stringify(activityLog.record.mock.calls)).not.toContain(
+      storedBookmark.url,
+    );
+  });
+
   it('keeps paste visible and disabled until an item is copied', async () => {
     const user = userEvent.setup();
     renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
@@ -1785,7 +1996,7 @@ describe('App', () => {
 
     const bookmark = screen.getByRole('link', { name: 'Open Example' });
     await user.pointer({ keys: '[MouseRight]', target: bookmark });
-    await user.click(screen.getByRole('menuitem', { name: /^Copy/ }));
+    await user.click(screen.getByRole('menuitem', { name: /^CopyCtrl\+C$/ }));
     await user.pointer({ keys: '[MouseRight]', target: content });
     const paste = screen.getByRole('menuitem', { name: /^Paste/ });
     expect(paste).toBeEnabled();
@@ -1817,7 +2028,7 @@ describe('App', () => {
     const bookmark = screen.getByRole('link', { name: 'Open Example' });
 
     await user.pointer({ keys: '[MouseRight]', target: bookmark });
-    await user.click(screen.getByRole('menuitem', { name: /^Copy/ }));
+    await user.click(screen.getByRole('menuitem', { name: /^CopyCtrl\+C$/ }));
     await user.pointer({ keys: '[MouseRight]', target: content });
     await user.click(screen.getByRole('menuitem', { name: /^Paste/ }));
     await waitFor(() =>
@@ -2177,6 +2388,82 @@ describe('App', () => {
     });
   });
 
+  it('persists a Details column move with privacy-safe activity and notification', async () => {
+    const user = userEvent.setup();
+    const detailsRoot = { ...rootFolder, bookmarkView: 'details' as const };
+    bookmarkManager.ensureRoot.mockResolvedValueOnce(detailsRoot);
+    bookmarkManager.listFolders.mockResolvedValueOnce([detailsRoot]);
+    bookmarkManager.updateFolderDetailsColumnOrder.mockResolvedValueOnce(
+      undefined,
+    );
+    renderApp({
+      status: 'ready',
+      theme: 'dark',
+      ...createdProfile,
+      settings: {
+        ...createdProfile.settings,
+        showDetailsColumnReorderControls: true,
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: 'Move left' }));
+
+    expect(bookmarkManager.updateFolderDetailsColumnOrder).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      rootFolder.id,
+      ['title', 'appearance', 'url', 'updatedAt', 'type'],
+    );
+    await waitFor(() =>
+      expect(activityLog.record).toHaveBeenCalledWith(
+        createdProfile.profile.id,
+        expect.objectContaining({
+          eventCode: 'DETAILS-COLUMN-ORDER-UPDATE-COMPLETE',
+          level: 'INFO',
+        }),
+      ),
+    );
+    expect(
+      await screen.findByText('The column order was saved for this folder.'),
+    ).toBeInTheDocument();
+  });
+
+  it('logs a failed Details column move and restores the displayed order', async () => {
+    const user = userEvent.setup();
+    const detailsRoot = { ...rootFolder, bookmarkView: 'details' as const };
+    bookmarkManager.ensureRoot.mockResolvedValueOnce(detailsRoot);
+    bookmarkManager.listFolders.mockResolvedValueOnce([detailsRoot]);
+    bookmarkManager.updateFolderDetailsColumnOrder.mockRejectedValueOnce(
+      new Error('write-failed'),
+    );
+    renderApp({
+      status: 'ready',
+      theme: 'dark',
+      ...createdProfile,
+      settings: {
+        ...createdProfile.settings,
+        showDetailsColumnReorderControls: true,
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: 'Move left' }));
+
+    await waitFor(() =>
+      expect(activityLog.record).toHaveBeenCalledWith(
+        createdProfile.profile.id,
+        expect.objectContaining({
+          eventCode: 'DETAILS-COLUMN-ORDER-UPDATE-FAILED',
+          level: 'ERROR',
+        }),
+      ),
+    );
+    expect(
+      await screen.findAllByText(/previous order was restored/i),
+    ).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader')[0]).toHaveAccessibleName(
+      'Appearance',
+    );
+  });
+
   it('shows an app notification when a folder background image is rejected', async () => {
     const user = userEvent.setup();
     renderApp({
@@ -2311,8 +2598,42 @@ describe('App', () => {
         bookmarkView: 'details',
         cardSize: 'large',
         cardSpacing: 'spacious',
+        detailsColumnOrder: ['appearance', 'title', 'url', 'updatedAt', 'type'],
       }),
     );
+  });
+
+  it('opens text editing actions for an editable field inside a dialog', async () => {
+    const user = userEvent.setup();
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+    await screen.findByRole('link', { name: 'Open Example' });
+
+    await user.pointer({
+      keys: '[MouseRight]',
+      target: screen.getByRole('region', { name: 'Bookmarks' }),
+    });
+    await user.click(screen.getByRole('menuitem', { name: 'New folder' }));
+    const folderDialog = screen.getByRole('dialog', { name: 'New folder' });
+    const title = within(folderDialog).getByLabelText(
+      'Title',
+    ) as HTMLInputElement;
+    await user.type(title, 'Research');
+    title.setSelectionRange(0, 8);
+
+    fireEvent.contextMenu(title, { clientX: 80, clientY: 120 });
+
+    const menu = within(folderDialog).getByRole('menu', {
+      name: 'Text editing actions',
+    });
+    expect(within(menu).getByRole('menuitem', { name: /^Cut/ })).toBeEnabled();
+    expect(within(menu).getByRole('menuitem', { name: /^Copy/ })).toBeEnabled();
+    expect(
+      within(menu).getByRole('menuitem', { name: /^Paste/ }),
+    ).toBeEnabled();
+    expect(
+      within(menu).getByRole('menuitem', { name: /^Select all/ }),
+    ).toBeEnabled();
+    expect(within(menu).getByRole('menuitem', { name: 'Clear' })).toBeEnabled();
   });
 
   it('keeps the nested folder open after creating an item and refreshing remembered appearance', async () => {

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { Bookmark } from '../../domain/bookmark';
 import { appearanceStyle } from '../../shared/appearance-style';
+import { titleInitials } from '../../shared/title-initials';
 
 interface BookmarkCardProps extends Omit<
   AnchorHTMLAttributes<HTMLAnchorElement>,
@@ -61,7 +62,7 @@ export const BookmarkCard = forwardRef<HTMLAnchorElement, BookmarkCardProps>(
             <span aria-hidden="true" className="bookmark-card__favicon">
               {faviconDisplay !== 'initials' && missingFavicon === 'built-in'
                 ? '◆'
-                : bookmark.title.slice(0, 2).toUpperCase()}
+                : titleInitials(bookmark.title, 'bookmark')}
             </span>
           ) : null}
           <span className="bookmark-card__copy">

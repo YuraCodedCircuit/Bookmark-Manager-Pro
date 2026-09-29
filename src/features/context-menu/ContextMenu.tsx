@@ -5,6 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { ContextMenuIcon, type ContextMenuIconName } from './ContextMenuIcon';
 import type { Bookmark } from '../../domain/bookmark';
 import type { Folder } from '../../domain/folder';
+import {
+  getBrowserFamily,
+  type BrowserFamily,
+} from '../../platform/browser/browser-target';
 import { prefersReducedMotion } from '../../shared/use-prefers-reduced-motion';
 
 export type ContextMenuKind = 'bookmark' | 'empty-area';
@@ -18,6 +22,7 @@ export interface ContextMenuRequest {
 }
 
 interface ContextMenuProps {
+  browserFamily?: BrowserFamily;
   disabledKeys?: ReadonlySet<string>;
   isTargetFavorite?: boolean;
   onAction?: (key: string) => void;
@@ -35,6 +40,26 @@ interface MenuItem {
 const noDisabledItems = new Set<string>();
 
 const bookmarkGroups: readonly (readonly MenuItem[])[] = [
+  [
+    { icon: 'open', key: 'open' },
+    { icon: 'open-new', key: 'openNewTab' },
+    { icon: 'open-new', key: 'openNewWindow' },
+  ],
+  [{ icon: 'copy', key: 'copyUrl' }],
+  [
+    { icon: 'edit', key: 'edit' },
+    { icon: 'copy', key: 'copy', shortcut: 'Ctrl+C' },
+    { icon: 'duplicate', key: 'duplicate' },
+    { icon: 'cut', key: 'cut', shortcut: 'Ctrl+X' },
+  ],
+  [
+    { icon: 'pin', key: 'favorite' },
+    { icon: 'info', key: 'info' },
+    { icon: 'delete', key: 'delete', tone: 'danger' },
+  ],
+];
+
+const folderGroups: readonly (readonly MenuItem[])[] = [
   [
     { icon: 'open', key: 'open' },
     { icon: 'open-new', key: 'openNewTab' },
@@ -65,6 +90,7 @@ const emptyAreaGroups: readonly (readonly MenuItem[])[] = [
 ];
 
 export function ContextMenu({
+  browserFamily = getBrowserFamily(globalThis.navigator.userAgent),
   disabledKeys = noDisabledItems,
   isTargetFavorite = false,
   onAction,
@@ -73,7 +99,30 @@ export function ContextMenu({
 }: ContextMenuProps) {
   const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
-  const groups = request.kind === 'bookmark' ? bookmarkGroups : emptyAreaGroups;
+  const groups =
+    request.kind === 'empty-area'
+      ? emptyAreaGroups
+      : request.target?.kind === 'folder'
+        ? folderGroups
+        : bookmarkGroups;
+
+  const getLabelKey = (item: MenuItem): string => {
+    if (item.key === 'openNewTab' || item.key === 'openNewWindow') {
+      return `contextMenu.items.${item.key}.${browserFamily}`;
+    }
+    if (item.key === 'copyUrl') {
+      return `contextMenu.items.copyUrl.${browserFamily}`;
+    }
+    if (item.key === 'edit' && request.target?.kind === 'folder') {
+      return 'contextMenu.items.editFolder';
+    }
+    if (item.key === 'favorite') {
+      return isTargetFavorite
+        ? 'contextMenu.items.removeFavorite'
+        : 'contextMenu.items.addFavorite';
+    }
+    return `contextMenu.items.${item.key}`;
+  };
 
   useLayoutEffect(() => {
     const menu = menuRef.current;
@@ -184,15 +233,7 @@ export function ContextMenu({
             >
               <ContextMenuIcon name={item.icon} />
               <span className="context-menu__label">
-                {t(
-                  item.key === 'edit' && request.target?.kind === 'folder'
-                    ? 'contextMenu.items.editFolder'
-                    : item.key === 'favorite'
-                      ? isTargetFavorite
-                        ? 'contextMenu.items.removeFavorite'
-                        : 'contextMenu.items.addFavorite'
-                      : `contextMenu.items.${item.key}`,
-                )}
+                {t(getLabelKey(item))}
               </span>
               {item.shortcut ? <kbd>{item.shortcut}</kbd> : null}
             </button>

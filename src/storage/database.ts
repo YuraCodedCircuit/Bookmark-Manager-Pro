@@ -1,7 +1,10 @@
 import Dexie, { type EntityTable, type Table } from 'dexie';
 
 import type { Profile } from '../domain/profile';
-import type { ProfileSettings } from '../domain/profile-settings';
+import {
+  defaultDetailsColumnOrder,
+  type ProfileSettings,
+} from '../domain/profile-settings';
 import type { Bookmark } from '../domain/bookmark';
 import type { Folder } from '../domain/folder';
 import type { FavoriteItem } from '../domain/favorite-item';
@@ -857,6 +860,128 @@ export class BookmarkManagerDatabase extends Dexie {
         }
         await folders.bulkPut(storedFolders);
       });
+    this.version(33)
+      .stores({
+        profiles: 'id, username, createdAt, updatedAt',
+        profileSettings: '&profileId',
+        metadata: '&key',
+        activity:
+          '&id, profileId, [profileId+timestamp], [profileId+level], category',
+        activityLogSettings: '&profileId',
+        bookmarks:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+url]',
+        folders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+parentId+createdAt+id+title]',
+        folderWallpapers: '&id, profileId, [profileId+createdAt]',
+        favoriteItems: '&[profileId+itemId], profileId, itemId, favoritedAt',
+        undoHistory:
+          '&id, sessionId, [sessionId+profileId], [sessionId+position], [sessionId+createdAt]',
+        notes:
+          '&id, profileId, folderId, [profileId+folderId], [profileId+modifiedAt]',
+        noteFolders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+createdAt], [profileId+isHome]',
+      })
+      .upgrade((transaction) =>
+        transaction
+          .table('profileSettings')
+          .toCollection()
+          .modify((settings) => {
+            settings.autoCropPopupScreenshots ??= false;
+          }),
+      );
+    this.version(34)
+      .stores({
+        profiles: 'id, username, createdAt, updatedAt',
+        profileSettings: '&profileId',
+        metadata: '&key',
+        activity:
+          '&id, profileId, [profileId+timestamp], [profileId+level], category',
+        activityLogSettings: '&profileId',
+        bookmarks:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+url]',
+        folders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+parentId+createdAt+id+title]',
+        folderWallpapers: '&id, profileId, [profileId+createdAt]',
+        favoriteItems: '&[profileId+itemId], profileId, itemId, favoritedAt',
+        undoHistory:
+          '&id, sessionId, [sessionId+profileId], [sessionId+position], [sessionId+createdAt]',
+        notes:
+          '&id, profileId, folderId, [profileId+folderId], [profileId+modifiedAt]',
+        noteFolders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+createdAt], [profileId+isHome]',
+      })
+      .upgrade(async (transaction) => {
+        await transaction
+          .table('profileSettings')
+          .toCollection()
+          .modify((settings) => {
+            settings.detailsColumnOrder ??= [...defaultDetailsColumnOrder];
+          });
+        await transaction
+          .table('folders')
+          .toCollection()
+          .modify((folder) => {
+            folder.detailsColumnOrder ??= [...defaultDetailsColumnOrder];
+          });
+      });
+    this.version(35)
+      .stores({
+        profiles: 'id, username, createdAt, updatedAt',
+        profileSettings: '&profileId',
+        metadata: '&key',
+        activity:
+          '&id, profileId, [profileId+timestamp], [profileId+level], category',
+        activityLogSettings: '&profileId',
+        bookmarks:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+url]',
+        folders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+parentId+createdAt+id+title]',
+        folderWallpapers: '&id, profileId, [profileId+createdAt]',
+        favoriteItems: '&[profileId+itemId], profileId, itemId, favoritedAt',
+        undoHistory:
+          '&id, sessionId, [sessionId+profileId], [sessionId+position], [sessionId+createdAt]',
+        notes:
+          '&id, profileId, folderId, [profileId+folderId], [profileId+modifiedAt]',
+        noteFolders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+createdAt], [profileId+isHome]',
+      })
+      .upgrade((transaction) =>
+        transaction
+          .table('profileSettings')
+          .toCollection()
+          .modify((settings) => {
+            settings.showDetailsColumnReorderControls ??= false;
+          }),
+      );
+    this.version(36)
+      .stores({
+        profiles: 'id, username, createdAt, updatedAt',
+        profileSettings: '&profileId',
+        metadata: '&key',
+        activity:
+          '&id, profileId, [profileId+timestamp], [profileId+level], category',
+        activityLogSettings: '&profileId',
+        bookmarks:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+url]',
+        folders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+parentId+index], [profileId+parentId+createdAt+id+title]',
+        folderWallpapers: '&id, profileId, [profileId+createdAt]',
+        favoriteItems: '&[profileId+itemId], profileId, itemId, favoritedAt',
+        undoHistory:
+          '&id, sessionId, [sessionId+profileId], [sessionId+position], [sessionId+createdAt]',
+        notes:
+          '&id, profileId, folderId, [profileId+folderId], [profileId+modifiedAt]',
+        noteFolders:
+          '&id, profileId, parentId, [profileId+parentId], [profileId+createdAt], [profileId+isHome]',
+      })
+      .upgrade((transaction) =>
+        transaction
+          .table('profileSettings')
+          .toCollection()
+          .modify((settings) => {
+            settings.hideEmptyDetailsTableHeader ??= true;
+          }),
+      );
   }
 }
 

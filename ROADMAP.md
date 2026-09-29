@@ -373,6 +373,26 @@ checks in every supported browser target.
 - Document that losing the export password makes the protected file
   unrecoverable; the application will not have a recovery key.
 
+### Rule-based bookmark URL updates
+
+- Let users define local, site-specific rules that describe which parts of a
+  URL identify the same saved item and which parts represent a changing
+  position, page, chapter, or other state.
+- Use those rules when saving a page to recognize related bookmarks whose URLs
+  differ only in the rule-defined variable portion.
+- When related bookmarks are found, offer a clear choice to update selected
+  saved URLs or keep the existing bookmarks and save a new one.
+- Support future rule designs for path segments, query parameters, and URL
+  fragments without assuming that one automatic pattern is safe for every
+  website.
+- Keep matching and updates local, preview the affected bookmarks before making
+  changes, and provide safeguards against overly broad or invalid rules.
+
+This capability requires a separate rule-management window and product design
+for rule scope, validation, multiple matches, conflict handling, undo, and
+import or export behavior. It is not planned for the current application
+version.
+
 ### Advanced settings
 
 - Keep the category disabled until specific advanced controls are approved.

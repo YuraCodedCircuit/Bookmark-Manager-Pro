@@ -2,8 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { NavigationItem } from '../../application/bookmark/manage-bookmarks';
+import { BookmarkIcon } from '../../components/icons/BookmarkIcon';
+import { ChevronIcon } from '../../components/icons/ChevronIcon';
 import { ClearIcon } from '../../components/icons/ClearIcon';
 import { CopyIcon } from '../../components/icons/CopyIcon';
+import { FolderIcon } from '../../components/icons/FolderIcon';
 import { appearanceStyle } from '../../shared/appearance-style';
 import { formatDateTime } from '../../shared/date-time-format';
 import type { DateTimeFormatPreference } from '../../shared/date-time-format';
@@ -135,7 +138,7 @@ export function ItemInfoDialog({
     rows.map((row) => (
       <div className="item-info-dialog__row" key={row.field}>
         <dt>{row.label}</dt>
-        <dd>{row.value}</dd>
+        <dd title={row.value}>{row.value}</dd>
         <button
           aria-label={t('itemInfo.copyValue', { label: row.label })}
           onClick={() => void copy(row.field, row.value)}
@@ -164,7 +167,12 @@ export function ItemInfoDialog({
       ref={dialogRef}
     >
       <header className="item-info-dialog__header">
-        <h1 id="item-info-title">{t('itemInfo.heading')}</h1>
+        <div className="item-info-dialog__title">
+          <span aria-hidden="true" className="item-info-dialog__type-icon">
+            {item.kind === 'folder' ? <FolderIcon /> : <BookmarkIcon />}
+          </span>
+          <h1 id="item-info-title">{t('itemInfo.heading')}</h1>
+        </div>
         <button
           aria-label={t('itemInfo.close')}
           onClick={onClose}
@@ -187,7 +195,10 @@ export function ItemInfoDialog({
           </dl>
           <dl>{renderRows(technicalRows)}</dl>
           <details className="item-info-dialog__more">
-            <summary>{t('itemInfo.moreDetails')}</summary>
+            <summary>
+              <ChevronIcon />
+              <span>{t('itemInfo.moreDetails')}</span>
+            </summary>
             <dl>{renderRows(moreRows)}</dl>
           </details>
           {copyError ? (

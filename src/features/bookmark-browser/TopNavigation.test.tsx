@@ -19,6 +19,7 @@ describe('TopNavigation', () => {
       <TopNavigation
         onNavigate={onNavigate}
         onOpenProfile={vi.fn()}
+        onOpenSearch={vi.fn()}
         onOpenTree={vi.fn()}
         path={['Home', 'Projects', 'Deep folder', 'Current folder']}
         pathSeparator="/"
@@ -40,5 +41,30 @@ describe('TopNavigation', () => {
 
     fireEvent.click(home);
     expect(onNavigate).toHaveBeenCalledWith(0);
+  });
+
+  it('places Search immediately before the profile control and exposes its action', () => {
+    const onOpenSearch = vi.fn();
+    render(
+      <TopNavigation
+        onNavigate={vi.fn()}
+        onOpenProfile={vi.fn()}
+        onOpenSearch={onOpenSearch}
+        onOpenTree={vi.fn()}
+        path={['Home']}
+        pathSeparator="/"
+        profile={{ username: 'Local user' }}
+        profileButtonRef={{ current: null }}
+        treeButtonRef={{ current: null }}
+      />,
+    );
+
+    const search = screen.getByRole('button', { name: 'Open search' });
+    const profile = screen.getByRole('button', { name: 'Open profile menu' });
+    expect(search.nextElementSibling).toBe(profile);
+    expect(search.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+
+    fireEvent.click(search);
+    expect(onOpenSearch).toHaveBeenCalledOnce();
   });
 });

@@ -29,8 +29,12 @@ import { BookmarkCard } from './BookmarkCard';
 import { BookmarkDetailsTable } from './BookmarkDetailsTable';
 import type { Bookmark } from '../../domain/bookmark';
 import type { Folder } from '../../domain/folder';
-import type { ProfileSettings } from '../../domain/profile-settings';
+import type {
+  DetailsColumn,
+  ProfileSettings,
+} from '../../domain/profile-settings';
 import { appearanceStyle } from '../../shared/appearance-style';
+import { titleInitials } from '../../shared/title-initials';
 import { organizeBookmarkItems } from './organize-bookmark-items';
 import {
   resolveDropZone,
@@ -54,6 +58,9 @@ interface BookmarkGridProps {
   interactionLocked?: boolean;
   onOpenFolder: (folder: Folder) => void;
   onOpenBookmark?: (bookmark: Bookmark) => void;
+  onDetailsColumnOrderChange?: (
+    order: readonly DetailsColumn[],
+  ) => Promise<void>;
   requestConfirmation?: (
     message: string,
     action: 'move' | 'open',
@@ -77,6 +84,9 @@ interface BookmarkGridProps {
     cardSpacing?: NonNullable<ProfileSettings['cardSpacing']>;
     dateTimeFormat?: NonNullable<ProfileSettings['dateTimeFormat']>;
     detailsTableTransparency?: number;
+    detailsColumnOrder?: readonly DetailsColumn[];
+    showDetailsColumnReorderControls?: boolean | undefined;
+    hideEmptyDetailsTableHeader?: boolean | undefined;
     confirmFolderDrop?: boolean | undefined;
     dragAndDropEnabled?: boolean | undefined;
     dropIntoFoldersEnabled?: boolean | undefined;
@@ -98,6 +108,7 @@ export function BookmarkGrid({
   interactionLocked = false,
   onOpenFolder,
   onOpenBookmark,
+  onDetailsColumnOrderChange,
   onMoveItem,
   requestConfirmation = async () => false,
   currentFolderId,
@@ -331,12 +342,22 @@ export function BookmarkGrid({
       >
         <BookmarkDetailsTable
           bookmarks={bookmarks}
-          key={`${view.bookmarkSortBy ?? 'manual'}:${view.bookmarkSortDirection ?? 'ascending'}:${view.bookmarkGroupBy ?? 'none'}`}
+          key={`${currentFolderId ?? 'unknown'}:${view.bookmarkSortBy ?? 'manual'}:${view.bookmarkSortDirection ?? 'ascending'}:${view.bookmarkGroupBy ?? 'none'}`}
           transparency={view.detailsTableTransparency ?? 0}
           folders={folders}
           bookmarkOpening={bookmarkOpening}
           folderOpening={folderOpening}
           dateTimeFormat={view.dateTimeFormat ?? 'browser'}
+          {...(view.detailsColumnOrder
+            ? { columnOrder: view.detailsColumnOrder }
+            : {})}
+          {...(onDetailsColumnOrderChange
+            ? { onColumnOrderChange: onDetailsColumnOrderChange }
+            : {})}
+          showColumnOrderControls={
+            view.showDetailsColumnReorderControls ?? false
+          }
+          hideHeaderWhenEmpty={view.hideEmptyDetailsTableHeader ?? true}
           onOpenFolder={onOpenFolder}
           {...(onOpenBookmark ? { onOpenBookmark } : {})}
           organization={view}
@@ -412,7 +433,7 @@ export function BookmarkGrid({
                         aria-hidden="true"
                         className="bookmark-card__favicon"
                       >
-                        {item.value.title.slice(0, 2).toUpperCase()}
+                        {titleInitials(item.value.title, 'folder')}
                       </span>
                     ) : null}
                     <span className="bookmark-card__copy">
@@ -566,7 +587,7 @@ function DragPreview({
         >
           {view.folderIcon !== 'none' ? (
             <span aria-hidden="true" className="bookmark-card__favicon">
-              {folder.title.slice(0, 2).toUpperCase()}
+              {titleInitials(folder.title, 'folder')}
             </span>
           ) : null}
           <span className="bookmark-card__copy">

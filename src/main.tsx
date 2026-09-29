@@ -29,6 +29,12 @@ if (rootElement === null) {
 const loadToolbarSavedStatusPermission = () =>
   import('./platform/browser/toolbar-saved-status-permission');
 
+/** Defers the extension-only windows API so local webpage preview still starts. */
+const openBookmarkWindow = async (url: string) =>
+  (await import('./platform/browser/open-bookmark-window')).openBookmarkWindow(
+    url,
+  );
+
 /**
  * Completes webpage preflight before mounting React so untranslated or partially
  * loaded application UI is never displayed.
@@ -93,6 +99,7 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
           createProfileAndResumePreflight={createProfileAndResumePreflight}
           initialPreflightSnapshot={preflightSnapshot}
           onUiReady={(operationId) => preflight.markUiReady(operationId)}
+          openBookmarkWindow={openBookmarkWindow}
           profileManager={profileManager}
           resumePreflight={() => preflight.execute()}
           toolbarSavedStatus={{

@@ -11,6 +11,16 @@ import type { ImageFit, ItemAppearance } from '../../domain/bookmark';
 import { parseGradientDirection } from '../../shared/gradient-direction';
 import { GradientDirectionControl } from '../../components/GradientDirectionControl';
 import { ImageFitSelect } from '../../components/ImageFitSelect';
+import { appearanceStyle } from '../../shared/appearance-style';
+import {
+  ImageCropDialog,
+  type ImageCropSession,
+} from '../image-crop/ImageCropDialog';
+import { centeredCrop, roundedCrop } from '../image-crop/crop-geometry';
+import {
+  inspectCropSource,
+  processCroppedImage,
+} from '../image-crop/process-cropped-image';
 
 const createRandomColor = (): string =>
   `#${Math.floor(Math.random() * 0x1000000)
@@ -27,8 +37,15 @@ export interface CreateContentValue {
   url?: string;
 }
 
+interface TransientImage {
+  applied: string;
+  session?: ImageCropSession | undefined;
+  source: string;
+}
+
 interface CreateContentDialogProps {
   afterNote?: ReactNode;
+  autoCropScreenshot?: boolean | undefined;
   defaultAppearance?: ItemAppearance | undefined;
   initialValue?: CreateContentValue;
   isOpen: boolean;
@@ -37,6 +54,9 @@ interface CreateContentDialogProps {
   /** Returns false when a caller defers completion to another UI decision. */
   onCreate: (value: CreateContentValue) => Promise<boolean | void>;
   onCaptureScreenshot?: (() => Promise<string>) | undefined;
+  onCropFailure?: (() => Promise<void> | void) | undefined;
+  onAutoCropResult?:
+    ((outcome: 'fallback' | 'succeeded') => Promise<void> | void) | undefined;
   parentName: string;
   titleKey?: string | undefined;
 }
@@ -44,6 +64,7 @@ interface CreateContentDialogProps {
 /** Focused creation window shared by bookmark and folder commands. */
 export function CreateContentDialog({
   afterNote,
+  autoCropScreenshot = false,
   defaultAppearance,
   initialValue,
   isOpen,
@@ -51,11 +72,15 @@ export function CreateContentDialog({
   onClose,
   onCreate,
   onCaptureScreenshot,
+  onCropFailure,
+  onAutoCropResult,
   parentName,
   titleKey,
 }: CreateContentDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const cropButtonRef = useRef<HTMLButtonElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const mode = initialValue ? 'edit' : 'create';
   const [appearanceKind, setAppearanceKind] = useState<
     ItemAppearance['kind'] | 'screenshot'
@@ -83,13 +108,20 @@ export function CreateContentDialog({
         ? String(defaultAppearance.direction)
         : '135',
   );
-  const [image, setImage] = useState<string | undefined>(
+  const initialImage =
     initialValue?.cardAppearance.kind === 'image'
       ? initialValue.cardAppearance.value
       : defaultAppearance?.kind === 'image'
         ? defaultAppearance.value
-        : undefined,
-  );
+        : undefined;
+  const [images, setImages] = useState<{
+    image?: TransientImage | undefined;
+    screenshot?: TransientImage | undefined;
+  }>(() => ({
+    ...(initialImage
+      ? { image: { applied: initialImage, source: initialImage } }
+      : {}),
+  }));
   const [imageFit, setImageFit] = useState<ImageFit>(
     initialValue?.cardAppearance.kind === 'image'
       ? initialValue.cardAppearance.fit
@@ -98,8 +130,62 @@ export function CreateContentDialog({
         : 'fill',
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [error, setError] = useState('');
   const [appearanceAnnouncement, setAppearanceAnnouncement] = useState('');
+  const [cropKind, setCropKind] = useState<'image' | 'screenshot'>();
+  const activeImageKind =
+    appearanceKind === 'image' || appearanceKind === 'screenshot'
+      ? appearanceKind
+      : undefined;
+  const activeImage = activeImageKind ? images[activeImageKind] : undefined;
+
+  const reportAutoCropResult = (outcome: 'fallback' | 'succeeded') => {
+    if (!onAutoCropResult) return;
+    try {
+      void Promise.resolve(onAutoCropResult(outcome)).catch(() => {
+        console.error('image-auto-crop-activity-log-write-failed');
+      });
+    } catch {
+      console.error('image-auto-crop-activity-log-write-failed');
+    }
+  };
+
+  const captureScreenshot = async () => {
+    if (!onCaptureScreenshot || isCapturing) return;
+    setIsCapturing(true);
+    setError('');
+    try {
+      const source = await onCaptureScreenshot();
+      setImageFit('fit');
+      let screenshot: TransientImage = { applied: source, source };
+      if (autoCropScreenshot) {
+        try {
+          const dimensions = await inspectCropSource(source);
+          const crop = roundedCrop({
+            ...centeredCrop(dimensions, 'card'),
+            x: 0,
+            y: 0,
+          });
+          screenshot = {
+            applied: await processCroppedImage(source, crop),
+            session: { crop, shape: 'card', zoom: 1 },
+            source,
+          };
+          setAppearanceAnnouncement(t('contentEditor.autoCropApplied'));
+          reportAutoCropResult('succeeded');
+        } catch {
+          setError(t('contentEditor.autoCropError'));
+          reportAutoCropResult('fallback');
+        }
+      }
+      setImages((current) => ({ ...current, screenshot }));
+    } catch {
+      setError(t('contentEditor.screenshotError'));
+    } finally {
+      setIsCapturing(false);
+    }
+  };
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -119,10 +205,11 @@ export function CreateContentDialog({
     setColor('#2f7de1');
     setGradientColors(['#2f7de1', '#9250bd', '#20a6ba']);
     setGradientDirection('135');
-    setImage(undefined);
+    setImages({});
     setImageFit('fill');
     setError('');
     setAppearanceAnnouncement('');
+    setCropKind(undefined);
     onClose();
   };
 
@@ -156,7 +243,7 @@ export function CreateContentDialog({
     const form = new FormData(event.currentTarget);
     const title = String(form.get('title') ?? '').trim();
     const url = String(form.get('url') ?? '').trim();
-    if (appearanceKind === 'screenshot' && !image) {
+    if (appearanceKind === 'screenshot' && !activeImage) {
       setError(t('contentEditor.screenshotRequired'));
       return;
     }
@@ -170,8 +257,9 @@ export function CreateContentDialog({
       }
     }
     const cardAppearance: ItemAppearance =
-      (appearanceKind === 'image' || appearanceKind === 'screenshot') && image
-        ? { fit: imageFit, kind: 'image', value: image }
+      (appearanceKind === 'image' || appearanceKind === 'screenshot') &&
+      activeImage
+        ? { fit: imageFit, kind: 'image', value: activeImage.applied }
         : appearanceKind === 'gradient'
           ? {
               colors: gradientColors,
@@ -393,30 +481,75 @@ export function CreateContentDialog({
               <input
                 accept="image/png,image/jpeg,image/bmp"
                 aria-label={t('contentEditor.image')}
+                hidden
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   if (!file || file.size > 1_000_000) {
-                    setImage(undefined);
                     setError(t('contentEditor.imageError'));
                     return;
                   }
                   const reader = new FileReader();
-                  reader.onload = () =>
-                    setImage(
-                      typeof reader.result === 'string'
-                        ? reader.result
-                        : undefined,
-                    );
+                  reader.onload = () => {
+                    if (typeof reader.result !== 'string') return;
+                    const source = reader.result;
+                    setImages((current) => ({
+                      ...current,
+                      image: { applied: source, source },
+                    }));
+                    setImageFit('fit');
+                    setError('');
+                  };
                   reader.onerror = () =>
                     setError(t('contentEditor.imageError'));
                   reader.readAsDataURL(file);
                 }}
-                required={!image}
+                ref={imageInputRef}
                 type="file"
               />
-              {image ? (
-                <img alt={t('contentEditor.imagePreview')} src={image} />
-              ) : null}
+              {activeImage ? (
+                <>
+                  <div
+                    aria-label={t('contentEditor.imagePreview')}
+                    className="content-editor__image-preview"
+                    role="img"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="content-editor__image-preview-art"
+                      style={appearanceStyle({
+                        fit: imageFit,
+                        kind: 'image',
+                        value: activeImage.applied,
+                      })}
+                    />
+                  </div>
+                  <div className="content-editor__image-actions">
+                    <button
+                      className="content-editor__image-button"
+                      onClick={() => imageInputRef.current?.click()}
+                      type="button"
+                    >
+                      {t('contentEditor.chooseAnotherImage')}
+                    </button>
+                    <button
+                      className="content-editor__image-button"
+                      onClick={() => setCropKind('image')}
+                      ref={cropButtonRef}
+                      type="button"
+                    >
+                      {t('contentEditor.crop.title')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button
+                  className="content-editor__image-button"
+                  onClick={() => imageInputRef.current?.click()}
+                  type="button"
+                >
+                  {t('contentEditor.image')}
+                </button>
+              )}
             </div>
           ) : null}
           {appearanceKind === 'screenshot' && onCaptureScreenshot ? (
@@ -424,22 +557,44 @@ export function CreateContentDialog({
               <ImageFitSelect onChange={setImageFit} value={imageFit} />
               <button
                 className="content-editor__capture-button"
-                onClick={() => {
-                  setError('');
-                  void onCaptureScreenshot()
-                    .then(setImage)
-                    .catch(() => setError(t('contentEditor.screenshotError')));
-                }}
+                disabled={isCapturing}
+                onClick={() => void captureScreenshot()}
                 type="button"
               >
                 {t(
-                  image
-                    ? 'contentEditor.replaceScreenshot'
-                    : 'contentEditor.captureScreenshot',
+                  isCapturing
+                    ? 'contentEditor.capturingScreenshot'
+                    : activeImage
+                      ? 'contentEditor.replaceScreenshot'
+                      : 'contentEditor.captureScreenshot',
                 )}
               </button>
-              {image ? (
-                <img alt={t('contentEditor.screenshotPreview')} src={image} />
+              {activeImage ? (
+                <>
+                  <div
+                    aria-label={t('contentEditor.screenshotPreview')}
+                    className="content-editor__image-preview"
+                    role="img"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="content-editor__image-preview-art"
+                      style={appearanceStyle({
+                        fit: imageFit,
+                        kind: 'image',
+                        value: activeImage.applied,
+                      })}
+                    />
+                  </div>
+                  <button
+                    className="content-editor__image-button"
+                    onClick={() => setCropKind('screenshot')}
+                    ref={cropButtonRef}
+                    type="button"
+                  >
+                    {t('contentEditor.crop.title')}
+                  </button>
+                </>
               ) : null}
             </div>
           ) : null}
@@ -454,10 +609,17 @@ export function CreateContentDialog({
           </p>
         ) : null}
         <footer>
-          <button disabled={isSaving} onClick={resetAndClose} type="button">
+          <button
+            disabled={isSaving || cropKind !== undefined}
+            onClick={resetAndClose}
+            type="button"
+          >
             {t('contentEditor.cancel')}
           </button>
-          <button disabled={isSaving} type="submit">
+          <button
+            disabled={isSaving || isCapturing || cropKind !== undefined}
+            type="submit"
+          >
             {isSaving
               ? t(`contentEditor.${mode === 'edit' ? 'updating' : 'creating'}`)
               : t(
@@ -466,6 +628,31 @@ export function CreateContentDialog({
           </button>
         </footer>
       </form>
+      {cropKind && images[cropKind] ? (
+        <ImageCropDialog
+          initialSession={images[cropKind]?.session}
+          onApply={(result, session) => {
+            setImages((current) => {
+              const existing = current[cropKind];
+              if (!existing) return current;
+              return {
+                ...current,
+                [cropKind]: { ...existing, applied: result, session },
+              };
+            });
+            setImageFit('fit');
+            setCropKind(undefined);
+            setAppearanceAnnouncement(t('contentEditor.cropApplied'));
+            requestAnimationFrame(() => cropButtonRef.current?.focus());
+          }}
+          onCancel={() => {
+            setCropKind(undefined);
+            requestAnimationFrame(() => cropButtonRef.current?.focus());
+          }}
+          {...(onCropFailure ? { onFailure: onCropFailure } : {})}
+          source={images[cropKind]?.source ?? ''}
+        />
+      ) : null}
     </dialog>
   );
 }

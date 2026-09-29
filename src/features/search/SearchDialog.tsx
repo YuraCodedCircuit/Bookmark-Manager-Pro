@@ -49,6 +49,8 @@ export function SearchDialog({
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const optionsButtonRef = useRef<HTMLButtonElement>(null);
+  const optionsDialogRef = useRef<HTMLDialogElement>(null);
   const firstResultRef = useRef<HTMLButtonElement>(null);
   const [mode, setMode] = useState<'bookmarks' | 'web'>('bookmarks');
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -78,6 +80,25 @@ export function SearchDialog({
       document.documentElement.style.overflowY = previousOverflow;
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    const dialog = optionsDialogRef.current;
+    if (!dialog) return;
+    if (optionsOpen && !dialog.open) {
+      if (typeof dialog.showModal === 'function') dialog.showModal();
+      else dialog.setAttribute('open', '');
+      requestAnimationFrame(() => {
+        dialog
+          .querySelector<HTMLElement>(
+            '.search-options-window__content input:not(:disabled), .search-options-window__content select:not(:disabled)',
+          )
+          ?.focus();
+      });
+    } else if (!optionsOpen && dialog.open) {
+      if (typeof dialog.close === 'function') dialog.close();
+      else dialog.removeAttribute('open');
+    }
+  }, [optionsOpen]);
 
   const results = useMemo(
     () =>
@@ -119,6 +140,10 @@ export function SearchDialog({
   const closeSearch = () => {
     resetTransientState();
     onClose();
+  };
+  const closeOptions = () => {
+    setOptionsOpen(false);
+    requestAnimationFrame(() => optionsButtonRef.current?.focus());
   };
   return (
     <dialog
@@ -197,6 +222,7 @@ export function SearchDialog({
               aria-expanded={optionsOpen}
               className="search-window__options-toggle"
               onClick={() => setOptionsOpen((open) => !open)}
+              ref={optionsButtonRef}
               type="button"
             >
               {t('searchWindow.options.title')}
@@ -211,14 +237,40 @@ export function SearchDialog({
         </p>
       </section>
 
-      {mode === 'bookmarks' && optionsOpen ? (
+      <dialog
+        aria-labelledby="search-options-title"
+        className="search-options-window"
+        id="search-window-options"
+        onCancel={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          closeOptions();
+        }}
+        ref={optionsDialogRef}
+      >
+        <header className="search-options-window__header">
+          <h2 id="search-options-title">{t('searchWindow.options.title')}</h2>
+          <button
+            aria-label={t('searchWindow.options.close')}
+            className="search-options-window__close"
+            onClick={closeOptions}
+            type="button"
+          >
+            <ClearIcon />
+          </button>
+        </header>
         <SearchOptions
-          className="search-window__options"
+          className="search-options-window__content"
           onChange={setPreferences}
           preferences={preferences}
           profileCount={sources.length}
         />
-      ) : null}
+        <footer className="search-options-window__footer">
+          <button onClick={closeOptions} type="button">
+            {t('searchWindow.options.closeAction')}
+          </button>
+        </footer>
+      </dialog>
 
       <section aria-live="polite" className="search-window__results">
         {normalizedQuery.length < 2 ? (

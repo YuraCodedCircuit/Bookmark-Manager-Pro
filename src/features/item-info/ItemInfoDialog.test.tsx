@@ -38,6 +38,12 @@ describe('ItemInfoDialog', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Get info' });
     expect(dialog).toBeVisible();
+    expect(dialog.querySelector('.item-info-dialog__type-icon')).toContainHTML(
+      '<svg',
+    );
+    expect(
+      dialog.querySelector('.item-info-dialog__type-icon'),
+    ).toHaveAttribute('aria-hidden', 'true');
     expect(
       dialog.querySelector('.item-info-dialog__primary-rows'),
     ).toBeInTheDocument();
@@ -54,6 +60,9 @@ describe('ItemInfoDialog', () => {
     ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Copy ID' })).not.toBeVisible();
     await user.click(screen.getByText('More details'));
+    expect(screen.getByText('More details').closest('details')).toHaveAttribute(
+      'open',
+    );
     const copyId = screen.getByRole('button', { name: 'Copy ID' });
     expect(copyId).toBeVisible();
     await user.click(copyId);
@@ -84,7 +93,8 @@ describe('ItemInfoDialog', () => {
       parentId: '11111111-1111-4111-8111-111111111111',
       profileId: bookmark.profileId,
       tags: [],
-      title: 'Folder',
+      title:
+        'A folder title that remains fully available when its visual presentation is limited to three lines',
       updatedAt: 2,
     };
     render(
@@ -98,5 +108,11 @@ describe('ItemInfoDialog', () => {
     expect(
       screen.queryByRole('button', { name: 'Copy URL' }),
     ).not.toBeInTheDocument();
+    expect(screen.getByTitle(folder.title)).toHaveTextContent(folder.title);
+    expect(
+      screen
+        .getByRole('dialog', { name: 'Get info' })
+        .querySelector('.item-info-dialog__type-icon'),
+    ).toContainHTML('<svg');
   });
 });

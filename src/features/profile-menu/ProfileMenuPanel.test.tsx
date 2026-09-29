@@ -15,6 +15,7 @@ afterEach(cleanup);
 describe('ProfileMenuPanel', () => {
   it('highlights enabled commands only while the mouse is over them', () => {
     const onOpenSynchronization = vi.fn();
+    const onOpenSearch = vi.fn();
     render(
       <ProfileMenuPanel
         initializationState={{
@@ -45,6 +46,7 @@ describe('ProfileMenuPanel', () => {
         onOpenLegal={vi.fn()}
         onOpenNotes={vi.fn()}
         onOpenPasswordGenerator={vi.fn()}
+        onOpenSearch={onOpenSearch}
         onOpenUndoHistory={vi.fn()}
         onOpenSynchronization={onOpenSynchronization}
         onOpenSettings={vi.fn()}
@@ -66,7 +68,7 @@ describe('ProfileMenuPanel', () => {
     const commands = within(menu)
       .getAllByRole('button')
       .filter((button) => !button.getAttribute('aria-label'));
-    expect(commands).toHaveLength(15);
+    expect(commands).toHaveLength(16);
     commands.forEach((command) => {
       expect(command.querySelector('svg')).toHaveAttribute(
         'aria-hidden',
@@ -76,6 +78,10 @@ describe('ProfileMenuPanel', () => {
     expect(
       within(menu).getByRole('button', { name: 'Settings' }),
     ).toContainHTML('<circle');
+    const search = within(menu).getByRole('button', { name: 'Search' });
+    expect(search.parentElement?.firstElementChild).toBe(search);
+    fireEvent.click(search);
+    expect(onOpenSearch).toHaveBeenCalledOnce();
     expect(within(menu).getByRole('button', { name: 'Backup' })).toContainHTML(
       '<ellipse',
     );
@@ -116,6 +122,7 @@ describe('ProfileMenuPanel', () => {
         onOpenLegal={onOpenLegal}
         onOpenNotes={vi.fn()}
         onOpenPasswordGenerator={vi.fn()}
+        onOpenSearch={vi.fn()}
         onOpenUndoHistory={vi.fn()}
         onOpenSynchronization={vi.fn()}
         onOpenSettings={vi.fn()}
@@ -131,6 +138,9 @@ describe('ProfileMenuPanel', () => {
     expect(onOpenLegal).toHaveBeenCalledOnce();
     expect(
       screen.getByRole('button', { name: 'NotesComing soon' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'SearchComing soon' }),
     ).toBeDisabled();
   });
 });

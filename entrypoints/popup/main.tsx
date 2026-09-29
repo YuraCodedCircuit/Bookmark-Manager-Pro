@@ -9,6 +9,7 @@ import { createBookmarkManager } from '../../src/application/bookmark/create-boo
 import { createWebPreflight } from '../../src/application/preflight/create-web-preflight';
 import { createUndoHistoryService } from '../../src/application/undo-history/create-undo-history-service';
 import {
+  FirstRunPopup,
   SaveCurrentPagePopup,
   type SaveCurrentPageReadyState,
   UnsupportedCurrentPage,
@@ -22,6 +23,7 @@ import {
 } from '../../src/platform/tabs/current-tab';
 import { createContentChangeBridge } from '../../src/platform/content-change/create-content-change-bridge';
 import { refreshToolbarSavedStatus } from '../../src/platform/browser/toolbar-saved-status-permission';
+import { openProfileCreation } from '../../src/platform/browser/open-profile-creation';
 import { createPopupScrollbarVisibility } from '../../src/features/save-current-page/popup-scrollbar-visibility';
 import '../../src/styles/global.css';
 import './popup.css';
@@ -143,15 +145,24 @@ async function bootstrap(): Promise<void> {
       );
       return;
     }
+    if (error instanceof Error && error.message === 'popup-profile-not-ready') {
+      reactRoot.render(
+        <StrictMode>
+          <I18nextProvider i18n={i18n}>
+            <FirstRunPopup
+              onClose={() => window.close()}
+              openProfileCreation={openProfileCreation}
+            />
+          </I18nextProvider>
+        </StrictMode>,
+      );
+      return;
+    }
     console.error('save-current-page-popup-initialization-failed');
-    const message =
-      error instanceof Error && error.message === 'popup-profile-not-ready'
-        ? i18n.t('saveCurrentPage.firstRun')
-        : i18n.t('saveCurrentPage.loadError');
     reactRoot.render(
       <StrictMode>
         <I18nextProvider i18n={i18n}>
-          {renderPopupLoadError(message, bootstrap)}
+          {renderPopupLoadError(i18n.t('saveCurrentPage.loadError'), bootstrap)}
         </I18nextProvider>
       </StrictMode>,
     );

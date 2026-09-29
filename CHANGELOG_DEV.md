@@ -6,6 +6,98 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.6.0 - 2026-09-29
+
+### Changed
+
+- Routed new profile-menu and main-header Search controls through the existing
+  transient Search dialog flow, including deferred opening after the profile
+  side panel closes and an active-profile capability guard. Replaced the inline
+  Search options disclosure with a stacked native dialog that preserves
+  transient preferences, restores trigger focus, and shares Settings select
+  styling and window surface tokens. Its Search fields labels divide the full
+  flex row evenly, remain vertically centered, and use the same container height
+  as Search all profiles.
+- Centralized bookmark and folder title-label generation in a Unicode-aware
+  grapheme parser that treats punctuation as word boundaries, ignores symbols,
+  preserves numeric initials, and supplies content-specific empty fallbacks.
+
+### Fixed
+
+- Replaced scaled manifest icon aliases with exact-size 16, 32, 48, and 128
+  pixel PNG assets and pointed bundled pages at the exact 32-pixel resource so
+  Edge does not reject or substitute browser-chrome icons.
+- Published the durable first-profile activation through the existing
+  revisioned cross-tab channel and made first-run tabs resume preflight and
+  dismiss Welcome when that activation arrives.
+- Removed the checkbox-row flex layout from the General Startup location choice
+  so it uses the standard Settings field-label grid at desktop and narrow widths.
+- Prevented CSS Grid from stretching profile-manager rows to fill the list,
+  bounded desktop rows to 86 pixels with a narrow-layout growth fallback, and
+  moved vertical overflow from the collapsible profile-list flex region to the
+  complete dialog so shared profile-owned scrollbar modes remain effective at
+  short viewport heights.
+- Refined `ItemInfoDialog` with a 9.5-rem appearance preview, a stable both-edge
+  scrollbar gutter, symmetric horizontal insets, decorative item-type and
+  disclosure icons, three-line visual value clamping, higher-contrast labels,
+  and transparent idle copy-button chrome while preserving complete DOM and
+  clipboard values.
+- Added shared window surface, border, radius, shadow, backdrop color, and
+  backdrop-filter tokens across native dialogs, modal side panels, Notes folder
+  windows, and Backup child windows while preserving panel-specific geometry.
+  Reduced-transparency and forced-colors media queries remove backdrop blur and
+  decorative shadows in favor of more opaque or system-color fallbacks.
+- Made the Appearance Card size and Card spacing selects controlled and
+  disabled outside Card view, preserving their values during submission even
+  though disabled native controls are omitted from `FormData`.
+- Normalized three- or four-part installed versions to their first three
+  components before recording, claiming, or completing update announcements,
+  so fourth-component-only browser build revisions do not enqueue What's new.
+
+### Added
+
+- Added a dependency-free shared crop pipeline and accessible modal for card
+  images and popup screenshots. Canvas re-encoding strips metadata, preserves
+  transparency as PNG, encodes opaque output as WebP, prevents upscaling, and
+  enforces 7680x4320 source, 870-pixel output-edge, and encoded-size bounds;
+  crop state remains isolated from IndexedDB until the owning item is saved.
+  Manual handle or numeric resizing transitions preset crop state to Free, and
+  zoom scales source-space crop geometry around its center. Applying a crop
+  switches `ImageFit` to `fit` to prevent `fill` from applying a second centered
+  crop. New upload and screenshot sources also reset `ImageFit` to `fit` before
+  editing; image selection/crop controls share the established screenshot-action
+  style. Schema 33 adds the optional `autoCropPopupScreenshots` profile setting
+  and defaults existing records to `false`. Enabled popup captures process a
+  top-left Card crop while retaining the original only in transient editor state;
+  processing fallback records a privacy-safe warning and preserves the original.
+- Added a no-profile popup action backed by the WebExtensions Tabs API that
+  opens the bundled application page without adding permissions; tab-opening
+  failure remains recoverable inline because no active profile exists for
+  activity logging or preference-aware notifications.
+- Added a lazy-loaded WebExtensions window adapter and browser-family-specific
+  bookmark context-menu labels. Explicit URL copies reuse the write-only
+  clipboard path, exclude URLs from diagnostics, and retain the private-mode
+  prohibition by omitting private-window opening.
+- Added an accessible, dialog-aware editable-text context menu and a
+  user-gesture-only clipboard-read adapter. WXT now declares `clipboardRead` as
+  optional; denied requests preserve field contents, clipboard values remain
+  transient, and password, read-only, disabled, and non-text controls are
+  excluded. The adapter reuses an existing grant, allows Chromium's permission
+  prompt to return document focus, and falls back to Firefox's extension-only
+  paste command when the Async Clipboard read is unavailable or rejected.
+- Added validated, complete Details-column permutations to profile defaults and
+  folder records, with immediate folder-scoped dnd-kit pointer, keyboard,
+  explicit-action, and reset updates. Fixed-layout columns retain their widths
+  during drag transforms, Title and URL divide remaining space, native tooltips
+  expose truncated values, and a 48 rem minimum table width provides horizontal
+  overflow. Schema 34 backfills the standard column order for profiles and
+  folders; schema 35 defaults the optional explicit reorder toolbar to hidden.
+  Column-order persistence records privacy-safe success and failure diagnostics.
+- Advanced IndexedDB to schema 36 with a profile-owned
+  `hideEmptyDetailsTableHeader` preference that defaults to `true`. Rendering
+  omits the complete empty-table surface when enabled without disabling sorting
+  or reordering when the header is configured to remain visible.
+
 ## 0.5.2 - 2026-09-25
 
 ### Optimized

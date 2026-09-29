@@ -38,6 +38,20 @@ open-folder view reloads. Validation or persistence failures record `ERROR`.
 These records identify only the generic item type and affected count; the title,
 URL, folder name, appearance value, and parent identifier are never recorded.
 
+Password Generator opening, automatic initial generation, option changes,
+strength calculation, reveal frames, and successful copy do not create activity
+records. An unexpected generation or clipboard failure may create an `ERROR`
+diagnostic containing only the stable failure category. Expected length
+validation does not create a diagnostic. Generated passwords and selected
+options never appear in records, developer diagnostics, or notification text.
+
+Image-crop success remains part of the pending editor state and is not logged.
+Automatic popup crop fallback may create a privacy-safe `WARN` outcome, but no
+image data, URL, title, crop coordinates, zoom value, or clipboard content may
+appear in an event. Clipboard-read denial and bookmark-address copy failures use
+generic categories only. All logging remains failure-isolated from the primary
+edit, crop, paste, copy, or navigation result.
+
 ## Retention
 
 When automatic removal is enabled, the service applies both the configured

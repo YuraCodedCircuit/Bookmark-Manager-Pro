@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { BookmarkRepository } from './bookmark-repository';
 import { ManageBookmarks } from './manage-bookmarks';
+import { defaultDetailsColumnOrder } from '../../domain/profile-settings';
 
 const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
 const rootId = '11111111-1111-4111-8111-111111111111';
@@ -18,6 +19,7 @@ const root = {
   bookmarkView: 'card' as const,
   cardSize: 'small' as const,
   cardSpacing: 'comfortable' as const,
+  detailsColumnOrder: [...defaultDetailsColumnOrder],
   detailsTableTransparency: 0,
   includeNavigationBackground: true,
   navigationTransparency: 70,
@@ -345,6 +347,7 @@ describe('ManageBookmarks', () => {
         bookmarkGroupBy: 'domain',
         bookmarkSortBy: 'title',
         bookmarkSortDirection: 'descending',
+        detailsColumnOrder: ['appearance', 'title', 'url', 'updatedAt', 'type'],
         cardSize: 'large',
         cardSpacing: 'spacious',
         parentId: rootId,
@@ -386,6 +389,7 @@ describe('ManageBookmarks', () => {
         bookmarkView: 'card',
         cardSize: 'small',
         cardSpacing: 'comfortable',
+        detailsColumnOrder: ['appearance', 'title', 'url', 'updatedAt', 'type'],
         includeNavigationBackground: true,
         navigationTransparency: 70,
         cardAppearance: { kind: 'color', value: '#123456' },
@@ -536,6 +540,31 @@ describe('ManageBookmarks', () => {
       navigationTransparency: 70,
       updatedAt: 40,
     });
+  });
+
+  it('validates and updates the Details column order for Home', async () => {
+    const repo = repository();
+    const service = new ManageBookmarks(repo, undefined, () => 45);
+    const order = ['title', 'url', 'appearance', 'updatedAt', 'type'] as const;
+
+    await service.updateFolderDetailsColumnOrder(profileId, rootId, order);
+
+    expect(repo.updateFolder).toHaveBeenCalledWith({
+      ...root,
+      detailsColumnOrder: order,
+      updatedAt: 45,
+    });
+    await expect(
+      service.updateFolderDetailsColumnOrder(profileId, rootId, [
+        'title',
+        'title',
+        'appearance',
+        'updatedAt',
+        'type',
+      ]),
+    ).rejects.toThrow(
+      'Details column order must contain every column exactly once.',
+    );
   });
 
   it('returns saved favorites and the five newest non-root items', async () => {

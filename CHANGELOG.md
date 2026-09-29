@@ -6,6 +6,63 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.6.0 - 2026-09-29
+
+### UI/UX
+
+- Added mouse-accessible Search controls as the first Application item in the
+  profile menu and immediately before the profile button in the main header.
+  Search options now opens in a matching focused window with standard choice
+  controls, equal-height full-width checkbox rows, top and bottom Close actions,
+  and focus restoration.
+- Restored the Bookmark Manager Pro icon in Microsoft Edge tab and sidebar
+  surfaces with exact-size packaged browser and page icons.
+- Replaced the toolbar popup's unusable no-profile Retry action with Create
+  profile, which opens Welcome in a new tab. Creating the first profile in one
+  app tab now closes Welcome and loads that profile in other open app tabs.
+- Matched the General Startup location selector to the width, alignment, and
+  responsive layout of the other Settings choice controls.
+- Added bookmark context-menu commands to open links in a new browser window or
+  copy their address, with familiar Edge, Chrome, and Firefox wording and
+  privacy-safe success or failure feedback.
+- Made bookmark and folder initials recognize words, punctuation, capitalization,
+  numbers, and non-English text, with distinct BO and FO fallbacks when a title
+  has no usable characters.
+- Kept Manage profiles entries at a consistent height and made the complete
+  window vertically scrollable in short viewports, following the active
+  profile's scrollbar Appearance setting.
+- Matched application windows and modal side panels to the Manage profiles
+  surface, border, shadow, and dimmed blurred background treatment, with opaque
+  system-color fallbacks for reduced-transparency and forced-colors modes.
+- Disabled Settings Appearance Card size and Card spacing when View is List or
+  Details while retaining their selected values for Card view.
+- Limited automatic What's new windows to major, minor, or patch version
+  increases, ignoring changes confined to an optional fourth build component.
+- Added an app-only text-field context menu with Cut, Copy, Paste, Select all,
+  and Clear. Custom Paste requests optional clipboard access when needed while
+  using the supported clipboard path in Chromium and Firefox; native Ctrl+V
+  remains unchanged.
+- Refined Get info with a more compact appearance preview, balanced scrollbar
+  spacing, clearer labels, quieter copy controls, item-type and disclosure
+  icons, and readable handling of long values without changing copied content.
+- Added a local image crop editor to bookmark and folder image fields and popup
+  screenshots, with card/free/square/landscape shapes, pointer and keyboard
+  controls, exact geometry, consistent image-action buttons, automatic Free
+  selection after manual resizing, zoom that changes the selected source area,
+  complete-original previews for new sources, exact edge-preserving Fit output,
+  bounded optimization, and an optional profile setting that automatically
+  starts popup screenshots with a top-left Card crop while retaining the
+  original for editing until Save. Changes remain temporary until the parent
+  Save action succeeds.
+- Made all five Details columns reorderable for each folder by pointer or
+  keyboard while keeping column widths stable. Title and URL share the available
+  width, long values expose their complete text on hover, and narrow viewports
+  receive horizontal scrolling instead of losing columns. An off-by-default
+  Accessibility setting reveals explicit Move and Reset controls.
+- Added an Appearance setting, enabled by default, that hides the Details table
+  header when a folder is empty. Showing the empty header keeps its sorting and
+  reordering controls available.
+
 ## 0.5.2 - 2026-09-25
 
 ### Performance

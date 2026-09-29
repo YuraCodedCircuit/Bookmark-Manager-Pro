@@ -33,6 +33,11 @@ import {
   ContextMenu,
   type ContextMenuRequest,
 } from '../features/context-menu/ContextMenu';
+import {
+  EditableTextContextMenu,
+  type EditableTextContextMenuRequest,
+} from '../features/editable-context-menu/EditableTextContextMenu';
+import { getEditableTextControl } from '../features/editable-context-menu/editable-text-control';
 import { FolderTreePanel } from '../features/folder-tree/FolderTreePanel';
 import { BookmarkActivityLogDialog } from '../features/activity-log/BookmarkActivityLogDialog';
 import { ProfileMenuPanel } from '../features/profile-menu/ProfileMenuPanel';
@@ -149,6 +154,7 @@ interface AppProps {
     | 'createFolder'
     | 'updateBookmark'
     | 'updateFolder'
+    | 'updateFolderDetailsColumnOrder'
     | 'updateFolderStyle'
     | 'setFavorite'
     | 'moveItem'
@@ -165,6 +171,7 @@ interface AppProps {
   initialPreflightSnapshot: WebPreflightSnapshot;
   /** Reports that React committed the current snapshot to the document. */
   onUiReady(operationId: string): void;
+  openBookmarkWindow(url: string): Promise<void>;
   profileManager: Pick<
     ManageProfiles,
     | 'list'
@@ -226,6 +233,7 @@ export function App({
   createProfileAndResumePreflight,
   initialPreflightSnapshot,
   onUiReady,
+  openBookmarkWindow,
   profileManager,
   resumePreflight,
   undoHistory,
@@ -327,6 +335,8 @@ export function App({
   const [openBackupAfterMenuClose, setOpenBackupAfterMenuClose] =
     useState(false);
   const [openNotesAfterMenuClose, setOpenNotesAfterMenuClose] = useState(false);
+  const [openSearchAfterMenuClose, setOpenSearchAfterMenuClose] =
+    useState(false);
   const [
     openPasswordGeneratorAfterMenuClose,
     setOpenPasswordGeneratorAfterMenuClose,
@@ -364,6 +374,8 @@ export function App({
   const [contextMenu, setContextMenu] = useState<ContextMenuRequest | null>(
     null,
   );
+  const [editableContextMenu, setEditableContextMenu] =
+    useState<EditableTextContextMenuRequest | null>(null);
   const [internalClipboard, setInternalClipboard] =
     useState<InternalClipboard | null>(null);
   const [isScrollbarActive, setIsScrollbarActive] = useState(false);
@@ -860,6 +872,7 @@ export function App({
         )
           throw new Error('profile-activation-state-mismatch');
         setPreflightSnapshot(resumed);
+        setIsWelcomeOpen(false);
         const preferences =
           resumed.initialization.settings.notificationPreferences ??
           defaultNotificationPreferences;
@@ -1186,7 +1199,7 @@ export function App({
   /** Requests safe bookmark navigation without recording its URL or title. */
   const openBookmark = async (
     url: string,
-    disposition: 'current-tab' | 'new-tab',
+    disposition: 'current-tab' | 'new-tab' | 'new-window',
     source: string,
   ) => {
     if (!readyProfileId) throw new Error('active-profile-not-ready');
@@ -1205,16 +1218,25 @@ export function App({
     try {
       if (disposition === 'new-tab') {
         window.open(url, '_blank', 'noopener,noreferrer');
+      } else if (disposition === 'new-window') {
+        await openBookmarkWindow(url);
       }
       await recordEventForProfile(readyProfileId, {
-        action: disposition === 'new-tab' ? 'Open in new tab' : 'Open',
+        action:
+          disposition === 'new-tab'
+            ? 'Open in new tab'
+            : disposition === 'new-window'
+              ? 'Open in new window'
+              : 'Open',
         category: 'Bookmarks',
         dataChanged: false,
         durationMs: 0,
         eventCode:
           disposition === 'new-tab'
             ? 'BOOKMARK-OPEN-NEW-TAB-REQUESTED'
-            : 'BOOKMARK-OPEN-REQUESTED',
+            : disposition === 'new-window'
+              ? 'BOOKMARK-OPEN-NEW-WINDOW-COMPLETE'
+              : 'BOOKMARK-OPEN-REQUESTED',
         itemType: 'Bookmark',
         itemsAffected: 1,
         kind: 'ACTIVITY',
@@ -1226,7 +1248,12 @@ export function App({
       if (disposition === 'current-tab') window.location.assign(url);
     } catch (error) {
       await recordEventForProfile(readyProfileId, {
-        action: disposition === 'new-tab' ? 'Open in new tab' : 'Open',
+        action:
+          disposition === 'new-tab'
+            ? 'Open in new tab'
+            : disposition === 'new-window'
+              ? 'Open in new window'
+              : 'Open',
         category: 'Bookmarks',
         dataChanged: false,
         durationMs: 0,
@@ -1687,6 +1714,12 @@ export function App({
                 ? (currentInitializationState.settings.bookmarkSortDirection ??
                   defaultFolderDisplaySettings.bookmarkSortDirection)
                 : defaultFolderDisplaySettings.bookmarkSortDirection,
+            detailsColumnOrder: [
+              ...(currentInitializationState.status === 'ready'
+                ? (currentInitializationState.settings.detailsColumnOrder ??
+                  defaultFolderDisplaySettings.detailsColumnOrder)
+                : defaultFolderDisplaySettings.detailsColumnOrder),
+            ],
             cardAppearance: preparedValue.cardAppearance,
             cardSize:
               currentInitializationState.status === 'ready'
@@ -2449,8 +2482,26 @@ export function App({
   }, [openSearchWindow, readyProfileId, shortcutPreferences]);
 
   const openContextMenu = (event: MouseEvent<HTMLElement>) => {
-    event.preventDefault();
     const target = event.target;
+    const editableTarget = getEditableTextControl(target);
+    if (editableTarget) {
+      event.preventDefault();
+      clearContextMenu();
+      const bounds = editableTarget.getBoundingClientRect();
+      setEditableContextMenu({
+        selectionEnd:
+          editableTarget.selectionEnd ?? editableTarget.value.length,
+        selectionStart:
+          editableTarget.selectionStart ?? editableTarget.value.length,
+        target: editableTarget,
+        x: event.clientX || bounds.left,
+        y: event.clientY || bounds.bottom,
+      });
+      return;
+    }
+
+    event.preventDefault();
+    setEditableContextMenu(null);
     const itemElement =
       target instanceof Element &&
       target.closest<HTMLElement>('[data-context-menu="bookmark"]');
@@ -2608,6 +2659,11 @@ export function App({
           setIsTreeOpen(false);
           setIsProfileMenuOpen(true);
         }}
+        onOpenSearch={() => {
+          clearContextMenu();
+          setIsTreeOpen(false);
+          openSearchWindow();
+        }}
         onOpenTree={() => {
           clearContextMenu();
           setIsProfileMenuOpen(false);
@@ -2633,6 +2689,11 @@ export function App({
         initializationState={currentInitializationState}
         isOpen={isProfileMenuOpen}
         onAfterClose={() => {
+          if (openSearchAfterMenuClose) {
+            setOpenSearchAfterMenuClose(false);
+            openSearchWindow();
+            return;
+          }
           if (openPasswordGeneratorAfterMenuClose) {
             setOpenPasswordGeneratorAfterMenuClose(false);
             setProfileWindow('password-generator');
@@ -2742,6 +2803,10 @@ export function App({
         }}
         onOpenPasswordGenerator={() => {
           setOpenPasswordGeneratorAfterMenuClose(true);
+          setIsProfileMenuOpen(false);
+        }}
+        onOpenSearch={() => {
+          setOpenSearchAfterMenuClose(true);
           setIsProfileMenuOpen(false);
         }}
         onOpenHelp={() => {
@@ -3820,6 +3885,59 @@ export function App({
               'Bookmark content',
             ).catch(() => undefined)
           }
+          onDetailsColumnOrderChange={async (order) => {
+            if (!readyProfileId || !currentFolderId)
+              throw new Error('active-folder-not-ready');
+            const startedAt = performance.now();
+            try {
+              await bookmarkManager.updateFolderDetailsColumnOrder(
+                readyProfileId,
+                currentFolderId,
+                order,
+              );
+              await loadFolderContent(readyProfileId, currentFolderId);
+              await recordEventForProfile(readyProfileId, {
+                action: 'Update',
+                category: 'Bookmarks',
+                dataChanged: true,
+                durationMs: Math.round(performance.now() - startedAt),
+                eventCode: 'DETAILS-COLUMN-ORDER-UPDATE-COMPLETE',
+                itemType: 'Folder display settings',
+                itemsAffected: 1,
+                kind: 'ACTIVITY',
+                level: 'INFO',
+                message: t('activityLog.messages.detailsColumnOrderUpdated'),
+                outcome: 'Succeeded',
+                source: 'Bookmark browser',
+              });
+              notifyForActiveProfile({
+                level: 'success',
+                message: t('bookmarks.details.columnOrderSaved'),
+                title: t('notifications.operationCompletedTitle'),
+              });
+            } catch (error) {
+              await recordEventForProfile(readyProfileId, {
+                action: 'Update',
+                category: 'Bookmarks',
+                dataChanged: false,
+                durationMs: Math.round(performance.now() - startedAt),
+                eventCode: 'DETAILS-COLUMN-ORDER-UPDATE-FAILED',
+                itemType: 'Folder display settings',
+                itemsAffected: 0,
+                kind: 'DIAGNOSTIC',
+                level: 'ERROR',
+                message: t(
+                  'activityLog.messages.detailsColumnOrderUpdateFailed',
+                ),
+                outcome: 'Failed',
+                source: 'Bookmark browser',
+              });
+              notifyOperationError(
+                t('bookmarks.details.columnOrderSaveFailed'),
+              );
+              throw error;
+            }
+          }}
           requestConfirmation={requestConfirmation}
           onMoveItem={async ({
             destinationIndex,
@@ -3913,6 +4031,10 @@ export function App({
                     'browser',
                   detailsTableTransparency:
                     currentFolder?.detailsTableTransparency ?? 0,
+                  detailsColumnOrder:
+                    currentFolder?.detailsColumnOrder ??
+                    currentInitializationState.settings.detailsColumnOrder ??
+                    defaultFolderDisplaySettings.detailsColumnOrder,
                   bookmarkSortBy:
                     currentFolder?.bookmarkSortBy ??
                     currentInitializationState.settings.bookmarkSortBy ??
@@ -4188,6 +4310,61 @@ export function App({
                 });
               }
             }
+            if (key === 'openNewWindow' && target.kind === 'bookmark') {
+              void openBookmark(
+                target.value.url,
+                'new-window',
+                'Item context menu',
+              ).catch(() =>
+                notifyOperationError(
+                  t('activityLog.messages.bookmarkOpenFailed'),
+                ),
+              );
+            }
+            if (key === 'copyUrl' && target.kind === 'bookmark') {
+              void (async () => {
+                if (!readyProfileId) return;
+                const startedAt = performance.now();
+                try {
+                  await writeClipboardText(target.value.url);
+                  await recordEventForProfile(readyProfileId, {
+                    action: 'Copy URL',
+                    category: 'Bookmarks',
+                    dataChanged: false,
+                    durationMs: Math.round(performance.now() - startedAt),
+                    eventCode: 'BOOKMARK-URL-COPY-COMPLETE',
+                    itemType: 'Bookmark',
+                    itemsAffected: 1,
+                    kind: 'ACTIVITY',
+                    level: 'INFO',
+                    message: t('activityLog.messages.bookmarkUrlCopySucceeded'),
+                    outcome: 'Succeeded',
+                    source: 'Item context menu',
+                  });
+                  notifyForActiveProfile({
+                    level: 'success',
+                    message: t('bookmarks.urlCopySucceeded'),
+                    title: t('notifications.operationCompletedTitle'),
+                  });
+                } catch {
+                  await recordEventForProfile(readyProfileId, {
+                    action: 'Copy URL',
+                    category: 'Bookmarks',
+                    dataChanged: false,
+                    durationMs: Math.round(performance.now() - startedAt),
+                    eventCode: 'BOOKMARK-URL-COPY-FAILED',
+                    itemType: 'Bookmark',
+                    itemsAffected: 0,
+                    kind: 'DIAGNOSTIC',
+                    level: 'ERROR',
+                    message: t('activityLog.messages.bookmarkUrlCopyFailed'),
+                    outcome: 'Failed',
+                    source: 'Item context menu',
+                  });
+                  notifyOperationError(t('bookmarks.urlCopyFailed'));
+                }
+              })();
+            }
             if (key === 'edit') {
               setContentWindow({
                 kind: target.kind,
@@ -4267,6 +4444,22 @@ export function App({
           }}
           onClose={closeContextMenu}
           request={contextMenu}
+        />
+      ) : null}
+      {editableContextMenu ? (
+        <EditableTextContextMenu
+          onClose={() => setEditableContextMenu(null)}
+          onOperationFailed={() =>
+            notifyOperationError(t('editableContextMenu.operationFailed'))
+          }
+          onPastePermissionDenied={() =>
+            notifyForActiveProfile({
+              level: 'warning',
+              message: t('editableContextMenu.pastePermissionDenied'),
+              title: t('notifications.clipboardPermissionDeniedTitle'),
+            })
+          }
+          request={editableContextMenu}
         />
       ) : null}
       {readyProfileId && currentFolderId && activeSettings ? (
@@ -4432,6 +4625,26 @@ export function App({
             : {})}
           kind={contentWindow.kind}
           onClose={() => setContentWindow(null)}
+          onCropFailure={() => {
+            if (!readyProfileId) return;
+            return recordEventForProfile(readyProfileId, {
+              action: 'Edit',
+              category: 'Bookmarks',
+              dataChanged: false,
+              durationMs: 0,
+              eventCode: 'ITEM-IMAGE-CROP-FAILED',
+              itemType:
+                contentWindow.kind === 'folder'
+                  ? 'Folder image'
+                  : 'Bookmark image',
+              itemsAffected: 0,
+              kind: 'DIAGNOSTIC',
+              level: 'ERROR',
+              message: t('activityLog.messages.imageCropFailed'),
+              outcome: 'Failed',
+              source: 'Content editor',
+            });
+          }}
           onCreate={(value) =>
             contentWindow.target
               ? updateContent(contentWindow.target, value)
@@ -4514,6 +4727,8 @@ export function App({
             setPreflightSnapshot(resumedPreflight);
             setIsWelcomeOpen(false);
             if (resumedPreflight.initialization.status === 'ready') {
+              const activation = await contentChanges.profileActivation();
+              await publishProfileActivationSafely(activation);
               await recordEventForProfile(
                 resumedPreflight.initialization.profile.id,
                 {

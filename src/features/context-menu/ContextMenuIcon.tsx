@@ -12,7 +12,8 @@ export type ContextMenuIconName =
   | 'open-new'
   | 'paste'
   | 'pin'
-  | 'search';
+  | 'search'
+  | 'select-all';
 
 interface ContextMenuIconProps {
   name: ContextMenuIconName;
@@ -33,6 +34,7 @@ const iconTransforms: Record<ContextMenuIconName, string> = {
   paste: 'translate(12 12) scale(1.333333 1) translate(-12 -12)',
   pin: '',
   search: 'translate(12 12) scale(1.142857) translate(-12 -12)',
+  'select-all': '',
 };
 
 export function ContextMenuIcon({ name }: ContextMenuIconProps) {
@@ -141,5 +143,12 @@ function getIconPaths(name: ContextMenuIconName) {
       );
     case 'pin':
       return <path d="m8 4h8l-1.5 5 3 3v2h-11v-2l3-3L8 4Zm4 10v6" />;
+    case 'select-all':
+      return (
+        <>
+          <path d="M8 5H5v3M16 5h3v3M8 19H5v-3M16 19h3v-3" />
+          <rect height="8" rx="1" width="8" x="8" y="8" />
+        </>
+      );
   }
 }

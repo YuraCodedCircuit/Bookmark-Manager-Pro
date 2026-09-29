@@ -55,7 +55,10 @@ capabilities.
   material must not appear in logs or notifications.
 - Generated passwords must remain transient, use Web Crypto randomness, and
   never appear in storage, logs, diagnostics, or notifications. Clipboard writes
-  require an explicit user action, and the extension never reads the clipboard.
+  require an explicit user action. Clipboard text is read only after the user
+  activates the app-local Paste command and grants the browser's optional
+  Clipboard Read permission; read content remains transient and never appears in
+  storage, logs, diagnostics, or notifications.
 - Browser permissions and remote communication must remain limited to documented
   product behavior.
 - Background work must tolerate worker suspension and safe retry.

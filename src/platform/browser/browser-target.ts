@@ -1,3 +1,13 @@
+export type BrowserFamily = 'chrome' | 'edge' | 'firefox' | 'unknown';
+
+/** Returns the supported browser family without retaining user-agent details. */
+export function getBrowserFamily(userAgent: string): BrowserFamily {
+  if (/Edg\/[\d.]+/.test(userAgent)) return 'edge';
+  if (/Firefox\/[\d.]+/.test(userAgent)) return 'firefox';
+  if (/Chrome\/[\d.]+/.test(userAgent)) return 'chrome';
+  return 'unknown';
+}
+
 /** Returns a coarse browser family/version string without device identifiers. */
 export function getBrowserTarget(userAgent: string): string {
   const candidates = [

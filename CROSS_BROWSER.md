@@ -77,6 +77,9 @@ bookmark sync.
   current-URL popup treats a hidden or unsupported URL as an expected condition,
   explains that the page cannot be saved, and offers Close without a retry.
 - Optional permissions and user prompts may differ.
+- App-local Paste may request optional clipboard-read permission. Chromium and
+  Firefox permission behavior can differ; denial leaves the field unchanged and
+  native Ctrl+V remains available.
 - Bookmark roots and native bookmark identifiers are browser-owned.
 - Store packaging, signing, review, and update processes are separate.
 
@@ -99,6 +102,17 @@ prefilling its title/address and optional local visible-tab capture. The
 `contextMenus` permission adds only the save-URL command. Firefox uses an
 event-driven background script while Chrome and Edge use service workers.
 
+The Password Generator uses standards-based Web Crypto and explicit clipboard
+writes in every target. It does not require a profile or an additional browser
+permission, and its values are never routed through a background worker. Image
+cropping uses browser canvas APIs locally; each target must verify source
+decoding, transparent PNG output, opaque WebP output, exact crop edges, and the
+870-pixel output bound.
+
+Bookmark context actions use typed adapters to copy an address or create a new
+browser window. Private-window creation remains prohibited by the manifest, and
+adapter failures return privacy-safe feedback without exposing the address.
+
 ## Acceptance matrix
 
 Each release candidate must verify:
@@ -108,6 +122,12 @@ Each release candidate must verify:
   surfaces
 - Bookmark permissions and native synchronization
 - Commands, context menus, notifications, tabs, and downloads
+- Password generation, strength feedback, reduced-motion reveal, clipboard
+  copy, and close-time state clearing
+- Image crop geometry, zoom, keyboard controls, transparency, output bounds,
+  popup automatic crop, and original-image retention until save
+- Optional clipboard-read grant and denial paths, native paste fallback, and
+  bookmark-address copy and new-window actions
 - IndexedDB persistence across worker restarts and browser restarts
 - Import, export, backup, restore, and schema-upgrade failure recovery
 - Keyboard, focus, zoom, contrast, and localization behavior

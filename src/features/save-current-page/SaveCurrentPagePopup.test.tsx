@@ -14,6 +14,7 @@ import { profileSettingsSchema } from '../../domain/profile-settings';
 import type { FolderTreeSummary } from '../../domain/folder';
 import { isSaveableCurrentPageUrl } from './current-page-url';
 import {
+  FirstRunPopup,
   SaveCurrentPagePopup,
   UnsupportedCurrentPage,
 } from './SaveCurrentPagePopup';
@@ -49,6 +50,61 @@ const root = {
   updatedAt: 10,
 };
 
+describe('first-run popup', () => {
+  it('opens profile creation instead of offering Retry', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const openProfileCreation = vi.fn(async () => undefined);
+    render(
+      <FirstRunPopup
+        onClose={onClose}
+        openProfileCreation={openProfileCreation}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+    const createProfile = screen.getByRole('button', {
+      name: 'Create profile',
+    });
+    expect(createProfile).toHaveFocus();
+
+    await user.click(createProfile);
+
+    expect(openProfileCreation).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('keeps recovery available when the app tab cannot be opened', async () => {
+    const user = userEvent.setup();
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const onClose = vi.fn();
+    const openProfileCreation = vi.fn(async () => {
+      throw new Error('tab-create-failed');
+    });
+    render(
+      <FirstRunPopup
+        onClose={onClose}
+        openProfileCreation={openProfileCreation}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Create profile' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Bookmark Manager Pro could not be opened. Try again.',
+    );
+    expect(onClose).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith(
+      'profile-creation-tab-open-failed',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Create profile' }),
+    ).toBeEnabled();
+  });
+});
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -66,6 +122,7 @@ function setup(
     async () => [root],
   ),
   initializeUndo = vi.fn(async () => true),
+  autoCropPopupScreenshots = false,
 ) {
   const createdBookmark = {
     cardAppearance: { kind: 'color' as const, value: '#2f7de1' },
@@ -131,6 +188,7 @@ function setup(
         profileId,
         root,
         settings: profileSettingsSchema.parse({
+          autoCropPopupScreenshots,
           duplicateHandling,
           profileId,
           tagOrder: 'preserve',
@@ -146,6 +204,44 @@ function setup(
   );
   return dependencies;
 }
+
+describe('SaveCurrentPagePopup screenshot auto-crop', () => {
+  it('falls back to the original and records a warning when local auto-crop fails', async () => {
+    const user = userEvent.setup();
+    const dependencies = setup(
+      'allow',
+      false,
+      undefined,
+      undefined,
+      undefined,
+      true,
+    );
+    dependencies.captureCurrentTab.mockResolvedValueOnce(
+      'data:image/gif;base64,dGVzdA==',
+    );
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
+    await user.click(within(editor).getByLabelText('Screenshot'));
+    await user.click(
+      within(editor).getByRole('button', { name: 'Capture current page' }),
+    );
+
+    expect(await within(editor).findByRole('alert')).toHaveTextContent(
+      'Automatic crop could not be applied. The original screenshot is still available.',
+    );
+    expect(
+      within(editor).getByRole('img', { name: 'Captured visible tab' }),
+    ).toBeVisible();
+    expect(dependencies.activityLog.record).toHaveBeenCalledWith(
+      profileId,
+      expect.objectContaining({
+        eventCode: 'CURRENT-TAB-SCREENSHOT-AUTO-CROP-FALLBACK',
+        level: 'WARN',
+      }),
+    );
+  });
+});
 
 describe('unsupported current pages', () => {
   it('rejects browser-internal URLs before duplicate lookup', () => {

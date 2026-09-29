@@ -17,6 +17,33 @@ export const bookmarkSortBySchema = z.enum([
 ]);
 export const bookmarkSortDirectionSchema = z.enum(['ascending', 'descending']);
 export const bookmarkGroupBySchema = z.enum(['none', 'type', 'domain']);
+export const detailsColumnSchema = z.enum([
+  'appearance',
+  'title',
+  'url',
+  'updatedAt',
+  'type',
+]);
+export type DetailsColumn = z.infer<typeof detailsColumnSchema>;
+
+/** Canonical Details-column order used when no profile or folder override exists. */
+export const defaultDetailsColumnOrder: readonly DetailsColumn[] = [
+  'appearance',
+  'title',
+  'url',
+  'updatedAt',
+  'type',
+];
+
+export const detailsColumnOrderSchema = z
+  .array(detailsColumnSchema)
+  .length(defaultDetailsColumnOrder.length)
+  .refine(
+    (order) =>
+      new Set(order).size === defaultDetailsColumnOrder.length &&
+      defaultDetailsColumnOrder.every((column) => order.includes(column)),
+    { message: 'Details column order must contain every column exactly once.' },
+  );
 
 /** Defines Home-aligned display defaults that Settings may override for new folders. */
 export const defaultFolderDisplaySettings = {
@@ -26,6 +53,7 @@ export const defaultFolderDisplaySettings = {
   bookmarkSortBy: 'manual',
   bookmarkSortDirection: 'ascending',
   bookmarkGroupBy: 'none',
+  detailsColumnOrder: defaultDetailsColumnOrder,
 } as const;
 
 export const defaultFolderAppearanceSettings = {
@@ -195,6 +223,7 @@ export const profileSettingsSchema = z.object({
   bookmarkSortBy: bookmarkSortBySchema.optional(),
   bookmarkSortDirection: bookmarkSortDirectionSchema.optional(),
   bookmarkGroupBy: bookmarkGroupBySchema.optional(),
+  detailsColumnOrder: detailsColumnOrderSchema.optional(),
   dragAndDropEnabled: z.boolean().optional(),
   dropIntoFoldersEnabled: z.boolean().optional(),
   folderDropHoverDelay: folderDropHoverDelaySchema.optional(),
@@ -202,6 +231,7 @@ export const profileSettingsSchema = z.object({
   openFolderAfterDrop: z.boolean().optional(),
   duplicateHandling: duplicateHandlingSchema.optional(),
   showSavedStatusOnToolbar: z.boolean().optional(),
+  autoCropPopupScreenshots: z.boolean().optional(),
   urlNormalization: urlNormalizationSchema.optional(),
   faviconDisplay: faviconDisplaySchema.optional(),
   missingFavicon: missingFaviconSchema.optional(),
@@ -229,6 +259,8 @@ export const profileSettingsSchema = z.object({
   confirmExternalLinks: z.boolean().optional(),
   animationPreference: animationPreferenceSchema.optional(),
   highContrast: z.boolean().optional(),
+  showDetailsColumnReorderControls: z.boolean().optional(),
+  hideEmptyDetailsTableHeader: z.boolean().optional(),
   allowLargeWallpaperImports: z.boolean().optional(),
   defaultFolderBackgroundAppearance:
     defaultFolderBackgroundAppearanceSchema.optional(),

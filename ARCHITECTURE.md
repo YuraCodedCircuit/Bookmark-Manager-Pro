@@ -14,8 +14,8 @@ Pure TypeScript entities, value objects, policies, and operations. This layer
 must not import React, WXT, Dexie, or browser APIs.
 
 Primary concepts include profiles, folders, bookmarks, appearance settings,
-selection, search, mutation history, synchronization plans, and portable
-exports.
+selection, search, password generation, image cropping, mutation history,
+synchronization plans, and portable exports.
 
 ### Application
 
@@ -32,8 +32,8 @@ unit-of-work abstraction.
 ### Platform
 
 Typed wrappers around bookmarks, tabs, windows, commands, context menus,
-notifications, storage, downloads, and alarms. Capability checks select a
-Chromium or Firefox implementation when behavior differs.
+clipboard access, notifications, storage, downloads, and alarms. Capability
+checks select a Chromium or Firefox implementation when behavior differs.
 
 ### Messaging
 
@@ -56,6 +56,8 @@ application services rather than treated as a UI store.
 - Import/export page: validated preview, progress, cancellation, and recovery
 - Activity page: privacy-safe operational history
 - Background entry point: event routing and resumable jobs
+- Profile-independent Password Generator dialog: transient Web Crypto output,
+  option controls, strength feedback, and explicit clipboard copy
 
 ### Action-popup flow
 
@@ -73,6 +75,22 @@ cover edited URLs and concurrent changes. An approved Warn decision is scoped
 to the canonical URL that was checked, and a later decision preserves the
 editor's transient values. Storage access remains behind repository contracts;
 presentation components receive services through explicit dependencies.
+
+Image selection and visible-page capture feed a shared, dependency-free crop
+pipeline. Crop geometry, zoom, source data, and preview output remain in React
+state. The pipeline validates source dimensions, renders the selected region to
+a canvas, strips source metadata through re-encoding, and returns bounded PNG
+or WebP data. IndexedDB receives only the chosen result through the bookmark or
+folder save transaction. Popup automatic crop uses the same pipeline and keeps
+the original source available until Save bookmark.
+
+Password generation is a profile-independent domain operation. The domain
+module validates the selected groups and length, uses rejection sampling with
+`crypto.getRandomValues`, guarantees at least one character from every enabled
+group, and shuffles the result. The dialog owns all options and generated values
+in local React state and clears them on close. Clipboard writing is injected by
+the application surface and occurs only after an explicit Copy action; no
+repository or messaging protocol carries generated values.
 
 ## Dependency direction
 
@@ -165,6 +183,9 @@ remain UI-surface responsibilities because extension workers have no DOM or
   ready, only the opaque active profile ID. Profile content remains in
   IndexedDB. If session storage is unavailable, preflight safely reruns.
 - React state owns control values and short-lived view state.
+- React state exclusively owns Password Generator values and options and image
+  crop originals, geometry, zoom, and pending results until the owning dialog
+  closes or saves.
 - Zustand owns cross-component transient state within a single surface.
 - Synchronization, toolbar-popup saves, and successful app mutations publish a
   versioned, Zod-validated BroadcastChannel message containing only profile and

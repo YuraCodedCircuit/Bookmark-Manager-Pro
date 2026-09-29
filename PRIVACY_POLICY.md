@@ -1,6 +1,6 @@
 # Bookmark Manager Pro Privacy Policy
 
-**Effective date:** September 25, 2026
+**Effective date:** September 29, 2026
 **Publisher:** YuraCodedCircuit
 
 Bookmark Manager Pro is a local-first browser extension for organizing browser
@@ -36,6 +36,8 @@ features:
   profile names, or copied content.
 - Temporary undo and redo information required to reverse changes during the
   active browser session.
+- Passwords generated on request and the selected generator options while the
+  Password Generator window remains open.
 - Browser and operating-system information shown in or added to a
   user-requested diagnostic export.
 
@@ -58,6 +60,18 @@ Folder wallpaper files are decoded, resized, and compressed locally. The
 original selected file is discarded after processing. Only the processed image
 is saved, and folders within one profile may reference the same stored image to
 avoid unnecessary copies. No wallpaper content is written to diagnostics.
+
+Bookmark-card images and visible-page screenshots are cropped, resized, and
+encoded locally. The original and edited image remain temporary until the
+bookmark or folder is saved. Image metadata is not retained in the processed
+result, and image content is not written to diagnostics or uploaded.
+
+The Password Generator uses Web Crypto in the current application surface.
+Generated passwords and selected options are not saved to IndexedDB, browser
+storage, backups, exports, activity records, diagnostics, or notification text.
+Closing the window clears its transient state. A password leaves the extension
+only when the user explicitly copies it to the operating-system clipboard; the
+extension does not read it back or clear it automatically.
 
 The optional toolbar saved-status feature reads the active tab address after
 the user enables it. The address is compared locally with bookmarks in the
@@ -124,6 +138,14 @@ is enabled. It allows the extension to read active tab addresses as tabs are
 selected or navigated so saved status can be shown before the toolbar popup is
 opened. The feature can be disabled in application settings, and the permission
 can be revoked through browser extension controls.
+
+Optional **Clipboard Read** access is requested only when the user chooses the
+app-local Paste command in an editable text field and browser permission is
+required. Clipboard text is used transiently for that paste and is not stored,
+logged, or included in notifications. Native keyboard paste remains available
+without this extension permission. Copying a bookmark address or generated
+password is an explicit clipboard-write action and does not require reading the
+clipboard.
 
 ## Retention and deletion
 

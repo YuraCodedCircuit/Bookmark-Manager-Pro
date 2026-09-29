@@ -27,6 +27,7 @@ interface ProfileMenuPanelProps {
   onOpenLegal: () => void;
   onOpenNotes: () => void;
   onOpenPasswordGenerator: () => void;
+  onOpenSearch: () => void;
   onOpenUndoHistory: () => void;
   onOpenSynchronization: () => void;
   onClose: () => void;
@@ -42,7 +43,7 @@ const menuSections = [
   },
   {
     heading: 'profileMenu.sections.application',
-    items: ['notes', 'passwordGenerator', 'settings'],
+    items: ['search', 'notes', 'passwordGenerator', 'settings'],
   },
   {
     heading: 'profileMenu.sections.data',
@@ -75,6 +76,7 @@ export function ProfileMenuPanel({
   onOpenLegal,
   onOpenNotes,
   onOpenPasswordGenerator,
+  onOpenSearch,
   onOpenUndoHistory,
   onOpenSynchronization,
   onOpenSettings,
@@ -216,6 +218,8 @@ export function ProfileMenuPanel({
                   item === 'help' ||
                   item === 'legal' ||
                   item === 'passwordGenerator' ||
+                  (item === 'search' &&
+                    initializationState.status === 'ready') ||
                   (item === 'settings' &&
                     initializationState.status === 'ready') ||
                   (item === 'notes' &&
@@ -242,29 +246,31 @@ export function ProfileMenuPanel({
                         ? onSwitchProfile
                         : item === 'manageProfiles'
                           ? onManageProfiles
-                          : item === 'settings'
-                            ? onOpenSettings
-                            : item === 'notes'
-                              ? onOpenNotes
-                              : item === 'passwordGenerator'
-                                ? onOpenPasswordGenerator
-                                : item === 'changelog'
-                                  ? onOpenChangelog
-                                  : item === 'help'
-                                    ? onOpenHelp
-                                    : item === 'legal'
-                                      ? onOpenLegal
-                                      : item === 'about'
-                                        ? onOpenAbout
-                                        : item === 'bookmarkActivityLog'
-                                          ? onOpenBookmarkActivityLog
-                                          : item === 'backup'
-                                            ? onOpenBackup
-                                            : item === 'undoHistory'
-                                              ? onOpenUndoHistory
-                                              : item === 'synchronization'
-                                                ? onOpenSynchronization
-                                                : undefined
+                          : item === 'search'
+                            ? onOpenSearch
+                            : item === 'settings'
+                              ? onOpenSettings
+                              : item === 'notes'
+                                ? onOpenNotes
+                                : item === 'passwordGenerator'
+                                  ? onOpenPasswordGenerator
+                                  : item === 'changelog'
+                                    ? onOpenChangelog
+                                    : item === 'help'
+                                      ? onOpenHelp
+                                      : item === 'legal'
+                                        ? onOpenLegal
+                                        : item === 'about'
+                                          ? onOpenAbout
+                                          : item === 'bookmarkActivityLog'
+                                            ? onOpenBookmarkActivityLog
+                                            : item === 'backup'
+                                              ? onOpenBackup
+                                              : item === 'undoHistory'
+                                                ? onOpenUndoHistory
+                                                : item === 'synchronization'
+                                                  ? onOpenSynchronization
+                                                  : undefined
                     }
                     onMouseEnter={() => {
                       if (isAvailableCommand) setHighlightedItem(item);

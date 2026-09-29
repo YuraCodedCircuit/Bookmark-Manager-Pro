@@ -109,7 +109,12 @@ describe('BookmarkDisplaySettingsDialog', () => {
       'scrolling',
     );
     expect(within(dialog).getByLabelText('View')).toHaveValue('list');
-    expect(within(dialog).getByLabelText('Card size')).toHaveValue('small');
+    const cardSize = within(dialog).getByLabelText('Card size');
+    const cardSpacing = within(dialog).getByLabelText('Card spacing');
+    expect(cardSize).toHaveValue('small');
+    expect(cardSpacing).toHaveValue('comfortable');
+    expect(cardSize).toBeDisabled();
+    expect(cardSpacing).toBeDisabled();
     expect(within(dialog).getByLabelText('Sort by')).toHaveValue('manual');
     expect(within(dialog).getByLabelText('Direction')).toBeDisabled();
     expect(
@@ -122,12 +127,22 @@ describe('BookmarkDisplaySettingsDialog', () => {
       'Allow larger background images',
     );
     expect(largeWallpaperImports).not.toBeChecked();
-
-    await user.selectOptions(within(dialog).getByLabelText('View'), 'details');
-    await user.selectOptions(
-      within(dialog).getByLabelText('Card size'),
-      'large',
+    const hideEmptyDetailsHeader = within(dialog).getByLabelText(
+      'Hide the Details table header when the folder is empty',
     );
+    expect(hideEmptyDetailsHeader).toBeChecked();
+    const largeWallpaperLabel = largeWallpaperImports.closest('label');
+    expect(largeWallpaperLabel?.nextElementSibling).toHaveClass(
+      'settings-dialog__help',
+    );
+    expect(
+      largeWallpaperLabel?.nextElementSibling?.nextElementSibling,
+    ).toContainElement(hideEmptyDetailsHeader);
+
+    await user.selectOptions(within(dialog).getByLabelText('View'), 'card');
+    expect(cardSize).toBeEnabled();
+    expect(cardSpacing).toBeEnabled();
+    await user.selectOptions(cardSize, 'large');
     await user.selectOptions(within(dialog).getByLabelText('Theme'), 'light');
     await user.selectOptions(
       within(dialog).getByLabelText('Accent color'),
@@ -136,10 +151,14 @@ describe('BookmarkDisplaySettingsDialog', () => {
     expect(
       within(dialog).getByLabelText('Custom accent color'),
     ).toHaveAttribute('type', 'color');
-    await user.selectOptions(
-      within(dialog).getByLabelText('Card spacing'),
-      'compact',
-    );
+    await user.selectOptions(cardSpacing, 'compact');
+    await user.selectOptions(within(dialog).getByLabelText('View'), 'details');
+    expect(
+      within(dialog).getByLabelText('Default Details column order'),
+    ).toHaveValue('title');
+    await user.click(within(dialog).getByRole('button', { name: 'Move left' }));
+    expect(cardSize).toBeDisabled();
+    expect(cardSpacing).toBeDisabled();
     await user.selectOptions(within(dialog).getByLabelText('Sort by'), 'title');
     await user.selectOptions(
       within(dialog).getByLabelText('Direction'),
@@ -154,6 +173,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
       'always',
     );
     await user.click(largeWallpaperImports);
+    await user.click(hideEmptyDetailsHeader);
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     expect(onSave).toHaveBeenCalledWith(
@@ -174,6 +194,8 @@ describe('BookmarkDisplaySettingsDialog', () => {
         bookmarkSortBy: 'title',
         bookmarkSortDirection: 'descending',
         bookmarkGroupBy: 'type',
+        detailsColumnOrder: ['title', 'appearance', 'url', 'updatedAt', 'type'],
+        hideEmptyDetailsTableHeader: false,
         scrollbarBehavior: 'always',
         theme: 'light',
       }),
@@ -461,7 +483,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
     );
   });
 
-  it('saves animation and contrast preferences in Accessibility', async () => {
+  it('saves animation, contrast, and Details control preferences in Accessibility', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async () => undefined);
     render(
@@ -486,12 +508,16 @@ describe('BookmarkDisplaySettingsDialog', () => {
       'none',
     );
     await user.click(within(dialog).getByLabelText('Use high-contrast mode'));
+    await user.click(
+      within(dialog).getByLabelText('Show Details column reordering controls'),
+    );
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
         animationPreference: 'none',
         highContrast: true,
+        showDetailsColumnReorderControls: true,
       }),
     );
   });
@@ -520,6 +546,13 @@ describe('BookmarkDisplaySettingsDialog', () => {
     expect(within(dialog).getByLabelText('Enable drag and drop')).toBeChecked();
     expect(within(dialog).getByLabelText('Duplicate handling')).toHaveValue(
       'allow',
+    );
+    const autoCrop = within(dialog).getByLabelText(
+      'Automatically crop popup screenshots to Card',
+    );
+    expect(autoCrop).not.toBeChecked();
+    expect(autoCrop).toHaveAccessibleDescription(
+      /original remains available for editing until the bookmark is saved/i,
     );
     const permissionButton = within(dialog).getByRole('button', {
       name: 'Allow tab access',
@@ -560,6 +593,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
       within(dialog).getByLabelText('Duplicate handling'),
       'prevent',
     );
+    await user.click(autoCrop);
     await user.click(permissionButton);
     expect(onRequestToolbarSavedStatusPermission).toHaveBeenCalledOnce();
     expect(
@@ -573,6 +607,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
         confirmFolderDrop: true,
+        autoCropPopupScreenshots: true,
         dragAndDropEnabled: true,
         dropIntoFoldersEnabled: true,
         duplicateHandling: 'prevent',
@@ -720,6 +755,15 @@ describe('BookmarkDisplaySettingsDialog', () => {
     );
     const dialog = screen.getByRole('dialog', { name: 'Settings' });
     const startupLocation = within(dialog).getByLabelText('Startup location');
+    expect(startupLocation.closest('label')).not.toHaveClass(
+      'settings-checkbox-row',
+    );
+    expect(
+      within(dialog).getByLabelText('Opening behavior').closest('label'),
+    ).not.toHaveClass('settings-checkbox-row');
+    expect(
+      within(dialog).getByLabelText('Folder opening').closest('label'),
+    ).not.toHaveClass('settings-checkbox-row');
     expect(within(startupLocation).getAllByRole('option')).toHaveLength(2);
     expect(within(startupLocation).queryByText(/selected folder/i)).toBeNull();
     await user.selectOptions(startupLocation, 'last');

@@ -21,6 +21,7 @@ test-results/
 # Local browser profiles and extension data
 .profiles/
 .web-ext-artifacts/
+.pnpm-store/
 
 # Environment and local configuration
 .env

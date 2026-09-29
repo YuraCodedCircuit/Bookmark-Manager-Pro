@@ -1,4 +1,11 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -58,14 +65,47 @@ describe('SearchDialog', () => {
     await user.click(
       within(dialog).getByRole('button', { name: 'Search options' }),
     );
-    expect(within(dialog).getByLabelText('Search all profiles')).toBeDisabled();
-    expect(within(dialog).getByText('Search fields')).toBeVisible();
+    const options = screen.getByRole('dialog', { name: 'Search options' });
     expect(
-      within(dialog).queryByText('Remember these options'),
+      within(options).getByLabelText('Search all profiles'),
+    ).toBeDisabled();
+    expect(within(options).getByText('Search fields')).toBeVisible();
+    await waitFor(() =>
+      expect(within(options).getByLabelText('Item type')).toHaveFocus(),
+    );
+    expect(
+      within(options).queryByText('Remember these options'),
     ).not.toBeInTheDocument();
     expect(
-      within(dialog).queryByRole('button', { name: 'Save options' }),
+      within(options).queryByRole('button', { name: 'Save options' }),
     ).not.toBeInTheDocument();
+    await user.click(within(options).getByRole('button', { name: 'Close' }));
+    expect(options).not.toHaveAttribute('open');
+    await waitFor(() =>
+      expect(
+        within(dialog).getByRole('button', { name: 'Search options' }),
+      ).toHaveFocus(),
+    );
+
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Search options' }),
+    );
+    expect(options).toHaveAttribute('open');
+    await user.click(
+      within(options).getByRole('button', { name: 'Close search options' }),
+    );
+    expect(options).not.toHaveAttribute('open');
+
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Search options' }),
+    );
+    fireEvent(options, new Event('cancel', { cancelable: true }));
+    expect(options).not.toHaveAttribute('open');
+    await waitFor(() =>
+      expect(
+        within(dialog).getByRole('button', { name: 'Search options' }),
+      ).toHaveFocus(),
+    );
 
     await user.click(
       within(dialog).getByRole('button', { name: 'Close search' }),

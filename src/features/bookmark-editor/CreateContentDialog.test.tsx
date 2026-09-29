@@ -175,14 +175,19 @@ describe('CreateContentDialog edit mode', () => {
       within(dialog).getByRole('button', { name: 'Capture current page' }),
     );
     expect(
-      await within(dialog).findByAltText('Captured visible tab'),
-    ).toHaveAttribute('src', screenshot);
+      await within(dialog).findByRole('img', {
+        name: 'Captured visible tab',
+      }),
+    ).toBeVisible();
+    expect(
+      within(dialog).getByRole('button', { name: 'Crop image' }),
+    ).toHaveClass('content-editor__image-button');
     await user.click(
       within(dialog).getByRole('button', { name: 'Save bookmark' }),
     );
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
-        cardAppearance: { fit: 'fill', kind: 'image', value: screenshot },
+        cardAppearance: { fit: 'fit', kind: 'image', value: screenshot },
       }),
     );
   });
@@ -199,6 +204,47 @@ describe('CreateContentDialog edit mode', () => {
     );
 
     expect(screen.queryByLabelText('Screenshot')).not.toBeInTheDocument();
+  });
+
+  it('uses the standard image-action style for choosing and cropping images', async () => {
+    const user = userEvent.setup();
+    render(
+      <CreateContentDialog
+        isOpen
+        kind="folder"
+        onClose={vi.fn()}
+        onCreate={vi.fn()}
+        parentName="Home"
+      />,
+    );
+    await user.click(screen.getByLabelText('Image'));
+    expect(
+      screen.getByRole('button', { name: 'Choose card image' }),
+    ).toHaveClass('content-editor__image-button');
+  });
+
+  it('shows a newly uploaded image in full before cropping', async () => {
+    const user = userEvent.setup();
+    render(
+      <CreateContentDialog
+        isOpen
+        kind="folder"
+        onClose={vi.fn()}
+        onCreate={vi.fn()}
+        parentName="Home"
+      />,
+    );
+    await user.click(screen.getByLabelText('Image'));
+    await user.upload(
+      screen.getByLabelText('Choose card image'),
+      new File(['image'], 'card.png', { type: 'image/png' }),
+    );
+    expect(
+      await screen.findByRole('img', { name: 'Selected card image' }),
+    ).toBeVisible();
+    expect(screen.getByLabelText('Choose a fit for your image')).toHaveValue(
+      'fit',
+    );
   });
 
   it('submits a host without a protocol to application URL handling', async () => {
@@ -316,10 +362,9 @@ describe('CreateContentDialog edit mode', () => {
     expect(
       within(dialog).getByLabelText('Choose a fit for your image'),
     ).toHaveValue('fit');
-    expect(within(dialog).getByAltText('Selected card image')).toHaveAttribute(
-      'src',
-      image,
-    );
+    expect(
+      within(dialog).getByRole('img', { name: 'Selected card image' }),
+    ).toBeVisible();
     expect(
       within(dialog).getByRole('button', { name: 'Save folder' }),
     ).toBeVisible();

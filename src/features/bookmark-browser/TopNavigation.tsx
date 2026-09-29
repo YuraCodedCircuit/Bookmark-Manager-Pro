@@ -5,6 +5,7 @@ import { ProfileIcon } from '../../components/icons/ProfileIcon';
 import type { Profile } from '../../domain/profile';
 import type { ProfilePreferences } from '../../domain/profile-settings';
 import { TreeIcon } from '../../components/icons/TreeIcon';
+import { ProfileMenuItemIcon } from '../../components/icons/ProfileMenuItemIcon';
 import type { PathSeparator } from '../../platform/navigation/path-separator';
 
 interface TopNavigationProps {
@@ -13,6 +14,7 @@ interface TopNavigationProps {
   pathSeparator: PathSeparator;
   onNavigate: (index: number) => void;
   onOpenProfile: () => void;
+  onOpenSearch: () => void;
   onOpenTree: () => void;
   profileButtonRef: RefObject<HTMLButtonElement | null>;
   profile: Pick<Profile, 'icon' | 'username'> | undefined;
@@ -26,6 +28,7 @@ export function TopNavigation({
   pathSeparator,
   onNavigate,
   onOpenProfile,
+  onOpenSearch,
   onOpenTree,
   profileButtonRef,
   profile,
@@ -85,6 +88,15 @@ export function TopNavigation({
           </ol>
         </div>
       </nav>
+      <button
+        aria-label={t('navigation.openSearch')}
+        className="icon-button icon-button--round"
+        disabled={profile === undefined}
+        onClick={onOpenSearch}
+        type="button"
+      >
+        <ProfileMenuItemIcon item="search" />
+      </button>
       <button
         aria-label={t('navigation.openProfileMenu')}
         className="icon-button icon-button--round"

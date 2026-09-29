@@ -18,6 +18,7 @@ const iconNames: ContextMenuIconName[] = [
   'paste',
   'pin',
   'search',
+  'select-all',
 ];
 
 describe('ContextMenuIcon', () => {

@@ -61,14 +61,14 @@ describe('BookmarkManagerDatabase schema upgrades', () => {
     upgraded.close();
   });
 
-  it('opens schema 32 with shared wallpapers, Notes stores, indexed popup reads, and session undo history', async () => {
+  it('opens schema 36 with shared wallpapers, Notes stores, indexed popup reads, and session undo history', async () => {
     const name = `search-preferences-schema-${crypto.randomUUID()}`;
     names.push(name);
     const database = new BookmarkManagerDatabase(name);
 
     await database.open();
 
-    expect(database.verno).toBe(32);
+    expect(database.verno).toBe(36);
     expect(database.folderWallpapers.schema.primKey.name).toBe('id');
     expect(database.notes.schema.primKey.name).toBe('id');
     expect(database.noteFolders.schema.primKey.name).toBe('id');
@@ -83,6 +83,89 @@ describe('BookmarkManagerDatabase schema upgrades', () => {
       '[profileId+url]',
     );
     database.close();
+  });
+
+  it('disables popup screenshot auto-crop for schema-32 profiles', async () => {
+    const name = `upgrade-popup-auto-crop-${crypto.randomUUID()}`;
+    names.push(name);
+    const versionThirtyTwo = new Dexie(name);
+    versionThirtyTwo.version(32).stores({ profileSettings: '&profileId' });
+    const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
+    await versionThirtyTwo.table('profileSettings').add({ profileId });
+    versionThirtyTwo.close();
+
+    const upgraded = new BookmarkManagerDatabase(name);
+    await upgraded.open();
+
+    await expect(upgraded.profileSettings.get(profileId)).resolves.toEqual(
+      expect.objectContaining({ autoCropPopupScreenshots: false }),
+    );
+    upgraded.close();
+  });
+
+  it('adds the default Details column order to schema-33 profiles and folders', async () => {
+    const name = `upgrade-details-column-order-${crypto.randomUUID()}`;
+    names.push(name);
+    const versionThirtyThree = new Dexie(name);
+    versionThirtyThree.version(33).stores({
+      folders: '&id, profileId',
+      profileSettings: '&profileId',
+    });
+    const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
+    await versionThirtyThree.table('profileSettings').add({ profileId });
+    await versionThirtyThree.table('folders').add({
+      id: '11111111-1111-4111-8111-111111111111',
+      profileId,
+    });
+    versionThirtyThree.close();
+
+    const upgraded = new BookmarkManagerDatabase(name);
+    await upgraded.open();
+    const expected = ['appearance', 'title', 'url', 'updatedAt', 'type'];
+
+    await expect(upgraded.profileSettings.get(profileId)).resolves.toEqual(
+      expect.objectContaining({ detailsColumnOrder: expected }),
+    );
+    await expect(upgraded.folders.toCollection().first()).resolves.toEqual(
+      expect.objectContaining({ detailsColumnOrder: expected }),
+    );
+    upgraded.close();
+  });
+
+  it('hides visible Details column controls for schema-34 profiles', async () => {
+    const name = `upgrade-details-column-controls-${crypto.randomUUID()}`;
+    names.push(name);
+    const versionThirtyFour = new Dexie(name);
+    versionThirtyFour.version(34).stores({ profileSettings: '&profileId' });
+    const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
+    await versionThirtyFour.table('profileSettings').add({ profileId });
+    versionThirtyFour.close();
+
+    const upgraded = new BookmarkManagerDatabase(name);
+    await upgraded.open();
+
+    await expect(upgraded.profileSettings.get(profileId)).resolves.toEqual(
+      expect.objectContaining({ showDetailsColumnReorderControls: false }),
+    );
+    upgraded.close();
+  });
+
+  it('hides empty Details headers for schema-35 profiles', async () => {
+    const name = `upgrade-empty-details-header-${crypto.randomUUID()}`;
+    names.push(name);
+    const versionThirtyFive = new Dexie(name);
+    versionThirtyFive.version(35).stores({ profileSettings: '&profileId' });
+    const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
+    await versionThirtyFive.table('profileSettings').add({ profileId });
+    versionThirtyFive.close();
+
+    const upgraded = new BookmarkManagerDatabase(name);
+    await upgraded.open();
+
+    await expect(upgraded.profileSettings.get(profileId)).resolves.toEqual(
+      expect.objectContaining({ hideEmptyDetailsTableHeader: true }),
+    );
+    upgraded.close();
   });
 
   it('disables toolbar saved status for schema-29 profiles', async () => {

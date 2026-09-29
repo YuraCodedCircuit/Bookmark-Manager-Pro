@@ -1,6 +1,6 @@
 # Accessibility Statement
 
-**Updated:** August 24, 2026
+**Updated:** September 29, 2026
 
 Bookmark Manager Pro aims to provide an interface that can be used with a
 keyboard, screen reader, text zoom, reduced motion, and higher-contrast display
@@ -21,6 +21,13 @@ Implemented accessibility behavior includes:
 - Keyboard operation for application actions and drag-and-drop alternatives.
 - Focus containment and restoration for modal windows and side panels.
 - Accessible names and status announcements for interactive controls.
+- The password generator exposes labeled length and character-set controls, a
+  named read-only output, a labeled strength meter, validation feedback, and
+  privacy-safe live announcements that never announce the generated password.
+- The image crop editor supports keyboard movement and resizing, precise
+  numeric geometry controls, zoom, and focus restoration after closing.
+- Details-view columns can be reordered by drag and drop or by optional visible
+  Move left and Move right controls in Settings > Accessibility.
 - Follow-system, reduced-animation, and no-animation preferences.
 - A profile-owned high-contrast option.
 - Layouts intended to remain usable with long text and browser zoom.
@@ -31,8 +38,8 @@ Implemented accessibility behavior includes:
   audit.
 - English (United States) is currently the only complete interface language.
 - Browser and assistive-technology combinations may expose different behavior.
-- Import, Export, Backup, and Advanced settings are visible but unavailable while
-  those features are being developed.
+- Import, Export, and Advanced settings are visible but unavailable while those
+  features are being developed. Backup is implemented.
 - Accessibility testing is ongoing as new surfaces are introduced.
 
 ## Reporting an accessibility problem

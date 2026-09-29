@@ -74,6 +74,62 @@ interface UnsupportedCurrentPageProps {
   onClose(): void;
 }
 
+interface FirstRunPopupProps {
+  onClose(): void;
+  openProfileCreation(): Promise<void>;
+}
+
+/** Directs a user without an active profile to first-profile creation. */
+export function FirstRunPopup({
+  onClose,
+  openProfileCreation,
+}: FirstRunPopupProps) {
+  const { t } = useTranslation();
+  const [isOpening, setIsOpening] = useState(false);
+  const [openError, setOpenError] = useState(false);
+
+  return (
+    <main
+      aria-describedby="first-run-popup-message"
+      aria-labelledby="first-run-popup-title"
+      className="save-current-page__decision save-current-page__load-error"
+    >
+      <div className="save-current-page__decision-content">
+        <h1 id="first-run-popup-title">{t('saveCurrentPage.firstRunTitle')}</h1>
+        <p id="first-run-popup-message">{t('saveCurrentPage.firstRun')}</p>
+        {openError ? (
+          <p role="alert">{t('saveCurrentPage.profileOpenFailed')}</p>
+        ) : null}
+      </div>
+      <footer>
+        <button disabled={isOpening} onClick={onClose} type="button">
+          {t('saveCurrentPage.close')}
+        </button>
+        <button
+          autoFocus
+          disabled={isOpening}
+          onClick={() => {
+            setIsOpening(true);
+            setOpenError(false);
+            void openProfileCreation()
+              .then(onClose)
+              .catch(() => {
+                console.error('profile-creation-tab-open-failed');
+                setOpenError(true);
+                setIsOpening(false);
+              });
+          }}
+          type="button"
+        >
+          {isOpening
+            ? t('saveCurrentPage.openingProfileCreation')
+            : t('saveCurrentPage.createProfile')}
+        </button>
+      </footer>
+    </main>
+  );
+}
+
 /** Explains that the active browser page cannot be stored as a bookmark. */
 export function UnsupportedCurrentPage({
   onClose,
@@ -248,7 +304,7 @@ export function SaveCurrentPagePopup({
 
   const record = async (
     eventCode: string,
-    level: 'INFO' | 'ERROR',
+    level: 'INFO' | 'WARN' | 'ERROR',
     outcome: 'Succeeded' | 'Failed',
   ) => {
     try {
@@ -484,6 +540,7 @@ export function SaveCurrentPagePopup({
 
   return (
     <CreateContentDialog
+      autoCropScreenshot={ready.settings.autoCropPopupScreenshots ?? false}
       afterNote={
         <section
           aria-labelledby="save-current-page-destination"
@@ -544,6 +601,18 @@ export function SaveCurrentPagePopup({
         }
       }}
       onClose={dependencies.close}
+      onAutoCropResult={(outcome) =>
+        record(
+          outcome === 'succeeded'
+            ? 'CURRENT-TAB-SCREENSHOT-AUTO-CROP-COMPLETE'
+            : 'CURRENT-TAB-SCREENSHOT-AUTO-CROP-FALLBACK',
+          outcome === 'succeeded' ? 'INFO' : 'WARN',
+          outcome === 'succeeded' ? 'Succeeded' : 'Failed',
+        )
+      }
+      onCropFailure={() =>
+        record('CURRENT-TAB-IMAGE-CROP-FAILED', 'ERROR', 'Failed')
+      }
       onCreate={save}
       parentName={selectedFolder.title}
       titleKey="saveCurrentPage.title"

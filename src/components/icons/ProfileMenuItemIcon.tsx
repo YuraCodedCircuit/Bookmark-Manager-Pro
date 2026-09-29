@@ -12,6 +12,7 @@ export type ProfileMenuItem =
   | 'manageProfiles'
   | 'notes'
   | 'passwordGenerator'
+  | 'search'
   | 'settings'
   | 'switchProfile'
   | 'synchronization'
@@ -40,6 +41,13 @@ function iconPaths(item: ProfileMenuItem): ReactNode {
     case 'passwordGenerator':
       return (
         <path d="M14.75 3.5a5.75 5.75 0 1 1-4.1 9.78L3.5 20.43V17h3v-3h3l1.17-1.17A5.75 5.75 0 0 1 14.75 3.5Zm2.25 4.25h.01" />
+      );
+    case 'search':
+      return (
+        <>
+          <circle cx="10.75" cy="10.75" r="6.25" />
+          <path d="m15.25 15.25 4.25 4.25" />
+        </>
       );
     case 'settings':
       return (

@@ -41,7 +41,7 @@ describe('BookmarkGrid', () => {
             parentId: rootId,
             profileId,
             tags: [],
-            title: 'Example bookmark',
+            title: 'GitHub',
             updatedAt: 1,
             url: 'https://example.com/',
           },
@@ -63,7 +63,7 @@ describe('BookmarkGrid', () => {
             parentId: rootId,
             profileId,
             tags: [],
-            title: 'Research',
+            title: 'Git_Hub',
             updatedAt: 1,
           },
         ]}
@@ -72,14 +72,14 @@ describe('BookmarkGrid', () => {
       />,
     );
 
-    const folder = screen.getByRole('button', { name: /Research/ });
+    const folder = screen.getByRole('button', { name: /Git_Hub/ });
     const bookmark = screen.getByRole('link', {
-      name: 'Open Example bookmark',
+      name: 'Open GitHub',
     });
-    expect(within(folder).getByText('RE')).toHaveClass(
+    expect(within(folder).getByText('GH')).toHaveClass(
       'bookmark-card__favicon',
     );
-    expect(within(bookmark).getByText('EX')).toHaveClass(
+    expect(within(bookmark).getByText('GH')).toHaveClass(
       'bookmark-card__favicon',
     );
     expect(folder.querySelector('.bookmark-card__details')).not.toBeNull();

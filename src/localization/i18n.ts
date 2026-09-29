@@ -449,6 +449,8 @@ void i18n.use(initReactI18next).init({
               'Release notes for this update are unavailable.',
             bookmarkOpenFailed: 'A bookmark could not be opened.',
             bookmarkOpenRequested: 'A bookmark open request was sent.',
+            bookmarkUrlCopyFailed: 'A bookmark URL could not be copied.',
+            bookmarkUrlCopySucceeded: 'A bookmark URL was copied.',
             bookmarkDisplayUpdated: 'Bookmark display settings were updated.',
             favoriteAdded: 'An item was added to favorites.',
             favoriteRemoved: 'An item was removed from favorites.',
@@ -456,6 +458,7 @@ void i18n.use(initReactI18next).init({
             itemInfoValueCopied: 'An item information value was copied.',
             itemInfoValueCopyFailed:
               'An item information value could not be copied.',
+            imageCropFailed: 'An image could not be cropped.',
             bookmarkDisplayUpdateFailed:
               'Bookmark display settings could not be updated.',
             bookmarkCreated: 'A bookmark was created.',
@@ -471,12 +474,15 @@ void i18n.use(initReactI18next).init({
             folderOpened: 'A folder was opened.',
             folderOpenFailed: 'A folder could not be opened.',
             folderOpenRequested: 'A folder open request was sent.',
+            detailsColumnOrderUpdated: 'The Details column order was updated.',
             folderStyleUpdated: 'The folder style was updated.',
             folderWallpaperImportRejected:
               'A folder background image was rejected during local validation or optimization.',
             navigationItemsLoadFailed:
               'Favorite and recent navigation items could not be loaded.',
             folderStyleUpdateFailed: 'The folder style could not be updated.',
+            detailsColumnOrderUpdateFailed:
+              'The Details column order could not be updated.',
             folderCreateFailed: 'A folder could not be created.',
             folderUpdated: 'A folder was updated.',
             folderUpdateFailed: 'A folder could not be updated.',
@@ -549,6 +555,8 @@ void i18n.use(initReactI18next).init({
           copyFailed: 'The item could not be copied.',
           copySucceeded: 'The item was copied.',
           copyReady: 'The item is ready to paste.',
+          urlCopyFailed: 'The link could not be copied.',
+          urlCopySucceeded: 'Link copied.',
           cutFailed: 'The item could not be cut.',
           cutReady: 'The item is ready to move.',
           duplicateFailed: 'The item could not be duplicated.',
@@ -570,7 +578,22 @@ void i18n.use(initReactI18next).init({
           bookmarkType: 'Bookmark',
           details: {
             appearance: 'Appearance',
+            columnOrderSaved: 'The column order was saved for this folder.',
+            columnOrderSaveFailed:
+              'The column order could not be saved. The previous order was restored.',
             dateModified: 'Date modified',
+            defaultOrder: 'Default Details column order',
+            dragCancelled: 'Cancelled moving the {{column}} column.',
+            dragDropped: 'Moved the {{column}} column.',
+            dragInstructions:
+              'Press Space to pick up a column. Use Left and Right Arrow to move it, Space to drop it, or Escape to cancel.',
+            dragOver: '{{column}} column is over the {{target}} column.',
+            dragStarted: 'Picked up the {{column}} column.',
+            moveLeft: 'Move left',
+            moveRight: 'Move right',
+            reorderColumn: 'Reorder {{column}} column',
+            resetColumnOrder: 'Reset column order',
+            selectedColumn: 'Selected column',
             title: 'Title',
             type: 'Type',
             url: 'URL',
@@ -641,6 +664,7 @@ void i18n.use(initReactI18next).init({
           randomGradientGenerated:
             'Random gradient generated: {{colors}} at {{direction}} degrees.',
           image: 'Choose card image',
+          chooseAnotherImage: 'Choose another image',
           imageFit: 'Choose a fit for your image',
           imageFits: {
             center: 'Center',
@@ -652,7 +676,54 @@ void i18n.use(initReactI18next).init({
           },
           imageError: 'Choose a PNG, JPEG, or BMP image smaller than 1 MB.',
           imagePreview: 'Selected card image',
+          autoCropApplied:
+            'Screenshot automatically cropped from the top-left corner. The original remains available until the bookmark is saved.',
+          autoCropError:
+            'Automatic crop could not be applied. The original screenshot is still available.',
+          cropApplied:
+            'Crop applied. Image fit changed to Fit so the complete crop remains visible.',
+          crop: {
+            apply: 'Apply crop',
+            applying: 'Applying crop...',
+            cancel: 'Cancel',
+            directions: {
+              east: 'right',
+              north: 'top',
+              'north-east': 'top right',
+              'north-west': 'top left',
+              south: 'bottom',
+              'south-east': 'bottom right',
+              'south-west': 'bottom left',
+              west: 'left',
+            },
+            error:
+              'The image could not be cropped. Adjust the crop or choose another image and try again.',
+            fields: {
+              height: 'Height',
+              width: 'Width',
+              x: 'Left',
+              y: 'Top',
+            },
+            instructions:
+              'Use the arrow keys to move the crop. Hold Shift for larger steps. Focus a resize handle and use the arrow keys to resize.',
+            loading: 'Preparing image...',
+            output: 'Output: {{width}} x {{height}} pixels',
+            precise: 'Precise crop',
+            region: 'Crop region',
+            reset: 'Reset',
+            resizeHandle: 'Resize from the {{direction}}',
+            shape: 'Crop shape',
+            shapes: {
+              card: 'Card',
+              free: 'Free',
+              landscape: 'Landscape',
+              square: 'Square',
+            },
+            title: 'Crop image',
+            zoom: 'Zoom',
+          },
           captureScreenshot: 'Capture current page',
+          capturingScreenshot: 'Capturing and processing...',
           replaceScreenshot: 'Capture current page again',
           screenshotError:
             'The visible tab could not be captured. Try again on a normal webpage.',
@@ -685,11 +756,16 @@ void i18n.use(initReactI18next).init({
           duplicateTitle: 'URL already saved',
           firstRun:
             'Create a profile in Bookmark Manager Pro before saving pages.',
+          firstRunTitle: 'A profile is required',
+          createProfile: 'Create profile',
           folderTreeFailed:
             'Other folders could not be loaded. This bookmark can still be saved to Home.',
           folderTreeLoading: 'Loading folders...',
           goBack: 'Go back',
           loadError: 'The current page could not be loaded.',
+          openingProfileCreation: 'Opening…',
+          profileOpenFailed:
+            'Bookmark Manager Pro could not be opened. Try again.',
           retry: 'Retry',
           retryFolders: 'Retry loading folders',
           saveAnother: 'Save another copy',
@@ -706,6 +782,8 @@ void i18n.use(initReactI18next).init({
               'Choose motion and contrast behavior for this profile.',
             help: 'Follow system uses the browser or operating-system motion preference. Reduced shortens motion, while No animations removes it.',
             highContrast: 'Use high-contrast mode',
+            showDetailsColumnReorderControls:
+              'Show Details column reordering controls',
             noAnimations: 'No animations',
             reducedAnimations: 'Reduced animations',
             systemAnimations: 'Follow system',
@@ -782,6 +860,10 @@ void i18n.use(initReactI18next).init({
             allow: 'Allow duplicates',
             alphabetical: 'Arrange alphabetically',
             alwaysInitials: 'Always use title initials',
+            autoCropPopupScreenshots:
+              'Automatically crop popup screenshots to Card',
+            autoCropPopupScreenshotsHelp:
+              'Starts at the top-left corner. The original remains available for editing until the bookmark is saved.',
             ask: 'Ask before adding https://',
             available: 'Show a saved favicon when available',
             builtIn: 'Built-in bookmark icon',
@@ -831,6 +913,8 @@ void i18n.use(initReactI18next).init({
           domain: 'Domain',
           appearanceDescription:
             'Choose how bookmarks and folders are displayed.',
+          hideEmptyDetailsTableHeader:
+            'Hide the Details table header when the folder is empty',
           cancel: 'Cancel',
           card: 'Card',
           comfortable: 'Comfortable',
@@ -1042,6 +1126,7 @@ void i18n.use(initReactI18next).init({
             bookmark: 'Bookmark not saved',
             folder: 'Folder not saved',
           },
+          clipboardPermissionDeniedTitle: 'Clipboard access not granted',
           copiedTitle: 'Copied',
           dismiss: 'Dismiss notification',
           errorMessage: 'The operation could not be completed.',
@@ -1126,12 +1211,42 @@ void i18n.use(initReactI18next).init({
             newBookmark: 'New bookmark',
             newFolder: 'New folder',
             open: 'Open',
-            openNewTab: 'Open in new tab',
+            copyUrl: {
+              chrome: 'Copy link address',
+              edge: 'Copy link',
+              firefox: 'Copy Link',
+              unknown: 'Copy URL',
+            },
+            openNewTab: {
+              chrome: 'Open link in new tab',
+              edge: 'Open link in new tab',
+              firefox: 'Open Link in New Tab',
+              unknown: 'Open in new tab',
+            },
+            openNewWindow: {
+              chrome: 'Open link in new window',
+              edge: 'Open link in new window',
+              firefox: 'Open Link in New Window',
+              unknown: 'Open in new window',
+            },
             paste: 'Paste',
             removeFavorite: 'Remove from favorites',
             search: 'Search bookmarks',
           },
           label: 'Bookmark actions',
+        },
+        editableContextMenu: {
+          items: {
+            clear: 'Clear',
+            copy: 'Copy',
+            cut: 'Cut',
+            paste: 'Paste',
+            selectAll: 'Select all',
+          },
+          label: 'Text editing actions',
+          operationFailed: 'The text editing command could not be completed.',
+          pastePermissionDenied:
+            'Clipboard access was not granted, so the text was not pasted.',
         },
         searchWindow: {
           bookmarkPlaceholder: 'Search bookmarks and folders',
@@ -1161,6 +1276,8 @@ void i18n.use(initReactI18next).init({
             bestMatch: 'Best match',
             bookmarks: 'Bookmarks',
             contains: 'Contains',
+            close: 'Close search options',
+            closeAction: 'Close',
             created: 'Date created',
             currentFolder: 'Current folder',
             currentProfile: 'Current profile',
@@ -1244,6 +1361,7 @@ void i18n.use(initReactI18next).init({
           breadcrumb: 'Current folder path',
           openFolderTree: 'Open folder tree',
           openProfileMenu: 'Open profile menu',
+          openSearch: 'Open search',
         },
         profileMenu: {
           activeProfile: 'Active profile',
@@ -1262,6 +1380,7 @@ void i18n.use(initReactI18next).init({
             manageProfiles: 'Manage profiles',
             notes: 'Notes',
             passwordGenerator: 'Password generator',
+            search: 'Search',
             settings: 'Settings',
             switchProfile: 'Switch profile',
             undoHistory: 'Undo and redo history',

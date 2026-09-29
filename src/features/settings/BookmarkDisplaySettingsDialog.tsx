@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { ProfileSettings } from '../../domain/profile-settings';
+import type {
+  DetailsColumn,
+  ProfileSettings,
+} from '../../domain/profile-settings';
 import type { ActivityLogSettings } from '../../domain/activity-log';
 import {
   defaultBackupPreferences,
@@ -9,6 +12,7 @@ import {
   defaultFolderAppearanceSettings,
   defaultNotificationPreferences,
   defaultProfilePreferences,
+  defaultDetailsColumnOrder,
 } from '../../domain/profile-settings';
 import type {
   ProfileIdentityListItem,
@@ -112,10 +116,39 @@ export function BookmarkDisplaySettingsDialog({
   const [bookmarkSortBy, setBookmarkSortBy] = useState(
     settings.bookmarkSortBy ?? defaultFolderDisplaySettings.bookmarkSortBy,
   );
+  const [cardSize, setCardSize] = useState(
+    settings.cardSize ?? defaultFolderDisplaySettings.cardSize,
+  );
+  const [cardSpacing, setCardSpacing] = useState(
+    settings.cardSpacing ?? defaultFolderDisplaySettings.cardSpacing,
+  );
   const initialFolderBackground =
     settings.defaultFolderBackgroundAppearance ??
     defaultFolderAppearanceSettings.backgroundAppearance;
   const [bookmarkView, setBookmarkView] = useState(settings.bookmarkView);
+  const [detailsColumnOrder, setDetailsColumnOrder] = useState<
+    readonly DetailsColumn[]
+  >(settings.detailsColumnOrder ?? defaultDetailsColumnOrder);
+  const [selectedDetailsColumn, setSelectedDetailsColumn] =
+    useState<DetailsColumn>('title');
+  const moveDefaultDetailsColumn = (direction: -1 | 1) => {
+    setDetailsColumnOrder((current) => {
+      const currentIndex = current.indexOf(selectedDetailsColumn);
+      const destinationIndex = currentIndex + direction;
+      if (
+        currentIndex < 0 ||
+        destinationIndex < 0 ||
+        destinationIndex >= current.length
+      )
+        return current;
+      const next = [...current];
+      [next[currentIndex], next[destinationIndex]] = [
+        next[destinationIndex]!,
+        next[currentIndex]!,
+      ];
+      return next;
+    });
+  };
   const [folderBackgroundKind, setFolderBackgroundKind] = useState<
     FolderBackgroundAppearance['kind']
   >(initialFolderBackground.kind);
@@ -223,6 +256,14 @@ export function BookmarkDisplaySettingsDialog({
         settings.bookmarkSortBy ?? defaultFolderDisplaySettings.bookmarkSortBy,
       );
       setBookmarkView(settings.bookmarkView);
+      setDetailsColumnOrder(
+        settings.detailsColumnOrder ?? defaultDetailsColumnOrder,
+      );
+      setSelectedDetailsColumn('title');
+      setCardSize(settings.cardSize ?? defaultFolderDisplaySettings.cardSize);
+      setCardSpacing(
+        settings.cardSpacing ?? defaultFolderDisplaySettings.cardSpacing,
+      );
       setAllowLargeWallpaperImports(
         settings.allowLargeWallpaperImports ?? false,
       );
@@ -290,6 +331,9 @@ export function BookmarkDisplaySettingsDialog({
     settings.notificationPreferences,
     settings.showSavedStatusOnToolbar,
     settings.bookmarkView,
+    settings.cardSize,
+    settings.cardSpacing,
+    settings.detailsColumnOrder,
     settings.allowLargeWallpaperImports,
     settings.defaultFolderBackgroundAppearance,
   ]);
@@ -457,6 +501,9 @@ export function BookmarkDisplaySettingsDialog({
                           : data.get('duplicateHandling') === 'prevent'
                             ? 'prevent'
                             : 'allow',
+                      autoCropPopupScreenshots: data.has(
+                        'autoCropPopupScreenshots',
+                      ),
                       showSavedStatusOnToolbar: data.has(
                         'showSavedStatusOnToolbar',
                       ),
@@ -557,6 +604,9 @@ export function BookmarkDisplaySettingsDialog({
                                       ? 'none'
                                       : 'system',
                                 highContrast: data.has('highContrast'),
+                                showDetailsColumnReorderControls: data.has(
+                                  'showDetailsColumnReorderControls',
+                                ),
                               }
                             : showShortcuts
                               ? { ...settings, shortcutPreferences }
@@ -564,6 +614,9 @@ export function BookmarkDisplaySettingsDialog({
                                   ...settings,
                                   accentColorMode,
                                   allowLargeWallpaperImports,
+                                  hideEmptyDetailsTableHeader: data.has(
+                                    'hideEmptyDetailsTableHeader',
+                                  ),
                                   defaultFolderBackgroundAppearance,
                                   defaultFolderDetailsTableTransparency: Number(
                                     data.get(
@@ -581,18 +634,8 @@ export function BookmarkDisplaySettingsDialog({
                                     ) ?? 70,
                                   ),
                                   bookmarkView: bookmarkView,
-                                  cardSize:
-                                    data.get('cardSize') === 'small'
-                                      ? 'small'
-                                      : data.get('cardSize') === 'large'
-                                        ? 'large'
-                                        : 'medium',
-                                  cardSpacing:
-                                    data.get('cardSpacing') === 'compact'
-                                      ? 'compact'
-                                      : data.get('cardSpacing') === 'spacious'
-                                        ? 'spacious'
-                                        : 'comfortable',
+                                  cardSize,
+                                  cardSpacing,
                                   bookmarkSortBy:
                                     data.get('bookmarkSortBy') === 'title'
                                       ? 'title'
@@ -617,6 +660,7 @@ export function BookmarkDisplaySettingsDialog({
                                       : data.get('bookmarkGroupBy') === 'domain'
                                         ? 'domain'
                                         : 'none',
+                                  detailsColumnOrder: [...detailsColumnOrder],
                                   customAccentColor:
                                     data.get('customAccentColor')?.toString() ||
                                     settings.customAccentColor ||
@@ -760,7 +804,7 @@ export function BookmarkDisplaySettingsDialog({
                 </div>
                 <fieldset>
                   <legend>{t('displaySettings.general.startup')}</legend>
-                  <label className="settings-checkbox-row">
+                  <label>
                     <span>{t('displaySettings.general.startupLocation')}</span>
                     <select
                       onChange={(event) => {
@@ -919,6 +963,18 @@ export function BookmarkDisplaySettingsDialog({
                   <p className="settings-dialog__help">
                     {t('displaySettings.allowLargeWallpaperImportsHelp')}
                   </p>
+                  <label className="settings-checkbox-row">
+                    <input
+                      defaultChecked={
+                        settings.hideEmptyDetailsTableHeader ?? true
+                      }
+                      name="hideEmptyDetailsTableHeader"
+                      type="checkbox"
+                    />
+                    <span>
+                      {t('displaySettings.hideEmptyDetailsTableHeader')}
+                    </span>
+                  </label>
                 </fieldset>
                 <fieldset>
                   <legend>{t('folderStyle.view')}</legend>
@@ -946,11 +1002,17 @@ export function BookmarkDisplaySettingsDialog({
                   <label>
                     <span>{t('displaySettings.size')}</span>
                     <select
-                      defaultValue={
-                        settings.cardSize ??
-                        defaultFolderDisplaySettings.cardSize
+                      disabled={bookmarkView !== 'card'}
+                      onChange={(event) =>
+                        setCardSize(
+                          event.target.value === 'small' ||
+                            event.target.value === 'large'
+                            ? event.target.value
+                            : 'medium',
+                        )
                       }
                       name="cardSize"
+                      value={cardSize}
                     >
                       <option value="small">
                         {t('displaySettings.small')}
@@ -966,11 +1028,17 @@ export function BookmarkDisplaySettingsDialog({
                   <label>
                     <span>{t('displaySettings.spacing')}</span>
                     <select
-                      defaultValue={
-                        settings.cardSpacing ??
-                        defaultFolderDisplaySettings.cardSpacing
+                      disabled={bookmarkView !== 'card'}
+                      onChange={(event) =>
+                        setCardSpacing(
+                          event.target.value === 'compact' ||
+                            event.target.value === 'spacious'
+                            ? event.target.value
+                            : 'comfortable',
+                        )
                       }
                       name="cardSpacing"
+                      value={cardSpacing}
                     >
                       <option value="compact">
                         {t('displaySettings.compact')}
@@ -1052,25 +1120,85 @@ export function BookmarkDisplaySettingsDialog({
                     {t('displaySettings.displayHelp')}
                   </p>
                   {bookmarkView === 'details' ? (
-                    <label>
-                      <span>
-                        {t('folderStyle.detailsTableTransparency', {
-                          value:
+                    <>
+                      <label>
+                        <span>
+                          {t('folderStyle.detailsTableTransparency', {
+                            value:
+                              settings.defaultFolderDetailsTableTransparency ??
+                              defaultFolderAppearanceSettings.detailsTableTransparency,
+                          })}
+                        </span>
+                        <input
+                          defaultValue={
                             settings.defaultFolderDetailsTableTransparency ??
-                            defaultFolderAppearanceSettings.detailsTableTransparency,
-                        })}
-                      </span>
-                      <input
-                        defaultValue={
-                          settings.defaultFolderDetailsTableTransparency ??
-                          defaultFolderAppearanceSettings.detailsTableTransparency
-                        }
-                        max={100}
-                        min={0}
-                        name="defaultFolderDetailsTableTransparency"
-                        type="range"
-                      />
-                    </label>
+                            defaultFolderAppearanceSettings.detailsTableTransparency
+                          }
+                          max={100}
+                          min={0}
+                          name="defaultFolderDetailsTableTransparency"
+                          type="range"
+                        />
+                      </label>
+                      <div className="settings-dialog__column-order">
+                        <label>
+                          <span>{t('bookmarks.details.defaultOrder')}</span>
+                          <select
+                            onChange={(event) =>
+                              setSelectedDetailsColumn(
+                                event.target.value as DetailsColumn,
+                              )
+                            }
+                            value={selectedDetailsColumn}
+                          >
+                            {detailsColumnOrder.map((column) => (
+                              <option key={column} value={column}>
+                                {t(
+                                  `bookmarks.details.${column === 'updatedAt' ? 'dateModified' : column}`,
+                                )}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <div>
+                          <button
+                            disabled={
+                              detailsColumnOrder.indexOf(
+                                selectedDetailsColumn,
+                              ) === 0
+                            }
+                            onClick={() => moveDefaultDetailsColumn(-1)}
+                            type="button"
+                          >
+                            {t('bookmarks.details.moveLeft')}
+                          </button>
+                          <button
+                            disabled={
+                              detailsColumnOrder.indexOf(
+                                selectedDetailsColumn,
+                              ) ===
+                              detailsColumnOrder.length - 1
+                            }
+                            onClick={() => moveDefaultDetailsColumn(1)}
+                            type="button"
+                          >
+                            {t('bookmarks.details.moveRight')}
+                          </button>
+                          <button
+                            disabled={detailsColumnOrder.every(
+                              (column, index) =>
+                                column === defaultDetailsColumnOrder[index],
+                            )}
+                            onClick={() =>
+                              setDetailsColumnOrder(defaultDetailsColumnOrder)
+                            }
+                            type="button"
+                          >
+                            {t('bookmarks.details.resetColumnOrder')}
+                          </button>
+                        </div>
+                      </div>
+                    </>
                   ) : null}
                 </fieldset>
                 <fieldset>
@@ -1387,6 +1515,29 @@ export function BookmarkDisplaySettingsDialog({
                       </option>
                     </select>
                   </label>
+                  <label className="settings-checkbox-row">
+                    <input
+                      aria-describedby="auto-crop-popup-screenshots-help"
+                      defaultChecked={
+                        settings.autoCropPopupScreenshots ?? false
+                      }
+                      name="autoCropPopupScreenshots"
+                      type="checkbox"
+                    />
+                    <span>
+                      {t(
+                        'displaySettings.bookmarkBehavior.autoCropPopupScreenshots',
+                      )}
+                    </span>
+                  </label>
+                  <p
+                    className="settings-dialog__help"
+                    id="auto-crop-popup-screenshots-help"
+                  >
+                    {t(
+                      'displaySettings.bookmarkBehavior.autoCropPopupScreenshotsHelp',
+                    )}
+                  </p>
                   {toolbarSavedStatusPermissionAvailable ? (
                     <label className="settings-checkbox-row">
                       <input
@@ -1896,6 +2047,20 @@ export function BookmarkDisplaySettingsDialog({
                     />
                     <span>
                       {t('displaySettings.accessibility.highContrast')}
+                    </span>
+                  </label>
+                  <label className="settings-checkbox-row">
+                    <input
+                      defaultChecked={
+                        settings.showDetailsColumnReorderControls ?? false
+                      }
+                      name="showDetailsColumnReorderControls"
+                      type="checkbox"
+                    />
+                    <span>
+                      {t(
+                        'displaySettings.accessibility.showDetailsColumnReorderControls',
+                      )}
                     </span>
                   </label>
                   <p className="settings-dialog__help">

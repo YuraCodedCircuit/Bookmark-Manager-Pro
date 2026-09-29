@@ -22,6 +22,7 @@ import {
   bookmarkViewSchema,
   cardSizeSchema,
   cardSpacingSchema,
+  detailsColumnOrderSchema,
   defaultFolderDisplaySettings,
   defaultFolderAppearanceSettings,
   type ProfileSettings,
@@ -54,6 +55,7 @@ const creationInputSchema = z.object({
   bookmarkGroupBy: bookmarkGroupBySchema.optional(),
   backgroundAppearance: folderBackgroundAppearanceSchema.optional(),
   detailsTableTransparency: detailsTableTransparencySchema.optional(),
+  detailsColumnOrder: detailsColumnOrderSchema.optional(),
   includeNavigationBackground: z.boolean().optional(),
   navigationTransparency: navigationTransparencySchema.optional(),
 });
@@ -76,6 +78,7 @@ export interface CreateFolderInput {
   bookmarkGroupBy?: ProfileSettings['bookmarkGroupBy'];
   backgroundAppearance?: FolderBackgroundAppearance | undefined;
   detailsTableTransparency?: number | undefined;
+  detailsColumnOrder?: ProfileSettings['detailsColumnOrder'];
   includeNavigationBackground?: boolean | undefined;
   navigationTransparency?: number | undefined;
 }
@@ -514,6 +517,9 @@ export class ManageBookmarks {
           defaultFolderDisplaySettings.bookmarkSortDirection,
         bookmarkGroupBy:
           value.bookmarkGroupBy ?? defaultFolderDisplaySettings.bookmarkGroupBy,
+        detailsColumnOrder:
+          value.detailsColumnOrder ??
+          defaultFolderDisplaySettings.detailsColumnOrder,
         backgroundAppearance:
           value.backgroundAppearance ??
           DEFAULT_FOLDER_STYLE.backgroundAppearance,
@@ -647,6 +653,22 @@ export class ManageBookmarks {
     await (expectedUpdatedAt === undefined
       ? this.repository.updateFolder(updated)
       : this.repository.updateFolder(updated, expectedUpdatedAt));
+  }
+
+  /** Persists a validated Details-column permutation for any folder, including Home. */
+  async updateFolderDetailsColumnOrder(
+    profileId: string,
+    folderId: string,
+    order: readonly string[],
+  ): Promise<void> {
+    const existing = await this.repository.getFolder(profileId, folderId);
+    if (!existing) throw new Error('folder-not-found');
+    const updated = folderSchema.parse({
+      ...existing,
+      detailsColumnOrder: detailsColumnOrderSchema.parse(order),
+      updatedAt: this.now(),
+    });
+    await this.repository.updateFolder(updated);
   }
 
   private async assertParent(
