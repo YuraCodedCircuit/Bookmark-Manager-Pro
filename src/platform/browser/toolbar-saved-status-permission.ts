@@ -8,11 +8,9 @@ const tabsPermission: Permissions.Permissions = { permissions: ['tabs'] };
 export { ToolbarSavedStatusPermissionDeniedError };
 
 /** Requests the optional URL visibility needed for proactive per-tab status. */
-export async function requestToolbarSavedStatusPermission(): Promise<boolean> {
-  if (await browser.permissions.contains(tabsPermission)) return false;
+export async function requestToolbarSavedStatusPermission(): Promise<void> {
   if (!(await browser.permissions.request(tabsPermission)))
     throw new ToolbarSavedStatusPermissionDeniedError();
-  return true;
 }
 
 /** Releases optional tab access when no active profile setting needs it. */

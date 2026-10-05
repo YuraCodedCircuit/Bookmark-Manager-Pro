@@ -76,13 +76,15 @@ to the canonical URL that was checked, and a later decision preserves the
 editor's transient values. Storage access remains behind repository contracts;
 presentation components receive services through explicit dependencies.
 
-Image selection and visible-page capture feed a shared, dependency-free crop
-pipeline. Crop geometry, zoom, source data, and preview output remain in React
-state. The pipeline validates source dimensions, renders the selected region to
-a canvas, strips source metadata through re-encoding, and returns bounded PNG
-or WebP data. IndexedDB receives only the chosen result through the bookmark or
-folder save transaction. Popup automatic crop uses the same pipeline and keeps
-the original source available until Save bookmark.
+Full-application image selection and action-popup visible-page capture feed a
+shared, dependency-free crop pipeline. The popup omits file selection because
+browser-owned action popups close when an operating-system picker takes focus.
+Crop geometry, zoom, source data, and preview output remain in React state. The
+pipeline validates source dimensions, renders the selected region to a canvas,
+strips source metadata through re-encoding, and returns bounded PNG or WebP
+data. IndexedDB receives only the chosen result through the bookmark or folder
+save transaction. Popup automatic crop uses the same pipeline and keeps the
+original source available until Save bookmark.
 
 Password generation is a profile-independent domain operation. The domain
 module validates the selected groups and length, uses rejection sampling with
@@ -176,6 +178,14 @@ remain UI-surface responsibilities because extension workers have no DOM or
   promise queue. Capacity failures apply oldest-first retention and synchronize
   only successfully persisted entries; other failures retain an unavailable
   diagnostic state.
+  Creation captures only the destination folder lineage plus the created item;
+  edits, favorite changes, style changes, and deletion capture only the affected
+  item or deleted subtree, its favorites, and required folder ancestry. These
+  repository-scoped reads preserve complete rollback data without loading the
+  rest of the profile or unrelated image payloads. Recovery snapshots remain a
+  separate durable system and never contain session undo state. Normal history
+  appends write only the new or status-changed patch and remove expired IDs;
+  unchanged image-bearing history records are not rewritten.
 - `browser.storage.local` owns only small browser-integrated preferences and
   boot metadata when IndexedDB is not suitable.
 - `browser.storage.session` owns the validated background-preflight snapshot for

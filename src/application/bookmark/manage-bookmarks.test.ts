@@ -38,10 +38,25 @@ const root = {
 
 function repository(): BookmarkRepository {
   return {
-    addBookmark: vi.fn(async () => undefined),
-    addFolder: vi.fn(async () => undefined),
+    addBookmark: vi.fn(async (bookmark) => bookmark),
+    addFolder: vi.fn(async (folder) => folder),
     addItems: vi.fn(async () => undefined),
     captureProfileState: vi.fn(async () => ({
+      bookmarks: [],
+      favorites: [],
+      folders: [root],
+    })),
+    captureFolderLineageState: vi.fn(async () => ({
+      bookmarks: [],
+      favorites: [],
+      folders: [root],
+    })),
+    captureItemState: vi.fn(async () => ({
+      bookmarks: [],
+      favorites: [],
+      folders: [root],
+    })),
+    captureStateByIds: vi.fn(async () => ({
       bookmarks: [],
       favorites: [],
       folders: [root],
@@ -72,7 +87,7 @@ function repository(): BookmarkRepository {
 describe('ManageBookmarks', () => {
   it('matches duplicate bookmarks by canonical URL across the profile', async () => {
     const repo = repository();
-    vi.mocked(repo.listBookmarks).mockResolvedValue([
+    vi.mocked(repo.listBookmarksByUrl).mockResolvedValue([
       {
         cardAppearance: { kind: 'color', value: '#123456' },
         createdAt: 1,
@@ -94,6 +109,7 @@ describe('ManageBookmarks', () => {
     await expect(
       service.hasBookmarkWithUrl(profileId, 'https://example.com', itemId),
     ).resolves.toBe(false);
+    expect(repo.listBookmarks).not.toHaveBeenCalled();
   });
 
   it('returns each folder containing a canonical URL match only once', async () => {

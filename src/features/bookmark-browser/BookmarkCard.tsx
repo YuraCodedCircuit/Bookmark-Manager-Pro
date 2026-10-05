@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next';
 
 import type { Bookmark } from '../../domain/bookmark';
 import { appearanceStyle } from '../../shared/appearance-style';
+import {
+  resolveBookmarkClickOpening,
+  type BookmarkClickOpening,
+} from '../../shared/bookmark-click-opening';
 import { titleInitials } from '../../shared/title-initials';
 
 interface BookmarkCardProps extends Omit<
@@ -13,7 +17,8 @@ interface BookmarkCardProps extends Omit<
   faviconDisplay?: 'available' | 'initials' | undefined;
   missingFavicon?: 'built-in' | 'initials' | 'none' | undefined;
   opening: 'current-tab' | 'new-tab';
-  onOpen?: (bookmark: Bookmark) => void;
+  onOpen?: (bookmark: Bookmark, opening: BookmarkClickOpening) => void;
+  showTextTooltips?: boolean | undefined;
 }
 
 export const BookmarkCard = forwardRef<HTMLAnchorElement, BookmarkCardProps>(
@@ -24,6 +29,7 @@ export const BookmarkCard = forwardRef<HTMLAnchorElement, BookmarkCardProps>(
       missingFavicon = 'initials',
       opening,
       onOpen,
+      showTextTooltips = false,
       ...anchorProps
     },
     ref,
@@ -42,7 +48,7 @@ export const BookmarkCard = forwardRef<HTMLAnchorElement, BookmarkCardProps>(
         onClick={(event) => {
           if (!onOpen) return;
           event.preventDefault();
-          onOpen(bookmark);
+          onOpen(bookmark, resolveBookmarkClickOpening(opening, event));
         }}
         rel="noreferrer"
         ref={ref}
@@ -66,8 +72,12 @@ export const BookmarkCard = forwardRef<HTMLAnchorElement, BookmarkCardProps>(
             </span>
           ) : null}
           <span className="bookmark-card__copy">
-            <strong>{bookmark.title}</strong>
-            <span>{bookmark.url}</span>
+            <strong title={showTextTooltips ? bookmark.title : undefined}>
+              {bookmark.title}
+            </strong>
+            <span title={showTextTooltips ? bookmark.url : undefined}>
+              {bookmark.url}
+            </span>
           </span>
         </span>
       </a>

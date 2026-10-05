@@ -3,6 +3,7 @@ import Dexie from 'dexie';
 import type {
   BookmarkRepository,
   FolderContents,
+  UndoStateIds,
 } from '../application/bookmark/bookmark-repository';
 import { bookmarkSchema, type Bookmark } from '../domain/bookmark';
 import {
@@ -178,18 +179,23 @@ export class DexieBookmarkRepository implements BookmarkRepository {
   }
 
   async nextIndex(profileId: string, parentId: string): Promise<number> {
-    const contents = await this.listContents(profileId, parentId);
-    return (
-      Math.max(
-        -1,
-        ...contents.bookmarks.map(({ index }) => index),
-        ...contents.folders.map(({ index }) => index),
-      ) + 1
-    );
+    const rangeStart = [profileId, parentId, Dexie.minKey];
+    const rangeEnd = [profileId, parentId, Dexie.maxKey];
+    const [lastBookmark, lastFolder] = await Promise.all([
+      this.database.bookmarks
+        .where('[profileId+parentId+index]')
+        .between(rangeStart, rangeEnd, true, true)
+        .last(),
+      this.database.folders
+        .where('[profileId+parentId+index]')
+        .between(rangeStart, rangeEnd, true, true)
+        .last(),
+    ]);
+    return Math.max(lastBookmark?.index ?? -1, lastFolder?.index ?? -1) + 1;
   }
 
-  async addBookmark(bookmark: Bookmark): Promise<void> {
-    await this.database.transaction(
+  async addBookmark(bookmark: Bookmark): Promise<Bookmark> {
+    return this.database.transaction(
       'rw',
       [
         this.database.bookmarks,
@@ -204,30 +210,34 @@ export class DexieBookmarkRepository implements BookmarkRepository {
           bookmark.profileId,
           bookmark.parentId,
         );
-        await this.database.bookmarks.add({ ...bookmark, index });
+        const created = bookmarkSchema.parse({ ...bookmark, index });
+        await this.database.bookmarks.add(created);
         await this.touchAncestorsInTransaction(
           bookmark.profileId,
           bookmark.parentId,
           bookmark.updatedAt,
         );
+        return created;
       },
     );
   }
 
-  async addFolder(folder: Folder): Promise<void> {
-    await this.database.transaction(
+  async addFolder(folder: Folder): Promise<Folder> {
+    return this.database.transaction(
       'rw',
-      [this.database.bookmarks, this.database.folders],
+      [
+        this.database.bookmarks,
+        this.database.folders,
+        this.database.folderWallpapers,
+      ],
       async () => {
         if (!folder.parentId) throw new Error('parent-folder-not-found');
         const parent = await this.database.folders.get(folder.parentId);
         if (!parent || parent.profileId !== folder.profileId)
           throw new Error('parent-folder-not-found');
         const index = await this.nextIndex(folder.profileId, folder.parentId);
-        await this.database.folders.add({
-          ...(await this.toStoredFolder(folder)),
-          index,
-        });
+        const created = folderSchema.parse({ ...folder, index });
+        await this.database.folders.add(await this.toStoredFolder(created));
         if (folder.parentId) {
           await this.touchAncestorsInTransaction(
             folder.profileId,
@@ -235,6 +245,7 @@ export class DexieBookmarkRepository implements BookmarkRepository {
             folder.updatedAt,
           );
         }
+        return created;
       },
     );
   }
@@ -512,6 +523,99 @@ export class DexieBookmarkRepository implements BookmarkRepository {
     return undoProfileStateSchema.parse({ bookmarks, favorites, folders });
   }
 
+  async captureFolderLineageState(
+    profileId: string,
+    folderId: string,
+  ): Promise<UndoProfileState> {
+    const folderIds = await this.folderLineageIds(profileId, folderId);
+    return this.captureStateByIds(profileId, {
+      bookmarkIds: [],
+      favoriteItemIds: [],
+      folderIds,
+    });
+  }
+
+  async captureItemState(
+    profileId: string,
+    itemId: string,
+  ): Promise<UndoProfileState> {
+    const bookmark = await this.database.bookmarks.get(itemId);
+    if (bookmark?.profileId === profileId) {
+      return this.captureStateByIds(profileId, {
+        bookmarkIds: [itemId],
+        favoriteItemIds: [itemId],
+        folderIds: await this.folderLineageIds(profileId, bookmark.parentId),
+      });
+    }
+
+    const target = await this.database.folders.get(itemId);
+    if (!target || target.profileId !== profileId)
+      throw new Error('undo-item-not-found');
+    const folders = await this.database.folders
+      .where('profileId')
+      .equals(profileId)
+      .toArray();
+    const descendantIds = new Set([itemId]);
+    let foundDescendant = true;
+    while (foundDescendant) {
+      foundDescendant = false;
+      for (const folder of folders) {
+        if (
+          folder.parentId &&
+          descendantIds.has(folder.parentId) &&
+          !descendantIds.has(folder.id)
+        ) {
+          descendantIds.add(folder.id);
+          foundDescendant = true;
+        }
+      }
+    }
+    const bookmarks = await this.database.bookmarks
+      .where('profileId')
+      .equals(profileId)
+      .filter(({ parentId }) => descendantIds.has(parentId))
+      .primaryKeys();
+    const ancestorIds = target.parentId
+      ? await this.folderLineageIds(profileId, target.parentId)
+      : [];
+    return this.captureStateByIds(profileId, {
+      bookmarkIds: bookmarks,
+      favoriteItemIds: [...bookmarks, ...descendantIds],
+      folderIds: [...ancestorIds, ...descendantIds],
+    });
+  }
+
+  async captureStateByIds(
+    profileId: string,
+    ids: UndoStateIds,
+  ): Promise<UndoProfileState> {
+    const [storedBookmarks, storedFolders, storedFavorites] = await Promise.all(
+      [
+        this.database.bookmarks.bulkGet([...new Set(ids.bookmarkIds)]),
+        this.database.folders.bulkGet([...new Set(ids.folderIds)]),
+        this.database.favoriteItems.bulkGet(
+          [...new Set(ids.favoriteItemIds)].map(
+            (itemId) => [profileId, itemId] as [string, string],
+          ),
+        ),
+      ],
+    );
+    const bookmarks = storedBookmarks.flatMap((value) =>
+      value?.profileId === profileId ? [bookmarkSchema.parse(value)] : [],
+    );
+    const folders = await Promise.all(
+      storedFolders.flatMap((value) =>
+        value?.profileId === profileId
+          ? [this.hydrateFolder(folderSchema.parse(value))]
+          : [],
+      ),
+    );
+    const favorites = storedFavorites.flatMap((value) =>
+      value?.profileId === profileId ? [favoriteItemSchema.parse(value)] : [],
+    );
+    return undoProfileStateSchema.parse({ bookmarks, favorites, folders });
+  }
+
   async restoreProfileState(
     profileId: string,
     state: UndoProfileState,
@@ -586,5 +690,25 @@ export class DexieBookmarkRepository implements BookmarkRepository {
       await this.database.folders.update(currentId, { updatedAt });
       currentId = folder.parentId;
     }
+  }
+
+  private async folderLineageIds(
+    profileId: string,
+    folderId: string,
+  ): Promise<string[]> {
+    const ids: string[] = [];
+    const visited = new Set<string>();
+    let currentId: string | null = folderId;
+    while (currentId) {
+      if (visited.has(currentId)) throw new Error('folder-cycle-detected');
+      visited.add(currentId);
+      const folder: Folder | undefined =
+        await this.database.folders.get(currentId);
+      if (!folder || folder.profileId !== profileId)
+        throw new Error('parent-folder-not-found');
+      ids.push(currentId);
+      currentId = folder.parentId;
+    }
+    return ids;
   }
 }

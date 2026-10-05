@@ -1,12 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { contains, request } = vi.hoisted(() => ({
-  contains: vi.fn(),
-  request: vi.fn(),
-}));
+const request = vi.hoisted(() => vi.fn());
 
 vi.mock('webextension-polyfill', () => ({
-  default: { permissions: { contains, request } },
+  default: { permissions: { request } },
 }));
 
 import {
@@ -20,7 +17,6 @@ describe('requestAndReadClipboardText', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    contains.mockResolvedValue(false);
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: { readText },
@@ -29,10 +25,6 @@ describe('requestAndReadClipboardText', () => {
       configurable: true,
       value: execCommand,
     });
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      callback(0);
-      return 1;
-    });
   });
 
   it('requests optional clipboard access before reading text', async () => {
@@ -40,7 +32,6 @@ describe('requestAndReadClipboardText', () => {
     readText.mockResolvedValue('Clipboard text');
 
     await expect(requestAndReadClipboardText()).resolves.toBe('Clipboard text');
-    expect(contains).toHaveBeenCalledWith({ permissions: ['clipboardRead'] });
     expect(request).toHaveBeenCalledWith({ permissions: ['clipboardRead'] });
     expect(request.mock.invocationCallOrder[0]).toBeLessThan(
       readText.mock.invocationCallOrder[0]!,
@@ -56,16 +47,16 @@ describe('requestAndReadClipboardText', () => {
     expect(readText).not.toHaveBeenCalled();
   });
 
-  it('reads without requesting again when clipboard access is already granted', async () => {
-    contains.mockResolvedValue(true);
+  it('reuses an existing grant through the idempotent permission request', async () => {
+    request.mockResolvedValue(true);
     readText.mockResolvedValue('Clipboard text');
 
     await expect(requestAndReadClipboardText()).resolves.toBe('Clipboard text');
-    expect(request).not.toHaveBeenCalled();
+    expect(request).toHaveBeenCalledOnce();
   });
 
   it('uses the extension paste command when the Async Clipboard API is unavailable', async () => {
-    contains.mockResolvedValue(true);
+    request.mockResolvedValue(true);
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: undefined,
@@ -84,7 +75,6 @@ describe('requestAndReadClipboardText', () => {
   });
 
   it('falls back when the Async Clipboard read rejects after permission is granted', async () => {
-    contains.mockResolvedValue(false);
     request.mockResolvedValue(true);
     readText.mockRejectedValue(new DOMException('Document is not focused'));
     execCommand.mockImplementation(() => {

@@ -275,8 +275,12 @@ void i18n.use(initReactI18next).init({
             'A local-first bookmark manager for organizing browser bookmarks.',
           localStorage:
             'Bookmark Manager Pro stores bookmark and profile data locally in this browser.',
-          madeWith: 'Copyright © 2026 YuraCodedCircuit',
+          copyright: 'Copyright © 2026',
           releaseStatus: 'Release status',
+          review: {
+            edge: 'Review on Microsoft Edge Add-ons',
+            firefox: 'Review on Firefox Add-ons',
+          },
           title: 'Bookmark Manager Pro',
           version: 'Application version',
         },
@@ -1078,6 +1082,8 @@ void i18n.use(initReactI18next).init({
           scrollbars: 'Scrollbars',
           search: 'Search settings',
           suggestFeature: 'Suggest a feature.',
+          suggestFeatureHelp:
+            'Opens GitHub, where you can suggest a new option.',
           saving: 'Saving…',
           size: 'Card size',
           small: 'Small',
@@ -1236,6 +1242,7 @@ void i18n.use(initReactI18next).init({
           label: 'Bookmark actions',
         },
         editableContextMenu: {
+          clearInput: 'Clear input',
           items: {
             clear: 'Clear',
             copy: 'Copy',

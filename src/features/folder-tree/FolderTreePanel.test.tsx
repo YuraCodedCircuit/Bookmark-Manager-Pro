@@ -1,4 +1,10 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -24,6 +30,20 @@ const folder = {
   tags: [],
   title: 'Pinned folder',
   updatedAt: 2,
+};
+
+const bookmark = {
+  cardAppearance: { kind: 'color' as const, value: '#123456' },
+  createdAt: 2,
+  id: '22222222-2222-4222-8222-222222222222',
+  index: 0,
+  note: '',
+  parentId: folder.id,
+  profileId: folder.profileId,
+  tags: [],
+  title: 'Pinned bookmark',
+  updatedAt: 2,
+  url: 'https://example.com/',
 };
 
 describe('FolderTreePanel', () => {
@@ -72,5 +92,34 @@ describe('FolderTreePanel', () => {
       kind: 'folder',
       value: folder,
     });
+  });
+
+  it('passes bookmark modifier-click opening overrides to navigation', () => {
+    const onOpenItem = vi.fn();
+    render(
+      <FolderTreePanel
+        favorites={[{ kind: 'bookmark', value: bookmark }]}
+        folderTree={{ id: folder.id, name: 'Home' }}
+        isOpen
+        onAfterClose={vi.fn()}
+        onClose={vi.fn()}
+        onOpenItem={onOpenItem}
+        onRemoveFavorite={vi.fn()}
+        onSelect={vi.fn()}
+        recent={[]}
+      />,
+    );
+    const shortcut = screen.getByRole('button', { name: 'Pinned bookmark' });
+
+    fireEvent.click(shortcut, { ctrlKey: true });
+    expect(onOpenItem).toHaveBeenLastCalledWith(
+      { kind: 'bookmark', value: bookmark },
+      'new-tab',
+    );
+    fireEvent.click(shortcut, { ctrlKey: true, shiftKey: true });
+    expect(onOpenItem).toHaveBeenLastCalledWith(
+      { kind: 'bookmark', value: bookmark },
+      'new-window',
+    );
   });
 });

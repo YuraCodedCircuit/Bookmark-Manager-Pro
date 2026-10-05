@@ -8,6 +8,10 @@ import type { NavigationItem } from '../../application/bookmark/manage-bookmarks
 import { PinIcon } from '../../components/icons/PinIcon';
 import { FolderIcon } from '../../components/icons/FolderIcon';
 import { BookmarkIcon } from '../../components/icons/BookmarkIcon';
+import {
+  resolveBookmarkClickOpening,
+  type BookmarkClickOpening,
+} from '../../shared/bookmark-click-opening';
 
 interface FolderTreePanelProps {
   isOpen: boolean;
@@ -17,7 +21,7 @@ interface FolderTreePanelProps {
   onAfterClose: () => void;
   onClose: () => void;
   onSelect: (path: readonly string[], folderId: string) => void;
-  onOpenItem: (item: NavigationItem) => void;
+  onOpenItem: (item: NavigationItem, opening: BookmarkClickOpening) => void;
   onRemoveFavorite: (item: NavigationItem) => void;
 }
 
@@ -100,7 +104,7 @@ function NavigationSection({
   firstItemRef?: RefObject<HTMLButtonElement | null>;
   label: string;
   labelId: string;
-  onOpenItem: (item: NavigationItem) => void;
+  onOpenItem: (item: NavigationItem, opening: BookmarkClickOpening) => void;
   onRemoveFavorite?: (item: NavigationItem) => void;
 }) {
   const { t } = useTranslation();
@@ -115,7 +119,14 @@ function NavigationSection({
             <li key={`${item.kind}-${item.value.id}`}>
               <button
                 className="folder-tree-shortcuts__open"
-                onClick={() => onOpenItem(item)}
+                onClick={(event) =>
+                  onOpenItem(
+                    item,
+                    item.kind === 'bookmark'
+                      ? resolveBookmarkClickOpening('current-tab', event)
+                      : 'current-tab',
+                  )
+                }
                 ref={index === 0 ? firstItemRef : undefined}
                 title={item.value.title}
                 type="button"

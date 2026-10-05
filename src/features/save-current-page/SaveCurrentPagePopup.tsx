@@ -37,7 +37,7 @@ export interface SaveCurrentPagePopupDependencies {
   activityLog: Pick<ManageActivityLog, 'record'>;
   bookmarkManager: Pick<
     ManageBookmarks,
-    'captureUndoState' | 'createBookmark' | 'listBookmarkLocationsByUrl'
+    'captureUndoLineage' | 'createBookmark' | 'listBookmarkLocationsByUrl'
   >;
   captureCurrentTab(windowId: number): Promise<string>;
   close(): void;
@@ -337,10 +337,11 @@ export function SaveCurrentPagePopup({
       throw new Error('popup-profile-changed');
     }
     const mutate = async () => {
-      const before = await dependencies.bookmarkManager.captureUndoState(
+      const before = await dependencies.bookmarkManager.captureUndoLineage(
         ready.profileId,
+        selectedFolder.id,
       );
-      await dependencies.bookmarkManager.createBookmark({
+      const created = await dependencies.bookmarkManager.createBookmark({
         ...value,
         parentId: selectedFolder.id,
         profileId: ready.profileId,
@@ -349,21 +350,22 @@ export function SaveCurrentPagePopup({
             ? [...value.tags].sort((left, right) => left.localeCompare(right))
             : value.tags,
       });
-      const after = await dependencies.bookmarkManager.captureUndoState(
-        ready.profileId,
-      );
-      const beforeIds = new Set(before.bookmarks.map(({ id }) => id));
-      const created = after.bookmarks.find(({ id }) => !beforeIds.has(id));
-      if (created) {
-        await dependencies.undoHistory.record({
-          action: 'created',
-          after,
-          before,
-          itemId: created.id,
-          itemType: 'bookmark',
-          profileId: ready.profileId,
-        });
-      }
+      const afterLineage =
+        await dependencies.bookmarkManager.captureUndoLineage(
+          ready.profileId,
+          selectedFolder.id,
+        );
+      await dependencies.undoHistory.record({
+        action: 'created',
+        after: {
+          ...afterLineage,
+          bookmarks: [created],
+        },
+        before,
+        itemId: created.id,
+        itemType: 'bookmark',
+        profileId: ready.profileId,
+      });
     };
     const undoReady = await dependencies.initializeUndo();
     if (undoReady) await dependencies.undoHistory.runMutation(mutate);
@@ -601,6 +603,7 @@ export function SaveCurrentPagePopup({
         }
       }}
       onClose={dependencies.close}
+      showImageAppearance={false}
       onAutoCropResult={(outcome) =>
         record(
           outcome === 'succeeded'

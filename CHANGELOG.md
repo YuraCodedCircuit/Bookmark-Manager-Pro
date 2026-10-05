@@ -6,6 +6,45 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.6.1 - 2026-10-05
+
+### Performance
+
+- Reduced bookmark and folder save, edit, favorite, style, and deletion delays
+  by limiting session Undo preparation to affected records and using the saved
+  folder-order index instead of scanning unrelated profile content.
+
+### Improved
+
+- Card view now shows the complete bookmark title or URL in separate native
+  tooltips when the corresponding truncated value is hovered.
+- File-selection buttons, radio controls, and checkboxes now match the app's
+  visual style, and editable single-line fields offer a Clear input action only
+  while they contain text.
+- Empty Settings searches now explain that Suggest a feature opens GitHub to
+  request a new option.
+- About now offers a review link matched to Firefox or Edge and links the
+  publisher name to the GitHub project.
+- Folder-tree search now uses the same clear-button shape as other text fields.
+- Ctrl+click now opens bookmarks in a new tab, while Ctrl+Shift+click opens them
+  in a new window, regardless of the saved opening preference.
+
+### Fixed
+
+- Canceling an image file picker now keeps its window open, clears only the
+  pending filename, and preserves an existing image and other unsaved values.
+- Removed image-file selection from the toolbar popup, where browsers close the
+  popup as soon as the operating-system picker opens. Screenshot remains
+  available, image-based remembered appearances fall back to Color there, and
+  the full application continues to support image uploads.
+- Fixed creation of folders with image backgrounds so the wallpaper and folder
+  record are saved together in the intended local transaction.
+- Fixed Firefox tab-access requests from Settings by preparing the permission
+  handler before interaction, allowing the browser to show its prompt directly
+  from the user's Allow tab access action.
+- Fixed the editable-field Paste command in Firefox so its optional clipboard
+  permission prompt remains connected to the user's action.
+
 ## 0.6.0 - 2026-09-29
 
 ### UI/UX

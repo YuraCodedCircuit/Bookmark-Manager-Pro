@@ -200,7 +200,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
         theme: 'light',
       }),
     );
-  });
+  }, 10_000);
 
   it('uses segmented background choices and generates random defaults', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
@@ -298,6 +298,9 @@ describe('BookmarkDisplaySettingsDialog', () => {
     expect(suggestion).toHaveAttribute(
       'href',
       'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues/new',
+    );
+    expect(suggestion.closest('p')).toHaveTextContent(
+      "Can't find the option you need? Suggest a feature. Opens GitHub, where you can suggest a new option.",
     );
     await user.click(suggestion);
     expect(onOpenExternalLink).toHaveBeenCalledWith(

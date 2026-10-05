@@ -11,6 +11,7 @@ import type { Profile } from '../../domain/profile';
 import type { DateTimeFormatPreference } from '../../shared/date-time-format';
 import { formatDateTime } from '../../shared/date-time-format';
 import { ClearIcon } from '../../components/icons/ClearIcon';
+import { ClearableInput } from '../../components/ClearableInput';
 
 interface BackupDialogProps {
   activeProfile: Profile;
@@ -484,7 +485,7 @@ function CreateSnapshotForm({
       </div>
       <label>
         <span>{t('backup.nameOptional')}</span>
-        <input
+        <ClearableInput
           maxLength={100}
           name="name"
           placeholder={t('backup.namePlaceholder')}

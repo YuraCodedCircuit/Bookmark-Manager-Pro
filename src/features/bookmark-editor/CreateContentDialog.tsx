@@ -7,11 +7,14 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ClearableInput } from '../../components/ClearableInput';
+
 import type { ImageFit, ItemAppearance } from '../../domain/bookmark';
 import { parseGradientDirection } from '../../shared/gradient-direction';
 import { GradientDirectionControl } from '../../components/GradientDirectionControl';
 import { ImageFitSelect } from '../../components/ImageFitSelect';
 import { appearanceStyle } from '../../shared/appearance-style';
+import { useFileInputCancelRef } from '../../shared/file-input-cancel';
 import {
   ImageCropDialog,
   type ImageCropSession,
@@ -58,6 +61,8 @@ interface CreateContentDialogProps {
   onAutoCropResult?:
     ((outcome: 'fallback' | 'succeeded') => Promise<void> | void) | undefined;
   parentName: string;
+  /** Omits uploaded-image appearance where the host cannot retain file pickers. */
+  showImageAppearance?: boolean | undefined;
   titleKey?: string | undefined;
 }
 
@@ -75,16 +80,24 @@ export function CreateContentDialog({
   onCropFailure,
   onAutoCropResult,
   parentName,
+  showImageAppearance = true,
   titleKey,
 }: CreateContentDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const cropButtonRef = useRef<HTMLButtonElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const imageInputCancelRef = useFileInputCancelRef(imageInputRef);
   const mode = initialValue ? 'edit' : 'create';
+  const requestedAppearanceKind =
+    initialValue?.cardAppearance.kind ?? defaultAppearance?.kind ?? 'color';
   const [appearanceKind, setAppearanceKind] = useState<
     ItemAppearance['kind'] | 'screenshot'
-  >(initialValue?.cardAppearance.kind ?? defaultAppearance?.kind ?? 'color');
+  >(
+    requestedAppearanceKind === 'image' && !showImageAppearance
+      ? 'color'
+      : requestedAppearanceKind,
+  );
   const [color, setColor] = useState(
     initialValue?.cardAppearance.kind === 'color'
       ? initialValue.cardAppearance.value
@@ -308,6 +321,7 @@ export function CreateContentDialog({
       className="content-editor"
       onCancel={(event) => {
         event.preventDefault();
+        if (event.target !== event.currentTarget) return;
         if (!isSaving) resetAndClose();
       }}
       ref={dialogRef}
@@ -338,7 +352,7 @@ export function CreateContentDialog({
 
         <label>
           <span>{t('contentEditor.name')}</span>
-          <input
+          <ClearableInput
             autoFocus
             defaultValue={initialValue?.title}
             maxLength={200}
@@ -349,7 +363,7 @@ export function CreateContentDialog({
         {kind === 'bookmark' ? (
           <label>
             <span>{t('contentEditor.url')}</span>
-            <input
+            <ClearableInput
               autoCapitalize="none"
               autoCorrect="off"
               inputMode="url"
@@ -364,7 +378,7 @@ export function CreateContentDialog({
         ) : null}
         <label>
           <span>{t('contentEditor.tags')}</span>
-          <input
+          <ClearableInput
             maxLength={1000}
             name="tags"
             defaultValue={initialValue?.tags.join(', ')}
@@ -390,7 +404,7 @@ export function CreateContentDialog({
               [
                 'color',
                 'gradient',
-                'image',
+                ...(showImageAppearance ? (['image'] as const) : []),
                 ...(onCaptureScreenshot ? (['screenshot'] as const) : []),
               ] as const
             ).map((option) => (
@@ -503,7 +517,7 @@ export function CreateContentDialog({
                     setError(t('contentEditor.imageError'));
                   reader.readAsDataURL(file);
                 }}
-                ref={imageInputRef}
+                ref={imageInputCancelRef}
                 type="file"
               />
               {activeImage ? (

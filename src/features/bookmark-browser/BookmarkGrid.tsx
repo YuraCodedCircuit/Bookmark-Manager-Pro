@@ -34,6 +34,7 @@ import type {
   ProfileSettings,
 } from '../../domain/profile-settings';
 import { appearanceStyle } from '../../shared/appearance-style';
+import type { BookmarkClickOpening } from '../../shared/bookmark-click-opening';
 import { titleInitials } from '../../shared/title-initials';
 import { organizeBookmarkItems } from './organize-bookmark-items';
 import {
@@ -57,7 +58,7 @@ interface BookmarkGridProps {
   folderOpening?: NonNullable<ProfileSettings['folderOpening']>;
   interactionLocked?: boolean;
   onOpenFolder: (folder: Folder) => void;
-  onOpenBookmark?: (bookmark: Bookmark) => void;
+  onOpenBookmark?: (bookmark: Bookmark, opening: BookmarkClickOpening) => void;
   onDetailsColumnOrderChange?: (
     order: readonly DetailsColumn[],
   ) => Promise<void>;
@@ -467,6 +468,7 @@ export function BookmarkGrid({
                   key={item.value.id}
                   missingFavicon={view.missingFavicon}
                   opening={bookmarkOpening}
+                  showTextTooltips={view.bookmarkView === 'card'}
                   {...(onOpenBookmark ? { onOpen: onOpenBookmark } : {})}
                 />
               </DraggableItem>
@@ -558,7 +560,7 @@ function DragPreview({
   opening: 'current-tab' | 'new-tab';
   view: Pick<
     ProfileSettings,
-    'faviconDisplay' | 'folderIcon' | 'missingFavicon'
+    'bookmarkView' | 'faviconDisplay' | 'folderIcon' | 'missingFavicon'
   >;
 }) {
   const { t } = useTranslation();
@@ -570,6 +572,7 @@ function DragPreview({
           faviconDisplay={view.faviconDisplay}
           missingFavicon={view.missingFavicon}
           opening={opening}
+          showTextTooltips={view.bookmarkView === 'card'}
         />
       </div>
     );

@@ -10,9 +10,11 @@ import type { ManagedProfileInput } from '../../application/profile/manage-profi
 import type { ProfileListItem } from '../../application/profile/profile-management-repository';
 import type { ProfilePreferences } from '../../domain/profile-settings';
 import { ClearIcon } from '../../components/icons/ClearIcon';
+import { ClearableInput } from '../../components/ClearableInput';
 import { ProfileAvatar } from './ProfileAvatar';
 import { formatDateTime } from '../../shared/date-time-format';
 import type { DateTimeFormatPreference } from '../../shared/date-time-format';
+import { useFileInputCancelRef } from '../../shared/file-input-cancel';
 
 interface Props {
   defaultProfileIcon?: ProfilePreferences['defaultProfileIcon'];
@@ -41,6 +43,7 @@ export function ProfileManagerDialog({
   dateTimeFormat = 'browser',
 }: Props) {
   const { t, i18n } = useTranslation();
+  const iconInputCancelRef = useFileInputCancelRef<HTMLInputElement>();
   const ref = useRef<HTMLDialogElement>(null);
   const [editingId, setEditingId] = useState<string>();
   const [username, setUsername] = useState('');
@@ -108,6 +111,7 @@ export function ProfileManagerDialog({
       className="profile-window profile-manager"
       onCancel={(e) => {
         e.preventDefault();
+        if (e.target !== e.currentTarget) return;
         onClose();
       }}
       ref={ref}
@@ -136,7 +140,7 @@ export function ProfileManagerDialog({
           </h2>
           <label>
             {t('profiles.username')}
-            <input
+            <ClearableInput
               autoFocus
               maxLength={80}
               onChange={(e) => setUsername(e.target.value)}
@@ -150,6 +154,7 @@ export function ProfileManagerDialog({
               <input
                 accept=".bmp,image/bmp,image/jpeg,image/png"
                 onChange={chooseIcon}
+                ref={iconInputCancelRef}
                 type="file"
               />
             </label>

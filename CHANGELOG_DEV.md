@@ -6,6 +6,52 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.6.1 - 2026-10-05
+
+### Added
+
+- Added card-view-only native title attributes to the separate bookmark title
+  and URL elements without changing List or Details view rendering.
+- Added the shared `ClearableInput` for editable text, search, and URL controls,
+  plus application-wide checkbox, radio, and file-selector styling with native
+  semantics and forced-colors fallback. Removed the folder-tree override that
+  changed the shared clear action into a larger circular control.
+- Added Firefox and Edge store-review destinations and the GitHub project link
+  to `AboutDialog`; all links delegate to the existing validated,
+  confirmation-aware external navigation path.
+- Added a shared bookmark click-opening resolver and routed card, Details,
+  Search, Favorites, and Recent bookmark activations through its Ctrl and
+  Ctrl+Shift overrides before the existing navigation service.
+
+### Optimized
+
+- Added profile-validated bounded Undo capture for creation, edit, favorite,
+  style, and deletion mutations. Creation records only the destination lineage
+  and created item; deletion retains only its subtree, favorites, and ancestry.
+  `nextIndex()` now uses `[profileId+parentId+index]` instead of hydrating every
+  sibling, and duplicate checks use `[profileId+url]` instead of scanning every
+  bookmark. Session history appends only new or status-changed rows instead of
+  rewriting unchanged patches. The schema and durable backup format are
+  unchanged.
+
+### Fixed
+
+- Stopped bubbling file-input `cancel` events from reaching ancestor dialog
+  cancellation handlers, cleared each native input value, and retained existing
+  processed image state across every image picker.
+- Added a caller-controlled image-appearance capability to
+  `CreateContentDialog`; `SaveCurrentPagePopup` omits that radio option and its
+  OS file input, falls back from remembered images to Color, and retains
+  screenshot capture.
+- Included `folderWallpapers` in the folder-creation transaction so persisting
+  an image-background reference cannot fail because its object store is absent.
+- Made the optional `tabs` request the first browser API call from its user
+  action, preserving Firefox's transient activation without a preflight check;
+  later settings failures do not revoke access the user explicitly granted.
+- Preloaded and injected the extension-only clipboard reader before rendering,
+  and made the optional `clipboardRead` request its first browser call so
+  Firefox retains the Paste command's transient user activation.
+
 ## 0.6.0 - 2026-09-29
 
 ### Changed
@@ -163,8 +209,9 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 - Made the first-run `WelcomeDialog` content pane the definite overflow
   container and forced its scrollbar track and thumb to remain visible
   independently of the profile-owned scrollbar preference.
-- Lazy-loaded the extension-only toolbar permission adapter from the webpage
-  bootstrap so local preview and browser smoke-test startup remain available.
+- Preloaded the extension-only toolbar permission adapter before rendering in
+  extension pages so Firefox receives permission requests within the trusted
+  click activation; protocol gating keeps local preview startup available.
 - Removed the `allow`-mode bypass from popup initialization so every supported
   current URL receives the same profile-scoped duplicate lookup before render.
 - Routed rejected folder-background image selections through a failure-isolated

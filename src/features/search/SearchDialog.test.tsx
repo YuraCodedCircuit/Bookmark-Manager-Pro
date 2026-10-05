@@ -126,12 +126,81 @@ describe('SearchDialog', () => {
       within(dialog).getByRole('button', { name: /React reference/ }),
     );
     expect(onOpenResult).toHaveBeenCalledOnce();
+    expect(onOpenResult).toHaveBeenLastCalledWith(
+      expect.objectContaining({ kind: 'bookmark' }),
+      'new-tab',
+    );
     rerender(<SearchDialog {...props} isOpen={false} />);
     rerender(<SearchDialog {...props} isOpen />);
     expect(within(dialog).getByRole('searchbox')).toHaveValue('');
     expect(
       within(dialog).getByRole('button', { name: 'Search options' }),
     ).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('overrides bookmark opening for Ctrl and Ctrl+Shift clicks', async () => {
+    const onOpenResult = vi.fn();
+    render(
+      <SearchDialog
+        activeProfileId="11111111-1111-4111-8111-111111111111"
+        bookmarkOpening="current-tab"
+        currentFolderId="22222222-2222-4222-8222-222222222222"
+        initialPreferences={defaultSearchPreferences}
+        isLoading={false}
+        isOpen
+        loadFailed={false}
+        onClose={vi.fn()}
+        onOpenResult={onOpenResult}
+        onWebSearch={vi.fn()}
+        onWebUnavailable={vi.fn()}
+        sources={[
+          {
+            bookmarks: [
+              {
+                cardAppearance: { kind: 'color', value: '#123456' },
+                createdAt: 1,
+                id: '33333333-3333-4333-8333-333333333333',
+                index: 0,
+                note: '',
+                parentId: '22222222-2222-4222-8222-222222222222',
+                profileId: '11111111-1111-4111-8111-111111111111',
+                tags: [],
+                title: 'React reference',
+                updatedAt: 1,
+                url: 'https://react.dev/',
+              },
+            ],
+            folders: [],
+            profileId: '11111111-1111-4111-8111-111111111111',
+            profileName: 'Personal',
+          },
+        ]}
+        webSearchAvailable={false}
+      />,
+    );
+    fireEvent.change(screen.getByRole('searchbox'), {
+      target: { value: 'React' },
+    });
+    const result = await screen.findByRole('button', {
+      name: /React reference/,
+    });
+
+    fireEvent.click(result, { ctrlKey: true });
+    expect(onOpenResult).toHaveBeenLastCalledWith(
+      expect.objectContaining({ kind: 'bookmark' }),
+      'new-tab',
+    );
+    fireEvent.change(screen.getByRole('searchbox'), {
+      target: { value: 'React' },
+    });
+    fireEvent.click(
+      await screen.findByRole('button', { name: /React reference/ }),
+      { ctrlKey: true, shiftKey: true },
+    );
+    expect(onOpenResult).toHaveBeenLastCalledWith(
+      expect.objectContaining({ kind: 'bookmark' }),
+      'new-window',
+    );
   });
 
   it('stays in Bookmarks when Web mode is unavailable', async () => {

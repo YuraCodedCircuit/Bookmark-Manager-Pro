@@ -5,9 +5,6 @@ const clipboardReadPermission: Permissions.Permissions = {
   permissions: ['clipboardRead'],
 };
 
-const waitForBrowserPromptToClose = () =>
-  new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-
 const readClipboardTextWithLegacyPaste = (): string => {
   const pasteTarget = document.createElement('textarea');
   pasteTarget.tabIndex = -1;
@@ -40,17 +37,10 @@ export class ClipboardReadPermissionDeniedError extends Error {
 
 /** Requests clipboard access and reads transient text across extension engines. */
 export async function requestAndReadClipboardText(): Promise<string> {
-  const alreadyGranted = await browser.permissions.contains(
-    clipboardReadPermission,
-  );
-  if (!alreadyGranted) {
-    const granted = await browser.permissions.request(clipboardReadPermission);
-    if (!granted) throw new ClipboardReadPermissionDeniedError();
-
-    // Chromium can resolve the permission request before its browser-chrome
-    // prompt has fully returned focus to the extension document.
-    await waitForBrowserPromptToClose();
-  }
+  // This must remain the first asynchronous browser call in the Paste action.
+  // Firefox rejects optional permission prompts after user activation is lost.
+  const granted = await browser.permissions.request(clipboardReadPermission);
+  if (!granted) throw new ClipboardReadPermissionDeniedError();
 
   if (navigator.clipboard?.readText) {
     try {

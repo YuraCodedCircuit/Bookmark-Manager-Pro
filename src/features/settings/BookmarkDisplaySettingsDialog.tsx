@@ -39,8 +39,10 @@ import type { FolderBackgroundAppearance } from '../../domain/folder';
 import type { ImageFit } from '../../domain/bookmark';
 import { GradientDirectionControl } from '../../components/GradientDirectionControl';
 import { ImageFitSelect } from '../../components/ImageFitSelect';
+import { ClearableInput } from '../../components/ClearableInput';
 import { optimizeFolderWallpaper } from '../../shared/optimize-folder-wallpaper';
 import { parseGradientDirection } from '../../shared/gradient-direction';
+import { useFileInputCancelRef } from '../../shared/file-input-cancel';
 
 const FEATURE_REQUEST_URL =
   'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues/new';
@@ -88,6 +90,7 @@ export function BookmarkDisplaySettingsDialog({
   updateAnnouncementsEnabled = true,
 }: BookmarkDisplaySettingsDialogProps) {
   const { t } = useTranslation();
+  const wallpaperInputCancelRef = useFileInputCancelRef<HTMLInputElement>();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLElement>(null);
@@ -701,6 +704,7 @@ export function BookmarkDisplaySettingsDialog({
       className="settings-dialog"
       onCancel={(event) => {
         event.preventDefault();
+        if (event.target !== event.currentTarget) return;
         onClose();
       }}
       ref={dialogRef}
@@ -712,7 +716,7 @@ export function BookmarkDisplaySettingsDialog({
               <span className="visually-hidden">
                 {t('displaySettings.search')}
               </span>
-              <input
+              <ClearableInput
                 onChange={(event) => {
                   const nextSearch = event.currentTarget.value;
                   const nextNormalizedSearch = nextSearch
@@ -1341,6 +1345,7 @@ export function BookmarkDisplaySettingsDialog({
                             })
                             .finally(() => setProcessingWallpaper(false));
                         }}
+                        ref={wallpaperInputCancelRef}
                         required={!folderBackgroundImage}
                         type="file"
                       />
@@ -2088,7 +2093,8 @@ export function BookmarkDisplaySettingsDialog({
                     target="_blank"
                   >
                     {t('displaySettings.suggestFeature')}
-                  </a>
+                  </a>{' '}
+                  {t('displaySettings.suggestFeatureHelp')}
                 </p>
               </div>
             ) : null}

@@ -20,6 +20,7 @@ interface EditableTextContextMenuProps {
   onClose: () => void;
   onOperationFailed: () => void;
   onPastePermissionDenied: () => void;
+  readClipboardText: () => Promise<string>;
   request: EditableTextContextMenuRequest;
 }
 
@@ -42,6 +43,7 @@ export function EditableTextContextMenu({
   onClose,
   onOperationFailed,
   onPastePermissionDenied,
+  readClipboardText,
   request,
 }: EditableTextContextMenuProps) {
   const { t } = useTranslation();
@@ -133,9 +135,7 @@ export function EditableTextContextMenu({
         );
         if (action === 'cut') replaceSelection('');
       } else if (action === 'paste') {
-        const { requestAndReadClipboardText } =
-          await import('../../platform/clipboard/read-clipboard-text');
-        replaceSelection(await requestAndReadClipboardText());
+        replaceSelection(await readClipboardText());
       } else if (action === 'selectAll') {
         request.target.select();
       } else {

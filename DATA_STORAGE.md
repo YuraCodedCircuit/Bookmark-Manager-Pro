@@ -112,6 +112,13 @@ folder display choices.
   tab's history. Saved bookmark content remains local and is never copied into
   activity logs or notifications. IndexedDB capacity errors apply oldest-first
   retention; other failures mark the in-memory entries unavailable.
+  Bookmark and folder creation records the destination lineage and created
+  record. Edit, favorite, style, and deletion patches read only the affected
+  item or subtree, its favorites, and the ancestry needed for restoration and
+  cross-tab change summaries. Every bounded read rechecks profile ownership;
+  unrelated records and image payloads are excluded. History persistence
+  appends new or status-changed rows and deletes removed IDs without rewriting
+  unchanged patches.
 - `activity`: bounded privacy-safe event metadata, indexed by owning profile,
   timestamp, level, and category
 - `activityLogSettings`: per-profile capture, diagnostic threshold, retention,
@@ -147,7 +154,10 @@ and favorite records in one IndexedDB transaction. Synchronization planning is
 read-only; application of a plan creates a snapshot and records durable
 progress.
 New bookmark and folder creation verifies the parent, calculates the current
-append position, and inserts the record within one transaction. Conditional
+append position from the compound profile, parent, and order index, and inserts
+the record within one transaction. Folder creation declares wallpaper storage
+in the same transaction before persisting an image-background reference.
+Conditional
 editor writes compare the stored `updatedAt` value within the write transaction
 and reject stale input.
 

@@ -1,14 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { contains, request, sendMessage } = vi.hoisted(() => ({
-  contains: vi.fn(),
+const { request, sendMessage } = vi.hoisted(() => ({
   request: vi.fn(),
   sendMessage: vi.fn(),
 }));
 
 vi.mock('webextension-polyfill', () => ({
   default: {
-    permissions: { contains, remove: vi.fn(), request },
+    permissions: { remove: vi.fn(), request },
     runtime: { sendMessage },
   },
 }));
@@ -22,20 +21,16 @@ import {
 describe('toolbar saved-status permission', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('requests optional tab access only when it is not already granted', async () => {
-    contains.mockResolvedValue(false);
+  it('requests optional tab access directly from the user action', async () => {
     request.mockResolvedValue(true);
 
-    await expect(requestToolbarSavedStatusPermission()).resolves.toBe(true);
+    await expect(
+      requestToolbarSavedStatusPermission(),
+    ).resolves.toBeUndefined();
     expect(request).toHaveBeenCalledWith({ permissions: ['tabs'] });
-
-    contains.mockResolvedValue(true);
-    await expect(requestToolbarSavedStatusPermission()).resolves.toBe(false);
-    expect(request).toHaveBeenCalledOnce();
   });
 
   it('reports a denied request without enabling the preference', async () => {
-    contains.mockResolvedValue(false);
     request.mockResolvedValue(false);
 
     await expect(requestToolbarSavedStatusPermission()).rejects.toBeInstanceOf(

@@ -25,9 +25,13 @@ if (rootElement === null) {
   throw new Error('Application root element was not found.');
 }
 
-/** Defers the extension-only polyfill until a toolbar-status action needs it. */
+/** Loads the extension-only adapter outside the local webpage preview. */
 const loadToolbarSavedStatusPermission = () =>
   import('./platform/browser/toolbar-saved-status-permission');
+
+/** Loads the extension-only clipboard reader outside the local webpage preview. */
+const loadClipboardReader = () =>
+  import('./platform/clipboard/read-clipboard-text');
 
 /** Defers the extension-only windows API so local webpage preview still starts. */
 const openBookmarkWindow = async (url: string) =>
@@ -48,9 +52,19 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
   const profileManager = createProfileManager();
   const updateAnnouncements = createUpdateAnnouncementManager();
   const backupManager = createBackupManager();
+  // Firefox requires permissions.request() to run in the original user-action
+  // chain. Load this module before rendering so the button callback can invoke
+  // the browser API directly instead of awaiting a dynamic import first.
+  const isExtensionPage = globalThis.location.protocol.endsWith('-extension:');
+  const [toolbarSavedStatusPermission, clipboardReader] = isExtensionPage
+    ? await Promise.all([
+        loadToolbarSavedStatusPermission(),
+        loadClipboardReader(),
+      ])
+    : [undefined, undefined];
   const contentChanges = createContentChangeBridge(() => {
-    void loadToolbarSavedStatusPermission()
-      .then(({ refreshToolbarSavedStatus }) => refreshToolbarSavedStatus())
+    void toolbarSavedStatusPermission
+      ?.refreshToolbarSavedStatus()
       .catch(() => console.error('toolbar-saved-status-request-failed'));
   });
   const preflightSnapshot = await preflight.execute();
@@ -101,20 +115,22 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
           onUiReady={(operationId) => preflight.markUiReady(operationId)}
           openBookmarkWindow={openBookmarkWindow}
           profileManager={profileManager}
+          {...(clipboardReader
+            ? {
+                readClipboardText: clipboardReader.requestAndReadClipboardText,
+              }
+            : {})}
           resumePreflight={() => preflight.execute()}
           toolbarSavedStatus={{
-            refresh: async () =>
-              (
-                await loadToolbarSavedStatusPermission()
-              ).refreshToolbarSavedStatus(),
-            removePermissionIfUnused: async () =>
-              (
-                await loadToolbarSavedStatusPermission()
-              ).removeToolbarSavedStatusPermissionIfUnused(),
-            requestPermission: async () =>
-              (
-                await loadToolbarSavedStatusPermission()
-              ).requestToolbarSavedStatusPermission(),
+            refresh: () =>
+              toolbarSavedStatusPermission?.refreshToolbarSavedStatus() ??
+              Promise.resolve(),
+            removePermissionIfUnused: () =>
+              toolbarSavedStatusPermission?.removeToolbarSavedStatusPermissionIfUnused() ??
+              Promise.resolve(),
+            requestPermission: () =>
+              toolbarSavedStatusPermission?.requestToolbarSavedStatusPermission() ??
+              Promise.resolve(),
           }}
           undoHistory={undoHistory}
           updateAnnouncements={updateAnnouncements}

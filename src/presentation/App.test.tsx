@@ -89,8 +89,17 @@ const bookmarkManager = {
     favorites: [],
     folders: [rootFolder],
   })),
-  createBookmark: vi.fn(),
-  createFolder: vi.fn(),
+  captureItemUndoState: vi.fn(() => bookmarkManager.captureUndoState()),
+  captureUndoLineage: vi.fn(() => bookmarkManager.captureUndoState()),
+  captureUndoStateByIds: vi.fn(() => bookmarkManager.captureUndoState()),
+  createBookmark: vi.fn(async () => storedBookmark),
+  createFolder: vi.fn(async () => ({
+    ...rootFolder,
+    id: '33333333-3333-4333-8333-333333333333',
+    isRoot: false,
+    parentId: rootFolder.id,
+    title: 'Created folder',
+  })),
   copyItem: vi.fn(async () => ({
     itemCount: 1,
     rootItemId: crypto.randomUUID(),
@@ -1629,7 +1638,7 @@ describe('App', () => {
     const toolbarSavedStatus = {
       refresh: vi.fn(async () => undefined),
       removePermissionIfUnused: vi.fn(async () => undefined),
-      requestPermission: vi.fn(async () => true),
+      requestPermission: vi.fn(async () => undefined),
     };
     renderApp(
       { status: 'ready', theme: 'dark', ...createdProfile },
@@ -1721,7 +1730,7 @@ describe('App', () => {
     const toolbarSavedStatus = {
       refresh: vi.fn(async () => undefined),
       removePermissionIfUnused: vi.fn(async () => undefined),
-      requestPermission: vi.fn(async () => true),
+      requestPermission: vi.fn(async () => undefined),
     };
     renderApp(
       {
@@ -1774,7 +1783,7 @@ describe('App', () => {
     const toolbarSavedStatus = {
       refresh: vi.fn(async () => undefined),
       removePermissionIfUnused: vi.fn(async () => undefined),
-      requestPermission: vi.fn(async () => true),
+      requestPermission: vi.fn(async () => undefined),
     };
     renderApp(
       { status: 'ready', theme: 'dark', ...createdProfile },

@@ -1,35 +1,33 @@
-# What's New in 0.6.0
+# What's New in 0.6.1
 
-Released September 29, 2026.
+Released October 5, 2026.
 
-This release adds local image cropping, flexible Details-table columns, and
-quicker access to common search, bookmark, and text-editing actions.
+This release makes everyday bookmark changes faster, improves familiar mouse
+and form controls, and fixes several Firefox and image-handling workflows.
 
 ## Highlights
 
-- **Crop card images before saving** - Bookmark and folder images and popup
-  screenshots can be cropped with preset or free shapes, zoom, pointer controls,
-  and keyboard controls. Editing remains local and temporary until Save.
-- **Arrange Details columns per folder** - Appearance, Title, URL, Date modified,
-  and Type can be reordered without changing their widths. Narrow windows scroll
-  horizontally, and truncated titles and URLs reveal their complete text on
-  hover.
-- **Search is easier to reach** - Search actions are available from the profile
-  menu and main header, and Search options opens in a focused, accessible window.
-- **More bookmark and text actions** - Bookmark menus can open a link in a new
-  window or copy its address. Editable text fields add Cut, Copy, Paste, Select
-  all, and Clear while preserving native keyboard shortcuts.
+- **Faster bookmark and folder changes** - Save, edit, favorite, style, and
+  delete operations now prepare Undo data only for affected records instead of
+  scanning unrelated profile content.
+- **More predictable link opening** - Ctrl+click always opens a bookmark in a
+  new tab, and Ctrl+Shift+click always opens it in a new window, regardless of
+  the saved opening preference.
+- **Clearer controls and information** - File selectors, radio buttons, and
+  checkboxes match the application style; nonempty single-line fields offer a
+  Clear action; card titles and addresses reveal their complete values on
+  hover; and About includes browser-matched review and project links.
 
-## Interface Improvements
+## Bug Fixes
 
-- Get info uses a more compact preview, clearer labels, and improved handling of
-  long values.
-- Details view can hide its header when a folder is empty, while an optional
-  accessibility toolbar provides explicit Move and Reset column controls.
-- The Manage profiles window keeps rows compact and makes the complete window
-  scrollable at short viewport heights.
-- Dialogs and side panels use more consistent surfaces and include fallbacks for
-  reduced-transparency and forced-colors preferences.
+- Firefox can show optional tab-access and Clipboard Read prompts directly from
+  the corresponding user action.
+- Canceling an image picker keeps its application window open and preserves the
+  current draft. The transient toolbar popup omits uploaded-image selection,
+  while Screenshot remains available and full application editors retain local
+  image uploads.
+- New folders with image backgrounds save the wallpaper and folder record in
+  the same local transaction.
 
 ## Full Changelog
 

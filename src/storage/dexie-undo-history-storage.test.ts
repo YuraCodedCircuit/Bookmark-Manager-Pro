@@ -68,6 +68,27 @@ describe('DexieUndoHistoryStorage', () => {
     await expect(database.undoHistory.count()).resolves.toBe(1);
   });
 
+  it('appends a new entry without rewriting unchanged history payloads', async () => {
+    const database = createDatabase();
+    const storage = new DexieUndoHistoryStorage(
+      database,
+      markerStore(sessionId, true),
+    );
+    const first = entry('11111111-1111-4111-8111-111111111111', 1);
+    const second = entry('22222222-2222-4222-8222-222222222222', 2);
+    await storage.load();
+    await storage.save([first]);
+    const bulkPut = vi.spyOn(database.undoHistory, 'bulkPut');
+
+    await storage.save([first, second]);
+
+    expect(bulkPut).toHaveBeenCalledOnce();
+    expect(bulkPut.mock.calls[0]?.[0]).toEqual([
+      expect.objectContaining({ id: second.id, position: 1 }),
+    ]);
+    await expect(storage.load()).resolves.toEqual([first, second]);
+  });
+
   it('does not treat a marker read failure as a missing session', async () => {
     const database = createDatabase();
     await database.undoHistory.add({

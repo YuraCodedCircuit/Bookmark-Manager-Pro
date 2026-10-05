@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { BookmarkIcon } from '../../components/icons/BookmarkIcon';
 import { ChevronIcon } from '../../components/icons/ChevronIcon';
 import { ClearIcon } from '../../components/icons/ClearIcon';
+import { ClearableInput } from '../../components/ClearableInput';
 import { FolderIcon } from '../../components/icons/FolderIcon';
 import type { UndoHistoryService } from '../../application/undo-history/undo-history-service';
 import type { UndoHistoryEntry } from '../../domain/undo-history';
@@ -245,7 +246,7 @@ export function UndoHistoryDialog({
         <div className="undo-history__search-row">
           <label>
             <span>{t('undoHistory.search')}</span>
-            <input
+            <ClearableInput
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t('undoHistory.searchPlaceholder')}
               ref={searchRef}

@@ -27,7 +27,11 @@ import {
   defaultFolderAppearanceSettings,
   type ProfileSettings,
 } from '../../domain/profile-settings';
-import type { BookmarkRepository, FolderContents } from './bookmark-repository';
+import type {
+  BookmarkRepository,
+  FolderContents,
+  UndoStateIds,
+} from './bookmark-repository';
 import type { UndoProfileState } from '../../domain/undo-history';
 
 const MAX_ID_ATTEMPTS = 5;
@@ -161,6 +165,36 @@ export class ManageBookmarks {
   /** Captures validated profile content for calculating a minimal undo patch. */
   captureUndoState(profileId: string): Promise<UndoProfileState> {
     return this.repository.captureProfileState(z.uuid().parse(profileId));
+  }
+
+  /** Captures only one folder and its ancestors for a child creation patch. */
+  captureUndoLineage(
+    profileId: string,
+    folderId: string,
+  ): Promise<UndoProfileState> {
+    return this.repository.captureFolderLineageState(
+      z.uuid().parse(profileId),
+      z.uuid().parse(folderId),
+    );
+  }
+
+  /** Captures one item, its deletion subtree, favorites, and folder ancestry. */
+  captureItemUndoState(
+    profileId: string,
+    itemId: string,
+  ): Promise<UndoProfileState> {
+    return this.repository.captureItemState(
+      z.uuid().parse(profileId),
+      z.uuid().parse(itemId),
+    );
+  }
+
+  /** Recaptures a previously bounded undo scope after a mutation. */
+  captureUndoStateByIds(
+    profileId: string,
+    ids: UndoStateIds,
+  ): Promise<UndoProfileState> {
+    return this.repository.captureStateByIds(z.uuid().parse(profileId), ids);
   }
 
   /** Atomically restores only the records affected by one history operation. */
@@ -445,11 +479,11 @@ export class ManageBookmarks {
     };
   }
 
-  async createBookmark(input: CreateBookmarkInput): Promise<void> {
+  async createBookmark(input: CreateBookmarkInput): Promise<Bookmark> {
     const value = bookmarkInputSchema.parse(input);
     await this.assertParent(value.profileId, value.parentId);
     const timestamp = this.now();
-    await this.repository.addBookmark(
+    return this.repository.addBookmark(
       bookmarkSchema.parse({
         ...value,
         id: await this.createUniqueItemId(),
@@ -467,7 +501,12 @@ export class ManageBookmarks {
   ): Promise<boolean> {
     const validatedProfileId = z.uuid().parse(profileId);
     const normalizedUrl = safeBookmarkUrlSchema.parse(url);
-    return (await this.repository.listBookmarks(validatedProfileId)).some(
+    return (
+      await this.repository.listBookmarksByUrl(
+        validatedProfileId,
+        normalizedUrl,
+      )
+    ).some(
       (bookmark) =>
         bookmark.id !== excludingBookmarkId && bookmark.url === normalizedUrl,
     );
@@ -498,11 +537,11 @@ export class ManageBookmarks {
     });
   }
 
-  async createFolder(input: CreateFolderInput): Promise<void> {
+  async createFolder(input: CreateFolderInput): Promise<Folder> {
     const value = creationInputSchema.parse(input);
     await this.assertParent(value.profileId, value.parentId);
     const timestamp = this.now();
-    await this.repository.addFolder(
+    return this.repository.addFolder(
       folderSchema.parse({
         ...DEFAULT_FOLDER_STYLE,
         bookmarkView:

@@ -65,6 +65,7 @@ import {
 import { getPathSeparator } from '../platform/navigation/path-separator';
 import { writeClipboardText } from '../platform/clipboard/write-clipboard-text';
 import { folderBackgroundStyle } from '../shared/appearance-style';
+import type { BookmarkClickOpening } from '../shared/bookmark-click-opening';
 import {
   NotificationService,
   type NotificationInput,
@@ -79,10 +80,11 @@ import { addHttpsToHostLikeUrl } from '../domain/bookmark-url';
 import { ConfirmationService } from '../application/confirmation/confirmation-service';
 import { ConfirmationDialog } from '../features/confirmation/ConfirmationDialog';
 import type { UndoHistoryService } from '../application/undo-history/undo-history-service';
-import type {
-  UndoHistoryAction,
-  UndoHistoryItemType,
-  UndoProfileState,
+import {
+  undoProfileStateIds,
+  type UndoHistoryAction,
+  type UndoHistoryItemType,
+  type UndoProfileState,
 } from '../domain/undo-history';
 import {
   defaultSearchPreferences,
@@ -160,7 +162,10 @@ interface AppProps {
     | 'moveItem'
     | 'hasBookmarkWithUrl'
     | 'deleteItem'
+    | 'captureItemUndoState'
+    | 'captureUndoLineage'
     | 'captureUndoState'
+    | 'captureUndoStateByIds'
     | 'copyItem'
     | 'restoreUndoState'
   >;
@@ -172,6 +177,7 @@ interface AppProps {
   /** Reports that React committed the current snapshot to the document. */
   onUiReady(operationId: string): void;
   openBookmarkWindow(url: string): Promise<void>;
+  readClipboardText?: () => Promise<string>;
   profileManager: Pick<
     ManageProfiles,
     | 'list'
@@ -199,7 +205,7 @@ interface AppProps {
   toolbarSavedStatus?: {
     refresh(): Promise<void>;
     removePermissionIfUnused(): Promise<void>;
-    requestPermission(): Promise<boolean>;
+    requestPermission(): Promise<void>;
   };
 }
 
@@ -235,13 +241,16 @@ export function App({
   onUiReady,
   openBookmarkWindow,
   profileManager,
+  readClipboardText = async () => {
+    throw new Error('clipboard-read-unavailable');
+  },
   resumePreflight,
   undoHistory,
   updateAnnouncements,
   toolbarSavedStatus = {
     refresh: async () => undefined,
     removePermissionIfUnused: async () => undefined,
-    requestPermission: async () => false,
+    requestPermission: async () => undefined,
   },
 }: AppProps) {
   const { t } = useTranslation();
@@ -1101,8 +1110,15 @@ export function App({
     ) => {
       await undoHistory.runMutation(async () => {
         let before;
+        const useBoundedCapture =
+          action === 'deleted' ||
+          action === 'edited' ||
+          action === 'favorite' ||
+          action === 'styled';
         try {
-          before = await bookmarkManager.captureUndoState(profileId);
+          before = useBoundedCapture
+            ? await bookmarkManager.captureItemUndoState(profileId, itemId)
+            : await bookmarkManager.captureUndoState(profileId);
         } catch {
           await mutation();
           await publishLocalContentChange(profileId);
@@ -1110,10 +1126,16 @@ export function App({
           await recordUndoHistoryDegraded(profileId);
           return;
         }
+        if (!before) return;
         await mutation();
         let after: UndoProfileState | undefined;
         try {
-          after = await bookmarkManager.captureUndoState(profileId);
+          after = useBoundedCapture
+            ? await bookmarkManager.captureUndoStateByIds(
+                profileId,
+                undoProfileStateIds(before),
+              )
+            : await bookmarkManager.captureUndoState(profileId);
           await undoHistory.record({
             action,
             after,
@@ -1379,9 +1401,12 @@ export function App({
     t,
   ]);
 
-  const openNavigationItem = async (item: NavigationItem) => {
+  const openNavigationItem = async (
+    item: NavigationItem,
+    opening: BookmarkClickOpening = 'current-tab',
+  ) => {
     if (item.kind === 'bookmark') {
-      await openBookmark(item.value.url, 'current-tab', 'Folder navigation');
+      await openBookmark(item.value.url, opening, 'Folder navigation');
       return;
     }
     if (!readyProfileId) return;
@@ -1680,10 +1705,11 @@ export function App({
       }
       await undoHistory.runMutation(async () => {
         const undoBefore = await bookmarkManager
-          .captureUndoState(readyProfileId)
+          .captureUndoLineage(readyProfileId, currentFolderId)
           .catch(() => undefined);
+        let createdItem: Bookmark | Folder;
         if (kind === 'bookmark') {
-          await bookmarkManager.createBookmark({
+          createdItem = await bookmarkManager.createBookmark({
             cardAppearance: preparedValue.cardAppearance,
             note: preparedValue.note,
             parentId: currentFolderId,
@@ -1693,7 +1719,7 @@ export function App({
             url: preparedValue.url ?? '',
           });
         } else {
-          await bookmarkManager.createFolder({
+          createdItem = await bookmarkManager.createFolder({
             backgroundAppearance:
               currentInitializationState.status === 'ready'
                 ? currentInitializationState.settings
@@ -1756,9 +1782,22 @@ export function App({
                 : defaultFolderDisplaySettings.bookmarkView,
           });
         }
-        const undoAfter = await bookmarkManager
-          .captureUndoState(readyProfileId)
+        const undoAfterLineage = await bookmarkManager
+          .captureUndoLineage(readyProfileId, currentFolderId)
           .catch(() => undefined);
+        const undoAfter = undoAfterLineage
+          ? {
+              ...undoAfterLineage,
+              bookmarks:
+                kind === 'bookmark'
+                  ? [createdItem as Bookmark]
+                  : undoAfterLineage.bookmarks,
+              folders:
+                kind === 'folder'
+                  ? [...undoAfterLineage.folders, createdItem as Folder]
+                  : undoAfterLineage.folders,
+            }
+          : undefined;
         await publishLocalContentChange(readyProfileId, undoBefore, undoAfter);
         if (!undoBefore) {
           console.error('undo-history-capture-before-failed');
@@ -1770,22 +1809,14 @@ export function App({
           await recordUndoHistoryDegraded(readyProfileId);
           return;
         }
-        const existingIds = new Set([
-          ...undoBefore.bookmarks.map(({ id }) => id),
-          ...undoBefore.folders.map(({ id }) => id),
-        ]);
-        const createdItem = [...undoAfter.bookmarks, ...undoAfter.folders].find(
-          ({ id }) => !existingIds.has(id),
-        );
-        if (createdItem)
-          await undoHistory.record({
-            action: 'created',
-            after: undoAfter,
-            before: undoBefore,
-            itemId: createdItem.id,
-            itemType: kind,
-            profileId: readyProfileId,
-          });
+        await undoHistory.record({
+          action: 'created',
+          after: undoAfter,
+          before: undoBefore,
+          itemId: createdItem.id,
+          itemType: kind,
+          profileId: readyProfileId,
+        });
       });
       if (settings.rememberLastAppearance) {
         try {
@@ -3088,6 +3119,11 @@ export function App({
       <AboutDialog
         isOpen={profileWindow === 'about'}
         onClose={() => setProfileWindow(null)}
+        onOpenExternalLink={(url) => {
+          void openExternalAppLink(url).catch(() =>
+            console.error('external-app-link-open-failed'),
+          );
+        }}
       />
       <ChangelogDialog
         content={automaticChangelogContent ?? { kind: 'full' }}
@@ -3363,14 +3399,12 @@ export function App({
               }
             }}
             onSave={async (display) => {
-              let newlyGrantedToolbarPermission = false;
               try {
                 if (
                   display.showSavedStatusOnToolbar &&
                   !currentInitializationState.settings.showSavedStatusOnToolbar
                 )
-                  newlyGrantedToolbarPermission =
-                    await toolbarSavedStatus.requestPermission();
+                  await toolbarSavedStatus.requestPermission();
                 await runLoggedProfileAction(
                   async () => {
                     await profileManager.updateProfileSettings(
@@ -3410,14 +3444,6 @@ export function App({
                     title: t('notifications.settingsSavedTitle'),
                   });
               } catch (error) {
-                if (newlyGrantedToolbarPermission)
-                  await toolbarSavedStatus
-                    .removePermissionIfUnused()
-                    .catch(() =>
-                      console.error(
-                        'toolbar-saved-status-permission-rollback-failed',
-                      ),
-                    );
                 if (error instanceof ToolbarSavedStatusPermissionDeniedError)
                   throw error;
                 notifyOperationError(
@@ -3875,15 +3901,10 @@ export function App({
               () => undefined,
             )
           }
-          onOpenBookmark={(bookmark) =>
-            void openBookmark(
-              bookmark.url,
-              currentInitializationState.status === 'ready'
-                ? (currentInitializationState.settings.bookmarkOpening ??
-                    'current-tab')
-                : 'current-tab',
-              'Bookmark content',
-            ).catch(() => undefined)
+          onOpenBookmark={(bookmark, opening) =>
+            void openBookmark(bookmark.url, opening, 'Bookmark content').catch(
+              () => undefined,
+            )
           }
           onDetailsColumnOrderChange={async (order) => {
             if (!readyProfileId || !currentFolderId)
@@ -4222,8 +4243,8 @@ export function App({
         isOpen={isTreeOpen}
         onAfterClose={() => treeButtonRef.current?.focus()}
         onClose={closeTree}
-        onOpenItem={(item) =>
-          void openNavigationItem(item).catch(() => undefined)
+        onOpenItem={(item, opening) =>
+          void openNavigationItem(item, opening).catch(() => undefined)
         }
         onRemoveFavorite={(item) =>
           void changeFavorite(item, false).catch(() => undefined)
@@ -4459,6 +4480,7 @@ export function App({
               title: t('notifications.clipboardPermissionDeniedTitle'),
             })
           }
+          readClipboardText={readClipboardText}
           request={editableContextMenu}
         />
       ) : null}
@@ -4474,14 +4496,13 @@ export function App({
           isOpen={isSearchOpen}
           loadFailed={searchLoadFailed}
           onClose={() => setIsSearchOpen(false)}
-          onOpenResult={async (result: BookmarkSearchResult) => {
+          onOpenResult={async (
+            result: BookmarkSearchResult,
+            opening: BookmarkClickOpening,
+          ) => {
             try {
               if (result.kind === 'bookmark' && 'url' in result.item) {
-                await openBookmark(
-                  result.item.url,
-                  activeSettings.bookmarkOpening ?? 'current-tab',
-                  'Search window',
-                );
+                await openBookmark(result.item.url, opening, 'Search window');
                 setIsSearchOpen(false);
                 return;
               }

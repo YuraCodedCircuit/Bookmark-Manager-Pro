@@ -1706,6 +1706,142 @@ main {
   outline-offset: 3px;
 }
 
+:is(input[type='checkbox'], input[type='radio']) {
+  display: inline-grid;
+  flex: 0 0 1.15rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  place-content: center;
+  color: var(--background);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+}
+
+input[type='checkbox'] {
+  border-radius: 0.28rem;
+}
+
+input[type='radio'] {
+  border-radius: 50%;
+}
+
+:is(input[type='checkbox'], input[type='radio'])::before {
+  width: 0.65rem;
+  height: 0.65rem;
+  background: currentColor;
+  content: '';
+  transform: scale(0);
+}
+
+input[type='checkbox']::before {
+  clip-path: polygon(14% 44%, 0 59%, 40% 100%, 100% 20%, 84% 4%, 39% 72%);
+}
+
+input[type='radio']::before {
+  border-radius: 50%;
+}
+
+:is(input[type='checkbox'], input[type='radio']):checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+:is(input[type='checkbox'], input[type='radio']):checked::before {
+  transform: scale(1);
+}
+
+:is(input[type='checkbox'], input[type='radio']):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+:is(input[type='checkbox'], input[type='radio']):disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+input[type='file']::file-selector-button {
+  min-height: 2.35rem;
+  margin-right: 0.7rem;
+  padding: 0.45rem 0.8rem;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.5rem;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+input[type='file']::file-selector-button:hover {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-raised));
+  border-color: var(--accent);
+}
+
+input[type='file']:disabled::file-selector-button {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.clearable-input {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+}
+
+.clearable-input > input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.clearable-input:has(.clearable-input__button) > input {
+  padding-right: 2.75rem !important;
+}
+
+.clearable-input__button {
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transform: translateY(-50%);
+  place-items: center;
+}
+
+.clearable-input__button:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.clearable-input__button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.clearable-input__button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (forced-colors: active) {
+  :is(input[type='checkbox'], input[type='radio']) {
+    appearance: auto;
+  }
+}
+
 .breadcrumb {
   display: flex;
   width: min(100%, 48rem);
@@ -3790,36 +3926,6 @@ main {
   outline-offset: 1px;
 }
 
-.folder-tree-filter button {
-  display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  align-self: center;
-  padding: 0;
-  margin-left: -2.4rem;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  place-items: center;
-}
-
-.folder-tree-filter button:hover {
-  background: var(--surface);
-  color: var(--text);
-}
-
-.folder-tree-filter button:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: -2px;
-}
-
-.folder-tree-filter button svg {
-  width: 1.15rem;
-  height: 1.15rem;
-}
-
 .folder-tree-scroll {
   width: 100%;
   min-width: 0;
@@ -4851,7 +4957,7 @@ main {
 
 .about-window__icon-frame {
   display: grid;
-  width: min(100%, 22rem);
+  width: min(100%, 19rem);
   aspect-ratio: 4 / 3;
   place-self: center;
   place-items: center;
@@ -4862,8 +4968,8 @@ main {
 }
 
 .about-window__icon-frame img {
-  width: min(72%, 15rem);
-  height: min(90%, 15rem);
+  width: min(72%, 13rem);
+  height: min(90%, 13rem);
   object-fit: contain;
 }
 
@@ -4928,6 +5034,29 @@ main {
   background: var(--surface-raised);
   border-left: 3px solid var(--accent);
   border-radius: 0.5rem;
+}
+
+.about-window__review {
+  margin: -0.25rem 0 0;
+  text-align: center;
+}
+
+.about-window :is(.about-window__review, .about-window__footer) a {
+  color: var(--accent);
+  font-weight: 650;
+  text-underline-offset: 0.18em;
+}
+
+.about-window :is(.about-window__review, .about-window__footer) a:hover {
+  text-decoration-thickness: 0.14em;
+}
+
+.about-window
+  :is(.about-window__review, .about-window__footer)
+  a:focus-visible {
+  border-radius: 0.2rem;
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
 }
 
 .about-window__footer {

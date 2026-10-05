@@ -20,6 +20,10 @@ import { useTranslation } from 'react-i18next';
 import type { Bookmark } from '../../domain/bookmark';
 import type { Folder } from '../../domain/folder';
 import { appearanceStyle } from '../../shared/appearance-style';
+import {
+  resolveBookmarkClickOpening,
+  type BookmarkClickOpening,
+} from '../../shared/bookmark-click-opening';
 import { formatDateTime } from '../../shared/date-time-format';
 import type { DateTimeFormatPreference } from '../../shared/date-time-format';
 import {
@@ -43,7 +47,7 @@ interface BookmarkDetailsTableProps {
   folderOpening?: 'single-click' | 'double-click';
   dateTimeFormat?: DateTimeFormatPreference;
   onOpenFolder: (folder: Folder) => void;
-  onOpenBookmark?: (bookmark: Bookmark) => void;
+  onOpenBookmark?: (bookmark: Bookmark, opening: BookmarkClickOpening) => void;
   columnOrder?: readonly DetailsColumn[];
   onColumnOrderChange?: (order: readonly DetailsColumn[]) => Promise<void>;
   showColumnOrderControls?: boolean;
@@ -222,7 +226,10 @@ export function BookmarkDetailsTable({
               onClick={(event) => {
                 if (!onOpenBookmark) return;
                 event.preventDefault();
-                onOpenBookmark(item.value);
+                onOpenBookmark(
+                  item.value,
+                  resolveBookmarkClickOpening(bookmarkOpening, event),
+                );
               }}
               rel="noreferrer"
               target={bookmarkOpening === 'new-tab' ? '_blank' : '_self'}

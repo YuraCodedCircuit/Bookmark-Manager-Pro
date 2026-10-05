@@ -106,6 +106,115 @@ describe('DexieBookmarkRepository', () => {
     ).resolves.toHaveLength(1);
   });
 
+  it('captures only a deleted folder subtree, its favorites, and its ancestry', async () => {
+    const database = new BookmarkManagerDatabase(
+      `bounded-delete-state-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = new DexieBookmarkRepository(database);
+    const targetId = '22222222-2222-4222-8222-222222222222';
+    const descendantId = '33333333-3333-4333-8333-333333333333';
+    const siblingId = '44444444-4444-4444-8444-444444444444';
+    const includedBookmarkId = '55555555-5555-4555-8555-555555555555';
+    const unrelatedBookmarkId = '66666666-6666-4666-8666-666666666666';
+    await repository.ensureRoot(profileId, root);
+    for (const folder of [
+      {
+        ...root,
+        backgroundAppearance: {
+          fit: 'fill' as const,
+          kind: 'image' as const,
+          value: `data:image/png;base64,${'w'.repeat(100_000)}`,
+        },
+        id: targetId,
+        isRoot: false,
+        parentId: rootId,
+        title: 'Target',
+      },
+      {
+        ...root,
+        id: descendantId,
+        isRoot: false,
+        parentId: targetId,
+        title: 'Descendant',
+      },
+      {
+        ...root,
+        id: siblingId,
+        isRoot: false,
+        parentId: rootId,
+        title: 'Sibling',
+      },
+    ])
+      await repository.addFolder(folder);
+    const bookmark = (id: string, parentId: string, title: string) => ({
+      cardAppearance: {
+        fit: 'fill' as const,
+        kind: 'image' as const,
+        value: `data:image/png;base64,${title.repeat(10_000)}`,
+      },
+      createdAt: 2,
+      id,
+      index: 0,
+      note: '',
+      parentId,
+      profileId,
+      tags: [],
+      title,
+      updatedAt: 2,
+      url: `https://${title}.example/`,
+    });
+    await repository.addBookmark(
+      bookmark(includedBookmarkId, descendantId, 'included'),
+    );
+    await repository.addBookmark(
+      bookmark(unrelatedBookmarkId, siblingId, 'unrelated'),
+    );
+    await repository.setFavorite({
+      favoritedAt: 3,
+      itemId: includedBookmarkId,
+      kind: 'bookmark',
+      profileId,
+    });
+
+    const captured = await repository.captureItemState(profileId, targetId);
+
+    expect(captured.bookmarks.map(({ id }) => id)).toEqual([
+      includedBookmarkId,
+    ]);
+    expect(captured.favorites.map(({ itemId }) => itemId)).toEqual([
+      includedBookmarkId,
+    ]);
+    expect(new Set(captured.folders.map(({ id }) => id))).toEqual(
+      new Set([rootId, targetId, descendantId]),
+    );
+    await expect(database.folderWallpapers.count()).resolves.toBe(1);
+  });
+
+  it('filters every bounded undo record by profile ownership', async () => {
+    const database = new BookmarkManagerDatabase(
+      `bounded-profile-state-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = new DexieBookmarkRepository(database);
+    const otherProfileId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const otherRootId = '22222222-2222-4222-8222-222222222222';
+    await repository.ensureRoot(profileId, root);
+    await repository.ensureRoot(otherProfileId, {
+      ...root,
+      id: otherRootId,
+      profileId: otherProfileId,
+    });
+
+    const captured = await repository.captureStateByIds(profileId, {
+      bookmarkIds: [],
+      favoriteItemIds: [],
+      folderIds: [rootId, otherRootId],
+    });
+
+    expect(captured.folders.map(({ id }) => id)).toEqual([rootId]);
+  });
+
   it('allocates unique append indexes inside concurrent creation transactions', async () => {
     const database = new BookmarkManagerDatabase(
       `concurrent-append-${crypto.randomUUID()}`,

@@ -8,6 +8,7 @@ import { GradientDirectionControl } from '../../components/GradientDirectionCont
 import { ImageFitSelect } from '../../components/ImageFitSelect';
 import type { ProfileSettings } from '../../domain/profile-settings';
 import { optimizeFolderWallpaper } from '../../shared/optimize-folder-wallpaper';
+import { useFileInputCancelRef } from '../../shared/file-input-cancel';
 
 export interface FolderStyleValue {
   appearance: FolderBackgroundAppearance;
@@ -66,6 +67,7 @@ export function FolderStyleDialog({
   onSave,
 }: FolderStyleDialogProps) {
   const { t } = useTranslation();
+  const imageInputCancelRef = useFileInputCancelRef<HTMLInputElement>();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [kind, setKind] = useState<FolderBackgroundAppearance['kind']>(
     appearance.kind,
@@ -207,6 +209,7 @@ export function FolderStyleDialog({
       className="content-editor"
       onCancel={(event) => {
         event.preventDefault();
+        if (event.target !== event.currentTarget) return;
         if (!saving) onClose();
       }}
       onClose={() => setOpenSection(null)}
@@ -519,6 +522,7 @@ export function FolderStyleDialog({
                       .catch(reportImageRejection)
                       .finally(() => setProcessingImage(false));
                   }}
+                  ref={imageInputCancelRef}
                   required={!image}
                   type="file"
                 />

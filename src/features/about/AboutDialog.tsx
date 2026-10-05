@@ -2,18 +2,38 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import packageMetadata from '../../../package.json';
-import { getBrowserTarget } from '../../platform/browser/browser-target';
+import {
+  getBrowserFamily,
+  getBrowserTarget,
+} from '../../platform/browser/browser-target';
+
+const PROJECT_URL = 'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro';
+const REVIEW_URLS = {
+  edge: 'https://microsoftedge.microsoft.com/addons/detail/bookmark-manager-pro/kicpilbdojnnoemoeihibebccijpbidh',
+  firefox:
+    'https://addons.mozilla.org/en-US/firefox/addon/bookmark-manager-pro/',
+} as const;
 
 interface AboutDialogProps {
   isOpen: boolean;
   onClose(): void;
+  onOpenExternalLink(url: string): void;
 }
 
 /** Presents non-sensitive application and release information. */
-export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
+export function AboutDialog({
+  isOpen,
+  onClose,
+  onOpenExternalLink,
+}: AboutDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const browserFamily = getBrowserFamily(window.navigator.userAgent);
+  const reviewUrl =
+    browserFamily === 'edge' || browserFamily === 'firefox'
+      ? REVIEW_URLS[browserFamily]
+      : null;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -61,9 +81,37 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
           </div>
         </dl>
         <p className="about-window__storage">{t('about.localStorage')}</p>
+        {reviewUrl ? (
+          <p className="about-window__review">
+            <a
+              href={reviewUrl}
+              onClick={(event) => {
+                event.preventDefault();
+                onOpenExternalLink(reviewUrl);
+              }}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {t(`about.review.${browserFamily}`)}
+            </a>
+          </p>
+        ) : null}
       </div>
       <footer className="about-window__footer">
-        <p>{t('about.madeWith')}</p>
+        <p>
+          {t('about.copyright')}{' '}
+          <a
+            href={PROJECT_URL}
+            onClick={(event) => {
+              event.preventDefault();
+              onOpenExternalLink(PROJECT_URL);
+            }}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            YuraCodedCircuit
+          </a>
+        </p>
         <button
           className="about-window__close"
           onClick={onClose}

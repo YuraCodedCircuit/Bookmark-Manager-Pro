@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { BookmarkIcon } from '../../components/icons/BookmarkIcon';
 import { ChevronIcon } from '../../components/icons/ChevronIcon';
 import { ClearIcon } from '../../components/icons/ClearIcon';
+import { ClearableInput } from '../../components/ClearableInput';
 import { FolderIcon } from '../../components/icons/FolderIcon';
 import { ContextMenuIcon } from '../context-menu/ContextMenuIcon';
 import { SearchOptions } from './SearchOptions';
@@ -13,6 +14,10 @@ import {
   type SearchPreferences,
   type SearchProfileSource,
 } from '../../domain/bookmark-search';
+import {
+  resolveBookmarkClickOpening,
+  type BookmarkClickOpening,
+} from '../../shared/bookmark-click-opening';
 
 interface Props {
   activeProfileId: string;
@@ -23,7 +28,10 @@ interface Props {
   isOpen: boolean;
   loadFailed: boolean;
   onClose(): void;
-  onOpenResult(result: BookmarkSearchResult): void | Promise<void>;
+  onOpenResult(
+    result: BookmarkSearchResult,
+    opening: BookmarkClickOpening,
+  ): void | Promise<void>;
   onWebSearch(query: string): Promise<void>;
   onWebUnavailable(): void;
   sources: readonly SearchProfileSource[];
@@ -197,7 +205,7 @@ export function SearchDialog({
         <div className="search-window__query-row">
           <label className="search-window__query">
             <span>{t('searchWindow.queryLabel')}</span>
-            <input
+            <ClearableInput
               aria-describedby="search-window-query-help"
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => {
@@ -321,9 +329,17 @@ export function SearchDialog({
                     <li key={`${result.profileId}:${result.item.id}`}>
                       <button
                         className="search-window__result"
-                        onClick={() => {
+                        onClick={(event) => {
                           resetTransientState();
-                          void onOpenResult(result);
+                          void onOpenResult(
+                            result,
+                            result.kind === 'bookmark'
+                              ? resolveBookmarkClickOpening(
+                                  bookmarkOpening,
+                                  event,
+                                )
+                              : bookmarkOpening,
+                          );
                         }}
                         ref={
                           index === 0 && profileName === groups[0]?.[0]

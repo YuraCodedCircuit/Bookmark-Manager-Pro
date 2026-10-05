@@ -11,6 +11,8 @@ import {
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { ClearableInput } from '../../components/ClearableInput';
+
 import { NoteIcon } from '../../components/icons/NoteIcon';
 import { ChevronIcon } from '../../components/icons/ChevronIcon';
 import { FolderIcon } from '../../components/icons/FolderIcon';
@@ -1153,7 +1155,7 @@ export function NotesWorkspace({
             {t('notes.newNote')}
           </button>
           <label className="notes-search">
-            <input
+            <ClearableInput
               aria-label={t('notes.search')}
               onChange={(event) => handleSearchChange(event.target.value)}
               placeholder={t('notes.searchPlaceholder')}
@@ -1336,7 +1338,7 @@ export function NotesWorkspace({
               </nav>
               <header className="notes-editor__header">
                 <label>
-                  <input
+                  <ClearableInput
                     aria-label={t('notes.noteTitle')}
                     id="notes-title"
                     maxLength={200}
@@ -1786,7 +1788,7 @@ export function NotesWorkspace({
                 : t('notes.renameFolder')}
             </h2>
             <label htmlFor="notes-folder-name">{t('notes.folderName')}</label>
-            <input
+            <ClearableInput
               aria-describedby={folderError ? 'notes-folder-error' : undefined}
               aria-invalid={folderError ? 'true' : undefined}
               id="notes-folder-name"

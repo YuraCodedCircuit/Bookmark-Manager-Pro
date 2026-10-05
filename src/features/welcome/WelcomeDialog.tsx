@@ -9,8 +9,11 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ClearableInput } from '../../components/ClearableInput';
+
 import type { CreateFirstProfileInput } from '../../application/profile/create-first-profile';
 import { usePrefersReducedMotion } from '../../shared/use-prefers-reduced-motion';
+import { useFileInputCancelRef } from '../../shared/file-input-cancel';
 
 interface WelcomeDialogProps {
   isOpen: boolean;
@@ -25,6 +28,7 @@ const maxProfileIconBytes = 1_000_000;
 
 export function WelcomeDialog({ isOpen, onCreateProfile }: WelcomeDialogProps) {
   const { t } = useTranslation();
+  const iconInputCancelRef = useFileInputCancelRef<HTMLInputElement>();
   const [stage, setStage] = useState<OnboardingStage>('welcome');
   const [isLearnMoreOpen, setIsLearnMoreOpen] = useState(false);
   const [icon, setIcon] = useState<string>();
@@ -208,7 +212,7 @@ export function WelcomeDialog({ isOpen, onCreateProfile }: WelcomeDialogProps) {
             <div className="profile-setup__fields">
               <label className="profile-setup__field">
                 <span>{t('welcome.profile.username')}</span>
-                <input
+                <ClearableInput
                   autoComplete="username"
                   maxLength={80}
                   name="username"
@@ -234,6 +238,7 @@ export function WelcomeDialog({ isOpen, onCreateProfile }: WelcomeDialogProps) {
                       <input
                         accept=".bmp,image/bmp,image/jpeg,image/png"
                         onChange={(event) => void selectIcon(event)}
+                        ref={iconInputCancelRef}
                         type="file"
                       />
                     </label>

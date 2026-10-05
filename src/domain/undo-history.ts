@@ -42,3 +42,12 @@ export type UndoHistoryAction = z.infer<typeof undoHistoryActionSchema>;
 export type UndoHistoryEntry = z.infer<typeof undoHistoryEntrySchema>;
 export type UndoHistoryItemType = z.infer<typeof undoHistoryItemTypeSchema>;
 export type UndoProfileState = z.infer<typeof undoProfileStateSchema>;
+
+/** Returns the bounded record identifiers needed to recapture an undo patch. */
+export function undoProfileStateIds(state: UndoProfileState) {
+  return {
+    bookmarkIds: state.bookmarks.map(({ id }) => id),
+    favoriteItemIds: state.favorites.map(({ itemId }) => itemId),
+    folderIds: state.folders.map(({ id }) => id),
+  };
+}

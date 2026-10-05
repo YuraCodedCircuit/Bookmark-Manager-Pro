@@ -110,6 +110,8 @@ Yes. Bookmark and folder editors support comma-separated tags and a note.
 Right-click any editable text field to use Cut, Copy, Paste, Select all, or
 Clear. Custom Paste asks for the browser's optional clipboard-read permission
 when needed; native Ctrl+V continues to work without that extension permission.
+Editable single-line fields also show a Clear input button while they contain
+text.
 
 ### 20. How do I edit an item?
 
@@ -117,6 +119,9 @@ Open the item's context menu and choose Edit bookmark or Edit folder. Saving
 updates editable content while preserving its identity and location.
 Bookmark context actions can also copy the address or open the bookmark in a
 new browser window.
+An ordinary left click follows the active profile's opening preference.
+Ctrl+click always opens the bookmark in a new tab, and Ctrl+Shift+click always
+opens it in a new browser window.
 
 ### 21. How do I move an item?
 
@@ -279,6 +284,12 @@ Bookmark and folder images can be cropped as Card, Free, Square, or Landscape;
 the original and edited result remain temporary until the owning Save action.
 Popup screenshots can optionally receive an automatic top-left Card crop while
 the original remains available for manual editing until Save bookmark.
+The Save current URL toolbar popup offers Color, Gradient, and Screenshot but
+omits uploaded-image selection because browsers close action popups when an
+operating-system file picker takes focus. Full application editors continue to
+support local image selection. Canceling a file picker in those editors keeps
+the editor open, clears only the pending filename, and preserves existing form
+values.
 
 ### 48. Which animation settings are available?
 
@@ -474,6 +485,8 @@ defaults, and other implemented settings are owned by each profile.
 
 The profile menu's Information section contains What's new, Legal & privacy,
 and About Bookmark Manager Pro alongside this Help & FAQ window.
+About Bookmark Manager Pro links the publisher name to the GitHub project and
+offers a review link for installed Firefox or Edge builds.
 
 ## Still need help?
 

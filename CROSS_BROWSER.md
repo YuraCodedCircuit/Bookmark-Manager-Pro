@@ -73,6 +73,10 @@ bookmark sync.
   the same oldest-first retention behavior across targets.
 - Extension windows, new-tab overrides, Firefox's consent-based homepage
   override, and popup sizing may differ.
+- Browser-owned action popups close when an operating-system file picker takes
+  focus. The Save current URL popup therefore omits uploaded-image selection in
+  every target while retaining visible-tab Screenshot capture; full application
+  editors continue to support local image selection.
 - Privileged browser pages may hide the active tab URL from extensions. The
   current-URL popup treats a hidden or unsupported URL as an expected condition,
   explains that the page cannot be saved, and offers Close without a retry.
@@ -125,7 +129,8 @@ Each release candidate must verify:
 - Password generation, strength feedback, reduced-motion reveal, clipboard
   copy, and close-time state clearing
 - Image crop geometry, zoom, keyboard controls, transparency, output bounds,
-  popup automatic crop, and original-image retention until save
+  popup automatic crop, popup image-option omission, and original-image
+  retention until save
 - Optional clipboard-read grant and denial paths, native paste fallback, and
   bookmark-address copy and new-window actions
 - IndexedDB persistence across worker restarts and browser restarts

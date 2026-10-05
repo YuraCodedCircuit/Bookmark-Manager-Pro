@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import type { ManageActivityLog } from '../../application/activity-log/manage-activity-log';
 import { defaultActivityLogSettings } from '../../application/activity-log/manage-activity-log';
 import { ClearIcon } from '../../components/icons/ClearIcon';
+import { ClearableInput } from '../../components/ClearableInput';
 import type {
   ActivityLogEntry,
   ActivityLogLevel,
@@ -451,7 +452,7 @@ export function BookmarkActivityLogDialog({
         </label>
         <label className="activity-log__search">
           <span>{t('activityLog.filters.search')}</span>
-          <input
+          <ClearableInput
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('activityLog.filters.searchPlaceholder')}
             type="search"

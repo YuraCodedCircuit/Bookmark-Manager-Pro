@@ -7,6 +7,11 @@ export interface FolderContents {
   bookmarks: readonly Bookmark[];
   folders: readonly Folder[];
 }
+export interface UndoStateIds {
+  bookmarkIds: readonly string[];
+  favoriteItemIds: readonly string[];
+  folderIds: readonly string[];
+}
 export type MovableItem =
   { kind: 'bookmark'; value: Bookmark } | { kind: 'folder'; value: Folder };
 
@@ -31,8 +36,8 @@ export interface BookmarkRepository {
   listFavorites(profileId: string): Promise<readonly FavoriteItem[]>;
   listContents(profileId: string, parentId: string): Promise<FolderContents>;
   nextIndex(profileId: string, parentId: string): Promise<number>;
-  addBookmark(bookmark: Bookmark): Promise<void>;
-  addFolder(folder: Folder): Promise<void>;
+  addBookmark(bookmark: Bookmark): Promise<Bookmark>;
+  addFolder(folder: Folder): Promise<Folder>;
   addItems(
     bookmarks: readonly Bookmark[],
     folders: readonly Folder[],
@@ -51,6 +56,18 @@ export interface BookmarkRepository {
     destinationIndex: number,
   ): Promise<void>;
   captureProfileState(profileId: string): Promise<UndoProfileState>;
+  captureFolderLineageState(
+    profileId: string,
+    folderId: string,
+  ): Promise<UndoProfileState>;
+  captureItemState(
+    profileId: string,
+    itemId: string,
+  ): Promise<UndoProfileState>;
+  captureStateByIds(
+    profileId: string,
+    ids: UndoStateIds,
+  ): Promise<UndoProfileState>;
   restoreProfileState(
     profileId: string,
     state: UndoProfileState,

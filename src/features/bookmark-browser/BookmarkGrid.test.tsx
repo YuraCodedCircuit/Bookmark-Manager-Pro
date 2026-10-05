@@ -1,4 +1,10 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -87,6 +93,60 @@ describe('BookmarkGrid', () => {
     expect(folder).toHaveAttribute('data-context-menu', 'bookmark');
     expect(bookmark).toHaveAttribute('data-context-menu', 'bookmark');
     expect(container.querySelectorAll('.bookmark-card__media')).toHaveLength(2);
+  });
+
+  it('exposes separate full title and URL tooltips only in card view', () => {
+    const bookmark = {
+      cardAppearance: { kind: 'color' as const, value: '#123456' },
+      createdAt: 1,
+      id: '22222222-2222-4222-8222-222222222222',
+      index: 1,
+      note: '',
+      parentId: rootId,
+      profileId,
+      tags: [],
+      title: 'A complete bookmark title',
+      updatedAt: 1,
+      url: 'https://example.com/a/complete/bookmark/url',
+    };
+    const view = { bookmarkView: 'card' as const, cardSize: 'small' as const };
+    const { rerender } = render(
+      <BookmarkGrid
+        bookmarks={[bookmark]}
+        contentRef={{ current: null }}
+        folders={[]}
+        onOpenFolder={vi.fn()}
+        view={view}
+      />,
+    );
+
+    let link = screen.getByRole('link', {
+      name: 'Open A complete bookmark title',
+    });
+    expect(within(link).getByText(bookmark.title)).toHaveAttribute(
+      'title',
+      bookmark.title,
+    );
+    expect(within(link).getByText(bookmark.url)).toHaveAttribute(
+      'title',
+      bookmark.url,
+    );
+
+    rerender(
+      <BookmarkGrid
+        bookmarks={[bookmark]}
+        contentRef={{ current: null }}
+        folders={[]}
+        onOpenFolder={vi.fn()}
+        view={{ ...view, bookmarkView: 'list' }}
+      />,
+    );
+
+    link = screen.getByRole('link', {
+      name: 'Open A complete bookmark title',
+    });
+    expect(within(link).getByText(bookmark.title)).not.toHaveAttribute('title');
+    expect(within(link).getByText(bookmark.url)).not.toHaveAttribute('title');
   });
 
   it('uses each card as the single keyboard focus and drag target', async () => {
@@ -198,6 +258,7 @@ describe('BookmarkGrid', () => {
   it('applies the configured bookmark and folder opening behavior', async () => {
     const user = userEvent.setup();
     const onOpenFolder = vi.fn();
+    const onOpenBookmark = vi.fn();
     render(
       <BookmarkGrid
         bookmarkOpening="new-tab"
@@ -239,13 +300,30 @@ describe('BookmarkGrid', () => {
           },
         ]}
         onOpenFolder={onOpenFolder}
+        onOpenBookmark={onOpenBookmark}
         view={{ bookmarkView: 'card', cardSize: 'medium' }}
       />,
     );
 
-    expect(
-      screen.getByRole('link', { name: 'Open Example bookmark' }),
-    ).toHaveAttribute('target', '_blank');
+    const bookmark = screen.getByRole('link', {
+      name: 'Open Example bookmark',
+    });
+    expect(bookmark).toHaveAttribute('target', '_blank');
+    fireEvent.click(bookmark);
+    expect(onOpenBookmark).toHaveBeenLastCalledWith(
+      expect.objectContaining({ title: 'Example bookmark' }),
+      'new-tab',
+    );
+    fireEvent.click(bookmark, { ctrlKey: true });
+    expect(onOpenBookmark).toHaveBeenLastCalledWith(
+      expect.objectContaining({ title: 'Example bookmark' }),
+      'new-tab',
+    );
+    fireEvent.click(bookmark, { ctrlKey: true, shiftKey: true });
+    expect(onOpenBookmark).toHaveBeenLastCalledWith(
+      expect.objectContaining({ title: 'Example bookmark' }),
+      'new-window',
+    );
     const folder = screen.getByRole('button', { name: /Research/ });
     await user.click(folder);
     expect(onOpenFolder).not.toHaveBeenCalled();

@@ -32,6 +32,49 @@ afterEach(() => {
 });
 
 describe('FolderStyleDialog', () => {
+  it('keeps the dialog and existing image open when file selection is canceled', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const existingImage = 'data:image/webp;base64,ZXhpc3Rpbmc=';
+    render(
+      <FolderStyleDialog
+        appearance={{ kind: 'image', fit: 'fill', value: existingImage }}
+        bookmarkGroupBy="none"
+        bookmarkSortBy="manual"
+        bookmarkSortDirection="ascending"
+        bookmarkView="card"
+        cardSize="medium"
+        cardSpacing="comfortable"
+        detailsTableTransparency={0}
+        folderName="Home"
+        isOpen
+        includeNavigationBackground={false}
+        navigationTransparency={45}
+        onClose={onClose}
+        onSave={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', {
+      name: 'Customize folder style',
+    });
+    await user.click(within(dialog).getByText('Folder background'));
+    const input = within(dialog).getByLabelText('Choose background image');
+    Object.defineProperty(input, 'value', {
+      configurable: true,
+      value: 'C:\\fakepath\\replacement.png',
+      writable: true,
+    });
+
+    fireEvent(input, new Event('cancel', { bubbles: true }));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(dialog).toBeVisible();
+    expect(input).toHaveValue('');
+    expect(
+      within(dialog).getByAltText('Selected folder background image'),
+    ).toHaveAttribute('src', existingImage);
+  });
+
   it('keeps every section collapsed initially and opens at most one', async () => {
     const user = userEvent.setup();
     render(

@@ -123,6 +123,8 @@ function setup(
   ),
   initializeUndo = vi.fn(async () => true),
   autoCropPopupScreenshots = false,
+  lastBookmarkAppearance:
+    { fit: 'fill'; kind: 'image'; value: string } | undefined = undefined,
 ) {
   const createdBookmark = {
     cardAppearance: { kind: 'color' as const, value: '#2f7de1' },
@@ -146,11 +148,11 @@ function setup(
   const dependencies = {
     activityLog: { record: vi.fn(async () => undefined) },
     bookmarkManager: {
-      captureUndoState: vi
+      captureUndoLineage: vi
         .fn()
         .mockResolvedValueOnce(before)
-        .mockResolvedValueOnce(after),
-      createBookmark: vi.fn(async () => undefined),
+        .mockResolvedValueOnce({ ...after, bookmarks: [] }),
+      createBookmark: vi.fn(async () => createdBookmark),
       listBookmarkLocationsByUrl,
     },
     captureCurrentTab: vi.fn(async () => 'data:image/jpeg;base64,dGVzdA=='),
@@ -190,6 +192,7 @@ function setup(
         settings: profileSettingsSchema.parse({
           autoCropPopupScreenshots,
           duplicateHandling,
+          lastBookmarkAppearance,
           profileId,
           tagOrder: 'preserve',
           theme: 'dark',
@@ -204,6 +207,35 @@ function setup(
   );
   return dependencies;
 }
+
+describe('SaveCurrentPagePopup appearance options', () => {
+  it('omits uploaded images while keeping screenshot capture available', async () => {
+    setup('allow', false);
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
+
+    expect(within(editor).queryByLabelText('Image')).not.toBeInTheDocument();
+    expect(
+      within(editor).queryByRole('button', { name: 'Choose card image' }),
+    ).not.toBeInTheDocument();
+    expect(within(editor).getByLabelText('Screenshot')).toBeEnabled();
+  });
+
+  it('falls back to Color when the remembered appearance is an image', async () => {
+    setup('allow', false, undefined, undefined, undefined, false, {
+      fit: 'fill',
+      kind: 'image',
+      value: 'data:image/png;base64,aW1hZ2U=',
+    });
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
+
+    expect(within(editor).getByLabelText('Color')).toBeChecked();
+    expect(within(editor).queryByLabelText('Image')).not.toBeInTheDocument();
+  });
+});
 
 describe('SaveCurrentPagePopup screenshot auto-crop', () => {
   it('falls back to the original and records a warning when local auto-crop fails', async () => {
@@ -451,6 +483,18 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
       expect(
         dependencies.bookmarkManager.createBookmark,
       ).toHaveBeenCalledOnce(),
+    );
+    expect(
+      dependencies.bookmarkManager.captureUndoLineage,
+    ).toHaveBeenCalledTimes(2);
+    expect(dependencies.undoHistory.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'created',
+        after: expect.objectContaining({
+          bookmarks: [expect.objectContaining({ id: bookmarkId })],
+        }),
+        before: expect.objectContaining({ bookmarks: [] }),
+      }),
     );
     expect(listBookmarkLocationsByUrl).not.toHaveBeenCalled();
   });

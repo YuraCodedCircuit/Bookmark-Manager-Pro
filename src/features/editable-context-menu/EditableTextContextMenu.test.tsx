@@ -50,6 +50,7 @@ function renderMenu(
       onClose={onClose}
       onOperationFailed={onOperationFailed}
       onPastePermissionDenied={onPastePermissionDenied}
+      readClipboardText={requestAndReadClipboardText}
       request={{ selectionEnd, selectionStart, target, x: 20, y: 30 }}
     />,
   );

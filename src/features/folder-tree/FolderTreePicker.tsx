@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ClearIcon } from '../../components/icons/ClearIcon';
+import { ClearableInput } from '../../components/ClearableInput';
 import { filterFolderTree } from './filter-folder-tree';
 import { FolderTreeNodeView } from './FolderTreeNodeView';
 import type { FolderTreeNode } from './folder-tree-data';
@@ -59,8 +59,9 @@ export function FolderTreePicker({
         <label className="visually-hidden" htmlFor={filterId}>
           {t('folderTree.filterLabel')}
         </label>
-        <input
+        <ClearableInput
           autoComplete="off"
+          clearLabel={t('folderTree.clearFilter')}
           id={filterId}
           onChange={(event) => setFilterQuery(event.target.value)}
           placeholder={t('folderTree.filterPlaceholder')}
@@ -69,18 +70,6 @@ export function FolderTreePicker({
           type="search"
           value={filterQuery}
         />
-        {filterQuery.length > 0 ? (
-          <button
-            aria-label={t('folderTree.clearFilter')}
-            onClick={() => {
-              setFilterQuery('');
-              filterInputRef.current?.focus();
-            }}
-            type="button"
-          >
-            <ClearIcon />
-          </button>
-        ) : null}
       </div>
       <div className="folder-tree-scroll">
         <nav aria-label={t('folderTree.label')} className="folder-tree">
