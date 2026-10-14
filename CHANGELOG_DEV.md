@@ -6,6 +6,71 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.6.2 - 2026-10-14
+
+### Changed
+
+- Replaced the welcome browser-list benefit with localized new-tab access
+  wording; synchronization behavior and storage boundaries are unchanged.
+
+- ImageCropDialog exposes a localized header close control using the existing
+  cancellation callback and processing guard. Parent editor close-icon styles are
+  scoped to their own form header so child SVG icons are not painted twice.
+
+- Shared enabled-button hover styling adds a neutral background tint without
+  changing text, borders, focus outlines, or destructive base colors. Native
+  file-picker buttons receive the same tint; forced-color mode is preserved.
+
+- FolderStyleDialog reuses ImageCropDialog with transient original and crop
+  state, Fit on apply, focus return, and existing save boundaries.
+
+- Added required `unlimitedStorage` permission to Chrome, Firefox, and Edge
+  manifests for extension-owned IndexedDB durability and storage quota exemption.
+  No schema, data conversion, runtime cleanup, or permission prompt flow is added.
+- Rebuilt `NotificationService` around FIFO admission, stable visible slots,
+  independent deadlines, and hover-only pause/resume. Reused caller IDs and
+  identical content create distinct events. Waiting events receive their full
+  timeout on admission; capacity, order, and placement preserve live deadlines.
+  Admission also requires measured card heights and gaps to fit the viewport.
+  An inert sizing card measures only the next waiting entry; resize and wrapping
+  invalidate stale measurements without starting queued clocks.
+- Rebuilt the notification viewport with a stable portal, actual modal-opening
+  order, and manual-popover top-layer management. Countdown rendering reads
+  the service clock instead of owning timers or restarting CSS animations.
+  Renderer degradation and action failures emit failure-isolated, privacy-safe
+  diagnostics without recursive notifications. Card-owned opacity entrance
+  animations survive top-layer changes without restarting or creating scroll
+  overflow. Cards omit shadows so clipping cannot paint a dark rectangle through
+  the transparent stack. Saved settings are unchanged.
+
+- Added a native child dialog for history filters with immediate parent-state
+  updates, Escape isolation, focus containment, and trigger focus restoration.
+- Separated undo-session initialization from obsolete-row cleanup. Deferred
+  maintenance runs after UI commit and document load under the history write
+  lock, revalidates the session marker, and preserves active rows on failure.
+  Browser-session history survives surface disposal; initialization is shared
+  and runs on demand before early mutations. No schema change is required.
+- Added privacy-safe session-cleanup INFO/WARN/ERROR boundaries with
+  failure-isolated, preference-aware warning and error notifications.
+
+### Fixed
+
+- ClearableInput button styles own border-box dimensions, minimum and maximum
+  size, zero padding, and corner radius with component-scoped specificity,
+  preventing surrounding dialog button rules from stretching the control.
+
+- Centered the crop stage within its padded viewport using safe grid alignment,
+  preserving scroll access when the image exceeds the available space.
+
+- Details tables use native intrinsic sizing for Date modified and Type while
+  constraining Title and URL cells so long content still truncates. Column
+  identity and reordering retain the same sizing rules without stored widths
+  or JavaScript measurement work.
+- Undo patches exclude timestamp-only ancestor updates from dependency checks
+  and restoration, including existing session patches. Shared-record mutations
+  remain linked, and folder existence dependencies protect child operations
+  during Undo and Redo without a schema or serialized-format change.
+
 ## 0.6.1 - 2026-10-05
 
 ### Added

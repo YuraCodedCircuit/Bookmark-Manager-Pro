@@ -17,6 +17,23 @@ afterEach(() => {
 });
 
 describe('ImageCropDialog', () => {
+  it('closes from the named header control without applying the crop', async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn();
+    const onCancel = vi.fn();
+    render(
+      <ImageCropDialog
+        onApply={onApply}
+        onCancel={onCancel}
+        source="data:image/png;base64,source"
+      />,
+    );
+    const close = screen.getByRole('button', { name: 'Close crop image' });
+    close.focus();
+    await user.keyboard('{Enter}');
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(onApply).not.toHaveBeenCalled();
+  });
   it('supports precise keyboard adjustment and applies a transient crop', async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();

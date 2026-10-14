@@ -94,29 +94,28 @@ export class DexieUndoHistoryStorage implements UndoHistoryStorage {
 
   private async initializeSession(): Promise<string> {
     const existing = await this.marker.get();
-    if (existing) {
-      await this.removeLegacyHistorySafely();
-      return existing;
-    }
-
-    const protectedSessionIds = await this.marker.getOtherActiveSessionIds();
+    if (existing) return existing;
     const sessionId = this.createSessionId();
-    if (protectedSessionIds) {
-      const protectedIds = new Set([...protectedSessionIds, sessionId]);
-      await this.database.undoHistory
-        .filter((record) => !protectedIds.has(record.sessionId))
-        .delete();
-    }
     await this.marker.set(sessionId);
-    await this.removeLegacyHistorySafely();
     return sessionId;
   }
 
-  private async removeLegacyHistorySafely(): Promise<void> {
-    try {
-      await this.marker.removeLegacyHistory();
-    } catch {
-      console.error('undo-history-legacy-session-cleanup-failed');
-    }
+  /** Keeps current and live preview sessions; a failed marker read never authorizes deletion. */
+  async cleanupObsoleteSessions(): Promise<{
+    removedEntries: number;
+    deferred: boolean;
+  }> {
+    const sessionId = await this.getSessionId();
+    if ((await this.marker.get()) !== sessionId)
+      return { removedEntries: 0, deferred: true };
+    const otherSessionIds = await this.marker.getOtherActiveSessionIds();
+    if (!otherSessionIds) return { removedEntries: 0, deferred: true };
+    const protectedIds = new Set([sessionId, ...otherSessionIds]);
+    const removedEntries = await this.database.undoHistory
+      .where('sessionId')
+      .noneOf([...protectedIds])
+      .delete();
+    await this.marker.removeLegacyHistory();
+    return { removedEntries, deferred: false };
   }
 }

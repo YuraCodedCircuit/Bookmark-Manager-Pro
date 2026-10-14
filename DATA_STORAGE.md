@@ -106,8 +106,12 @@ folder display choices.
 - `undoHistory`: schema-23 session-namespaced undo/redo patches, indexed by
   opaque session ID, profile, insertion position, and timestamp. Each patch
   contains only records changed by its operation. Session storage contains only
-  the active opaque ID, never bookmark content. Missing shared markers remove
-  stale session rows; marker read failures preserve every row. Preview tabs
+  the active opaque ID, never bookmark content. Closing extension tabs or normal
+  windows does not expire it; browser-managed session lifetime is authoritative.
+  Missing shared markers create a new session without deleting rows. After UI
+  commit and document load, separate maintenance removes obsolete session rows
+  under the history write lock. Failed, malformed, or changed markers preserve
+  rows. Cleanup failures do not disable valid current-session history. Preview tabs
   exchange active IDs before cleanup so one tab cannot delete another live
   tab's history. Saved bookmark content remains local and is never copied into
   activity logs or notifications. IndexedDB capacity errors apply oldest-first
@@ -200,6 +204,10 @@ mode. Reusing an existing default wallpaper does not duplicate its data for each
 new folder. An image is removed after no folder or default-style record in that
 profile references it.
 
+Customize folder style retains its optimized source and latest crop only in
+the open form. Applying uses Fit and persists only through Save style. Originals
+and crop geometry are not added to the stored wallpaper format.
+
 Visible-page screenshots and selected bookmark-card images remain temporary
 data URLs together with the latest cropped result until the owning bookmark or
 folder is saved. The shared crop pipeline accepts sources up to 7680 by 4320
@@ -220,7 +228,16 @@ exports, activity records, or diagnostics. Closing the dialog clears them. An
 explicit Copy action writes the generated value to the operating-system
 clipboard, which is outside extension storage.
 
-The browser controls the total IndexedDB quota. The app can show estimated
+Packaged Chrome, Edge, and Firefox extensions require `unlimitedStorage` to
+protect extension-owned IndexedDB data against automatic storage eviction and
+lift extension storage quotas. The permission does not prevent deliberate
+deletion, uninstall, browser-profile loss, or disk failure, and does not replace
+recovery snapshots or exported backups. The local web preview does not receive
+extension permissions and remains subject to the browser's normal quota and
+eviction rules. `navigator.storage.persisted()` alone does not indicate whether
+an extension has the separate `unlimitedStorage` permission.
+
+The browser and available disk space still bound storage. The app can show estimated
 profile storage, but the estimate excludes browser database overhead and is not
 a guarantee of remaining capacity. A fixed application-wide quota, proactive
 low-storage warnings, and cleanup rules for ordinary profile data remain an open

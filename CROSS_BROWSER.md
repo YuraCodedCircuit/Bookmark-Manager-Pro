@@ -94,8 +94,14 @@ must return an explicit unsupported result instead of silently doing nothing.
 Browser detection alone is insufficient when a direct capability test is
 available.
 
-The required `storage` permission currently supports browser-session undo and
-redo patches. It does not enable remote storage or synchronization.
+The required `storage` permission supports session coordination and preflight
+metadata; undo patches remain in IndexedDB. Required `unlimitedStorage` protects
+extension-owned databases against automatic eviction and lifts extension storage
+quotas in all three packaged targets. It does not prevent explicit deletion,
+uninstall, browser-profile loss, or disk failure. The webpage preview receives
+neither protection nor extension-only storage capabilities. Closing extension
+tabs or the last normal window does not expire the browser-session marker;
+obsolete history cleanup runs after UI load, outside preflight.
 
 The toolbar action and native page context menu open the same current-URL save
 popup. The background worker verifies the native menu registration whenever it

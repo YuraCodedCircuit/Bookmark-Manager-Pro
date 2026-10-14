@@ -73,9 +73,12 @@ for non-sensitive bugs and suggestions. Report suspected vulnerabilities through
 
 ## Installation
 
-Official browser-store links will be added when this implementation is ready for
-publication. Development builds can be loaded manually by following
-[INSTALLATION.md](INSTALLATION.md).
+Existing listings are available for
+[Firefox](https://addons.mozilla.org/en-US/firefox/addon/bookmark-manager-pro/)
+and [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/bookmark-manager-pro/kicpilbdojnnoemoeihibebccijpbidh).
+Browser stores may offer an older version while the latest release awaits
+submission or approval. Chrome development packages and
+manual installation instructions are described in [INSTALLATION.md](INSTALLATION.md).
 
 ## Development
 

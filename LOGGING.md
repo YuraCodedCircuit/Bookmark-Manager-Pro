@@ -52,6 +52,13 @@ appear in an event. Clipboard-read denial and bookmark-address copy failures use
 generic categories only. All logging remains failure-isolated from the primary
 edit, crop, paste, copy, or navigation result.
 
+Post-load undo-session maintenance records privacy-safe INFO for completion,
+WARN for supported skips or unavailable markers, and ERROR for cleanup failure.
+It never records bookmark content or session IDs and cannot block startup or
+disable current-session history. Notification-layer fallback and failed actions
+use content-free diagnostics; routine admission, pointer activity, and timers
+are not logged.
+
 ## Retention
 
 When automatic removal is enabled, the service applies both the configured

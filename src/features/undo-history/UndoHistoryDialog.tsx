@@ -11,6 +11,7 @@ import { BookmarkIcon } from '../../components/icons/BookmarkIcon';
 import { ChevronIcon } from '../../components/icons/ChevronIcon';
 import { ClearIcon } from '../../components/icons/ClearIcon';
 import { ClearableInput } from '../../components/ClearableInput';
+import { UndoHistoryFiltersDialog } from './UndoHistoryFiltersDialog';
 import { FolderIcon } from '../../components/icons/FolderIcon';
 import type { UndoHistoryService } from '../../application/undo-history/undo-history-service';
 import type { UndoHistoryEntry } from '../../domain/undo-history';
@@ -56,6 +57,7 @@ export function UndoHistoryDialog({
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const filtersButtonRef = useRef<HTMLButtonElement>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [view, setView] = useState<'grouped' | 'timeline'>('timeline');
@@ -255,20 +257,100 @@ export function UndoHistoryDialog({
             />
           </label>
           <button
-            aria-expanded={filtersOpen}
+            aria-haspopup="dialog"
             aria-controls="undo-history-options"
             className="profile-button undo-history__filter-toggle"
-            onClick={() => setFiltersOpen((open) => !open)}
+            onClick={() => setFiltersOpen(true)}
+            ref={filtersButtonRef}
             type="button"
           >
             {t('undoHistory.filters')}
-            <ChevronIcon
-              className={filtersOpen ? 'undo-history__chevron--open' : ''}
-            />
+            <ChevronIcon />
           </button>
         </div>
-        {filtersOpen ? (
-          <div className="undo-history__options" id="undo-history-options">
+      </section>
+
+      <section
+        aria-label={t('undoHistory.listLabel')}
+        className="undo-history__list"
+      >
+        {entries.length ? (
+          view === 'timeline' ? (
+            <ol className="undo-history__timeline">
+              {timelineEntries.map((entry) => {
+                const itemEntries = groups.find(
+                  ([itemId]) => itemId === entry.itemId,
+                )![1];
+                return renderEntry(
+                  entry,
+                  itemEntries.indexOf(entry),
+                  itemEntries,
+                );
+              })}
+            </ol>
+          ) : (
+            <div className="undo-history__groups">
+              {groups.map(([itemId, itemEntries]) => (
+                <details key={itemId} open>
+                  <summary>
+                    {entryTitle(itemEntries[0]!, t)}
+                    <span>{itemEntries.length}</span>
+                  </summary>
+                  <ol>
+                    {itemEntries.map((entry, index) =>
+                      renderEntry(entry, index, itemEntries),
+                    )}
+                  </ol>
+                </details>
+              ))}
+            </div>
+          )
+        ) : (
+          <div className="undo-history__empty" role="status">
+            <strong>
+              {t(
+                hasProfileHistory
+                  ? 'undoHistory.emptyTitle'
+                  : 'undoHistory.noHistoryTitle',
+              )}
+            </strong>
+            <span>
+              {t(
+                hasProfileHistory
+                  ? 'undoHistory.emptyMessage'
+                  : 'undoHistory.noHistoryMessage',
+              )}
+            </span>
+          </div>
+        )}
+      </section>
+
+      <footer className="undo-history__footer">
+        <span>{t('undoHistory.sessionCount', { count: entries.length })}</span>
+        <div className="undo-history__footer-actions">
+          <button
+            className="profile-button undo-history__clear"
+            disabled={historyState.busy || entries.length === 0}
+            onClick={clearHistory}
+            type="button"
+          >
+            {t('undoHistory.clearAll')}
+          </button>
+          <button
+            className="profile-button profile-button--primary"
+            onClick={onClose}
+            type="button"
+          >
+            {t('undoHistory.closeButton')}
+          </button>
+        </div>
+      </footer>
+      {filtersOpen && isOpen ? (
+        <UndoHistoryFiltersDialog
+          onClose={() => setFiltersOpen(false)}
+          returnFocusRef={filtersButtonRef}
+        >
+          <div className="undo-history__options">
             <label>
               <span>{t('undoHistory.options.view')}</span>
               <select
@@ -354,84 +436,8 @@ export function UndoHistoryDialog({
               </select>
             </label>
           </div>
-        ) : null}
-      </section>
-
-      <section
-        aria-label={t('undoHistory.listLabel')}
-        className="undo-history__list"
-      >
-        {entries.length ? (
-          view === 'timeline' ? (
-            <ol className="undo-history__timeline">
-              {timelineEntries.map((entry) => {
-                const itemEntries = groups.find(
-                  ([itemId]) => itemId === entry.itemId,
-                )![1];
-                return renderEntry(
-                  entry,
-                  itemEntries.indexOf(entry),
-                  itemEntries,
-                );
-              })}
-            </ol>
-          ) : (
-            <div className="undo-history__groups">
-              {groups.map(([itemId, itemEntries]) => (
-                <details key={itemId} open>
-                  <summary>
-                    {entryTitle(itemEntries[0]!, t)}
-                    <span>{itemEntries.length}</span>
-                  </summary>
-                  <ol>
-                    {itemEntries.map((entry, index) =>
-                      renderEntry(entry, index, itemEntries),
-                    )}
-                  </ol>
-                </details>
-              ))}
-            </div>
-          )
-        ) : (
-          <div className="undo-history__empty" role="status">
-            <strong>
-              {t(
-                hasProfileHistory
-                  ? 'undoHistory.emptyTitle'
-                  : 'undoHistory.noHistoryTitle',
-              )}
-            </strong>
-            <span>
-              {t(
-                hasProfileHistory
-                  ? 'undoHistory.emptyMessage'
-                  : 'undoHistory.noHistoryMessage',
-              )}
-            </span>
-          </div>
-        )}
-      </section>
-
-      <footer className="undo-history__footer">
-        <span>{t('undoHistory.sessionCount', { count: entries.length })}</span>
-        <div className="undo-history__footer-actions">
-          <button
-            className="profile-button undo-history__clear"
-            disabled={historyState.busy || entries.length === 0}
-            onClick={clearHistory}
-            type="button"
-          >
-            {t('undoHistory.clearAll')}
-          </button>
-          <button
-            className="profile-button profile-button--primary"
-            onClick={onClose}
-            type="button"
-          >
-            {t('undoHistory.closeButton')}
-          </button>
-        </div>
-      </footer>
+        </UndoHistoryFiltersDialog>
+      ) : null}
     </dialog>
   );
 }

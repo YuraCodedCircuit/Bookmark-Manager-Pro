@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { BookmarkManagerDatabase } from './database';
 import { DexieBookmarkRepository } from './dexie-bookmark-repository';
+import { UndoHistoryService } from '../application/undo-history/undo-history-service';
 
 const databases: BookmarkManagerDatabase[] = [];
 const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
@@ -463,6 +464,185 @@ describe('DexieBookmarkRepository', () => {
       updatedAt: 101,
     });
   });
+
+  it('undoes sibling history independently without overwriting a later parent edit', async () => {
+    const database = new BookmarkManagerDatabase(
+      `independent-history-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = new DexieBookmarkRepository(database);
+    await repository.ensureRoot(profileId, root);
+    const service = new UndoHistoryService(
+      { load: async () => [], save: async () => undefined },
+      (id, state, affected) =>
+        repository.restoreProfileState(id, state, affected),
+    );
+    const childIds = [
+      '22222222-2222-4222-8222-222222222222',
+      '44444444-4444-4444-8444-444444444444',
+    ];
+    for (const [index, id] of childIds.entries()) {
+      const before = await repository.captureProfileState(profileId);
+      const created = await repository.addFolder({
+        ...root,
+        id,
+        isRoot: false,
+        parentId: rootId,
+        title: `Child ${index}`,
+        updatedAt: index + 2,
+      });
+      await service.record({
+        action: 'created',
+        before,
+        after: await repository.captureProfileState(profileId),
+        itemId: id,
+        itemType: 'folder',
+        profileId,
+      });
+      const editBefore = await repository.captureItemState(profileId, id);
+      await repository.updateFolder({
+        ...created,
+        title: `Edited ${index}`,
+        updatedAt: index + 4,
+      });
+      await service.record({
+        action: 'edited',
+        before: editBefore,
+        after: await repository.captureItemState(profileId, id),
+        itemId: id,
+        itemType: 'folder',
+        profileId,
+      });
+    }
+    const parent = await repository.getFolder(profileId, rootId);
+    await repository.updateFolder({
+      ...parent!,
+      title: 'Later parent edit',
+      updatedAt: 20,
+    });
+    const [firstCreate, firstEdit, secondCreate, secondEdit] =
+      service.store.getState().entries;
+    await service.undo(profileId, firstEdit!.id);
+    await expect(
+      repository.getFolder(profileId, childIds[0]!),
+    ).resolves.toMatchObject({ title: 'Child 0' });
+    await expect(
+      repository.getFolder(profileId, childIds[1]!),
+    ).resolves.toMatchObject({ title: 'Edited 1' });
+    await service.undo(profileId, firstCreate!.id);
+    await expect(
+      repository.getFolder(profileId, childIds[0]!),
+    ).resolves.toBeUndefined();
+    await service.undo(profileId, secondEdit!.id);
+    await service.undo(profileId, secondCreate!.id);
+    await service.redo(profileId, secondCreate!.id);
+    await service.redo(profileId, secondEdit!.id);
+    await service.redo(profileId, firstCreate!.id);
+    await service.redo(profileId, firstEdit!.id);
+    await expect(
+      repository.getFolder(profileId, rootId),
+    ).resolves.toMatchObject({ title: 'Later parent edit', updatedAt: 20 });
+    await expect(
+      repository.getFolder(profileId, childIds[0]!),
+    ).resolves.toMatchObject({ title: 'Edited 0' });
+    await expect(
+      repository.getFolder(profileId, childIds[1]!),
+    ).resolves.toMatchObject({ title: 'Edited 1' });
+  });
+
+  it.each(['deleted', 'moved'] as const)(
+    'restores a %s folder and its contents as one history action',
+    async (action) => {
+      const database = new BookmarkManagerDatabase(
+        `linked-history-${crypto.randomUUID()}`,
+      );
+      databases.push(database);
+      const repository = new DexieBookmarkRepository(database);
+      await repository.ensureRoot(profileId, root);
+      const parentId = '22222222-2222-4222-8222-222222222222';
+      const childId = '33333333-3333-4333-8333-333333333333';
+      const destinationId = '44444444-4444-4444-8444-444444444444';
+      const bookmarkId = '55555555-5555-4555-8555-555555555555';
+      for (const [id, parent] of [
+        [parentId, rootId],
+        [childId, parentId],
+        [destinationId, rootId],
+      ]) {
+        await repository.addFolder({
+          ...root,
+          id: id!,
+          parentId: parent!,
+          isRoot: false,
+        });
+      }
+      await repository.addBookmark({
+        cardAppearance: root.cardAppearance,
+        createdAt: 1,
+        id: bookmarkId,
+        index: 0,
+        note: '',
+        parentId: childId,
+        profileId,
+        tags: [],
+        title: 'Nested bookmark',
+        updatedAt: 1,
+        url: 'https://example.com/',
+      });
+      const service = new UndoHistoryService(
+        { load: async () => [], save: async () => undefined },
+        (id, state, affected) =>
+          repository.restoreProfileState(id, state, affected),
+      );
+      const before = await repository.captureProfileState(profileId);
+      if (action === 'deleted')
+        await repository.deleteItem(profileId, parentId);
+      else await repository.moveItem(profileId, parentId, destinationId, 0);
+      await service.record({
+        action,
+        before,
+        after: await repository.captureProfileState(profileId),
+        itemId: parentId,
+        itemType: 'folder',
+        profileId,
+      });
+      expect(service.store.getState().entries).toHaveLength(1);
+      await service.undo(profileId);
+      await expect(
+        repository.getFolder(profileId, parentId),
+      ).resolves.toMatchObject({ parentId: rootId });
+      await expect(
+        repository.getFolder(profileId, childId),
+      ).resolves.toMatchObject({ parentId });
+      await expect(
+        repository.getBookmark(profileId, bookmarkId),
+      ).resolves.toMatchObject({ parentId: childId });
+      await service.redo(profileId);
+      if (action === 'deleted') {
+        await expect(
+          repository.getFolder(profileId, parentId),
+        ).resolves.toBeUndefined();
+        await expect(
+          repository.getFolder(profileId, childId),
+        ).resolves.toBeUndefined();
+        await expect(
+          repository.getBookmark(profileId, bookmarkId),
+        ).resolves.toBeUndefined();
+      } else {
+        await expect(
+          repository.getFolder(profileId, parentId),
+        ).resolves.toMatchObject({ parentId: destinationId });
+        await expect(
+          repository.getFolder(profileId, childId),
+        ).resolves.toMatchObject({ parentId });
+        await expect(
+          repository.getBookmark(profileId, bookmarkId),
+        ).resolves.toMatchObject({ parentId: childId });
+      }
+      await expect(
+        repository.getFolder(profileId, destinationId),
+      ).resolves.toBeDefined();
+    },
+  );
 
   it('atomically restores affected records from an undo patch', async () => {
     const database = new BookmarkManagerDatabase(

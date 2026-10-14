@@ -1,6 +1,6 @@
 # Accessibility Statement
 
-**Updated:** September 29, 2026
+**Updated:** October 14, 2026
 
 Bookmark Manager Pro aims to provide an interface that can be used with a
 keyboard, screen reader, text zoom, reduced motion, and higher-contrast display
@@ -40,6 +40,9 @@ Implemented accessibility behavior includes:
 - Browser and assistive-technology combinations may expose different behavior.
 - Import, Export, and Advanced settings are visible but unavailable while those
   features are being developed. Backup is implemented.
+- A nested crop-dialog check has exposed intermittent focus return to the Crop
+  image trigger. Automatic focus restoration is not consistently verified in
+  every host context; keyboard Tab navigation remains available.
 - Accessibility testing is ongoing as new surfaces are introduced.
 
 ## Reporting an accessibility problem

@@ -130,6 +130,21 @@ The consequence is that snapshots still belong to browser-managed extension
 storage: uninstalling the extension or clearing its data removes them. They are
 not a replacement for future portable exports.
 
+### ADR-011: Protect packaged extension storage from automatic eviction
+
+Status: Accepted
+
+Date: 2026-10-14
+
+Require `unlimitedStorage` in all packaged browser targets. This supersedes
+ADR-008's reliance on the browser's ordinary extension storage quota; per-image
+validation bounds remain. Browser persistence requests alone can be denied, and
+local snapshots share the same browser-profile storage risk. The permission
+protects extension databases from automatic eviction without external storage
+or additional data access. Available disk space still bounds storage, and
+explicit deletion, uninstall, browser-profile loss, and disk failure remain
+possible. Portable exports and independent backups remain separate work.
+
 ## Proposed decisions
 
 - Export container format and cryptographic parameters

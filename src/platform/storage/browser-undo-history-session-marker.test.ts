@@ -11,6 +11,32 @@ afterEach(() => {
 });
 
 describe('BrowserUndoHistorySessionMarker', () => {
+  it('rejects malformed markers instead of authorizing a fresh session', async () => {
+    window.sessionStorage.setItem(
+      'bookmark-manager-pro.undo-session-id.v1',
+      'invalid',
+    );
+    await expect(new BrowserUndoHistorySessionMarker().get()).rejects.toThrow();
+    expect(
+      window.sessionStorage.getItem('bookmark-manager-pro.undo-session-id.v1'),
+    ).toBe('invalid');
+  });
+
+  it('does not treat a stored null extension marker as an absent key', async () => {
+    Object.assign(globalThis, {
+      browser: {
+        storage: {
+          session: {
+            get: async (key: string) => ({ [key]: null }),
+            set: async () => undefined,
+            remove: async () => undefined,
+          },
+        },
+      },
+    });
+    await expect(new BrowserUndoHistorySessionMarker().get()).rejects.toThrow();
+  });
+
   it('uses tab session storage in the webpage preview', async () => {
     const marker = new BrowserUndoHistorySessionMarker();
 

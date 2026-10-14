@@ -1,13 +1,16 @@
 # Installation
 
 Bookmark Manager Pro targets Chrome, Firefox, and Microsoft Edge. The current
-application is an Alpha release. Browser-store installation links will be added
-when this implementation is published.
+application is an Alpha release. Store availability and release timing differ
+between browsers.
 
 ## Browser-store installation
 
-When an official release becomes available, install it only from the listing
-linked by the project repository. Browser stores manage installation, updates,
+Official listings are available for
+[Firefox](https://addons.mozilla.org/en-US/firefox/addon/bookmark-manager-pro/)
+and [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/bookmark-manager-pro/kicpilbdojnnoemoeihibebccijpbidh).
+Browser stores may offer an older version while the latest release awaits
+submission or approval. Browser stores manage installation, updates,
 permissions, and removal. Avoid packages or listings published by unrelated
 developers under a similar name.
 

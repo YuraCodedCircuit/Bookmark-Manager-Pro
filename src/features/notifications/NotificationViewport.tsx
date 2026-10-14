@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useEffectEvent,
   useLayoutEffect,
   useRef,
@@ -11,110 +10,149 @@ import { useStore } from 'zustand';
 import { useTranslation } from 'react-i18next';
 
 import type { NotificationPreferences } from '../../domain/profile-settings';
+import { prefersReducedMotion } from '../../shared/use-prefers-reduced-motion';
 import {
   NotificationService,
   type AppNotification,
 } from '../../application/notification/notification-service';
+import {
+  mountNotificationLayer,
+  reportNotificationDiagnostic,
+  type NotificationDiagnostic,
+} from './notification-layer';
 
 interface NotificationViewportProps {
   preferences: NotificationPreferences;
   service: NotificationService;
+  onDiagnostic?: (event: NotificationDiagnostic) => void;
 }
 
-const findNotificationHost = (): HTMLElement => {
-  const dialogs = document.querySelectorAll<HTMLDialogElement>('dialog[open]');
-  return dialogs.item(dialogs.length - 1) ?? document.body;
-};
-
-/** Renders the visible portion of the notification queue at the saved edge. */
+/** Presents admitted notifications in the configured corner without owning their clocks. */
 export function NotificationViewport({
   preferences,
   service,
+  onDiagnostic,
 }: NotificationViewportProps) {
   const { t } = useTranslation();
   const viewportRef = useRef<HTMLElement>(null);
-  const [portalContainer] = useState(() => document.createElement('div'));
-  const [portalHost, setPortalHost] = useState<HTMLElement>(() =>
-    findNotificationHost(),
+  const [container] = useState(() => document.createElement('div'));
+  const cardHeights = useRef(new Map<string, number>());
+  const measuredSize = useRef('');
+  const state = useStore(service.store);
+  const visibleSet = new Set(state.visibleIds);
+  const chronological = state.notifications.filter(({ id }) =>
+    visibleSet.has(id),
   );
-  const notifications = useStore(service.store, (state) => state.notifications);
-
-  useEffect(() => {
-    const updateHost = () => setPortalHost(findNotificationHost());
-    updateHost();
-    const observer = new MutationObserver((records) => {
-      if (
-        records.some(
-          (record) =>
-            record.type === 'childList' || record.attributeName === 'open',
-        )
-      ) {
-        updateHost();
-      }
-    });
-    observer.observe(document.body, {
-      attributeFilter: ['open'],
-      attributes: true,
-      childList: true,
-      subtree: true,
-    });
-    return () => observer.disconnect();
-  }, []);
+  const priority =
+    preferences.order === 'newest' ? chronological.reverse() : chronological;
+  const rendered = preferences.position.startsWith('bottom')
+    ? priority.reverse()
+    : priority;
+  const active = preferences.enabled && state.notifications.length > 0;
+  const waiting =
+    rendered.length < preferences.stackLimit
+      ? state.notifications.find(({ id }) => !visibleSet.has(id))
+      : undefined;
+  const placement = `${preferences.position}:${rendered.map(({ id }) => id).join(',')}`;
+  const reportLayerFallback = useEffectEvent(() =>
+    reportNotificationDiagnostic(onDiagnostic, 'top-layer-unavailable'),
+  );
 
   useLayoutEffect(() => {
-    const activeHost =
-      !portalHost.isConnected || portalHost.matches('dialog:not([open])')
-        ? document.body
-        : portalHost;
-    activeHost.append(portalContainer);
-    return () => {
-      if (portalContainer.parentElement === activeHost)
-        portalContainer.remove();
-    };
-  }, [portalContainer, portalHost]);
+    // Start with no measured space so a newly attached surface cannot start
+    // queued clocks before its hidden, inert sizing card has been laid out.
+    service.setViewportCapacity({ height: 0, gap: 0, cardHeights: new Map() });
+  }, [service]);
 
-  useEffect(() => {
-    if (!preferences.enabled) service.clear();
-  }, [preferences.enabled, service]);
+  useLayoutEffect(() => {
+    service.configure({
+      enabled: preferences.enabled,
+      stackLimit: preferences.stackLimit,
+    });
+  }, [preferences.enabled, preferences.stackLimit, service]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const viewport = viewportRef.current;
-    if (!viewport || typeof viewport.showPopover !== 'function') return;
-    const bringToFront = () => {
-      if (!viewport.isConnected) return;
-      if (viewport.matches(':popover-open')) viewport.hidePopover();
-      if (!viewport.isConnected) return;
-      viewport.showPopover();
-    };
-    bringToFront();
-    const observer = new MutationObserver((records) => {
-      if (records.some((record) => record.attributeName === 'open')) {
-        bringToFront();
-      }
+    if (!active || !viewport) return;
+    return mountNotificationLayer(container, viewport, reportLayerFallback);
+  }, [active, container]);
+
+  const measure = useEffectEvent(() => {
+    const viewport = viewportRef.current;
+    if (!viewport?.isConnected) return;
+    const rootSize =
+      parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const height = Math.max(
+      0,
+      Math.min(window.innerHeight, window.visualViewport?.height ?? Infinity) -
+        2 * rootSize,
+    );
+    viewport.style.setProperty(
+      '--notification-available-height',
+      `${height}px`,
+    );
+    const size = `${viewport.getBoundingClientRect().width}:${height}`;
+    if (measuredSize.current !== size) {
+      cardHeights.current.clear();
+      measuredSize.current = size;
+    }
+    const ids = new Set(
+      service.store.getState().notifications.map(({ id }) => id),
+    );
+    for (const id of cardHeights.current.keys())
+      if (!ids.has(id)) cardHeights.current.delete(id);
+    for (const card of viewport.querySelectorAll<HTMLElement>(
+      '[data-notification-id], [data-notification-measurement]',
+    )) {
+      const id =
+        card.dataset.notificationId ?? card.dataset.notificationMeasurement;
+      const height = card.getBoundingClientRect().height;
+      if (id && height > 0) cardHeights.current.set(id, height);
+    }
+    service.setViewportCapacity({
+      height,
+      gap: parseFloat(getComputedStyle(viewport).rowGap) || 0,
+      cardHeights: cardHeights.current,
     });
-    observer.observe(document.body, {
-      attributeFilter: ['open'],
-      attributes: true,
-      subtree: true,
-    });
+  });
+
+  useLayoutEffect(() => {
+    measure();
+  });
+  useLayoutEffect(() => {
+    if (!active) return;
+    const resize = () => measure();
+    let frame: number | undefined;
+    const observer =
+      typeof ResizeObserver === 'function'
+        ? new ResizeObserver(() => {
+            // Admission changes the observed stack's height. Measure on the
+            // next frame instead of feeding writes back into observer delivery.
+            if (frame !== undefined) return;
+            frame = requestAnimationFrame(() => {
+              frame = undefined;
+              measure();
+            });
+          })
+        : undefined;
+    const viewport = viewportRef.current;
+    if (viewport) {
+      observer?.observe(viewport);
+      for (const card of viewport.querySelectorAll('article'))
+        observer?.observe(card);
+    }
+    window.addEventListener('resize', resize);
+    window.visualViewport?.addEventListener('resize', resize);
     return () => {
-      observer.disconnect();
-      if (viewport.isConnected && viewport.matches(':popover-open'))
-        viewport.hidePopover();
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener('resize', resize);
+      window.visualViewport?.removeEventListener('resize', resize);
     };
-  }, [notifications.length, portalHost]);
+  }, [active, placement, waiting?.id]);
 
-  if (!preferences.enabled || notifications.length === 0) return null;
-  const priority =
-    preferences.order === 'newest'
-      ? [...notifications].reverse()
-      : [...notifications];
-  const visible = priority.slice(0, preferences.stackLimit);
-  const rendered = preferences.position.startsWith('bottom')
-    ? visible.reverse()
-    : visible;
-
-  const viewport = (
+  if (!active) return null;
+  return createPortal(
     <section
       aria-label={t('notifications.regionLabel')}
       className={`notification-viewport notification-viewport--${preferences.position}`}
@@ -124,82 +162,150 @@ export function NotificationViewport({
       {rendered.map((notification) => (
         <NotificationCard
           key={notification.id}
-          countdownLineColor={preferences.countdownLineColor}
           notification={notification}
           service={service}
+          countdownLineColor={preferences.countdownLineColor}
           dismissLabel={t('notifications.dismiss')}
-          onDismiss={() => service.dismiss(notification.id)}
+          onDiagnostic={onDiagnostic}
         />
       ))}
-    </section>
+      {waiting ? (
+        <div
+          aria-hidden="true"
+          inert
+          className="notification-measurement"
+          style={{ visibility: 'hidden' }}
+        >
+          <NotificationCard
+            notification={waiting}
+            service={service}
+            countdownLineColor={preferences.countdownLineColor}
+            dismissLabel={t('notifications.dismiss')}
+            measurement
+          />
+        </div>
+      ) : null}
+    </section>,
+    container,
   );
-  return createPortal(viewport, portalContainer);
 }
 
 interface NotificationCardProps {
+  measurement?: boolean;
   countdownLineColor: string | null;
   dismissLabel: string;
   notification: AppNotification;
-  onDismiss: () => void;
   service: NotificationService;
+  onDiagnostic?: ((event: NotificationDiagnostic) => void) | undefined;
 }
 
-/** Manages pause-and-resume timing without changing the underlying operation. */
+/** Keeps countdown rendering observational: focus, rerenders, and DOM moves cannot change time. */
 function NotificationCard({
   countdownLineColor,
   dismissLabel,
   notification,
-  onDismiss,
   service,
+  onDiagnostic,
+  measurement = false,
 }: NotificationCardProps) {
-  const timerRef = useRef<number | undefined>(undefined);
-  const [paused, setPaused] = useState(false);
-  const dismiss = useEffectEvent(onDismiss);
+  const cardRef = useRef<HTMLElement>(null);
+  const lineRef = useRef<HTMLSpanElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const timing = service.getTiming(notification.id);
 
-  useEffect(() => {
-    if (paused || notification.durationMs === null) return;
-    const remainingMs = service.resumeTimer(notification.id);
-    timerRef.current = window.setTimeout(
-      dismiss,
-      Math.max(0, remainingMs ?? 0),
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    if (
+      measurement ||
+      !card ||
+      typeof card.animate !== 'function' ||
+      prefersReducedMotion()
+    )
+      return;
+    // CSS animations restart when a popover is raised or its dialog closes.
+    // A card-owned Web Animation plays once and opacity cannot create overflow.
+    const entrance = card.animate(
+      { opacity: [0, 1] },
+      { duration: 160, easing: 'ease-out' },
     );
-    return () => {
-      window.clearTimeout(timerRef.current);
-      service.pauseTimer(notification.id);
+    return () => entrance.cancel();
+  }, [measurement]);
+
+  useLayoutEffect(() => {
+    const line = lineRef.current;
+    if (measurement || !line || notification.durationMs === null) return;
+    const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    let frame: number;
+    const update = () => {
+      const progress = service.getTiming(notification.id);
+      if (
+        !progress ||
+        progress.remainingMs === null ||
+        progress.durationMs === null
+      )
+        return;
+      let fraction =
+        progress.durationMs === 0
+          ? 0
+          : progress.remainingMs / progress.durationMs;
+      if (
+        motion?.matches ||
+        ['reduced', 'none'].includes(
+          document.documentElement.dataset.motion ?? '',
+        )
+      )
+        fraction = Math.ceil(fraction * 10) / 10;
+      line.style.transform = `scaleX(${fraction})`;
+      line.dataset.paused = progress.paused ? 'true' : 'false';
+      frame = requestAnimationFrame(update);
     };
-  }, [
-    notification.durationMs,
-    notification.id,
-    notification.revision,
-    paused,
-    service,
-  ]);
+    update();
+    return () => cancelAnimationFrame(frame);
+  }, [notification.id, notification.durationMs, service, measurement]);
 
-  const { elapsedMs } = service.getTiming(notification.id);
-
-  const setPauseFromFocus = (next: boolean) => setPaused(next);
+  useLayoutEffect(() => {
+    if (measurement) return;
+    const card = cardRef.current;
+    return () => {
+      if (
+        card?.contains(document.activeElement) &&
+        returnFocusRef.current?.isConnected
+      )
+        returnFocusRef.current.focus({ preventScroll: true });
+      // A removed card cannot remain under the pointer, even if DOM removal
+      // does not dispatch mouseleave (for example, a surface unmount).
+      service.setHovered(notification.id, false);
+    };
+  }, [notification.id, service, measurement]);
 
   return (
     <article
       className={`notification-card notification-card--${notification.level}`}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setPauseFromFocus(false);
-        }
+      data-notification-id={measurement ? undefined : notification.id}
+      data-notification-measurement={measurement ? notification.id : undefined}
+      ref={cardRef}
+      onFocus={(event) => {
+        if (
+          event.relatedTarget instanceof HTMLElement &&
+          !event.currentTarget.contains(event.relatedTarget)
+        )
+          returnFocusRef.current = event.relatedTarget;
       }}
-      onFocus={() => setPauseFromFocus(true)}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
           event.stopPropagation();
-          onDismiss();
+          service.dismiss(notification.id);
         }
       }}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onMouseEnter={() => service.setHovered(notification.id, true)}
+      onMouseLeave={() => service.setHovered(notification.id, false)}
       role={
-        notification.level === 'success' || notification.level === 'information'
-          ? 'status'
-          : 'alert'
+        measurement
+          ? undefined
+          : notification.level === 'success' ||
+              notification.level === 'information'
+            ? 'status'
+            : 'alert'
       }
     >
       <span aria-hidden="true" className="notification-card__icon">
@@ -217,14 +323,17 @@ function NotificationCard({
             {notification.actions.map((action) => (
               <button
                 key={action.id}
-                onClick={() => {
-                  void Promise.resolve(action.run()).catch(() => {
-                    console.error(
-                      'A privacy-safe notification action could not be completed.',
-                    );
-                  });
-                }}
                 type="button"
+                onClick={() => {
+                  void Promise.resolve()
+                    .then(() => action.run())
+                    .catch(() =>
+                      reportNotificationDiagnostic(
+                        onDiagnostic,
+                        'action-failed',
+                      ),
+                    );
+                }}
               >
                 {action.label}
               </button>
@@ -235,7 +344,7 @@ function NotificationCard({
       <button
         aria-label={dismissLabel}
         className="notification-card__close"
-        onClick={onDismiss}
+        onClick={() => service.dismiss(notification.id)}
         type="button"
       >
         ×
@@ -244,11 +353,11 @@ function NotificationCard({
         <span
           aria-hidden="true"
           className="notification-card__time-line"
-          data-paused={paused ? 'true' : 'false'}
+          ref={lineRef}
+          data-paused={timing?.paused ? 'true' : 'false'}
           style={
             {
               '--notification-duration': `${notification.durationMs}ms`,
-              '--notification-delay': `-${elapsedMs}ms`,
               '--notification-line-color': countdownLineColor ?? 'var(--text)',
             } as CSSProperties
           }

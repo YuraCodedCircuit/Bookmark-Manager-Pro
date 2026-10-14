@@ -1,33 +1,42 @@
-# What's New in 0.6.1
+# What's New in 0.6.2
 
-Released October 5, 2026.
+Released October 14, 2026.
 
-This release makes everyday bookmark changes faster, improves familiar mouse
-and form controls, and fixes several Firefox and image-handling workflows.
+This release improves independent Undo and Redo, notification behavior, local
+storage protection, and image and form controls.
 
 ## Highlights
 
-- **Faster bookmark and folder changes** - Save, edit, favorite, style, and
-  delete operations now prepare Undo data only for affected records instead of
-  scanning unrelated profile content.
-- **More predictable link opening** - Ctrl+click always opens a bookmark in a
-  new tab, and Ctrl+Shift+click always opens it in a new window, regardless of
-  the saved opening preference.
-- **Clearer controls and information** - File selectors, radio buttons, and
-  checkboxes match the application style; nonempty single-line fields offer a
-  Clear action; card titles and addresses reveal their complete values on
-  hover; and About includes browser-matched review and project links.
+- **Independent Undo and Redo** - The history window can reverse the latest
+  eligible change for each independent item without undoing unrelated items.
+  Filters opens in a focused modal. History survives closing extension tabs
+  for the browser session, with obsolete history cleaned up after a later load.
+- **Predictable notifications** - Every trigger receives a separate card.
+  Cards follow the saved corner, order, and limit, and wait when the viewport
+  has no room. Only hovering a card pauses its timer; other windows do not
+  restart or pause it. Error notifications remain until manually closed.
+- **Local storage protection** - Required Unlimited Storage permission protects
+  extension databases from automatic browser eviction. It does not prevent
+  explicit deletion, uninstall, browser-profile loss, or disk failure.
+- **Folder background cropping** - Customize folder style now offers Crop image
+  below its preview. Crop changes stay pending until Save style.
 
-## Bug Fixes
+## Other Improvements
 
-- Firefox can show optional tab-access and Clipboard Read prompts directly from
-  the corresponding user action.
-- Canceling an image picker keeps its application window open and preserves the
-  current draft. The transient toolbar popup omits uploaded-image selection,
-  while Screenshot remains available and full application editors retain local
-  image uploads.
-- New folders with image backgrounds save the wallpaper and folder record in
-  the same local transaction.
+- Welcome highlights opening a new tab to access bookmarks directly.
+
+- Date modified and Type columns fit their longest text automatically.
+- Crop image has a top-right X and balanced preview spacing.
+- Buttons show subtle theme-aware hover feedback while retaining red
+  destructive colors, and input Clear buttons keep a consistent square size.
+- The Privacy Policy effective date and permission documentation are updated.
+
+## Known Limitations
+
+Nested crop-dialog keyboard focus return can be intermittent in some host
+contexts. Firefox manual verification and store-update testing remain pending.
+Unlimited Storage reduces one storage-loss risk; the reported Edge data-loss
+incident's original cause has not been established.
 
 ## Full Changelog
 

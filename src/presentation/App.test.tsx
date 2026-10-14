@@ -15,6 +15,7 @@ import type { Bookmark } from '../domain/bookmark';
 import { safeBookmarkUrlSchema } from '../domain/bookmark-url';
 import type { Folder } from '../domain/folder';
 import { defaultShortcutPreferences } from '../domain/keyboard-shortcuts';
+import { defaultNotificationPreferences } from '../domain/profile-settings';
 import type { NavigationItems } from '../application/bookmark/manage-bookmarks';
 import '../localization/i18n';
 import { App } from './App';
@@ -42,6 +43,15 @@ const createdProfile = {
 const onUiReady = vi.fn();
 const openBookmarkWindow = vi.fn(async () => undefined);
 const originalClipboard = navigator.clipboard;
+
+/** Distinguishes a form's own error from interactive notices portaled into its modal. */
+function inlineAlert(dialog: HTMLElement): HTMLElement {
+  const alerts = within(dialog)
+    .getAllByRole('alert')
+    .filter((element) => !element.closest('.notification-viewport'));
+  expect(alerts).toHaveLength(1);
+  return alerts[0]!;
+}
 const activityLog = {
   clear: vi.fn(),
   createExport: vi.fn(),
@@ -541,6 +551,121 @@ describe('App', () => {
         'Undo history could not be initialized for this browser session.',
       ),
     ).toBeInTheDocument();
+    consoleError.mockRestore();
+  });
+
+  it.each([
+    ['complete', 'INFO', 'Succeeded', 3],
+    ['deferred', 'WARN', 'Skipped', 0],
+    ['failed', 'ERROR', 'Failed', 0],
+  ] as const)(
+    'reports %s session maintenance with privacy-safe diagnostics',
+    async (status, level, outcome, count) => {
+      const service = new UndoHistoryService(
+        { load: async () => [], save: async () => undefined },
+        bookmarkManager.restoreUndoState,
+      );
+      service.store.setState({
+        cleanupStatus: status,
+        removedObsoleteEntries: count,
+      });
+      const show = vi.spyOn(NotificationService.prototype, 'show');
+      renderApp(
+        { status: 'ready', theme: 'dark', ...createdProfile },
+        undefined,
+        service,
+      );
+      await waitFor(() =>
+        expect(activityLog.record).toHaveBeenCalledWith(
+          createdProfile.profile.id,
+          expect.objectContaining({
+            eventCode: `UNDO-HISTORY-SESSION-CLEANUP-${status.toUpperCase()}`,
+            level,
+            outcome,
+            itemsAffected: count,
+          }),
+        ),
+      );
+      if (status === 'complete') expect(show).not.toHaveBeenCalled();
+      else
+        expect(show).toHaveBeenCalledWith(
+          expect.objectContaining({
+            id: 'undo-history-session-cleanup',
+            level: status === 'failed' ? 'error' : 'warning',
+          }),
+        );
+      show.mockRestore();
+    },
+  );
+
+  it('keeps cleanup failures isolated when logging fails and notifications are disabled', async () => {
+    const service = new UndoHistoryService(
+      { load: async () => [], save: async () => undefined },
+      bookmarkManager.restoreUndoState,
+    );
+    service.store.setState({ cleanupStatus: 'failed' });
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    activityLog.record.mockRejectedValueOnce(new Error('log unavailable'));
+    const show = vi.spyOn(NotificationService.prototype, 'show');
+    renderApp(
+      {
+        status: 'ready',
+        theme: 'dark',
+        ...createdProfile,
+        settings: {
+          ...createdProfile.settings,
+          notificationPreferences: {
+            ...defaultNotificationPreferences,
+            enabled: false,
+          },
+        },
+      },
+      undefined,
+      service,
+    );
+    await screen.findByRole('link', { name: 'Open Example' });
+    expect(show).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith(
+      'profile-activity-log-write-failed',
+    );
+    expect(service.store.getState().entries).toEqual([]);
+    show.mockRestore();
+    consoleError.mockRestore();
+  });
+
+  it('preserves cleanup results when notification delivery fails', async () => {
+    const service = new UndoHistoryService(
+      { load: async () => [], save: async () => undefined },
+      bookmarkManager.restoreUndoState,
+    );
+    service.store.setState({ cleanupStatus: 'failed' });
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const show = vi
+      .spyOn(NotificationService.prototype, 'show')
+      .mockImplementationOnce(() => {
+        throw new Error('notification unavailable');
+      });
+    renderApp(
+      { status: 'ready', theme: 'dark', ...createdProfile },
+      undefined,
+      service,
+    );
+    await screen.findByRole('link', { name: 'Open Example' });
+    expect(consoleError).toHaveBeenCalledWith(
+      'A privacy-safe notification could not be displayed.',
+    );
+    expect(service.store.getState().cleanupStatus).toBe('failed');
+    expect(activityLog.record).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      expect.objectContaining({
+        eventCode: 'UNDO-HISTORY-SESSION-CLEANUP-FAILED',
+      }),
+    );
+    show.mockRestore();
     consoleError.mockRestore();
   });
 
@@ -1553,8 +1678,8 @@ describe('App', () => {
       await screen.findByText('Password copied to your clipboard.'),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText('A new random password was generated.'),
-    ).not.toBeInTheDocument();
+      screen.getByText('A new random password was generated.'),
+    ).toBeInTheDocument();
 
     await user.click(within(generator).getByRole('button', { name: 'Cancel' }));
     expect(
@@ -1700,8 +1825,10 @@ describe('App', () => {
       within(dialog).getByRole('button', { name: 'Allow tab access' }),
     );
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
-      'Tab-address access was not granted.',
+    await waitFor(() =>
+      expect(inlineAlert(dialog)).toHaveTextContent(
+        'Tab-address access was not granted.',
+      ),
     );
     expect(screen.getByText('Tab access not granted')).toBeInTheDocument();
     expect(
@@ -1835,7 +1962,7 @@ describe('App', () => {
       within(settingsDialog).getByRole('button', { name: 'Save' }),
     );
 
-    expect(within(settingsDialog).getByRole('alert')).toBeVisible();
+    expect(inlineAlert(settingsDialog)).toBeVisible();
     expect(screen.getByText('Operation failed')).toBeInTheDocument();
     expect(activityLog.record).toHaveBeenCalledWith(
       createdProfile.profile.id,
@@ -2229,7 +2356,7 @@ describe('App', () => {
       within(dialog).getByRole('button', { name: 'Save bookmark' }),
     );
 
-    expect(await within(dialog).findByRole('alert')).toBeVisible();
+    await waitFor(() => expect(inlineAlert(dialog)).toBeVisible());
     expect(activityLog.record).toHaveBeenCalledWith(
       createdProfile.profile.id,
       expect.objectContaining({
@@ -2287,7 +2414,7 @@ describe('App', () => {
     await user.click(within(dialog).getByText('More details'));
     await user.click(within(dialog).getByRole('button', { name: 'Copy ID' }));
 
-    expect(within(dialog).getByRole('alert')).toHaveTextContent(
+    expect(inlineAlert(dialog)).toHaveTextContent(
       'The value could not be copied.',
     );
     expect(activityLog.record).toHaveBeenCalledWith(
@@ -2507,7 +2634,11 @@ describe('App', () => {
         'Choose a valid PNG, JPEG, or BMP image no larger than 1 MB and 7680 by 4320 pixels.',
       ),
     ).toBeInTheDocument();
-    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+    expect(
+      within(dialog)
+        .queryAllByRole('alert')
+        .filter((element) => !element.closest('.notification-viewport')),
+    ).toHaveLength(0);
     expect(activityLog.record).toHaveBeenCalledWith(
       createdProfile.profile.id,
       expect.objectContaining({

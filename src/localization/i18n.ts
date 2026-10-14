@@ -294,6 +294,7 @@ void i18n.use(initReactI18next).init({
             styled: 'Changed appearance',
           },
           close: 'Close undo and redo history',
+          closeFilters: 'Close history filters',
           closeButton: 'Close',
           clearAll: 'Clear all',
           clearConfirm:
@@ -307,6 +308,11 @@ void i18n.use(initReactI18next).init({
           itemTypes: { bookmark: 'Bookmark', folder: 'Folder' },
           initializeFailed:
             'Undo history could not be initialized for this browser session.',
+          cleanupComplete: 'Previous-session undo history was removed.',
+          cleanupDeferred:
+            'Previous-session history cleanup was postponed because the active session could not be confirmed.',
+          cleanupFailed:
+            'Previous-session undo history could not be removed. Cleanup will be attempted when another application tab loads.',
           listLabel: 'Undo and redo history',
           noHistoryMessage:
             'Changes that can be undone or redone will appear here.',
@@ -687,6 +693,7 @@ void i18n.use(initReactI18next).init({
           cropApplied:
             'Crop applied. Image fit changed to Fit so the complete crop remains visible.',
           crop: {
+            close: 'Close crop image',
             apply: 'Apply crop',
             applying: 'Applying crop...',
             cancel: 'Cancel',
@@ -1137,6 +1144,9 @@ void i18n.use(initReactI18next).init({
           dismiss: 'Dismiss notification',
           errorMessage: 'The operation could not be completed.',
           errorTitle: 'Operation failed',
+          actionFailed: 'A notification action could not be completed.',
+          topLayerUnavailable:
+            'Notifications are using a fallback display layer because the browser top layer is unavailable.',
           externalContentRefreshFailedMessage:
             'Updated folder contents could not be loaded. The last available contents remain visible.',
           externalContentRefreshFailedTitle: 'Folder update failed',
@@ -1630,8 +1640,8 @@ void i18n.use(initReactI18next).init({
         welcome: {
           benefits: {
             browsers: {
-              description: 'A consistent home across supported browsers.',
-              title: 'Chrome, Firefox, and Edge',
+              description: 'Open a new tab and get straight to your bookmarks.',
+              title: 'Ready when you are',
             },
             customize: {
               description: 'Shape folders and bookmark cards around your work.',

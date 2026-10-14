@@ -61,8 +61,11 @@ export class BrowserUndoHistorySessionMarker implements UndoHistorySessionMarker
     const raw = extensionStorage
       ? (await extensionStorage.get(SESSION_ID_KEY))[SESSION_ID_KEY]
       : window.sessionStorage.getItem(SESSION_ID_KEY);
-    const parsed = sessionIdSchema.safeParse(raw);
-    this.activeSessionId = parsed.success ? parsed.data : undefined;
+    // A malformed marker is unavailable storage, never evidence of a new session.
+    this.activeSessionId =
+      raw === undefined || (!extensionStorage && raw === null)
+        ? undefined
+        : sessionIdSchema.parse(raw);
     return this.activeSessionId;
   }
 

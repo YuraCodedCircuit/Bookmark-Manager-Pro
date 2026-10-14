@@ -18,6 +18,7 @@ import { i18n } from './localization/i18n';
 import { App } from './presentation/App';
 import { createContentChangeBridge } from './platform/content-change/create-content-change-bridge';
 import './styles/global.css';
+import { scheduleAfterPageLoad } from './platform/lifecycle/schedule-after-page-load';
 
 const rootElement = document.querySelector<HTMLDivElement>('#root');
 
@@ -68,30 +69,31 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
       .catch(() => console.error('toolbar-saved-status-request-failed'));
   });
   const preflightSnapshot = await preflight.execute();
-  const undoHistoryReady = await undoHistory.initialize();
-  if (
-    !undoHistoryReady &&
-    preflightSnapshot.initialization.status === 'ready'
-  ) {
-    try {
-      await activityLog.record(preflightSnapshot.initialization.profile.id, {
-        action: 'Initialize',
-        category: 'Application',
-        dataChanged: false,
-        durationMs: 0,
-        eventCode: 'UNDO-HISTORY-INITIALIZATION-FAILED',
-        itemType: 'Undo history',
-        itemsAffected: 0,
-        kind: 'DIAGNOSTIC',
-        level: 'ERROR',
-        message: i18n.t('undoHistory.initializeFailed'),
-        outcome: 'Failed',
-        source: 'Application startup',
-      });
-    } catch {
-      console.error('undo-history-initialization-log-write-failed');
+  let historyMaintenanceScheduled = false;
+  const prepareSessionHistory = async () => {
+    const ready = await undoHistory.initialize();
+    if (!ready && preflightSnapshot.initialization.status === 'ready') {
+      try {
+        await activityLog.record(preflightSnapshot.initialization.profile.id, {
+          action: 'Initialize',
+          category: 'Application',
+          dataChanged: false,
+          durationMs: 0,
+          eventCode: 'UNDO-HISTORY-INITIALIZATION-FAILED',
+          itemType: 'Undo history',
+          itemsAffected: 0,
+          kind: 'DIAGNOSTIC',
+          level: 'ERROR',
+          message: i18n.t('undoHistory.initializeFailed'),
+          outcome: 'Failed',
+          source: 'Application startup',
+        });
+      } catch {
+        console.error('undo-history-initialization-log-write-failed');
+      }
     }
-  }
+    if (ready) await undoHistory.cleanupObsoleteSessions();
+  };
 
   const createProfileAndResumePreflight = async (
     input: CreateFirstProfileInput,
@@ -112,7 +114,16 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
           contentChanges={contentChanges}
           createProfileAndResumePreflight={createProfileAndResumePreflight}
           initialPreflightSnapshot={preflightSnapshot}
-          onUiReady={(operationId) => preflight.markUiReady(operationId)}
+          onUiReady={(operationId) => {
+            preflight.markUiReady(operationId);
+            if (historyMaintenanceScheduled) return;
+            historyMaintenanceScheduled = true;
+            scheduleAfterPageLoad(() => {
+              void prepareSessionHistory().catch(() =>
+                console.error('undo-history-maintenance-failed'),
+              );
+            });
+          }}
           openBookmarkWindow={openBookmarkWindow}
           profileManager={profileManager}
           {...(clipboardReader

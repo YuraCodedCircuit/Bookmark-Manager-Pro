@@ -26,7 +26,14 @@ export default defineConfig({
     default_locale: 'en',
     incognito: 'not_allowed',
     minimum_chrome_version: browser === 'firefox' ? undefined : '140',
-    permissions: ['activeTab', 'alarms', 'contextMenus', 'search', 'storage'],
+    permissions: [
+      'activeTab',
+      'alarms',
+      'contextMenus',
+      'search',
+      'storage',
+      'unlimitedStorage',
+    ],
     optional_permissions: ['bookmarks', 'clipboardRead', 'tabs'],
     icons: {
       16: 'extension-icon-16.png',

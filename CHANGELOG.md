@@ -6,6 +6,57 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.6.2 - 2026-10-14
+
+### Improved
+
+- The welcome screen highlights direct bookmark access from a new tab instead
+  of listing browsers.
+
+- Crop image includes a top-right Close button that cancels without applying
+  changes.
+
+- Buttons show subtle hover feedback across themes while retaining their
+  existing colors, including red destructive actions. Disabled buttons remain
+  unchanged.
+
+- Customize folder style now offers Crop image directly below the background
+  preview, using the same local crop editor as bookmarks and folders.
+
+- Added local storage protection against automatic browser eviction through the
+  required Unlimited Storage permission. Backups remain necessary for explicit
+  deletion, uninstall, browser-profile loss, and disk failures.
+- Every triggered notification now receives its own card. Extra cards wait for
+  a visible slot instead of replacing or merging existing notifications, and
+  follow the configured corner, order, and visible limit. Only whole cards that
+  fit within the browser viewport are admitted; other notifications wait.
+- Notification timers pause only while that card is hovered. Focus, window
+  changes, and other interactions no longer pause or restart the remaining
+  timeout or countdown line.
+- Notifications stay above newly opened dialogs and popovers while retaining
+  usable close and action buttons, without flashing or briefly showing a
+  scrollbar when panels open or close. The space between cards stays transparent.
+
+- History filters now open in a separate modal above Undo and redo history,
+  with immediate updates and keyboard focus returned to Filters on closing.
+- Undo history remains available after all extension tabs close, until the
+  browser session ends. Obsolete history is cleaned up after an application
+  tab loads, keeping cleanup out of startup preflight.
+
+### Fixed
+
+- Input Clear buttons keep a consistent compact square shape across dialogs,
+  including Create snapshot, without inheriting larger action-button sizes.
+
+- Crop image centers its editing area with balanced opposite gaps when the
+  controls make the workspace taller than the image.
+
+- Details view automatically fits Date modified and Type columns to their
+  longest text, keeping dates readable as folder contents and formats change.
+- Undo and Redo remain available for each independent item's latest change,
+  even after another item changes in the same folder. Actions affecting
+  multiple items stay linked, and parent/child dependencies remain protected.
+
 ## 0.6.1 - 2026-10-05
 
 ### Performance

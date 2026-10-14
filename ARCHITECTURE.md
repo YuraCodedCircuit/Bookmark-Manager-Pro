@@ -170,11 +170,16 @@ remain UI-surface responsibilities because extension workers have no DOM or
   service through explicit composition and does not access either database.
 - The schema-23 `undoHistory` IndexedDB table owns bounded undo/redo patches.
   Browser session storage owns only an opaque session ID, shared across packaged
-  extension surfaces and tab-scoped in the webpage preview. Startup under the
-  Web Locks adapter creates a marker when missing and removes rows belonging to
-  stale, non-active sessions. Preview markers use a one-shot BroadcastChannel
+  extension surfaces and tab-scoped in the webpage preview. Closing the last
+  extension tab or normal browser window does not clear history. History
+  preparation is scheduled after React's UI-ready commit and document load,
+  outside preflight; an earlier mutation initializes history on demand.
+  Initialization under the Web Locks adapter creates a marker when missing.
+  Separate post-load maintenance uses the same lock and removes only obsolete
+  sessions after rechecking the active marker. Preview markers use a one-shot BroadcastChannel
   presence probe to protect other live tabs. Marker reads must succeed before
-  cleanup; read failures preserve all rows. Each surface also keeps a local
+  cleanup; failed or malformed reads preserve all rows. Cleanup diagnostics and
+  failure notices are isolated from current-session history. Each surface also keeps a local
   promise queue. Capacity failures apply oldest-first retention and synchronize
   only successfully persisted entries; other failures retain an unavailable
   diagnostic state.
@@ -197,6 +202,21 @@ remain UI-surface responsibilities because extension workers have no DOM or
   crop originals, geometry, zoom, and pending results until the owning dialog
   closes or saves.
 - Zustand owns cross-component transient state within a single surface.
+- A surface-local notification service owns FIFO admission and independent
+  timeout clocks. Waiting cards receive their full duration on admission;
+  only mouse hover pauses a visible card. React observes those clocks and
+  arranges admitted cards according to the active profile's settings. A manual
+  popover raises notifications above other top-layer content, with its portal
+  hosted inside the active modal so notification controls remain interactive.
+  A card-owned opacity Web Animation runs only on mount, avoiding CSS entrance
+  restarts when the top-layer host changes and avoiding translated overflow.
+  Admission is bounded by both the profile's count limit and measured viewport
+  space. An inert, hidden copy of the next FIFO card measures its height without
+  timers or live-region announcements. ResizeObserver and viewport resize
+  remeasure wrapping and available space. Oversized cards scroll internally;
+  the stack never requires scrolling to reveal an admitted card.
+  Unsupported top-layer behavior and failed actions produce failure-isolated,
+  content-free diagnostics; routine card and pointer activity is not logged.
 - Synchronization, toolbar-popup saves, and successful app mutations publish a
   versioned, Zod-validated BroadcastChannel message containing only profile and
   affected-item identifiers. Each profile also has a monotonic content revision

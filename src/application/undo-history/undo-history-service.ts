@@ -13,6 +13,8 @@ interface UndoHistoryState {
   busy: boolean;
   entries: readonly UndoHistoryEntry[];
   initializationFailed: boolean;
+  cleanupStatus: 'idle' | 'complete' | 'deferred' | 'failed';
+  removedObsoleteEntries: number;
 }
 
 interface RecordOperationInput {
@@ -54,8 +56,12 @@ export class UndoHistoryService {
     busy: false,
     entries: [],
     initializationFailed: false,
+    cleanupStatus: 'idle',
+    removedObsoleteEntries: 0,
   }));
   private operation: Promise<void> = Promise.resolve();
+  private initialization: Promise<boolean> | undefined;
+  private initialized = false;
   private readonly surfaceId = crypto.randomUUID();
   private readonly peers = new Set<string>();
   private readonly storageWriteFailureListeners =
@@ -70,7 +76,9 @@ export class UndoHistoryService {
     private readonly now: () => number = () => Date.now(),
     private readonly runExclusive: RunExclusive = (run) => run(),
     private readonly channel:
-      HistoryChannel | undefined = createHistoryChannel(),
+      HistoryChannel | undefined = storage.sharedAcrossTabs === undefined
+      ? undefined
+      : createHistoryChannel(),
   ) {
     if (this.channel)
       this.channel.onmessage = (event: MessageEvent<unknown>) => {
@@ -91,9 +99,11 @@ export class UndoHistoryService {
           return;
         }
         if (message.type === 'request') {
-          this.broadcast('sync', this.store.getState().entries);
+          if (this.initialized)
+            this.broadcast('sync', this.store.getState().entries);
           return;
         }
+        if (!this.initialized) return;
         const parsed = undoHistoryEntrySchema
           .array()
           .max(250)
@@ -123,7 +133,13 @@ export class UndoHistoryService {
     return () => this.storagePressureListeners.delete(listener);
   }
 
-  async initialize(): Promise<boolean> {
+  /** Loads at most once, including when a mutation starts before deferred startup. */
+  initialize(): Promise<boolean> {
+    this.initialization ??= this.loadHistory();
+    return this.initialization;
+  }
+
+  private async loadHistory(): Promise<boolean> {
     try {
       await this.runExclusive(async () => {
         this.store.setState({
@@ -131,6 +147,7 @@ export class UndoHistoryService {
           initializationFailed: false,
         });
       });
+      this.initialized = true;
       this.broadcast('hello');
       this.broadcast('request');
       return true;
@@ -142,7 +159,10 @@ export class UndoHistoryService {
   }
 
   async record(input: RecordOperationInput): Promise<void> {
+    if (!(await this.initialize()))
+      throw new Error('undo-history-initialize-failed');
     const changed = changedIds(input.before, input.after);
+    changed.folderIds = meaningfulFolderIds(input, changed.folderIds);
     if (
       !changed.bookmarkIds.length &&
       !changed.folderIds.length &&
@@ -175,16 +195,19 @@ export class UndoHistoryService {
 
   /** Serializes a new mutation against undo and redo database writes. */
   runMutation<T>(run: () => Promise<T>): Promise<T> {
-    const task = this.operation.then(() =>
-      this.runExclusive(async () => {
+    const task = this.operation.then(async () => {
+      // History failure must not block the primary bookmark mutation; recording
+      // reports degradation afterward through the established caller boundary.
+      await this.initialize();
+      return this.runExclusive(async () => {
         this.store.setState({ busy: true });
         try {
           return await run();
         } finally {
           this.store.setState({ busy: false });
         }
-      }),
-    );
+      });
+    });
     this.operation = task.then(
       () => undefined,
       () => undefined,
@@ -203,6 +226,8 @@ export class UndoHistoryService {
   /** Clears every session-history entry owned by one profile. */
   clear(profileId: string): Promise<void> {
     return this.enqueue(async () => {
+      if (!(await this.initialize()))
+        throw new Error('undo-history-initialize-failed');
       await this.runExclusive(async () => {
         this.store.setState({ busy: true });
         try {
@@ -231,18 +256,37 @@ export class UndoHistoryService {
     });
   }
 
-  /** Releases cross-tab resources and clears storage when this is the last surface. */
+  /** Releases this surface without expiring browser-session history. */
   async dispose(): Promise<void> {
-    if (this.peers.size === 0)
-      await this.storage
-        .save([])
-        .catch(() =>
-          this.reportStorageWriteFailure(this.store.getState().entries),
-        );
-    else this.broadcast('goodbye');
+    this.broadcast('goodbye');
     this.channel?.close();
   }
 
+  /** Runs post-load maintenance under the same cross-surface lock as writes. */
+  cleanupObsoleteSessions(): Promise<void> {
+    return this.enqueue(async () => {
+      if (!(await this.initialize())) return;
+      try {
+        const result = await this.runExclusive(
+          () =>
+            this.storage.cleanupObsoleteSessions?.() ??
+            Promise.resolve({ removedEntries: 0, deferred: false }),
+        );
+        this.store.setState({
+          cleanupStatus: result.deferred ? 'deferred' : 'complete',
+          removedObsoleteEntries: result.removedEntries,
+        });
+      } catch {
+        this.store.setState({
+          cleanupStatus: 'failed',
+          removedObsoleteEntries: 0,
+        });
+        console.error('undo-history-session-cleanup-failed');
+      }
+    });
+  }
+
+  /** Checks item ordering and shared-record or parent-existence dependencies. */
   canApply(
     profileId: string,
     entryId: string,
@@ -278,6 +322,8 @@ export class UndoHistoryService {
     profileId: string,
     entryId?: string,
   ): Promise<void> {
+    if (!(await this.initialize()))
+      throw new Error('undo-history-initialize-failed');
     await this.runExclusive(async () => {
       this.store.setState({ busy: true });
       try {
@@ -292,13 +338,23 @@ export class UndoHistoryService {
         if (!entry) return;
         if (!this.canApply(profileId, entry.id, direction))
           throw new Error('undo-history-dependent-operation');
+        // Older session patches also contain timestamp-only ancestors. Never
+        // restore those snapshots over unrelated, more recent folder changes.
+        const folderIds = meaningfulFolderIds(entry, entry.affectedFolderIds);
         await this.restoreState(
           profileId,
-          direction === 'undo' ? entry.before : entry.after,
+          selectChangedState(
+            direction === 'undo' ? entry.before : entry.after,
+            {
+              bookmarkIds: entry.affectedBookmarkIds,
+              favoriteIds: entry.affectedFavoriteIds,
+              folderIds,
+            },
+          ),
           {
             bookmarkIds: entry.affectedBookmarkIds,
             favoriteIds: entry.affectedFavoriteIds,
-            folderIds: entry.affectedFolderIds,
+            folderIds,
           },
         );
         const updated = entries.map((candidate) =>
@@ -408,22 +464,62 @@ function operationsOverlap(
   right: UndoHistoryEntry,
 ): boolean {
   if (left.itemId === right.itemId) return true;
-  if (!isStructuralAction(left.action) && !isStructuralAction(right.action))
-    return false;
-  const rightIds = new Set([
-    ...right.affectedBookmarkIds,
-    ...right.affectedFavoriteIds,
-    ...right.affectedFolderIds,
-  ]);
-  return [
-    ...left.affectedBookmarkIds,
-    ...left.affectedFavoriteIds,
-    ...left.affectedFolderIds,
-  ].some((id) => rightIds.has(id));
+  const leftFolders = meaningfulFolderIds(left, left.affectedFolderIds);
+  const rightFolders = meaningfulFolderIds(right, right.affectedFolderIds);
+  return (
+    overlaps(left.affectedBookmarkIds, right.affectedBookmarkIds) ||
+    overlaps(left.affectedFavoriteIds, right.affectedFavoriteIds) ||
+    overlaps(leftFolders, rightFolders) ||
+    changesRequiredParent(left, right, leftFolders) ||
+    changesRequiredParent(right, left, rightFolders)
+  );
 }
 
-function isStructuralAction(action: UndoHistoryAction): boolean {
-  return action === 'created' || action === 'deleted' || action === 'moved';
+function overlaps(left: readonly string[], right: readonly string[]): boolean {
+  const rightIds = new Set(right);
+  return left.some((id) => rightIds.has(id));
+}
+
+/** Omits propagated timestamps while retaining every actual folder mutation. */
+function meaningfulFolderIds(
+  operation: Pick<RecordOperationInput, 'before' | 'after' | 'itemId'>,
+  folderIds: readonly string[],
+): string[] {
+  const before = new Map(
+    operation.before.folders.map((folder) => [folder.id, folder]),
+  );
+  const after = new Map(
+    operation.after.folders.map((folder) => [folder.id, folder]),
+  );
+  return folderIds.filter((id) => {
+    if (id === operation.itemId) return true;
+    const previous = before.get(id);
+    const next = after.get(id);
+    if (!previous || !next) return true;
+    return (
+      JSON.stringify({ ...previous, updatedAt: 0 }) !==
+      JSON.stringify({ ...next, updatedAt: 0 })
+    );
+  });
+}
+
+/** Keeps folder existence linked to operations on its children in either direction. */
+function changesRequiredParent(
+  operation: UndoHistoryEntry,
+  dependent: UndoHistoryEntry,
+  folderIds: readonly string[],
+): boolean {
+  const beforeIds = new Set(operation.before.folders.map(({ id }) => id));
+  const afterIds = new Set(operation.after.folders.map(({ id }) => id));
+  const existenceChanges = new Set(
+    folderIds.filter((id) => beforeIds.has(id) !== afterIds.has(id)),
+  );
+  return [
+    ...dependent.before.bookmarks,
+    ...dependent.after.bookmarks,
+    ...dependent.before.folders,
+    ...dependent.after.folders,
+  ].some(({ parentId }) => parentId !== null && existenceChanges.has(parentId));
 }
 
 function selectDefaultCandidate(

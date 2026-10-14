@@ -16,7 +16,7 @@ afterEach(async () =>
 );
 
 describe('DexieUndoHistoryStorage', () => {
-  it('creates a shared session, deletes previous-session rows, and persists ordered entries', async () => {
+  it('loads without deleting old rows and later cleans only obsolete sessions', async () => {
     const database = createDatabase();
     await database.undoHistory.add({
       ...entry('11111111-1111-4111-8111-111111111111', 1),
@@ -37,9 +37,13 @@ describe('DexieUndoHistoryStorage', () => {
 
     await expect(storage.load()).resolves.toEqual([]);
     expect(marker.set).toHaveBeenCalledWith(sessionId);
-    await expect(database.undoHistory.count()).resolves.toBe(0);
+    await expect(database.undoHistory.count()).resolves.toBe(1);
 
     await storage.save(entries);
+    await expect(storage.cleanupObsoleteSessions()).resolves.toEqual({
+      removedEntries: 1,
+      deferred: false,
+    });
 
     await expect(storage.load()).resolves.toEqual(entries);
     await expect(database.undoHistory.toArray()).resolves.toMatchObject([
@@ -65,6 +69,10 @@ describe('DexieUndoHistoryStorage', () => {
     expect(storage.sharedAcrossTabs).toBe(false);
 
     await expect(storage.load()).resolves.toEqual([]);
+    await expect(storage.cleanupObsoleteSessions()).resolves.toEqual({
+      removedEntries: 0,
+      deferred: false,
+    });
     await expect(database.undoHistory.count()).resolves.toBe(1);
   });
 
@@ -120,10 +128,52 @@ describe('DexieUndoHistoryStorage', () => {
     const storage = new DexieUndoHistoryStorage(createDatabase(), marker);
 
     await expect(storage.load()).resolves.toEqual([]);
-    expect(consoleError).toHaveBeenCalledWith(
-      'undo-history-legacy-session-cleanup-failed',
+    expect(marker.removeLegacyHistory).not.toHaveBeenCalled();
+    await expect(storage.cleanupObsoleteSessions()).rejects.toThrow(
+      'remove failed',
     );
     consoleError.mockRestore();
+  });
+
+  it('preserves every row when session verification fails during deferred cleanup', async () => {
+    const database = createDatabase();
+    const marker = markerStore(sessionId, true);
+    const storage = new DexieUndoHistoryStorage(database, marker);
+    await database.undoHistory.add({
+      ...entry('11111111-1111-4111-8111-111111111111', 1),
+      position: 0,
+      sessionId: previousSessionId,
+    });
+    await storage.load();
+    marker.get.mockRejectedValueOnce(new Error('read failed'));
+    await expect(storage.cleanupObsoleteSessions()).rejects.toThrow(
+      'read failed',
+    );
+    await expect(database.undoHistory.count()).resolves.toBe(1);
+    marker.get.mockResolvedValueOnce(previousSessionId);
+    await expect(storage.cleanupObsoleteSessions()).resolves.toEqual({
+      removedEntries: 0,
+      deferred: true,
+    });
+    await expect(database.undoHistory.count()).resolves.toBe(1);
+  });
+
+  it('postpones preview cleanup when other live tab sessions cannot be determined', async () => {
+    const database = createDatabase();
+    await database.undoHistory.add({
+      ...entry('11111111-1111-4111-8111-111111111111', 1),
+      position: 0,
+      sessionId: previousSessionId,
+    });
+    const storage = new DexieUndoHistoryStorage(
+      database,
+      markerStore(sessionId, false),
+    );
+    await expect(storage.cleanupObsoleteSessions()).resolves.toEqual({
+      removedEntries: 0,
+      deferred: true,
+    });
+    await expect(database.undoHistory.count()).resolves.toBe(1);
   });
 });
 
@@ -151,7 +201,9 @@ function markerStore(
       sharedAcrossTabs ? [] : undefined,
     ),
     removeLegacyHistory: vi.fn(async () => undefined),
-    set: vi.fn(async () => undefined),
+    set: vi.fn(async (next: string) => {
+      value = next;
+    }),
   };
 }
 

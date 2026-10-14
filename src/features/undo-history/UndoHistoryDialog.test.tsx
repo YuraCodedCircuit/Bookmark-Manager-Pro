@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../localization/i18n';
 import { UndoHistoryService } from '../../application/undo-history/undo-history-service';
 import { UndoHistoryDialog } from './UndoHistoryDialog';
+import type { UndoProfileState } from '../../domain/undo-history';
 
 afterEach(cleanup);
 
@@ -36,9 +37,36 @@ describe('UndoHistoryDialog', () => {
     const filters = within(dialog).getByRole('button', { name: 'Filters' });
     await user.click(filters);
 
-    expect(filters).toHaveAttribute('aria-expanded', 'true');
-    expect(within(dialog).getByLabelText('View')).toBeVisible();
-    expect(within(dialog).queryByLabelText('Profile')).not.toBeInTheDocument();
+    expect(filters).toHaveAttribute('aria-haspopup', 'dialog');
+    const filtersDialog = screen.getByRole('dialog', { name: 'Filters' });
+    const view = within(filtersDialog).getByLabelText('View');
+    expect(view).toHaveFocus();
+    expect(
+      within(filtersDialog).queryByLabelText('Profile'),
+    ).not.toBeInTheDocument();
+    await user.selectOptions(view, 'grouped');
+    await user.click(
+      within(filtersDialog).getByRole('button', { name: 'Close' }),
+    );
+    expect(
+      screen.queryByRole('dialog', { name: 'Filters' }),
+    ).not.toBeInTheDocument();
+    expect(filters).toHaveFocus();
+    expect(dialog).toBeVisible();
+    await user.click(filters);
+    expect(screen.getByLabelText('View')).toHaveValue('grouped');
+    await user.keyboard('{Escape}');
+    expect(
+      screen.queryByRole('dialog', { name: 'Filters' }),
+    ).not.toBeInTheDocument();
+    expect(filters).toHaveFocus();
+    await user.click(filters);
+    await user.selectOptions(screen.getByLabelText('Action'), 'edited');
+    expect(within(dialog).getByText('No matching changes')).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: 'Close history filters' }),
+    );
+    expect(filters).toHaveFocus();
   });
 
   it('filters session history and presents a fixed close action', async () => {
@@ -93,6 +121,105 @@ describe('UndoHistoryDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Undo' }));
     expect(changed).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: 'Redo' })).toBeEnabled();
+  });
+
+  it('enables each latest item action and supports keyboard undo and redo independently', async () => {
+    const user = userEvent.setup();
+    let timestamp = 1;
+    const service = new UndoHistoryService(
+      { load: async () => [], save: async () => undefined },
+      vi.fn(async () => undefined),
+      undefined,
+      () => timestamp,
+    );
+    let current: UndoProfileState = {
+      bookmarks: [],
+      favorites: [],
+      folders: [root],
+    };
+    for (const id of [itemId, bookmarkId]) {
+      for (const action of ['created', 'edited'] as const) {
+        const next = {
+          ...current,
+          folders: [
+            { ...root, updatedAt: ++timestamp },
+            ...current.folders.slice(1).filter((folder) => folder.id !== id),
+            {
+              ...root,
+              id,
+              isRoot: false,
+              parentId: rootId,
+              title: id === itemId ? '123' : '333',
+              updatedAt: timestamp,
+            },
+          ],
+        };
+        await service.record({
+          action,
+          before: current,
+          after: next,
+          itemId: id,
+          itemType: 'folder',
+          profileId,
+        });
+        current = next;
+      }
+    }
+    const completed = vi.fn();
+    const failed = vi.fn();
+    render(
+      <UndoHistoryDialog
+        isOpen
+        onClose={vi.fn()}
+        onHistoryChanged={vi.fn()}
+        onHistoryClearCompleted={vi.fn()}
+        onHistoryClearFailed={vi.fn()}
+        onOperationCompleted={completed}
+        onOperationFailed={failed}
+        profileId={profileId}
+        requestClearConfirmation={async () => true}
+        service={service}
+      />,
+    );
+    const [secondEdit, secondCreate, firstEdit, firstCreate] =
+      screen.getAllByRole('listitem');
+    expect(
+      within(secondEdit!).getByRole('button', { name: 'Undo' }),
+    ).toBeEnabled();
+    expect(
+      within(firstEdit!).getByRole('button', { name: 'Undo' }),
+    ).toBeEnabled();
+    expect(
+      within(secondCreate!).getByRole('button', { name: 'Undo' }),
+    ).toBeDisabled();
+    expect(
+      within(firstCreate!).getByRole('button', { name: 'Undo' }),
+    ).toBeDisabled();
+    await user.tab(); // Filters.
+    await user.tab(); // Latest second-item action.
+    await user.tab(); // Latest first-item action; disabled creation is skipped.
+    expect(
+      within(firstEdit!).getByRole('button', { name: 'Undo' }),
+    ).toHaveFocus();
+    await user.keyboard('{Enter}');
+    const redo = within(firstEdit!).getByRole('button', { name: 'Redo' });
+    expect(redo).toBeEnabled();
+    expect(redo).toHaveFocus();
+    expect(
+      within(firstCreate!).getByRole('button', { name: 'Undo' }),
+    ).toBeEnabled();
+    expect(
+      within(secondEdit!).getByRole('button', { name: 'Undo' }),
+    ).toBeEnabled();
+    await user.keyboard('{Enter}');
+    expect(
+      within(firstCreate!).getByRole('button', { name: 'Undo' }),
+    ).toBeDisabled();
+    expect(completed.mock.calls).toEqual([
+      ['undo', 'folder'],
+      ['redo', 'folder'],
+    ]);
+    expect(failed).not.toHaveBeenCalled();
   });
 
   it('shows bounded item context and connects only records for the same item', async () => {

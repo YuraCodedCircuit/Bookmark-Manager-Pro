@@ -268,6 +268,7 @@ export function App({
     undoHistory.store.getState,
     undoHistory.store.getInitialState,
   );
+  const reportedHistoryCleanup = useRef<string | undefined>(undefined);
   const requestConfirmation = useCallback(
     async (
       message: string,
@@ -521,6 +522,61 @@ export function App({
     },
     [activityLog],
   );
+
+  useEffect(() => {
+    const status = undoHistoryState.cleanupStatus;
+    if (!readyProfileId || status === 'idle') return;
+    const resultKey = `${status}:${undoHistoryState.removedObsoleteEntries}`;
+    if (reportedHistoryCleanup.current === resultKey) return;
+    reportedHistoryCleanup.current = resultKey;
+    if (status === 'complete' && undoHistoryState.removedObsoleteEntries === 0)
+      return;
+    const message = t(
+      `undoHistory.${status === 'complete' ? 'cleanupComplete' : status === 'deferred' ? 'cleanupDeferred' : 'cleanupFailed'}`,
+    );
+    void recordEventForProfile(readyProfileId, {
+      action: 'Cleanup',
+      category: 'Application',
+      dataChanged: status === 'complete',
+      durationMs: 0,
+      eventCode: `UNDO-HISTORY-SESSION-CLEANUP-${status.toUpperCase()}`,
+      itemType: 'Undo history',
+      itemsAffected: undoHistoryState.removedObsoleteEntries,
+      kind: status === 'complete' ? 'ACTIVITY' : 'DIAGNOSTIC',
+      level:
+        status === 'complete'
+          ? 'INFO'
+          : status === 'deferred'
+            ? 'WARN'
+            : 'ERROR',
+      message,
+      outcome:
+        status === 'complete'
+          ? 'Succeeded'
+          : status === 'deferred'
+            ? 'Skipped'
+            : 'Failed',
+      source: 'Undo history maintenance',
+    });
+    if (status !== 'complete')
+      notifyForActiveProfile({
+        id: 'undo-history-session-cleanup',
+        level: status === 'failed' ? 'error' : 'warning',
+        message,
+        title: t(
+          status === 'failed'
+            ? 'notifications.errorTitle'
+            : 'undoHistory.title',
+        ),
+      });
+  }, [
+    readyProfileId,
+    undoHistoryState.cleanupStatus,
+    undoHistoryState.removedObsoleteEntries,
+    recordEventForProfile,
+    notifyForActiveProfile,
+    t,
+  ]);
 
   useEffect(() => {
     if (
@@ -4131,6 +4187,23 @@ export function App({
           key={currentFolder.id}
           navigationTransparency={currentFolder.navigationTransparency}
           onClose={() => setIsFolderStyleOpen(false)}
+          onCropFailure={() => {
+            if (!readyProfileId) return;
+            return recordEventForProfile(readyProfileId, {
+              action: 'Edit',
+              category: 'Bookmarks',
+              dataChanged: false,
+              durationMs: 0,
+              eventCode: 'ITEM-IMAGE-CROP-FAILED',
+              itemType: 'Folder background image',
+              itemsAffected: 0,
+              kind: 'DIAGNOSTIC',
+              level: 'ERROR',
+              message: t('activityLog.messages.imageCropFailed'),
+              outcome: 'Failed',
+              source: 'Folder style editor',
+            });
+          }}
           onImageRejected={async () => {
             notifyForActiveProfile({
               level: 'warning',
@@ -4789,6 +4862,36 @@ export function App({
         }}
       />
       <NotificationViewport
+        onDiagnostic={(event) => {
+          const failed = event === 'action-failed';
+          if (!readyProfileId) {
+            if (failed) console.error('notification-action-failed');
+            else console.warn('notification-top-layer-unavailable');
+            return;
+          }
+          // Reporting a notification-renderer failure must not recursively
+          // create another notification through the same failing renderer.
+          void recordEventForProfile(readyProfileId, {
+            action: failed ? 'Run' : 'Display',
+            category: 'Application',
+            dataChanged: false,
+            durationMs: 0,
+            eventCode: failed
+              ? 'NOTIFICATION-ACTION-FAILED'
+              : 'NOTIFICATION-TOP-LAYER-UNAVAILABLE',
+            itemType: 'Notification',
+            itemsAffected: 0,
+            kind: 'DIAGNOSTIC',
+            level: failed ? 'ERROR' : 'WARN',
+            outcome: failed ? 'Failed' : 'Skipped',
+            message: t(
+              failed
+                ? 'notifications.actionFailed'
+                : 'notifications.topLayerUnavailable',
+            ),
+            source: 'Notification viewport',
+          });
+        }}
         preferences={
           activeSettings?.notificationPreferences ??
           defaultNotificationPreferences

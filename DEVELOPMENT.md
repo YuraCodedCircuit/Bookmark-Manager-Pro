@@ -61,7 +61,10 @@ pnpm package:firefox
 pnpm package:edge
 ```
 
-Generated extension builds and archives are written under `.output/`.
+Unpacked extension builds are written under `.output/<browser>-mv3/`. Release
+archives and supporting notes are collected in
+`.output/bookmark-manager-pro-X.Y.Z/`; versioned archives must not remain at
+the `.output/` root.
 
 ## Localization conventions
 

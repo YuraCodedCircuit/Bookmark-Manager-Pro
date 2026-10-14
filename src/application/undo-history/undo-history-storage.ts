@@ -5,6 +5,11 @@ export interface UndoHistoryStorage {
   readonly sharedAcrossTabs?: boolean;
   load(): Promise<readonly UndoHistoryEntry[]>;
   save(entries: readonly UndoHistoryEntry[]): Promise<void>;
+  /** Removes obsolete sessions separately from history loading and mutations. */
+  cleanupObsoleteSessions?(): Promise<{
+    removedEntries: number;
+    deferred: boolean;
+  }>;
 }
 
 export interface UndoHistorySessionMarker {

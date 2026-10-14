@@ -205,7 +205,7 @@ export function BookmarkDetailsTable({
       );
     if (column === 'title')
       return (
-        <td key={column}>
+        <td className="bookmark-details-table__flexible-cell" key={column}>
           {item.kind === 'folder' ? (
             <button
               onClick={(event) => {
@@ -242,7 +242,7 @@ export function BookmarkDetailsTable({
       );
     if (column === 'url')
       return (
-        <td key={column}>
+        <td className="bookmark-details-table__flexible-cell" key={column}>
           {item.kind === 'bookmark' ? (
             <span title={item.value.url}>{item.value.url}</span>
           ) : (
@@ -470,6 +470,11 @@ function SortableHeader({
   return (
     <th
       {...(onSort ? { 'aria-sort': direction ?? 'none' } : {})}
+      className={
+        column === 'title' || column === 'url'
+          ? 'bookmark-details-table__flexible-cell'
+          : undefined
+      }
       ref={setNodeRef}
       scope="col"
       style={{

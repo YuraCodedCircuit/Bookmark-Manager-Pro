@@ -1804,13 +1804,18 @@ input[type='file']:disabled::file-selector-button {
   padding-right: 2.75rem !important;
 }
 
-.clearable-input__button {
+.clearable-input > button.clearable-input__button {
   position: absolute;
+  box-sizing: border-box;
   top: 50%;
   right: 0.4rem;
   display: grid;
   width: 2rem;
   height: 2rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  max-width: 2rem;
+  max-height: 2rem;
   padding: 0;
   color: var(--text-muted);
   background: transparent;
@@ -1821,12 +1826,12 @@ input[type='file']:disabled::file-selector-button {
   place-items: center;
 }
 
-.clearable-input__button:hover {
+.clearable-input > button.clearable-input__button:hover {
   color: var(--text);
   background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
-.clearable-input__button:focus-visible {
+.clearable-input > button.clearable-input__button:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
@@ -2149,7 +2154,7 @@ input[type='file']:disabled::file-selector-button {
   min-width: 48rem;
   border-collapse: collapse;
   color: var(--text);
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .bookmark-details-table__column-controls {
@@ -2193,15 +2198,18 @@ input[type='file']:disabled::file-selector-button {
 }
 
 .bookmark-details-table__flexible-column {
-  width: calc(50% - 11.125rem);
+  width: 50%;
 }
 
-.bookmark-details-table__date-column {
-  width: 12rem;
+.bookmark-details-table__flexible-cell {
+  /* Keep long titles and URLs from setting the table's intrinsic width. */
+  max-width: 0;
 }
 
+.bookmark-details-table__date-column,
 .bookmark-details-table__type-column {
-  width: 7rem;
+  /* Native table layout reserves the longest unwrapped header or cell value. */
+  width: 1%;
 }
 
 .bookmark-details-table th,
@@ -2218,6 +2226,7 @@ input[type='file']:disabled::file-selector-button {
 
 .bookmark-details-table__group th {
   height: auto;
+  max-width: 0;
   padding-block: 0.65rem;
   color: var(--text-muted);
   background: color-mix(in srgb, var(--surface) 82%, transparent);
@@ -2654,7 +2663,28 @@ input[type='file']:disabled::file-selector-button {
 }
 
 .crop-image-dialog__header {
+  justify-content: space-between;
   border-bottom: 1px solid var(--border);
+}
+
+.crop-image-dialog__close {
+  display: grid;
+  box-sizing: border-box;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  padding: 8px;
+  place-items: center;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.crop-image-dialog__close svg {
+  width: 20px;
+  height: 20px;
 }
 
 .crop-image-dialog__header h2 {
@@ -2679,10 +2709,12 @@ input[type='file']:disabled::file-selector-button {
 }
 
 .crop-image-dialog__viewport {
+  display: grid;
   min-width: 0;
   min-height: 20rem;
   overflow: auto;
   padding: 1rem;
+  place-items: safe center;
   background: #080c11;
 }
 
@@ -5554,15 +5586,23 @@ input[type='file']:disabled::file-selector-button {
   transform: rotate(90deg);
 }
 
-.undo-history__filter-toggle .undo-history__chevron--open {
-  transform: rotate(-90deg);
+.undo-history-filters[open] {
+  display: grid;
+  width: min(90vw, 600px);
+  max-height: calc(100dvh - 2rem);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.undo-history-filters .undo-history-filters__footer {
+  justify-content: flex-end;
 }
 
 .undo-history__options {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem 1rem;
-  padding: 0 1.25rem 1rem;
+  padding: 1.25rem;
+  overflow-y: auto;
 }
 
 .undo-history__list {
@@ -6388,19 +6428,32 @@ dialog[open] h1 {
 .notification-viewport {
   position: fixed;
   inset: auto;
-  z-index: 1200;
+  z-index: 2147483647;
   display: flex;
   width: min(26rem, calc(100vw - 2rem));
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
   flex-direction: column;
   gap: 0.75rem;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: clip;
   pointer-events: none;
   margin: 0;
   padding: 0;
   color: inherit;
   background: transparent;
   border: 0;
+}
+
+/* Size only the next FIFO entry without exposing or starting its live card. */
+.notification-measurement {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* Dialog state is the single source of truth for main-document scroll locking. */
@@ -6439,10 +6492,11 @@ html:has(dialog[open]) {
   background: var(--surface);
   border: 1px solid currentColor;
   border-radius: 0.85rem;
-  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 28%);
-  overflow: hidden;
+  max-height: var(--notification-available-height, calc(100dvh - 2rem));
+  overflow-x: hidden;
+  overflow-y: auto;
   pointer-events: auto;
-  animation: notification-enter 160ms ease-out;
+  flex-shrink: 0;
 }
 
 .notification-card--success {
@@ -6539,40 +6593,6 @@ html:has(dialog[open]) {
   background: var(--notification-line-color, var(--text));
   pointer-events: none;
   transform-origin: left center;
-  animation: notification-time-left var(--notification-duration) linear forwards;
-  animation-delay: var(--notification-delay, 0ms);
-}
-
-.notification-card__time-line[data-paused='true'] {
-  animation-play-state: paused;
-}
-
-:root[data-motion='reduced'] .notification-card__time-line {
-  animation-duration: var(--notification-duration) !important;
-  animation-timing-function: steps(10, end) !important;
-}
-
-@keyframes notification-time-left {
-  to {
-    transform: scaleX(0);
-  }
-}
-
-@keyframes notification-enter {
-  from {
-    opacity: 0;
-    transform: translateY(0.5rem);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .notification-card {
-    animation: none;
-  }
-
-  .notification-card__time-line {
-    animation-timing-function: steps(10, end);
-  }
 }
 
 @media (forced-colors: active) {
@@ -7163,7 +7183,11 @@ html:has(dialog[open]) {
 }
 
 /* One optically centered close control for every modal window header. */
-:is(.content-editor header, .profile-window__header, .item-info-dialog__header)
+:is(
+    .content-editor > form > header,
+    .profile-window__header,
+    .item-info-dialog__header
+  )
   > button {
   position: relative;
   display: grid;
@@ -7187,13 +7211,13 @@ html:has(dialog[open]) {
 }
 
 /* CSS-drawn equivalent for editors that currently contain a text multiplication sign. */
-.content-editor header > button {
+.content-editor > form > header > button {
   overflow: hidden;
   font-size: 0;
 }
 
-.content-editor header > button::before,
-.content-editor header > button::after {
+.content-editor > form > header > button::before,
+.content-editor > form > header > button::after {
   position: absolute;
   width: 12px;
   height: 1.75px;
@@ -7202,11 +7226,11 @@ html:has(dialog[open]) {
   border-radius: 999px;
 }
 
-.content-editor header > button::before {
+.content-editor > form > header > button::before {
   transform: rotate(45deg);
 }
 
-.content-editor header > button::after {
+.content-editor > form > header > button::after {
   transform: rotate(-45deg);
 }
 
@@ -7311,5 +7335,27 @@ html:has(dialog[open]) {
   :is(.notes-folder-dialog__backdrop, .backup-dialog__child-backdrop) {
     background: Canvas;
     backdrop-filter: none;
+  }
+}
+
+/* Tint the existing button fill without replacing semantic background colors. */
+@media (hover: hover) and (forced-colors: none) {
+  :is(
+      button,
+      input[type='button'],
+      input[type='submit'],
+      input[type='reset']
+    ):not(:disabled):not([aria-disabled='true']):hover {
+    background-image: linear-gradient(
+      rgb(128 128 128 / 16%),
+      rgb(128 128 128 / 16%)
+    ) !important;
+  }
+
+  input[type='file']:not(:disabled)::file-selector-button:hover {
+    background-image: linear-gradient(
+      rgb(128 128 128 / 16%),
+      rgb(128 128 128 / 16%)
+    );
   }
 }

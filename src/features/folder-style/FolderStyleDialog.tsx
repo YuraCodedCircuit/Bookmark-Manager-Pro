@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  ImageCropDialog,
+  type ImageCropSession,
+} from '../image-crop/ImageCropDialog';
 
 import type { ImageFit } from '../../domain/bookmark';
 import type { FolderBackgroundAppearance } from '../../domain/folder';
@@ -38,6 +42,7 @@ interface FolderStyleDialogProps {
   includeNavigationBackground: boolean;
   navigationTransparency: number;
   onClose: () => void;
+  onCropFailure?: () => void | Promise<void>;
   onImageRejected?: () => void | Promise<void>;
   onSave: (value: FolderStyleValue) => Promise<void>;
 }
@@ -63,12 +68,20 @@ export function FolderStyleDialog({
   includeNavigationBackground,
   navigationTransparency,
   onClose,
+  onCropFailure,
   onImageRejected,
   onSave,
 }: FolderStyleDialogProps) {
   const { t } = useTranslation();
   const imageInputCancelRef = useFileInputCancelRef<HTMLInputElement>();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const cropButtonRef = useRef<HTMLButtonElement>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropSession, setCropSession] = useState<ImageCropSession>();
+  // Keep the uncropped source only in this form so another crop can restore edges.
+  const [cropSource, setCropSource] = useState<string | undefined>(
+    appearance.kind === 'image' ? appearance.value : undefined,
+  );
   const [kind, setKind] = useState<FolderBackgroundAppearance['kind']>(
     appearance.kind,
   );
@@ -125,6 +138,7 @@ export function FolderStyleDialog({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (cropOpen || processingImage || saving) return;
     let parsedDirection = 0;
     if (kind === 'gradient') {
       try {
@@ -168,6 +182,8 @@ export function FolderStyleDialog({
 
   const reportImageRejection = () => {
     setImage(undefined);
+    setCropSource(undefined);
+    setCropSession(undefined);
     setError('');
     try {
       void Promise.resolve(onImageRejected?.()).catch(() =>
@@ -515,6 +531,8 @@ export function FolderStyleDialog({
                     )
                       .then((optimized) => {
                         setImage(optimized);
+                        setCropSource(optimized);
+                        setCropSession(undefined);
                         setAppearanceAnnouncement(
                           t('folderStyle.imageOptimized'),
                         );
@@ -527,7 +545,18 @@ export function FolderStyleDialog({
                   type="file"
                 />
                 {image ? (
-                  <img alt={t('folderStyle.imagePreview')} src={image} />
+                  <>
+                    <img alt={t('folderStyle.imagePreview')} src={image} />
+                    <button
+                      className="content-editor__randomize-button"
+                      disabled={saving || processingImage}
+                      onClick={() => setCropOpen(true)}
+                      ref={cropButtonRef}
+                      type="button"
+                    >
+                      {t('contentEditor.crop.title')}
+                    </button>
+                  </>
                 ) : null}
               </div>
             ) : null}
@@ -587,17 +616,47 @@ export function FolderStyleDialog({
         ) : null}
         <footer>
           <button
-            disabled={saving || processingImage}
+            disabled={saving || processingImage || cropOpen}
             onClick={onClose}
             type="button"
           >
             {t('folderStyle.cancel')}
           </button>
-          <button disabled={saving || processingImage} type="submit">
+          <button
+            disabled={saving || processingImage || cropOpen}
+            type="submit"
+          >
             {saving ? t('folderStyle.saving') : t('folderStyle.save')}
           </button>
         </footer>
       </form>
+      {cropOpen && cropSource ? (
+        <ImageCropDialog
+          initialSession={cropSession}
+          onApply={(result, session) => {
+            setImage(result);
+            setCropSession(session);
+            setImageFit('fit');
+            setCropOpen(false);
+            setAppearanceAnnouncement(t('contentEditor.cropApplied'));
+            requestAnimationFrame(() => cropButtonRef.current?.focus());
+          }}
+          onCancel={() => {
+            setCropOpen(false);
+            requestAnimationFrame(() => cropButtonRef.current?.focus());
+          }}
+          source={cropSource}
+          onFailure={() => {
+            try {
+              void Promise.resolve(onCropFailure?.()).catch(() =>
+                console.error('folder-wallpaper-crop-diagnostic-failed'),
+              );
+            } catch {
+              console.error('folder-wallpaper-crop-diagnostic-failed');
+            }
+          }}
+        />
+      ) : null}
     </dialog>
   );
 }

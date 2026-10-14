@@ -280,7 +280,10 @@ bar, and a transparency control adds a readability overlay.
 No. Selected profile and appearance images are processed and stored locally
 with application data. Original folder-wallpaper files are discarded after
 local processing, and folders can share one stored optimized wallpaper.
-Bookmark and folder images can be cropped as Card, Free, Square, or Landscape;
+Bookmark and folder images can be cropped as Card, Free, Square, or Landscape.
+Customize folder style also offers Crop image immediately below its image
+preview. Applying a crop selects Fit; Cancel or the top-right X keeps the prior
+preview. The crop is saved only with Save style or the owning item Save action;
 the original and edited result remain temporary until the owning Save action.
 Popup screenshots can optionally receive an automatic top-left Card crop while
 the original remains available for manual editing until Save bookmark.
@@ -369,8 +372,12 @@ deleted or the browser removes the extension's stored data.
 
 ### 62. How long is undo history retained?
 
-Undo history belongs to the active browser session. A missing session marker on
-startup causes stale undo rows to be removed.
+Undo history belongs to the browser session and survives closing all extension
+tabs. After a later browser start, obsolete history is cleaned up in the
+background after an application tab loads. This cleanup does not run in startup
+preflight. The history window offers Undo and Redo for each independent item's
+latest eligible change; dependent actions remain linked. Filters opens a
+separate modal above the history window.
 
 ### 63. Is activity-history retention limited?
 
@@ -493,3 +500,15 @@ offers a review link for installed Firefox or Edge builds.
 Use the project's [GitHub](https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro)
 page for questions, bug reports, feature suggestions, and other project
 information.
+
+## Notifications
+
+### 80. How are multiple notifications displayed?
+
+Every triggered notification receives its own card, including repeated types.
+Settings controls the corner, newest/oldest order, visible limit, and timeouts.
+Extra cards wait until a slot and enough viewport space are available. Newest
+first places new cards nearest the selected corner; Oldest first puts them
+behind older cards. Only hovering a card pauses that card's timer, which resumes
+on pointer leave. Opening other windows does not restart or pause timers. Error
+notifications remain until manually closed.

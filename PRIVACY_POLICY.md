@@ -1,6 +1,6 @@
 # Bookmark Manager Pro Privacy Policy
 
-**Effective date:** September 29, 2026
+**Effective date:** October 14, 2026
 **Publisher:** YuraCodedCircuit
 
 Bookmark Manager Pro is a local-first browser extension for organizing browser
@@ -117,6 +117,9 @@ titles, addresses, profile identifiers, search text, notes, and copied content.
 
 - **Storage:** supports browser-managed extension storage and temporary
   session coordination.
+- **Unlimited Storage:** protects extension-owned local databases against
+  automatic storage eviction and removes browser-imposed extension storage
+  quotas. It does not grant access to other sites' data or transmit stored data.
 - **Search:** allows an explicit user request to be passed to the search engine
   configured in the browser. It is not used to monitor or intercept searches.
 - **Active tab:** allows the toolbar popup or page context-menu command to read
@@ -157,7 +160,9 @@ managed.
 
 Activity history is bounded by profile settings and can be disabled, cleared,
 or configured to remove older records. Undo and redo history is temporary and
-is cleared when its browser-session marker is no longer present. Automatic
+remains available after extension tabs close. On a later browser session,
+obsolete history is removed in the background after an application tab loads;
+it is excluded from startup preflight. Automatic
 snapshots are bounded by the selected per-trigger retention limit; manual and
 mandatory safety snapshots remain until deleted. Removing the extension or
 clearing its extension data also removes its locally stored snapshots.
