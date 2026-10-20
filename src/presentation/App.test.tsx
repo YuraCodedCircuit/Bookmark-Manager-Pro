@@ -1984,7 +1984,9 @@ describe('App', () => {
     });
 
     const menu = screen.getByRole('menu', { name: 'Bookmark actions' });
-    expect(within(menu).getByRole('menuitem', { name: 'Open' })).toHaveFocus();
+    expect(
+      within(menu).getByRole('menuitem', { name: 'Open link' }),
+    ).toHaveFocus();
     expect(
       within(menu).getByRole('menuitem', { name: 'Edit bookmark' }),
     ).toBeVisible();
@@ -2939,7 +2941,9 @@ describe('App', () => {
     fireEvent.contextMenu(bookmark, { clientX: 120, clientY: 180 });
 
     const menu = screen.getByRole('menu', { name: 'Bookmark actions' });
-    expect(within(menu).getByRole('menuitem', { name: 'Open' })).toHaveFocus();
+    expect(
+      within(menu).getByRole('menuitem', { name: 'Open link' }),
+    ).toHaveFocus();
     expect(within(menu).queryByText('New bookmark')).not.toBeInTheDocument();
   });
 });

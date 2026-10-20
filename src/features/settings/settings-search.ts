@@ -58,6 +58,8 @@ const CATEGORY_RESOURCE_KEYS: Partial<
   activity: ['displaySettings.activity'],
   appearance: APPEARANCE_KEYS.map((key) => `displaySettings.${key}`),
   backup: ['displaySettings.backupSettings'],
+  import: ['displaySettings.importSettings'],
+  export: ['displaySettings.exportSettings'],
   bookmarks: ['displaySettings.bookmarkBehavior'],
   general: ['displaySettings.generalDescription', 'displaySettings.general'],
   language: ['displaySettings.languageSettings'],

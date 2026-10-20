@@ -9,12 +9,279 @@ void i18n.use(initReactI18next).init({
   resources: {
     'en-US': {
       translation: {
+        import: {
+          reviewPages: 'Import review pages',
+          previousPage: 'Previous page',
+          nextPage: 'Next page',
+          pageStatus: 'Page {{page}} of {{count}}',
+          itemLevel: 'Nesting level {{level}}.',
+          title: 'Import',
+          validationStatus: 'File validation status',
+          selectionStatus: 'Profile selection status',
+          description: 'Choose a file and review the import.',
+          close: 'Close Import',
+          closeAction: 'Cancel',
+          closeChild: 'Close selection dialog',
+          previewOnly:
+            'Preview only. Saving imported data is not available yet.',
+          chooseFile: 'Choose file',
+          supportedFiles: 'Supported files',
+          supportedFilesDescription:
+            'Bookmark Manager Pro (.bmpro), bookmark JSON, browser bookmarks HTML, and CSV.',
+          changeFile: 'Change file',
+          selectedOf: '{{count}} of {{total}} profiles selected',
+          newProfiles_one: '{{count}} new profile',
+          newProfiles_other: '{{count}} new profiles',
+          bookmarkCount_one: '{{count}} bookmark',
+          bookmarkCount_other: '{{count}} bookmarks',
+          folderCount_one: '{{count}} folder',
+          folderCount_other: '{{count}} folders',
+          filterImportedProfiles: 'Filter imported profiles',
+          bulkProfiles: 'Profile selection actions',
+          bulkProfilesHelp:
+            'Applies only to profiles matching the current filter. Hidden selections stay unchanged.',
+          checkAll: 'Check all',
+          uncheckAll: 'Uncheck all',
+          selectedPreserve:
+            'Selected profiles keep their saved themes and settings.',
+          destinationSelection: 'Destination: {{name}}',
+          foldersIn: 'Folders in {{name}}',
+          profileLabel: 'Profile',
+          folderLabel: 'Folder',
+          optionalReview: 'Optional: choose which items to include.',
+          destinationProfileHelp:
+            'Choose one existing profile for this import.',
+          profilesHelp: 'Import selected profiles as new profiles.',
+          reviewModalHelp: 'Select which bookmarks and folders will be saved.',
+          reviewCsvHelp: 'Select which bookmarks will be saved.',
+          fileType: {
+            native: 'Native profile file',
+            json: 'Bookmark JSON',
+            csv: 'Bookmark CSV',
+            html: 'Browser bookmark HTML',
+            supported: '.bmpro, JSON, CSV, or HTML',
+          },
+          destinationHelp:
+            'All imported bookmarks and folders will be saved in this profile.',
+          destination: 'Destination',
+          destinationProfile: 'Destination profile',
+          destinationFolder: 'Destination folder',
+          selectDestinationProfile: 'Choose destination profile',
+          selectDestinationFolder: 'Choose destination folder',
+          loadingDestinations: 'Loading destinations...',
+          emptyDestinationHome: 'Home',
+          destinationFailed:
+            'The destination could not be loaded. Retry or choose another destination.',
+          portableDefaults:
+            "New bookmarks and folders use the destination profile's defaults.",
+          rootMapped:
+            'The source root maps to the selected folder; its hierarchy is preserved below it.',
+          duplicatePending:
+            'Duplicate checks and saving are not available in this preview.',
+          reviewItems: 'Review imported items',
+          reviewAction: 'Review items',
+          filterItems: 'Filter imported items',
+          reviewHelp:
+            'Uncheck items to exclude them. Folder checkboxes include hidden descendants. Required parent folders remain in the selection.',
+          expandItem: 'Expand {{title}}',
+          collapseItem: 'Collapse {{title}}',
+          action: 'Import',
+          destinationMissing:
+            'The remembered folder no longer exists. Choose a destination folder.',
+          csvFlat:
+            'CSV adds bookmarks directly to the selected folder. Folder paths are ignored; empty folders and exact folder identities are not preserved.',
+          htmlWrappers:
+            'HTML hierarchy is preserved. Enclosing folders are kept unless their contents-only option is explicitly selected.',
+          chooseWrappers: 'Choose contents-only folders',
+          wrapperHelp:
+            'Check only enclosing folders to omit. Their contents stay in the parent folder. Keep unchecked folders, including folders named Home. This does not exclude their contents.',
+          nativeOnly:
+            'Bookmark Manager Pro (.bmpro), bookmark JSON or CSV exports, and browser bookmark HTML.',
+          checking: 'Checking file...',
+          locked: 'This file is encrypted. Unlock it to review its profiles.',
+          verified: 'File verified. Review the profiles below.',
+          noFile: 'No verified file selected.',
+          invalid:
+            'This file could not be verified. Choose a supported, undamaged file.',
+          unlockFile: 'Unlock file',
+          profilesToCreate: 'Profiles to import',
+          selectProfiles: 'Select profiles to import',
+          selected_one: '{{count}} profile selected',
+          selected_other: '{{count}} profiles selected',
+          preserve:
+            'Saved themes, settings, and profile content are preserved.',
+          review: 'Review import',
+          existingKept: 'Existing profiles will not be replaced.',
+          confirmSave: 'Confirm import',
+          snapshot: {
+            enabled:
+              'A snapshot of the destination profile will be created before importing.',
+            disabled:
+              'No snapshot will be created. Create a snapshot before importing is turned off for the destination profile.',
+            'automatic-disabled':
+              "No snapshot will be created. Automatic snapshots are turned off in the destination profile's Backup settings.",
+            'not-needed':
+              'No pre-import snapshot is needed because this import creates new profiles.',
+            'no-changes':
+              'No snapshot will be created because there are no changes to import.',
+          },
+          readyToSave:
+            'Review these totals before saving. Imported synchronization stays paused.',
+          saving: 'Saving import...',
+          preparing: 'Preparing import...',
+          saved: 'Import completed.',
+          saveFailed:
+            'The import could not be saved. No imported data was saved. Review the file and destination, then retry.',
+          destinationChanged:
+            'The destination changed. Review the import again before saving.',
+          exclusionsSaved:
+            'Import completed with duplicate bookmarks excluded.',
+          refreshFailed:
+            'The import was saved, but the view could not refresh. Reopen the view.',
+          synchronizationPaused:
+            'Import completed. Synchronization is paused; review it before enabling it.',
+          duplicatesExcluded_one:
+            '{{count}} duplicate bookmark will be excluded.',
+          duplicatesExcluded_other:
+            '{{count}} duplicate bookmarks will be excluded.',
+          duplicatesConfirm_one:
+            '{{count}} duplicate bookmark will be saved. Continue?',
+          duplicatesConfirm_other:
+            '{{count}} duplicate bookmarks will be saved. Continue?',
+          duplicatesAllowed_one:
+            '{{count}} duplicate bookmark will be saved under the destination policy.',
+          duplicatesAllowed_other:
+            '{{count}} duplicate bookmarks will be saved under the destination policy.',
+          local:
+            'Files are checked on this device. Closing Import discards the preview.',
+          notSaved: 'No changes have been saved.',
+          filterProfiles: 'Filter imported profiles',
+          noMatches: 'No matching profiles',
+          noMatchingItems: 'No matching items',
+          includeItem: 'Include',
+          done: 'Close',
+          password: 'Password',
+          unlocking: 'Unlocking and checking file...',
+          unlockFailed:
+            'The password is incorrect or the file is damaged. Try again.',
+          cancel: 'Cancel',
+          unlock: 'Unlock',
+          eventMessage: 'Import file validation state changed.',
+          validationFailed: 'The import file could not be verified.',
+        },
+        export: {
+          profileCounts:
+            'Bookmarks: {{bookmarks, number}} | Folders: {{folders, number}}',
+          showPasswordInput: 'Show password',
+          hidePassword: 'Hide password',
+          showConfirmation: 'Show confirmation password',
+          hideConfirmation: 'Hide confirmation password',
+          clearPassword: 'Clear password',
+          clearConfirmation: 'Clear confirmation password',
+          estimatedSize: 'Estimated size: {{size}}',
+          actualSize: 'File size: {{size}}',
+          calculatingSize: 'Calculating...',
+          sizeUnavailable: 'Unavailable',
+          closeAction: 'Close',
+          selectProfiles: 'Select profiles',
+          chooseFormat: 'Choose format',
+          includeData: 'Include data',
+          selectedProfiles_one: '{{count}} profile selected',
+          selectedProfiles_other: '{{count}} profiles selected',
+          profileSelectionCount_one:
+            '{{selected}} of {{count}} profile selected',
+          profileSelectionCount_other:
+            '{{selected}} of {{count}} profiles selected',
+          closeProfilePicker: 'Close profile selection',
+          moreDetails: 'Export details and limitations',
+          csvBookmarks: 'Bookmarks',
+          portableBookmarks: 'Bookmarks and folders',
+          formatSummaries: {
+            bmpro:
+              'Includes the selected profile data. Bookmarks, folders, and favorites are exported together; other data categories and backup history are included only when selected.',
+            json: 'Preserves the folder tree, tags, and notes attached to bookmarks and folders, grouped by profile. Favorites and appearance are not included.',
+            html: 'Exports bookmarks and folders for browser import, inside a Bookmark Manager Pro folder. Favorites, tags, and notes are not included.',
+            csv: 'Exports bookmark rows using the columns selected in Settings. Folder paths can be included as text; folders and favorites are not exported.',
+          },
+          encryptionUnavailable:
+            'Password encryption is available for Bookmark Manager Pro files only.',
+          title: 'Export',
+          description: 'Save selected profiles to a local file.',
+          close: 'Close Export',
+          loading: 'Loading profiles...',
+          loadFailed: 'Profiles could not be loaded. Retry to continue.',
+          retry: 'Retry',
+          profiles: 'Profiles',
+          options: 'Export options',
+          format: 'File format',
+          formats: {
+            bmpro: 'Bookmark Manager Pro (.bmpro)',
+            json: 'Bookmarks JSON (.json)',
+            csv: 'Bookmarks CSV (.csv)',
+            html: 'Browser bookmarks HTML (.html)',
+          },
+          content: 'Included data',
+          complete: 'Complete profiles',
+          custom: 'Choose data',
+          categoriesTitle: 'Data categories',
+          categories: {
+            bookmarks: 'Bookmarks, folders, and favorites',
+            notes: 'Notes and note folders',
+            settings: 'Settings and appearance',
+            activity: 'Activity logs',
+            synchronization: 'Synchronization configuration',
+          },
+          assets:
+            'Required stored images, backgrounds, and website screenshots are included with their data. Synchronization will require review and restoration in a paused state.',
+          backups: 'Include backup history',
+          backupsHelp:
+            'History contains complete snapshots, including categories excluded above, and can substantially increase file size.',
+          encrypt: 'Encrypt with a password',
+          password: 'Password',
+          confirmPassword: 'Confirm password',
+          showPassword: 'Show passwords',
+          passwordHelp:
+            'Use at least 4 characters, including a lowercase letter, an uppercase letter, and a number. Only ASCII letters, numbers, and !@#$%^&*-_=+? are allowed.',
+          passwordConfirmPrompt:
+            'Password meets the requirements. Enter it again to confirm.',
+          passwordReady: 'Passwords match and meet the requirements.',
+          passwordRecovery:
+            'This extension does not save your password. If you lose it, you cannot decrypt this export file.',
+          passwordMismatch: 'The passwords do not match.',
+          passwordRequirements: 'Password requirements',
+          passwordAllowed:
+            'At least 4 ASCII characters, including a lowercase letter, an uppercase letter, and a number. Optional symbols: !@#$%^&*-_=+?',
+          passwordMatchRule: 'Passwords match.',
+          requirementMet: 'Met:',
+          requirementUnmet: 'Not met:',
+          unencrypted:
+            'This export file is not encrypted. Anyone with access to it can read its contents.',
+          portableHelp:
+            'Exports all bookmarks in selected profiles. JSON and HTML preserve folders; CSV includes folder paths. Profile identities remain distinguishable. Images, Notes, settings, logs, and backup history are omitted. These files are not encrypted.',
+          limit:
+            'Native exports support up to 256 MiB of data before encryption. Keep this window open until the export is ready. Canceling may take a moment while the current step finishes.',
+          cancel: 'Cancel',
+          working: 'Generating export...',
+          progress:
+            'Captured {{done}} of {{total}} profiles. Preparing file...',
+          started: 'Export generation started.',
+          completed:
+            'Export handed to the browser for download. Manage or cancel the download in the browser.',
+          cancelled: 'Export cancelled. No file was handed to the browser.',
+          failed:
+            'Export failed. No file was handed to the browser. Retry, reduce the selection, or review the activity log.',
+        },
         backup: {
           title: 'Backup snapshots',
           description:
             'Create and restore recovery points stored in this browser profile.',
           close: 'Close',
           profile: 'Profile',
+          chooseProfile: 'Choose profile',
+          deletedProfileName: '{{name}} (Deleted)',
+          closeProfilePicker: 'Close profile selection',
+          filterProfiles: 'Filter profiles',
+          noMatchingProfiles: 'No matching profiles.',
           currentProfiles: 'Current profiles',
           deletedProfiles: 'Deleted profiles',
           deletedProfileOption: '{{name}} (Deleted {{date}})',
@@ -189,7 +456,6 @@ void i18n.use(initReactI18next).init({
               'Changes made in the extension folder are copied to the browser folder. Changes made only in the browser folder are not copied back to the extension.',
             both: 'Changes made in either folder are copied to the other folder. If the same item is changed in both places, synchronization pauses and asks which version to keep.',
           },
-          snapshotUnavailable: 'Create a recovery snapshot (Unavailable)',
           preview: 'Preview changes',
           refresh: 'Refresh preview',
           destination: 'Destination',
@@ -932,6 +1198,45 @@ void i18n.use(initReactI18next).init({
           compact: 'Compact',
           categories: 'Settings categories',
           containsSearchMatch: 'Contains a search match',
+          exportSettings: {
+            description:
+              'Choose CSV columns and their order for exports opened from this profile.',
+            columns: 'CSV columns',
+            required: 'URL is required. Column names are fixed.',
+            orderStatus: 'CSV header: {{columns}}',
+            importHelp:
+              'CSV import recognizes supported headers in any order. URL is required.',
+            preview: 'Header preview',
+            restore: 'Restore defaults',
+            moveUp: 'Move up',
+            moveDown: 'Move down',
+            moveUpLabel: 'Move {{column}} up',
+            moveDownLabel: 'Move {{column}} down',
+            labels: {
+              profileId: 'Profile ID',
+              profile: 'Profile',
+              folderPath: 'Folder path',
+              title: 'Title',
+              url: 'URL',
+              tags: 'Tags',
+              note: 'Note',
+            },
+          },
+          importSettings: {
+            beforeImport: 'Create a snapshot before importing',
+            snapshotHelp:
+              "Uses this profile's Before import preference in Backup. Automatic snapshots must also be enabled. The chosen destination profile controls snapshots when importing bookmarks.",
+            description: 'Choose Import preferences for this profile.',
+            options: 'Import options',
+            autoOpenReview: 'Automatically open item review',
+            rememberDestination: 'Remember destination folder',
+            closeAfterSuccess: 'Close Import after success',
+            privacy:
+              'Only local app folder references are remembered after a successful import. Source files, paths, passwords, and review selections are never remembered.',
+            previewLimit:
+              'Review selected items before saving. Destinations are remembered and the window closes only after a successful import.',
+            related: 'Related settings',
+          },
           backupSettings: {
             automatic: 'Automatic snapshots',
             automaticHelp:
@@ -1227,6 +1532,24 @@ void i18n.use(initReactI18next).init({
             newBookmark: 'New bookmark',
             newFolder: 'New folder',
             open: 'Open',
+            openLink: {
+              chrome: 'Open link',
+              edge: 'Open link',
+              firefox: 'Open Link',
+              unknown: 'Open link',
+            },
+            openFolder: {
+              chrome: 'Open folder',
+              edge: 'Open folder',
+              firefox: 'Open Folder',
+              unknown: 'Open folder',
+            },
+            openFolderNewTab: {
+              chrome: 'Open folder in new tab',
+              edge: 'Open folder in new tab',
+              firefox: 'Open Folder in New Tab',
+              unknown: 'Open folder in new tab',
+            },
             copyUrl: {
               chrome: 'Copy link address',
               edge: 'Copy link',
@@ -1247,7 +1570,7 @@ void i18n.use(initReactI18next).init({
             },
             paste: 'Paste',
             removeFavorite: 'Remove from favorites',
-            search: 'Search bookmarks',
+            search: 'Search',
           },
           label: 'Bookmark actions',
         },
@@ -1621,7 +1944,7 @@ void i18n.use(initReactI18next).init({
           edit: 'Edit',
           editTitle: 'Edit profile',
           iconError: 'Choose a PNG, JPEG, or BMP image smaller than 1 MB.',
-          iconHelp: 'PNG, JPEG, or BMP up to 1 MB.',
+          iconHelp: 'PNG, JPEG, or BMP up to 1\u00a0MB.',
           listSummary: 'Changes stay on this device.',
           listTitle: 'Profiles',
           manageSummary: 'Create, edit, and manage local profiles.',
@@ -1629,9 +1952,10 @@ void i18n.use(initReactI18next).init({
           removeImage: 'Remove image',
           save: 'Save changes',
           saveError: 'The profile could not be saved. Try again.',
+          usernameError: 'Enter a username containing 1 to 80 characters.',
           switch: 'Switch',
           switchNote:
-            'The current profile is saved before the selected profile is loaded.',
+            'Your changes will be saved before you switch to another profile.',
           switchSummary:
             'Switching loads the selected profile’s bookmarks, settings, and logs.',
           switchTitle: 'Switch profile',
@@ -1665,7 +1989,7 @@ void i18n.use(initReactI18next).init({
               'The profile could not be created. Check the information and try again.',
             creating: 'Creating profile…',
             icon: 'Profile icon (optional)',
-            iconHelp: 'PNG, JPEG, or BMP up to 1 MB.',
+            iconHelp: 'PNG, JPEG, or BMP up to 1\u00a0MB.',
             iconPreview: 'Selected profile icon',
             iconReadError: 'The selected image could not be read.',
             iconSizeError: 'Choose an image smaller than 1 MB.',

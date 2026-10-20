@@ -19,11 +19,7 @@ export const settingsCategories = [
 
 export type SettingsCategory = (typeof settingsCategories)[number];
 
-const disabledSettingsCategories = new Set<SettingsCategory>([
-  'import',
-  'export',
-  'advanced',
-]);
+const disabledSettingsCategories = new Set<SettingsCategory>(['advanced']);
 
 /** Identifies visible categories reserved for future implementation. */
 export function isSettingsCategoryDisabled(

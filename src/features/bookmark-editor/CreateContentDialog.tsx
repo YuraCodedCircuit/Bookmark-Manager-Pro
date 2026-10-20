@@ -8,6 +8,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { ClearableInput } from '../../components/ClearableInput';
+import { ClearIcon } from '../../components/icons/ClearIcon';
 
 import type { ImageFit, ItemAppearance } from '../../domain/bookmark';
 import { parseGradientDirection } from '../../shared/gradient-direction';
@@ -326,7 +327,10 @@ export function CreateContentDialog({
       }}
       ref={dialogRef}
     >
-      <form onSubmit={(event) => void submit(event)}>
+      <form
+        className="content-editor__fixed-form"
+        onSubmit={(event) => void submit(event)}
+      >
         <header>
           <div>
             <h1 id="content-editor-title">
@@ -346,282 +350,283 @@ export function CreateContentDialog({
             onClick={resetAndClose}
             type="button"
           >
-            ×
+            <ClearIcon />
           </button>
         </header>
-
-        <label>
-          <span>{t('contentEditor.name')}</span>
-          <ClearableInput
-            autoFocus
-            defaultValue={initialValue?.title}
-            maxLength={200}
-            name="title"
-            required
-          />
-        </label>
-        {kind === 'bookmark' ? (
+        <div className="content-editor__body">
           <label>
-            <span>{t('contentEditor.url')}</span>
+            <span>{t('contentEditor.name')}</span>
             <ClearableInput
-              autoCapitalize="none"
-              autoCorrect="off"
-              inputMode="url"
-              name="url"
-              defaultValue={initialValue?.url}
-              placeholder="https://example.com/"
+              autoFocus
+              defaultValue={initialValue?.title}
+              maxLength={200}
+              name="title"
               required
-              spellCheck={false}
-              type="text"
             />
           </label>
-        ) : null}
-        <label>
-          <span>{t('contentEditor.tags')}</span>
-          <ClearableInput
-            maxLength={1000}
-            name="tags"
-            defaultValue={initialValue?.tags.join(', ')}
-            placeholder={t('contentEditor.tagsPlaceholder')}
-          />
-        </label>
-        <label>
-          <span>{t('contentEditor.note')}</span>
-          <textarea
-            defaultValue={initialValue?.note}
-            maxLength={10_000}
-            name="note"
-            rows={4}
-          />
-        </label>
+          {kind === 'bookmark' ? (
+            <label>
+              <span>{t('contentEditor.url')}</span>
+              <ClearableInput
+                autoCapitalize="none"
+                autoCorrect="off"
+                inputMode="url"
+                name="url"
+                defaultValue={initialValue?.url}
+                placeholder="https://example.com/"
+                required
+                spellCheck={false}
+                type="text"
+              />
+            </label>
+          ) : null}
+          <label>
+            <span>{t('contentEditor.tags')}</span>
+            <ClearableInput
+              maxLength={1000}
+              name="tags"
+              defaultValue={initialValue?.tags.join(', ')}
+              placeholder={t('contentEditor.tagsPlaceholder')}
+            />
+          </label>
+          <label>
+            <span>{t('contentEditor.note')}</span>
+            <textarea
+              defaultValue={initialValue?.note}
+              maxLength={10_000}
+              name="note"
+              rows={4}
+            />
+          </label>
 
-        {afterNote}
+          {afterNote}
 
-        <fieldset>
-          <legend>{t('contentEditor.appearance')}</legend>
-          <div className="content-editor__appearance-options">
-            {(
-              [
-                'color',
-                'gradient',
-                ...(showImageAppearance ? (['image'] as const) : []),
-                ...(onCaptureScreenshot ? (['screenshot'] as const) : []),
-              ] as const
-            ).map((option) => (
-              <label key={option}>
+          <fieldset>
+            <legend>{t('contentEditor.appearance')}</legend>
+            <div className="content-editor__appearance-options">
+              {(
+                [
+                  'color',
+                  'gradient',
+                  ...(showImageAppearance ? (['image'] as const) : []),
+                  ...(onCaptureScreenshot ? (['screenshot'] as const) : []),
+                ] as const
+              ).map((option) => (
+                <label key={option}>
+                  <input
+                    checked={appearanceKind === option}
+                    name="appearance"
+                    onChange={() => {
+                      setAppearanceKind(option);
+                      setAppearanceAnnouncement('');
+                    }}
+                    type="radio"
+                  />
+                  {t(`contentEditor.appearanceKinds.${option}`)}
+                </label>
+              ))}
+            </div>
+            {appearanceKind === 'color' ? (
+              <div className="content-editor__color-controls">
                 <input
-                  checked={appearanceKind === option}
-                  name="appearance"
-                  onChange={() => {
-                    setAppearanceKind(option);
-                    setAppearanceAnnouncement('');
-                  }}
-                  type="radio"
+                  aria-label={t('contentEditor.color')}
+                  onChange={(event) => setColor(event.target.value)}
+                  type="color"
+                  value={color}
                 />
-                {t(`contentEditor.appearanceKinds.${option}`)}
-              </label>
-            ))}
-          </div>
-          {appearanceKind === 'color' ? (
-            <div className="content-editor__color-controls">
-              <input
-                aria-label={t('contentEditor.color')}
-                onChange={(event) => setColor(event.target.value)}
-                type="color"
-                value={color}
-              />
-              <button
-                className="content-editor__randomize-button"
-                onClick={randomizeColor}
-                type="button"
-              >
-                {t('contentEditor.randomColor')}
-              </button>
-            </div>
-          ) : null}
-          {appearanceKind === 'gradient' ? (
-            <div className="content-editor__gradient-controls">
-              <div className="content-editor__gradient-colors">
-                {gradientColors.map((gradientColor, index) => (
-                  <label key={index}>
-                    <span>
-                      {t('contentEditor.gradientColor', {
-                        number: index + 1,
-                      })}
-                    </span>
-                    <input
-                      aria-label={t('contentEditor.gradientColor', {
-                        number: index + 1,
-                      })}
-                      onChange={(event) => {
-                        const nextColors = [...gradientColors] as [
-                          string,
-                          string,
-                          string,
-                        ];
-                        nextColors[index] = event.target.value;
-                        setGradientColors(nextColors);
-                      }}
-                      type="color"
-                      value={gradientColor}
-                    />
-                  </label>
-                ))}
+                <button
+                  className="content-editor__randomize-button"
+                  onClick={randomizeColor}
+                  type="button"
+                >
+                  {t('contentEditor.randomColor')}
+                </button>
               </div>
-              <GradientDirectionControl
-                onChange={setGradientDirection}
-                value={gradientDirection}
-              />
-              <div
-                aria-label={t('contentEditor.gradientPreview')}
-                className="content-editor__gradient-preview"
-                role="img"
-                style={{
-                  background: `linear-gradient(${gradientDirection}deg, ${gradientColors.join(', ')})`,
-                }}
-              />
-              <button
-                className="content-editor__randomize-button"
-                onClick={randomizeGradient}
-                type="button"
-              >
-                {t('contentEditor.randomGradient')}
-              </button>
-            </div>
-          ) : null}
-          {appearanceKind === 'image' ? (
-            <div className="content-editor__image-input">
-              <ImageFitSelect onChange={setImageFit} value={imageFit} />
-              <input
-                accept="image/png,image/jpeg,image/bmp"
-                aria-label={t('contentEditor.image')}
-                hidden
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (!file || file.size > 1_000_000) {
-                    setError(t('contentEditor.imageError'));
-                    return;
-                  }
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    if (typeof reader.result !== 'string') return;
-                    const source = reader.result;
-                    setImages((current) => ({
-                      ...current,
-                      image: { applied: source, source },
-                    }));
-                    setImageFit('fit');
-                    setError('');
-                  };
-                  reader.onerror = () =>
-                    setError(t('contentEditor.imageError'));
-                  reader.readAsDataURL(file);
-                }}
-                ref={imageInputCancelRef}
-                type="file"
-              />
-              {activeImage ? (
-                <>
-                  <div
-                    aria-label={t('contentEditor.imagePreview')}
-                    className="content-editor__image-preview"
-                    role="img"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="content-editor__image-preview-art"
-                      style={appearanceStyle({
-                        fit: imageFit,
-                        kind: 'image',
-                        value: activeImage.applied,
-                      })}
-                    />
-                  </div>
-                  <div className="content-editor__image-actions">
-                    <button
-                      className="content-editor__image-button"
-                      onClick={() => imageInputRef.current?.click()}
-                      type="button"
+            ) : null}
+            {appearanceKind === 'gradient' ? (
+              <div className="content-editor__gradient-controls">
+                <div className="content-editor__gradient-colors">
+                  {gradientColors.map((gradientColor, index) => (
+                    <label key={index}>
+                      <span>
+                        {t('contentEditor.gradientColor', {
+                          number: index + 1,
+                        })}
+                      </span>
+                      <input
+                        aria-label={t('contentEditor.gradientColor', {
+                          number: index + 1,
+                        })}
+                        onChange={(event) => {
+                          const nextColors = [...gradientColors] as [
+                            string,
+                            string,
+                            string,
+                          ];
+                          nextColors[index] = event.target.value;
+                          setGradientColors(nextColors);
+                        }}
+                        type="color"
+                        value={gradientColor}
+                      />
+                    </label>
+                  ))}
+                </div>
+                <GradientDirectionControl
+                  onChange={setGradientDirection}
+                  value={gradientDirection}
+                />
+                <div
+                  aria-label={t('contentEditor.gradientPreview')}
+                  className="content-editor__gradient-preview"
+                  role="img"
+                  style={{
+                    background: `linear-gradient(${gradientDirection}deg, ${gradientColors.join(', ')})`,
+                  }}
+                />
+                <button
+                  className="content-editor__randomize-button"
+                  onClick={randomizeGradient}
+                  type="button"
+                >
+                  {t('contentEditor.randomGradient')}
+                </button>
+              </div>
+            ) : null}
+            {appearanceKind === 'image' ? (
+              <div className="content-editor__image-input">
+                <ImageFitSelect onChange={setImageFit} value={imageFit} />
+                <input
+                  accept="image/png,image/jpeg,image/bmp"
+                  aria-label={t('contentEditor.image')}
+                  hidden
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file || file.size > 1_000_000) {
+                      setError(t('contentEditor.imageError'));
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      if (typeof reader.result !== 'string') return;
+                      const source = reader.result;
+                      setImages((current) => ({
+                        ...current,
+                        image: { applied: source, source },
+                      }));
+                      setImageFit('fit');
+                      setError('');
+                    };
+                    reader.onerror = () =>
+                      setError(t('contentEditor.imageError'));
+                    reader.readAsDataURL(file);
+                  }}
+                  ref={imageInputCancelRef}
+                  type="file"
+                />
+                {activeImage ? (
+                  <>
+                    <div
+                      aria-label={t('contentEditor.imagePreview')}
+                      className="content-editor__image-preview"
+                      role="img"
                     >
-                      {t('contentEditor.chooseAnotherImage')}
-                    </button>
+                      <span
+                        aria-hidden="true"
+                        className="content-editor__image-preview-art"
+                        style={appearanceStyle({
+                          fit: imageFit,
+                          kind: 'image',
+                          value: activeImage.applied,
+                        })}
+                      />
+                    </div>
+                    <div className="content-editor__image-actions">
+                      <button
+                        className="content-editor__image-button"
+                        onClick={() => imageInputRef.current?.click()}
+                        type="button"
+                      >
+                        {t('contentEditor.chooseAnotherImage')}
+                      </button>
+                      <button
+                        className="content-editor__image-button"
+                        onClick={() => setCropKind('image')}
+                        ref={cropButtonRef}
+                        type="button"
+                      >
+                        {t('contentEditor.crop.title')}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <button
+                    className="content-editor__image-button"
+                    onClick={() => imageInputRef.current?.click()}
+                    type="button"
+                  >
+                    {t('contentEditor.image')}
+                  </button>
+                )}
+              </div>
+            ) : null}
+            {appearanceKind === 'screenshot' && onCaptureScreenshot ? (
+              <div className="content-editor__image-input">
+                <ImageFitSelect onChange={setImageFit} value={imageFit} />
+                <button
+                  className="content-editor__capture-button"
+                  disabled={isCapturing}
+                  onClick={() => void captureScreenshot()}
+                  type="button"
+                >
+                  {t(
+                    isCapturing
+                      ? 'contentEditor.capturingScreenshot'
+                      : activeImage
+                        ? 'contentEditor.replaceScreenshot'
+                        : 'contentEditor.captureScreenshot',
+                  )}
+                </button>
+                {activeImage ? (
+                  <>
+                    <div
+                      aria-label={t('contentEditor.screenshotPreview')}
+                      className="content-editor__image-preview"
+                      role="img"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="content-editor__image-preview-art"
+                        style={appearanceStyle({
+                          fit: imageFit,
+                          kind: 'image',
+                          value: activeImage.applied,
+                        })}
+                      />
+                    </div>
                     <button
                       className="content-editor__image-button"
-                      onClick={() => setCropKind('image')}
+                      onClick={() => setCropKind('screenshot')}
                       ref={cropButtonRef}
                       type="button"
                     >
                       {t('contentEditor.crop.title')}
                     </button>
-                  </div>
-                </>
-              ) : (
-                <button
-                  className="content-editor__image-button"
-                  onClick={() => imageInputRef.current?.click()}
-                  type="button"
-                >
-                  {t('contentEditor.image')}
-                </button>
-              )}
-            </div>
-          ) : null}
-          {appearanceKind === 'screenshot' && onCaptureScreenshot ? (
-            <div className="content-editor__image-input">
-              <ImageFitSelect onChange={setImageFit} value={imageFit} />
-              <button
-                className="content-editor__capture-button"
-                disabled={isCapturing}
-                onClick={() => void captureScreenshot()}
-                type="button"
-              >
-                {t(
-                  isCapturing
-                    ? 'contentEditor.capturingScreenshot'
-                    : activeImage
-                      ? 'contentEditor.replaceScreenshot'
-                      : 'contentEditor.captureScreenshot',
-                )}
-              </button>
-              {activeImage ? (
-                <>
-                  <div
-                    aria-label={t('contentEditor.screenshotPreview')}
-                    className="content-editor__image-preview"
-                    role="img"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="content-editor__image-preview-art"
-                      style={appearanceStyle({
-                        fit: imageFit,
-                        kind: 'image',
-                        value: activeImage.applied,
-                      })}
-                    />
-                  </div>
-                  <button
-                    className="content-editor__image-button"
-                    onClick={() => setCropKind('screenshot')}
-                    ref={cropButtonRef}
-                    type="button"
-                  >
-                    {t('contentEditor.crop.title')}
-                  </button>
-                </>
-              ) : null}
-            </div>
-          ) : null}
-          <span aria-live="polite" className="visually-hidden">
-            {appearanceAnnouncement}
-          </span>
-        </fieldset>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
+            <span aria-live="polite" className="visually-hidden">
+              {appearanceAnnouncement}
+            </span>
+          </fieldset>
 
-        {error ? (
-          <p className="content-editor__error" role="alert">
-            {error}
-          </p>
-        ) : null}
+          {error ? (
+            <p className="content-editor__error" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </div>
         <footer>
           <button
             disabled={isSaving || cropKind !== undefined}

@@ -666,7 +666,7 @@ export function BookmarkActivityLogDialog({
           <div className="activity-log__confirmation" role="alert">
             <span>{t('activityLog.clear.confirm')}</span>
             <button
-              className="profile-button profile-button--danger"
+              className="profile-button profile-button--danger profile-button--danger-filled"
               onClick={() => void clearEntries()}
               type="button"
             >

@@ -61,6 +61,12 @@ Schema version 36 adds the optional profile-owned
 `hideEmptyDetailsTableHeader` Appearance setting. Existing and new profiles
 default to hiding the Details header when a folder has no items.
 
+Schema version 37 adds profile-owned `importPreferences`. Existing and new
+profiles default automatic item review, remembered destinations, and closing
+after success to Off. Remembered destinations contain only local profile and
+folder UUIDs. Older serialized settings can omit this optional category.
+No source file, source path, password, or review selection is stored.
+
 Packaged-extension preflight stores a schema-validated snapshot in
 `browser.storage.session` for the current browser session. The snapshot contains
 only stable startup metadata: operation and completion identifiers, locale,
@@ -127,13 +133,14 @@ folder display choices.
   timestamp, level, and category
 - `activityLogSettings`: per-profile capture, diagnostic threshold, retention,
   and export choices
-- `snapshots`: immutable recovery points stored in the separate versioned
-  `bookmark-manager-pro-backups` IndexedDB database. Each snapshot contains one
+- `backupSnapshots`: immutable recovery points stored in the primary database
+  starting with schema 38. Each snapshot contains one
   complete profile payload, creation metadata, encoded size, and a SHA-256
   digest. Creation is accepted only after a persisted read-back verifies the
   digest.
-- `jobs`: resumable import, export, schema-upgrade, and synchronization state
-- `syncMappings`: internal and native browser bookmark identity mapping
+- Synchronization connection state, mappings, and resumable operations reside
+  in profile-owned `sync:v1:` metadata. There are no `jobs` or `syncMappings`
+  tables in the current schema. Import and Export do not persist resumable jobs.
 - `metadata`: schema, export-format, upgrade, installation identifiers,
   per-profile `content-revision:v1` counters, and the global
   `profile-activation-revision:v1` counter. Revision records contain no bookmark
@@ -167,6 +174,31 @@ and reject stale input.
 
 ## Backup snapshots and restore
 
+Schema 38 adds `backupSnapshots` to `bookmark-manager-pro`. Before the first
+backup/import/export operation, legacy snapshots from
+`bookmark-manager-pro-backups.snapshots` are validated, their payload digests
+verified, and copies read back inside the same transaction as a migration
+marker. Failure leaves the marker unwritten and the source untouched, allowing
+a retry. Subsequent operations use only the primary table. The legacy database
+is retained unchanged; it is a historical recovery copy, not an updated mirror.
+Deleting a current snapshot does not cause its old copy to be migrated again.
+Current backups no longer remain independently available when the main
+database cannot open. Deleting a profile preserves its recovery snapshots.
+
+Imports validate complete records and field lengths before writing. Native
+files create new profiles and remap owned identities and included backup
+history. JSON and HTML preserve selected hierarchy beneath the destination;
+CSV saves selected rows flat. Destination defaults supply portable appearance.
+A final review shows duplicate exclusions and save totals. Destination changes
+invalidate the plan. Confirmation also reports the effective snapshot policy;
+Settings > Import and Backup edit the same `backupPreferences.beforeImport`
+field, gated by `automaticEnabled`. No schema change or additional stored
+preference is required. Activity-log additions alone do not invalidate the plan. Required safety
+snapshots, imported records, remembered destinations, and snapshot retention
+share one abortable transaction. Snapshot verification failure blocks saving.
+Closing the owning UI aborts an unfinished transaction; completed commits
+remain saved. No source file, password, or resumable import job is stored.
+
 Manual, automatic, safety, pre-upgrade, and deleted-profile snapshot types share
 a versioned validated payload. Automatic retention applies independently to
 each profile and trigger; it never deletes manual or mandatory safety records.
@@ -181,8 +213,8 @@ profile remaps wallpaper IDs together with folder and content IDs so references
 remain profile-local.
 
 Snapshot deletion affects only the chosen snapshot. Uninstalling the extension
-or clearing its browser-managed data removes both primary data and the separate
-snapshot database.
+or clearing its browser-managed data removes the primary database and any
+retained legacy snapshot database.
 
 ## Image storage and quota behavior
 
@@ -252,15 +284,129 @@ content.
 
 ## Imports
 
-Import processing follows these stages:
+### Native export and import contract
+
+Native `.bmpro` v1 files contain explicit selected profiles and categories:
+bookmarks, notes, settings, activity, and synchronization. Optional backup
+history contains complete verified historical snapshots regardless of the
+current category selection. Native imports remap identities and create new
+profiles; they do not replace or activate an existing profile. Synchronization
+configuration is restored paused without transferring browser permissions.
+Session undo patches are excluded.
+
+Plaintext native envelopes contain a SHA-256 payload digest for corruption
+detection; an attacker can rewrite an unencrypted file and its digest, so this
+is not source authentication. Optional authenticated encryption uses Web Crypto
+PBKDF2-SHA256 with 600,000 iterations, a random 16-byte salt, and AES-256-GCM
+with a random 12-byte nonce. The versioned envelope carries its KDF/cipher
+parameters, encoding metadata, and ciphertext. Readers validate those bounds
+before derivation/decryption. Passwords are transient and not recoverable.
+
+The native payload budget is 256 MiB; the serialized-file ceiling is 384 MiB.
+Other field and record limits remain enforced. Available browser memory can
+still prevent processing an otherwise allowed file. Portable formats are
+unencrypted and have their own validated representations described below.
+
+### Portable formats and file processing
+
+CSV export preferences belong to the profile that opens Export, even when
+other profiles are selected for the file. The optional `exportPreferences`
+settings field stores a complete permutation of the seven CSV columns and a
+unique enabled subset containing URL. Missing preferences preserve the original
+seven-column export. This additive optional field requires no IndexedDB schema
+change or backfill and does not add fields to older serialized settings.
+Native exports include it only when settings are selected. CSV serialization
+and byte estimation use the same enabled column order. Source paths and file
+contents are not remembered. Header names, JSON-array folder paths and tags,
+UTF-8 BOM, quoting, and spreadsheet-formula protection remain unchanged.
+
+Bookmark JSON exports use `bookmark-manager-pro-bookmarks` version 2. Each
+profile has `id`, `name`, and `content` containing its structural root folder.
+Folders contain `id`, `parentId`, `title`, `index`, `tags`, `note`, and a
+`content` array of child folders and bookmarks. Bookmarks contain `id`,
+`parentId`, `title`, `url`, `tags`, `note`, and `index`. Children are ordered by
+index, with ID as the tie breaker. Empty folders retain an empty content array.
+Appearance, images, and other profile data remain exclusive to native exports.
+The reader accepts both flat JSON v1 and nested JSON v2; older v1 readers cannot
+read v2 exports. Nested parent IDs must agree with containment. Both formats
+retain size, record, field, URL, ownership, and cycle validation boundaries.
+Bookmark folder nesting has no application-defined depth cap. JSON tree
+serialization and relationship checks are iterative; HTML indentation is
+bounded independently of the represented hierarchy. Native v1 and portable
+JSON v1/v2 formats are unchanged. Earlier readers with fixed depth limits can
+reject newly generated deeply nested files.
+
+Export capture, serialization, encryption, and estimates run in local dedicated
+workers owned by the dialog. Generated files cross to the download adapter as
+Blobs rather than large strings.
+Selected-profile backup histories are read one payload at a time. JSON, HTML,
+and CSV output enforce the serialized-byte budget while accumulating chunks;
+CSV folder paths and HTML escaping cannot silently expand beyond that budget.
+Import parsing, preparation, and atomic IndexedDB commits run in dialog-owned workers.
+Record writes are issued in batches of up to 500 inside the original transaction;
+a later batch failure or cancellation rolls back earlier batches and safety snapshots.
+Workers have no network behavior, new permissions, or durable job payloads.
+Close, cancellation, replacement, and page lifecycle cleanup discard transient
+work; interrupted transactions retain IndexedDB atomicity. There is no restart
+or resume contract. Worker failure uses existing generic errors rather than a
+blocking UI-thread fallback. File-size and record-count limits still apply;
+worker isolation does not guarantee sufficient memory for every allowed file.
+Large IndexedDB commits can take substantially longer than parsing or export;
+worker isolation preserves interface responsiveness rather than guaranteeing a
+fixed completion time. Cancellation aborts the complete import transaction.
+
+The current Import UI validates native files, own bookmark JSON, supported CSV, and
+Netscape browser HTML in a dialog-owned worker before displaying verified
+metadata. Closing, replacing the file, or pagehide terminates processing.
+Source files require valid UTF-8; malformed byte sequences fail before parsing.
+Native validation rejects bookmark folder cycles and missing parents without
+a folder depth cap. Note folder depth remains limited to 20, including embedded
+backups. Note bodies must satisfy the
+existing 1 MiB UTF-8 limit. Plain-text symbols and code examples are not executed
+or removed; unsafe URLs and invalid structures reject the whole file.
+HTML is tokenized without a DOM or resource loading; all source folders are
+preserved in the preview. CSV recognizes Profile ID, Profile, Folder path,
+Title, URL, Tags, and Note headers in any order, ignoring case and outer header
+whitespace. URL is required; other columns may be omitted. Unknown columns are
+ignored, duplicate supported headers and malformed rows fail the whole file,
+and unsafe URLs are rejected. Tags use JSON arrays; missing titles fall back
+to a bounded URL title. CSV fields remain strings, with existing formula
+protection preserved. A maximum of 128 source columns bounds ignored fields.
+Supported cells are transferred from the worker only after complete validation
+and displayed as inert text in a wide review table. CSV profile/folder values
+do not select destinations or create folders. JSON/HTML review displays a
+checkbox hierarchy using Home tree visuals and at most 200 review rows per page.
+Selection counts and subtree changes include items on other pages. Import
+preferences persist independently; successful
+destination updates and automatic closing await the writer.
+
+Browser HTML uses the Netscape bookmark grammar: a doctype, generated-file
+comment, an app-name and UTC export-time comment, UTF-8 metadata, a Bookmarks
+heading, and nested DL/H3/A elements. The provenance comment uses the export
+payload's creation time and is informational, not an authenticity guarantee.
+HTML exports retain empty folders and sibling order, with ADD_DATE and folder
+LAST_MODIFIED values in Unix seconds. A Bookmark Manager Pro enclosing folder
+keeps exported content together. A single profile contributes its Home contents
+inside it; multiple profiles contribute named folders without UUIDs inside it.
+Only the structural app root is omitted. Browser toolbar markers, date fields,
+and icon attributes are accepted as inert metadata by the reader. They neither
+load resources nor define app appearance. HTML omits app-specific tags, notes,
+images, and settings; native and JSON exports retain their documented data.
+
+The implemented saving operation follows these stages:
 
 1. Read into a bounded buffer or streaming parser.
 2. Validate format version, structure, sizes, URLs, and relationships.
 3. Normalize into a proposed domain model without modifying current data.
 4. Show a safe summary and conflict preview.
-5. Create a recovery snapshot.
-6. Apply changes transactionally.
-7. Verify counts and key relationships before deleting temporary state.
+5. Resolve the destination's automatic-snapshot and Before import preferences;
+   native new-profile imports need no pre-import snapshot.
+6. Recheck the destination and atomically save records, any required verified
+   snapshot, included native history, preferences, and retention. Failure or
+   cancellation before commit rolls back the entire transaction.
+7. Discard transient file/review state after commit and deliver failure-isolated
+   feedback and content refresh. A completed commit remains saved even if
+   subsequent feedback fails.
 
 Imported HTML is treated as data and is never rendered unsanitized.
 

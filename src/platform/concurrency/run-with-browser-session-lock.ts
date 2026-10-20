@@ -2,18 +2,23 @@
 export function runWithBrowserLock<T>(
   name: string,
   run: () => Promise<T>,
+  signal?: AbortSignal,
 ): Promise<T> {
+  signal?.throwIfAborted();
   if (!navigator.locks?.request) return run();
   return new Promise<T>((resolve, reject) => {
-    void navigator.locks
-      .request(name, async () => {
-        try {
-          resolve(await run());
-        } catch (error) {
-          reject(error);
-        }
-      })
-      .catch(reject);
+    const callback = async () => {
+      try {
+        resolve(await run());
+      } catch (error) {
+        reject(error);
+      }
+    };
+    void (
+      signal
+        ? navigator.locks.request(name, { signal }, callback)
+        : navigator.locks.request(name, callback)
+    ).catch(reject);
   });
 }
 

@@ -15,7 +15,7 @@ type ClearableInputProps = Omit<
   'type'
 > & {
   clearLabel?: string | undefined;
-  type?: 'search' | 'text' | 'url' | undefined;
+  type?: 'search' | 'text' | 'url' | 'password' | undefined;
 };
 
 /** Adds an adjacent clear action to an editable single-line text input. */

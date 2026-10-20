@@ -58,6 +58,38 @@ function renderMenu(
 }
 
 describe('EditableTextContextMenu', () => {
+  it('keeps selection visible during menu focus and disposes it on dismissal', () => {
+    const input = document.createElement('input');
+    input.value = 'Selected text';
+    document.body.append(input);
+    input.focus();
+    input.setSelectionRange(0, 8);
+    const { onClose } = renderMenu(input, 0, 8);
+    const preview = document.querySelector<HTMLElement>(
+      '.editable-selection-preview',
+    )!;
+    expect(screen.getByRole('menuitem', { name: /^Cut/ })).toHaveFocus();
+    expect(preview.style.visibility).toBe('visible');
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'ArrowDown' });
+    expect(screen.getByRole('menuitem', { name: /^Copy/ })).toHaveFocus();
+    fireEvent.scroll(input);
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.wheel(input);
+    expect(onClose).toHaveBeenCalledOnce();
+    cleanup();
+    expect(preview.isConnected).toBe(false);
+    expect(preview.textContent).toBe('');
+  });
+
+  it('still dismisses when a textarea scrolls', () => {
+    const target = document.createElement('textarea');
+    target.value = 'Selected text';
+    document.body.append(target);
+    const { onClose } = renderMenu(target, 0, 8);
+    fireEvent.scroll(target);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it('disables selection commands when there is no selected text', () => {
     const input = document.createElement('input');
     input.value = 'Example';

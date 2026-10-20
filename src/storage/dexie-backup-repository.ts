@@ -7,6 +7,7 @@ import { syncConnectionSchema } from '../domain/synchronization';
 import { BookmarkManagerDatabase } from './database';
 import { BackupDatabase } from './backup-database';
 import packageMetadata from '../../package.json';
+import { migrateBackupSnapshots } from './migrate-backup-snapshots';
 
 export class DexieBackupRepository implements BackupRepository {
   constructor(
@@ -14,7 +15,14 @@ export class DexieBackupRepository implements BackupRepository {
     private readonly primary = new BookmarkManagerDatabase(),
   ) {}
 
+  /** Finishes the verified legacy copy before any backup operation. */
+  async ready(): Promise<void> {
+    await this.primary.open();
+    await migrateBackupSnapshots(this.primary, this.backups);
+  }
+
   async captureProfile(profileId: string): Promise<BackupPayload> {
+    await this.ready();
     return this.primary.transaction(
       'r',
       [
@@ -89,24 +97,50 @@ export class DexieBackupRepository implements BackupRepository {
   }
 
   async list(): Promise<readonly BackupSnapshot[]> {
+    await this.ready();
     return (
-      await this.backups.snapshots.orderBy('createdAt').reverse().toArray()
+      await this.primary.backupSnapshots
+        .orderBy('createdAt')
+        .reverse()
+        .toArray()
     ).map((snapshot) => backupSnapshotSchema.parse(snapshot));
   }
 
+  /** Reads only selected-profile history, one payload at a time, under the export budget. */
+  async *iterateForExport(
+    profileIds: readonly string[],
+  ): AsyncGenerator<BackupSnapshot> {
+    await this.ready();
+    const ids = await this.primary.backupSnapshots
+      .where('profileId')
+      .anyOf([...profileIds])
+      .primaryKeys();
+    if (ids.length > 10000) throw new Error('export-backup-count-limit');
+    for (const id of ids) {
+      const snapshot = await this.primary.backupSnapshots.get(id);
+      if (!snapshot) throw new Error('export-backup-changed');
+      yield backupSnapshotSchema.parse(snapshot);
+    }
+  }
+
   async get(snapshotId: string): Promise<BackupSnapshot | undefined> {
-    const snapshot = await this.backups.snapshots.get(
+    await this.ready();
+    const snapshot = await this.primary.backupSnapshots.get(
       z.uuid().parse(snapshotId),
     );
     return snapshot ? backupSnapshotSchema.parse(snapshot) : undefined;
   }
 
   async put(snapshot: BackupSnapshot): Promise<void> {
-    await this.backups.snapshots.add(backupSnapshotSchema.parse(snapshot));
+    await this.ready();
+    await this.primary.backupSnapshots.add(
+      backupSnapshotSchema.parse(snapshot),
+    );
   }
 
   async delete(snapshotId: string): Promise<void> {
-    await this.backups.snapshots.delete(z.uuid().parse(snapshotId));
+    await this.ready();
+    await this.primary.backupSnapshots.delete(z.uuid().parse(snapshotId));
   }
 
   async replaceProfile(profileId: string, input: BackupPayload): Promise<void> {

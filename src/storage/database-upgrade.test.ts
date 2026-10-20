@@ -61,14 +61,15 @@ describe('BookmarkManagerDatabase schema upgrades', () => {
     upgraded.close();
   });
 
-  it('opens schema 36 with shared wallpapers, Notes stores, indexed popup reads, and session undo history', async () => {
+  it('opens schema 38 with atomic backup storage, shared wallpapers, Notes stores, indexed popup reads, and session undo history', async () => {
     const name = `search-preferences-schema-${crypto.randomUUID()}`;
     names.push(name);
     const database = new BookmarkManagerDatabase(name);
 
     await database.open();
 
-    expect(database.verno).toBe(36);
+    expect(database.verno).toBe(38);
+    expect(database.backupSnapshots.schema.primKey.name).toBe('id');
     expect(database.folderWallpapers.schema.primKey.name).toBe('id');
     expect(database.notes.schema.primKey.name).toBe('id');
     expect(database.noteFolders.schema.primKey.name).toBe('id');

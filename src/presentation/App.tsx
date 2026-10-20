@@ -116,6 +116,13 @@ import type {
 import { summarizeContentChange } from '../application/bookmark/summarize-content-change';
 import type { ManageBackups } from '../application/backup/manage-backups';
 import { createBackupManager } from '../application/backup/create-backup-manager';
+import { reportExportEvent } from '../application/export/report-export-event';
+import {
+  importValidationOutcome,
+  reportImportValidation,
+} from '../application/import/report-import-validation';
+import { ImportDialog } from '../features/import/ImportDialog';
+import { ExportDialog } from '../features/export/ExportDialog';
 import { BackupDialog } from '../features/backup/BackupDialog';
 import type { BackupUiEvent } from '../features/backup/BackupDialog';
 import {
@@ -168,7 +175,8 @@ interface AppProps {
     | 'captureUndoStateByIds'
     | 'copyItem'
     | 'restoreUndoState'
-  >;
+  > &
+    Partial<Pick<ManageBookmarks, 'listFolderTreeSummaries'>>;
   /** Persists the first profile and returns a freshly validated preflight snapshot. */
   createProfileAndResumePreflight(
     input: CreateFirstProfileInput,
@@ -281,7 +289,8 @@ export function App({
           confirmLabel: t(`confirmation.actions.${action}`),
           message,
           title,
-          variant: action === 'delete' ? 'danger' : 'primary',
+          variant:
+            action === 'delete' || action === 'clearAll' ? 'danger' : 'primary',
         });
       } catch {
         console.error(
@@ -342,6 +351,10 @@ export function App({
   const [openLegalAfterMenuClose, setOpenLegalAfterMenuClose] = useState(false);
   const [openHelpAfterMenuClose, setOpenHelpAfterMenuClose] = useState(false);
   const [openSyncAfterMenuClose, setOpenSyncAfterMenuClose] = useState(false);
+  const [openImportAfterMenuClose, setOpenImportAfterMenuClose] =
+    useState(false);
+  const [openExportAfterMenuClose, setOpenExportAfterMenuClose] =
+    useState(false);
   const [openBackupAfterMenuClose, setOpenBackupAfterMenuClose] =
     useState(false);
   const [openNotesAfterMenuClose, setOpenNotesAfterMenuClose] = useState(false);
@@ -364,6 +377,8 @@ export function App({
     | 'switch'
     | 'undo-history'
     | 'synchronization'
+    | 'import'
+    | 'export'
     | 'backup'
     | null
   >(null);
@@ -2791,6 +2806,16 @@ export function App({
             setIsNotesOpen(true);
             return;
           }
+          if (openImportAfterMenuClose) {
+            setOpenImportAfterMenuClose(false);
+            setProfileWindow('import');
+            return;
+          }
+          if (openExportAfterMenuClose) {
+            setOpenExportAfterMenuClose(false);
+            setProfileWindow('export');
+            return;
+          }
           if (openBackupAfterMenuClose) {
             setOpenBackupAfterMenuClose(false);
             setProfileWindow('backup');
@@ -2853,6 +2878,14 @@ export function App({
           // Native modal dialogs cannot overlap; wait for the side panel's
           // closing animation before opening the focused log window.
           setOpenActivityLogAfterMenuClose(true);
+          setIsProfileMenuOpen(false);
+        }}
+        onOpenImport={() => {
+          setOpenImportAfterMenuClose(true);
+          setIsProfileMenuOpen(false);
+        }}
+        onOpenExport={() => {
+          setOpenExportAfterMenuClose(true);
           setIsProfileMenuOpen(false);
         }}
         onOpenBackup={() => {
@@ -2995,6 +3028,128 @@ export function App({
                       : 'success',
               title: t('sync.title'),
               message: t(`sync.serviceEvents.${event}`),
+            })
+          }
+        />
+      ) : null}
+      {profileWindow === 'import' && readyProfileId ? (
+        <ImportDialog
+          key={readyProfileId}
+          onImported={async (profileIds) => {
+            await Promise.all(
+              profileIds.map((id) => publishLocalContentChange(id)),
+            );
+            await refreshProfiles();
+            setPreflightSnapshot(await resumePreflight());
+          }}
+          {...(activeSettings?.importPreferences
+            ? { preferences: activeSettings.importPreferences }
+            : {})}
+          destinations={{
+            activeProfileId: readyProfileId,
+            loadProfiles: () => profileManager.list(),
+            loadFolders: (id) =>
+              bookmarkManager.listFolderTreeSummaries
+                ? bookmarkManager.listFolderTreeSummaries(id)
+                : Promise.reject(
+                    new Error('import-folder-summaries-unavailable'),
+                  ),
+          }}
+          onClose={() => {
+            setProfileWindow(null);
+            profileButtonRef.current?.focus();
+          }}
+          onReport={(event) => {
+            const message = t(
+              event.code === 'import.save.succeeded'
+                ? 'import.saved'
+                : event.code === 'import.save.failed'
+                  ? 'import.saveFailed'
+                  : event.code === 'import.save.changed'
+                    ? 'import.destinationChanged'
+                    : event.code === 'import.save.paused'
+                      ? 'import.synchronizationPaused'
+                      : event.code === 'import.save.excluded'
+                        ? 'import.exclusionsSaved'
+                        : event.code === 'import.save.refresh-failed'
+                          ? 'import.refreshFailed'
+                          : event.code === 'import.unlock.failed'
+                            ? 'import.unlockFailed'
+                            : event.code === 'import.destination.failed'
+                              ? 'import.destinationFailed'
+                              : event.code === 'import.destination.missing'
+                                ? 'import.destinationMissing'
+                                : event.code === 'import.validation.csv-flat'
+                                  ? 'import.csvFlat'
+                                  : event.level === 'ERROR'
+                                    ? 'import.validationFailed'
+                                    : 'import.eventMessage',
+            );
+            reportImportValidation(event, {
+              record: (input) =>
+                recordEventForProfile(readyProfileId, {
+                  eventCode: input.code.toUpperCase().replaceAll('.', '-'),
+                  level: input.level,
+                  kind: input.level === 'ERROR' ? 'DIAGNOSTIC' : 'ACTIVITY',
+                  outcome: importValidationOutcome(input),
+                  message,
+                  action: 'Import',
+                  category: 'Application',
+                  dataChanged: input.code === 'import.save.succeeded',
+                  durationMs: 0,
+                  itemType: 'Import',
+                  itemsAffected: 0,
+                  source: 'Import window',
+                }),
+              notifyFailure: () =>
+                notifyForActiveProfile({
+                  level: 'error',
+                  title: t('import.title'),
+                  message,
+                }),
+              notifySuccess: () =>
+                notifyForActiveProfile({
+                  level: 'success',
+                  title: t('import.title'),
+                  message,
+                }),
+              notifyWarning: () =>
+                notifyForActiveProfile({
+                  level: 'warning',
+                  title: t('import.title'),
+                  message,
+                }),
+            });
+          }}
+        />
+      ) : null}
+      {profileWindow === 'export' && readyProfileId ? (
+        <ExportDialog
+          key={readyProfileId}
+          {...(activeSettings?.exportPreferences
+            ? { preferences: activeSettings.exportPreferences }
+            : {})}
+          activeProfileId={readyProfileId}
+          loadProfiles={() => profileManager.list()}
+          onClose={() => {
+            setProfileWindow(null);
+            profileButtonRef.current?.focus();
+          }}
+          onReport={(event) =>
+            reportExportEvent(event, t(`export.${event}`), {
+              record: (input) =>
+                recordEventForProfile(readyProfileId, {
+                  ...input,
+                  action: 'Export',
+                  category: 'Application',
+                  dataChanged: false,
+                  durationMs: 0,
+                  itemType: 'Export',
+                  itemsAffected: 0,
+                  source: 'Export window',
+                }),
+              notify: (input) =>
+                notifyForActiveProfile({ ...input, title: t('export.title') }),
             })
           }
         />
@@ -3704,6 +3859,7 @@ export function App({
         }}
       />
       <ProfileManagerDialog
+        onValidationError={notifyOperationError}
         defaultProfileIcon={
           currentInitializationState.status === 'ready'
             ? (currentInitializationState.settings.profilePreferences

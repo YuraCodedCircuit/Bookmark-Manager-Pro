@@ -6,24 +6,91 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.7.0 - 2026-10-20
+
+### Added
+
+- Added profile-owned CSV export column preferences shared by serialization and
+  size estimation. URL remains required; omitted preferences retain defaults
+  without a schema upgrade.
+- Added native export v1 with category-selected profile data, local image
+  assets, and verified backup snapshots captured in read transactions.
+- Added PBKDF2-SHA256/AES-256-GCM encryption and plaintext SHA-256 integrity
+  checks. Envelope validation bounds cryptographic parameters before key
+  derivation; decoding preserves existing password compatibility.
+- Added JSON v2 tree exports with folder and bookmark metadata, iterative
+  serialization and cycle-safe linear hierarchy validation without a bookmark
+  folder depth cap; the reader continues accepting flat JSON v1.
+- Added formula-protected CSV and escaped Netscape HTML exports through the
+  local download adapter. HTML preserves hierarchy, browser date metadata,
+  and an app-level wrapper with named folders for multiple profiles.
+- Added a terminable, dialog-owned import worker with format-specific runtime
+  validation. Files, passwords, and previews remain transient; cancellation
+  invalidates pending results. Dialog-owned worker saves revalidate complete records,
+  reject stale destinations, and commit data, required safety snapshots, and
+  native backup history atomically with remapped identities. Closing aborts
+  unfinished transactions; commits share the synchronizer's abortable browser
+  lock, issue at most 500 record writes per batch inside the same transaction,
+  and imported synchronization remains paused.
+- Added strict UTF-8 decoding, cycle-checked native hierarchies and bounded note bodies,
+  JSON identity/reference validation, DOM-free Netscape HTML parsing, and
+  header-aware CSV validation. Unsafe URLs reject the complete import.
+- Added destination browsing through lightweight folder summaries without
+  profile activation or storage writes. Empty profiles use a preview-only Home
+  target resolved inside the import transaction. Portable materialization uses
+  destination appearance defaults and preserves supported text metadata.
+- Added iterative hierarchical import selection with subtree exclusion, required
+  ancestors, linear subtree counts, and 200-row review pages; CSV review retains
+  supported source columns as inert text.
+- Added schema 37 profile-owned Import preferences with optional serialized
+  fields and app-ID-only remembered destinations.
+- Added schema 38 `backupSnapshots` storage in the primary database with a
+  verified, retry-safe legacy copy and atomic migration marker. The original
+  backup database remains an unchanged recovery copy; current snapshots now
+  share primary-database availability and are retained after profile deletion.
+- Added privacy-safe import/export activity events and failure-isolated
+  notifications through the existing application services.
+- Added reusable Export capture and password-free size estimation in terminable
+  dedicated workers, with Blob download handoff, versioned validated messages,
+  cancellation, and no synchronous UI-thread processing fallback. Selected
+  backup histories are read incrementally; output expansion is bounded during
+  serialization rather than only after a complete file has been allocated.
+
+### Changed
+
+- Shared checkbox styling supports native indeterminate states and forced colors.
+- BackupProfilePicker provides read-only profile filtering and modal focus
+  management; snapshot loading no longer controls the dialog lifetime.
+- Backup snapshot filters match exact snapshot types. Import honors the
+  destination's automatic-backup trigger and defers retention until commit.
+  Settings > Import shares the existing Before import preference with Backup;
+  save plans expose the effective snapshot policy for accurate confirmation.
+- Profile management validates usernames before mutation and isolates
+  notification failures from operation results.
+- Shared dialog controls and scroll containers preserve native input semantics,
+  focus restoration, and Appearance scrollbar preferences. Folder and bookmark
+  SVG components share accent-driven styling across tree consumers.
+- Editable text menus paint an inert, dialog-local selection preview while
+  keyboard focus is in the menu, including the toolbar save popup. Both surfaces
+  reuse the menu and explicit, optional-permission clipboard reader.
+  The transient text-only preview follows control typography, wrapping,
+  and scroll offsets, excludes secret/immutable controls, and is removed on
+  dismissal without changing clipboard boundaries.
+
 ## 0.6.2 - 2026-10-14
 
 ### Changed
 
 - Replaced the welcome browser-list benefit with localized new-tab access
   wording; synchronization behavior and storage boundaries are unchanged.
-
 - ImageCropDialog exposes a localized header close control using the existing
   cancellation callback and processing guard. Parent editor close-icon styles are
   scoped to their own form header so child SVG icons are not painted twice.
-
 - Shared enabled-button hover styling adds a neutral background tint without
   changing text, borders, focus outlines, or destructive base colors. Native
   file-picker buttons receive the same tint; forced-color mode is preserved.
-
 - FolderStyleDialog reuses ImageCropDialog with transient original and crop
   state, Fit on apply, focus return, and existing save boundaries.
-
 - Added required `unlimitedStorage` permission to Chrome, Firefox, and Edge
   manifests for extension-owned IndexedDB durability and storage quota exemption.
   No schema, data conversion, runtime cleanup, or permission prompt flow is added.
@@ -42,7 +109,6 @@ benefits and behavior are maintained in `CHANGELOG.md`.
   animations survive top-layer changes without restarting or creating scroll
   overflow. Cards omit shadows so clipping cannot paint a dark rectangle through
   the transparent stack. Saved settings are unchanged.
-
 - Added a native child dialog for history filters with immediate parent-state
   updates, Escape isolation, focus containment, and trigger focus restoration.
 - Separated undo-session initialization from obsolete-row cleanup. Deferred
@@ -58,10 +124,8 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 - ClearableInput button styles own border-box dimensions, minimum and maximum
   size, zero padding, and corner radius with component-scoped specificity,
   preventing surrounding dialog button rules from stretching the control.
-
 - Centered the crop stage within its padded viewport using safe grid alignment,
   preserving scroll access when the image exceeds the available space.
-
 - Details tables use native intrinsic sizing for Date modified and Type while
   constraining Title and URL cells so long content still truncates. Column
   identity and reordering retain the same sizing rules without stored widths

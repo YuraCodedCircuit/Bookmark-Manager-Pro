@@ -6,23 +6,61 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.7.0 - 2026-10-20
+
+### New
+
+- Import native profiles or selected bookmarks and folders from JSON, HTML,
+  and CSV after validation and confirmation.
+- Portable imports follow the destination profile's appearance and duplicate
+  preferences, with duplicate warnings and optional recovery snapshots.
+- Review encrypted files locally with password controls and clear error feedback.
+- Configure import review preferences in Settings.
+- Review JSON and HTML imports as folder trees, or CSV imports as a table of
+  supported columns, with keyboard navigation and layouts for smaller screens.
+- Import files and passwords stay local and are discarded when the dialog closes.
+- Import previews reject malformed or unsafe files before showing their contents.
+- Export selected profiles to a native file preserving durable data and stored
+  images, with optional password encryption, data categories, and backup history.
+- Export bookmarks as JSON, CSV, or browser-compatible HTML without a folder
+  nesting limit. Large exports are prepared outside the interface thread.
+  JSON preserves the folder tree, including folder and bookmark tags and notes.
+- Choose which CSV columns to export and arrange their order in Settings.
+- Use a themed, keyboard-accessible Export dialog with profile selection,
+  bookmark and folder counts, file size estimates, progress, and cancellation.
+
+### Improved
+
+- Firefox follows native UI typography throughout the app for more familiar
+  text sizing.
+- Bookmark and folder icons consistently follow the app's accent color across
+  navigation and dialogs.
+- Updated privacy disclosures for locally processed import files, exported
+  profile data, and retained recovery snapshots.
+- Profile management is easier to navigate, with a scrollable profile list and
+  clearer feedback for invalid input.
+- Backup browsing offers searchable profile selection and clearer snapshot filters.
+- Bookmark and folder editors keep their actions available while scrolling.
+- Dialogs, menus, and navigation use more consistent controls and visual feedback;
+  details-table items have roomier hover and focus areas. Item menus distinguish
+  opening bookmarks from folders with clearer labels and icons.
+- Text fields share editing menus, keyboard behavior, and visible selection
+  highlights in the manager and Save current URL popup.
+- Destructive actions are easier to recognize before confirmation.
+
 ## 0.6.2 - 2026-10-14
 
 ### Improved
 
 - The welcome screen highlights direct bookmark access from a new tab instead
   of listing browsers.
-
 - Crop image includes a top-right Close button that cancels without applying
   changes.
-
 - Buttons show subtle hover feedback across themes while retaining their
   existing colors, including red destructive actions. Disabled buttons remain
   unchanged.
-
 - Customize folder style now offers Crop image directly below the background
   preview, using the same local crop editor as bookmarks and folders.
-
 - Added local storage protection against automatic browser eviction through the
   required Unlimited Storage permission. Backups remain necessary for explicit
   deletion, uninstall, browser-profile loss, and disk failures.
@@ -36,7 +74,6 @@ behavior. Developer-facing implementation details are maintained in the
 - Notifications stay above newly opened dialogs and popovers while retaining
   usable close and action buttons, without flashing or briefly showing a
   scrollbar when panels open or close. The space between cards stays transparent.
-
 - History filters now open in a separate modal above Undo and redo history,
   with immediate updates and keyboard focus returned to Filters on closing.
 - Undo history remains available after all extension tabs close, until the
@@ -47,10 +84,8 @@ behavior. Developer-facing implementation details are maintained in the
 
 - Input Clear buttons keep a consistent compact square shape across dialogs,
   including Create snapshot, without inheriting larger action-button sizes.
-
 - Crop image centers its editing area with balanced opposite gaps when the
   controls make the workspace taller than the image.
-
 - Details view automatically fits Date modified and Type columns to their
   longest text, keeping dates readable as folder contents and formats change.
 - Undo and Redo remain available for each independent item's latest change,

@@ -9,6 +9,7 @@ export type ContextMenuIconName =
   | 'folder-style'
   | 'info'
   | 'open'
+  | 'open-bookmark'
   | 'open-new'
   | 'paste'
   | 'pin'
@@ -20,18 +21,19 @@ interface ContextMenuIconProps {
 }
 
 const iconTransforms: Record<ContextMenuIconName, string> = {
-  'bookmark-add': 'translate(12 12) scale(1.6 1) translate(-12 -12)',
+  'bookmark-add': '',
   copy: 'translate(12 12) scale(1.142857) translate(-12 -12)',
-  cut: 'translate(12 12) scale(1.103448 1.066667) translate(-10.75 -12)',
-  delete: 'translate(12 12) scale(1.142857 1) translate(-12 -12)',
+  cut: 'translate(12 12) scale(1.066667) translate(-10.75 -12)',
+  delete: '',
   duplicate: 'translate(12 12) scale(1.142857) translate(-12 -12)',
   edit: 'translate(12 12) scale(1.230769) translate(-11.5 -12.5)',
-  'folder-add': 'translate(12 12) scale(1 1.333333) translate(-12 -12)',
-  'folder-style': 'translate(12 12) scale(1 1.333333) translate(-12 -12)',
+  'folder-add': 'translate(12 12) scale(1.142857) translate(-12 -12)',
+  'folder-style': '',
   info: '',
   open: 'translate(12 12) scale(1.142857) translate(-12 -12)',
+  'open-bookmark': '',
   'open-new': 'translate(12 12) scale(1.142857) translate(-12 -12)',
-  paste: 'translate(12 12) scale(1.333333 1) translate(-12 -12)',
+  paste: '',
   pin: '',
   search: 'translate(12 12) scale(1.142857) translate(-12 -12)',
   'select-all': '',
@@ -55,7 +57,9 @@ export function ContextMenuIcon({ name }: ContextMenuIconProps) {
 function getIconPaths(name: ContextMenuIconName) {
   switch (name) {
     case 'open':
-      return <path d="M5 19V5h6l2 2h6v12H5Zm3-4 3-3 2 2 3-4" />;
+      return <path d="M5 19V5h6l2 2h6v12H5Z" />;
+    case 'open-bookmark':
+      return <path d="M5.5 4h13v16L12 17l-6.5 3V4Z" />;
     case 'open-new':
       return (
         <>
@@ -109,15 +113,15 @@ function getIconPaths(name: ContextMenuIconName) {
     case 'bookmark-add':
       return (
         <>
-          <path d="M7 4h10v16l-5-3-5 3V4Z" />
+          <path d="M5.5 4h13v16L12 17l-6.5 3V4Z" />
           <path d="M12 7v6M9 10h6" />
         </>
       );
     case 'folder-add':
       return (
         <>
-          <path d="M4 6h6l2 2h8v10H4V6Z" />
-          <path d="M12 11v5M9.5 13.5h5" />
+          <path d="M5 19V5h6l2 2h6v12H5Z" />
+          <path d="M12 10v6M9 13h6" />
         </>
       );
     case 'paste':
@@ -130,8 +134,8 @@ function getIconPaths(name: ContextMenuIconName) {
     case 'folder-style':
       return (
         <>
-          <path d="M4 6h6l2 2h8v10H4V6Z" />
-          <path d="M12 10s-2.5 2.7-2.5 4.2a2.5 2.5 0 0 0 5 0C14.5 12.7 12 10 12 10Z" />
+          <path d="M20 10V8h-8l-2-2H4v12h5" />
+          <path d="m17 11 3 3-6 6h-3v-3l6-6Zm-1.5 1.5 3 3" />
         </>
       );
     case 'search':

@@ -32,7 +32,7 @@ between extension surfaces.
 
 Security-sensitive assets include bookmark and profile data, settings, local
 images, generated passwords, clipboard content, undo and activity records,
-encryption material for future protected exports, and the integrity of
+encryption material for protected native exports, and the integrity of
 user-requested mutations.
 
 ## Threat model and trust boundaries

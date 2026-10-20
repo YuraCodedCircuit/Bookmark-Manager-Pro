@@ -1,7 +1,10 @@
 # Bookmark Manager Pro Privacy Policy
 
-**Effective date:** October 14, 2026
+**Effective date:** October 20, 2026
 **Publisher:** YuraCodedCircuit
+
+**Review status:** Revised data-practice disclosures are a draft pending
+qualified legal review.
 
 Bookmark Manager Pro is a local-first browser extension for organizing browser
 bookmarks. This Privacy Policy explains what information the extension handles,
@@ -38,6 +41,10 @@ features:
   active browser session.
 - Passwords generated on request and the selected generator options while the
   Password Generator window remains open.
+- Selected import files, filenames, validated content, review selections, and
+  passwords used to unlock native files while the Import dialog remains open.
+- Export selections and optional encryption passwords while an export is
+  prepared. Export passwords are never saved or logged.
 - Browser and operating-system information shown in or added to a
   user-requested diagnostic export.
 
@@ -78,11 +85,25 @@ the user enables it. The address is compared locally with bookmarks in the
 active profile to set a per-tab toolbar badge and title. Browsed addresses are
 not stored as history, included in activity records, or transmitted.
 
-Recovery snapshots are stored in a separate browser-managed IndexedDB database.
+Current recovery snapshots are stored in the same browser-managed IndexedDB
+database as application data, allowing imports and their required snapshots to
+commit or roll back together. They no longer remain independently accessible
+when that database cannot open.
 A snapshot can contain the selected profile's bookmarks, folders, favorites,
 local images, settings, activity records, and synchronization configuration.
 Snapshots are never uploaded. Restored synchronization connections are paused
 until reviewed by the user.
+
+Import reads and validates selected files locally before any imported records
+are saved. Native files can create new profiles and restore included backup
+history; bookmark JSON, browser bookmark HTML, and CSV add selected content to
+an existing destination. Imported markup is not executed or loaded as a web
+page. Dedicated local workers handle validation, preparation, and saving without
+uploading file contents. Source files, filenames, unlock passwords, and review
+selections remain transient rather than becoming resumable stored jobs.
+Cancellation or closure aborts unfinished work; a completed commit remains
+saved. Remembered destinations contain only application profile/folder IDs when
+the corresponding preference is enabled.
 
 Bookmark Manager Pro does not collect or share this information for
 advertising, profiling, analytics, or sale.
@@ -107,6 +128,24 @@ the browser Search API to the configured search engine. It does not use a
 separate suggestion service.
 
 ### User-requested exports
+
+Profile exports create local files through the browser's download mechanism.
+Native `.bmpro` files can include selected profiles' bookmarks, folders,
+favorites, notes, images and screenshots, settings, activity records, and
+synchronization configuration. Optional backup history contains complete
+historical snapshots even when fewer current-data categories are selected.
+JSON, HTML, and CSV exports contain their supported bookmark data; these files
+are not anonymized. The user controls where downloaded files are stored and
+whether they are shared. Browser download behavior determines whether a save
+location prompt appears.
+
+Native exports offer optional password-based authenticated encryption, disabled
+by default. Unencrypted native files and all JSON, HTML, and CSV exports can be
+read by anyone with access to the file. Export passwords are not retained and
+cannot be recovered by the extension. Export preparation and encryption are
+local; they do not send data to a service. Downloaded files are outside the
+extension's managed storage and are not deleted when a profile or the extension
+is removed.
 
 When a user explicitly exports an activity log, the extension creates a local
 plain-text file through the browser. The user controls where that file is saved
@@ -166,6 +205,16 @@ it is excluded from startup preflight. Automatic
 snapshots are bounded by the selected per-trigger retention limit; manual and
 mandatory safety snapshots remain until deleted. Removing the extension or
 clearing its extension data also removes its locally stored snapshots.
+
+Deleting a profile preserves its recovery snapshots, which can retain that
+profile's personal content until those snapshots are separately deleted or the
+extension's stored data is removed. When upgrading from the former separate
+snapshot database, a verified migration copies snapshots to the main database
+and retains the legacy source unchanged. It is a historical recovery copy, not
+an updated mirror or automatic fallback. Deleting a current snapshot does not
+delete its retained legacy copy. Removing the extension or clearing all of its
+stored data removes both databases. Files already downloaded or shared remain
+under the user's control.
 
 ## Security
 

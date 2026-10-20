@@ -294,6 +294,37 @@ Exit criteria:
 - Chrome, Firefox, and Edge release candidates pass the acceptance matrix.
 - No known data-loss, security, schema-upgrade, or accessibility blockers remain.
 
+## Implemented Import, Export, and recovery
+
+Import validates native `.bmpro`, own bookmark JSON v1/v2, supported CSV, and
+Netscape browser bookmark HTML. Native imports create new profiles with included
+history; portable imports add selected content to an existing destination using
+its appearance defaults and duplicate policy. Final confirmation resolves totals
+and snapshot policy. Records, required snapshots, included history, preferences,
+and retention commit atomically. Imported synchronization remains paused.
+
+Export supports explicit profile selection, category-selected native durable
+data and optional complete backup history, bookmark JSON v2, Netscape HTML,
+and configurable CSV. Optional native password encryption uses authenticated
+Web Crypto encryption; portable files are unencrypted. Passwords are transient
+and cannot be recovered by the application. All processing is local, and files
+are handed to browser downloads after an explicit Export action.
+
+Dedicated dialog-owned workers process files; Import review uses bounded pages.
+Bookmark folder processing has no fixed depth cap, while size, record, field,
+and available-memory limits remain. Import/Export do not persist resumable jobs.
+Backup creates verified recovery points, supports replacement/deleted-profile
+restore with paused synchronization, and provides optional per-trigger snapshots
+before Import and synchronization. Schema 38 colocates current snapshots with
+main data, retaining the legacy source as an unchanged historical copy.
+
+Chromium webpage tests and packaged Chrome smoke checks provide implementation
+evidence. Packaged Firefox/Edge interaction, near-ceiling memory, hard process
+termination, and screen-reader verification remain outstanding. These checks
+are verification work, not disabled-feature status. Current user workflows are
+documented in [Help & FAQ](FAQ.md#import-and-export); durable contracts are in
+[Data and Storage Design](DATA_STORAGE.md#imports).
+
 ## Future implementations
 
 The following capabilities are intentionally deferred. Their current Settings
@@ -318,60 +349,12 @@ Acceptance signal: each shipped locale has complete resources, predictable
 English fallback behavior, and passing localization, layout, and accessibility
 checks in every supported browser target.
 
-### Import
-
-- Accept documented Bookmark Manager Pro export formats and selected standard
-  browser bookmark formats.
-- Validate the file version, structure, field sizes, URLs, item relationships,
-  and image data before changing stored information.
-- Let the user choose the destination profile and preview additions, conflicts,
-  replacements, and skipped records.
-- Create a recovery snapshot and apply an approved import transactionally so a
-  failed import does not leave partial changes.
-- Treat imported markup as data and never render it as unsanitized HTML.
-
-### Export
-
-- Let the user export a selected profile or other clearly selected data without
-  silently including unrelated profiles.
-- Use a documented, versioned, portable format that a future app version can
-  validate before importing.
-- Explain whether settings, images, activity records, and other optional data are
-  included before creating the file.
-- Start exports only after an explicit user action and write them to a file chosen
-  through the browser. Exporting must not send data to an online service.
-
 ### Backup and restore
 
-- Implemented: create complete, verified local recovery snapshots for one
-  selected profile; manage them in a dedicated Backup window; and restore a
-  current or deleted profile with synchronization paused.
-- Implemented: require acknowledgment and a verified safety snapshot before a
-  replacement restore, and preserve a deleted profile before removal.
-- Implemented: optional automatic snapshots before synchronization with
-  configurable per-trigger retention.
-- Add automatic triggers when import, profile reset, and destructive database
+- Add automatic triggers when profile reset and destructive database
   upgrade workflows are implemented.
-- Add portable backup export so recovery data can survive extension removal or
-  browser-data clearing.
 - Test backup and restore compatibility for every supported data-format version
   and across Chrome, Firefox, and Edge.
-
-### Planned encrypted exports
-
-- Offer password protection as an optional export choice rather than changing
-  ordinary exports without the user's knowledge.
-- Use the browser Web Crypto API with authenticated encryption and a standard,
-  versioned password-based key derivation scheme.
-- Store only the export-format version, key-derivation parameters, salt, nonce,
-  ciphertext, and authentication data in the protected container.
-- Never persist or log the password, derived key, or decrypted export contents.
-- Detect an incorrect password or modified file without importing partial data,
-  and explain the failure without exposing sensitive information.
-- Select algorithms and parameters during implementation using current browser
-  support and security guidance. Custom cryptography is not permitted.
-- Document that losing the export password makes the protected file
-  unrecoverable; the application will not have a recovery key.
 
 ### Rule-based bookmark URL updates
 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { profileSchema, type Profile } from '../../domain/profile';
 import {
   defaultFolderDisplaySettings,
+  defaultImportPreferences,
   defaultProfilePreferences,
   profileSettingsSchema,
   type ProfileSettings,
@@ -56,6 +57,7 @@ export class CreateFirstProfile {
       animationPreference: 'system',
       autoCropPopupScreenshots: false,
       ...defaultFolderDisplaySettings,
+      importPreferences: structuredClone(defaultImportPreferences),
       customAccentColor: '#88bdf2',
       confirmExternalLinks: false,
       dateTimeFormat: 'browser',

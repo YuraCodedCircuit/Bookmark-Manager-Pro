@@ -16,6 +16,7 @@ describe('ProfileMenuPanel', () => {
   it('highlights enabled commands only while the mouse is over them', () => {
     const onOpenSynchronization = vi.fn();
     const onOpenSearch = vi.fn();
+    const onOpenExport = vi.fn();
     render(
       <ProfileMenuPanel
         initializationState={{
@@ -47,6 +48,7 @@ describe('ProfileMenuPanel', () => {
         onOpenNotes={vi.fn()}
         onOpenPasswordGenerator={vi.fn()}
         onOpenSearch={onOpenSearch}
+        onOpenExport={onOpenExport}
         onOpenUndoHistory={vi.fn()}
         onOpenSynchronization={onOpenSynchronization}
         onOpenSettings={vi.fn()}
@@ -60,6 +62,8 @@ describe('ProfileMenuPanel', () => {
     expect(synchronization.previousElementSibling).toHaveTextContent('Backup');
     fireEvent.click(synchronization);
     expect(onOpenSynchronization).toHaveBeenCalledOnce();
+    fireEvent.click(within(menu).getByRole('button', { name: 'Export' }));
+    expect(onOpenExport).toHaveBeenCalledOnce();
     const enabled = within(menu).getByRole('button', { name: 'Settings' });
     expect(within(menu).getByRole('button', { name: 'Notes' })).toBeEnabled();
     const disabled = within(menu).getByRole('button', {

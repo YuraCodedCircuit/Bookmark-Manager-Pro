@@ -2,7 +2,7 @@ import Dexie, { type EntityTable } from 'dexie';
 
 import type { BackupSnapshot } from '../domain/backup';
 
-/** Separate recovery store that remains readable when the primary database fails. */
+/** Legacy recovery source retained unchanged after verified migration into schema 38. */
 export class BackupDatabase extends Dexie {
   readonly snapshots!: EntityTable<BackupSnapshot, 'id'>;
 

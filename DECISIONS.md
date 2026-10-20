@@ -109,7 +109,8 @@ verification.
 
 ### ADR-010: Isolate recovery snapshots in a separate local database
 
-Status: Accepted
+Status: Superseded on 2026-10-19 by
+[ADR-012](#adr-012-colocate-current-recovery-snapshots-for-atomic-imports).
 
 Date: 2026-09-12
 
@@ -145,9 +146,49 @@ or additional data access. Available disk space still bounds storage, and
 explicit deletion, uninstall, browser-profile loss, and disk failure remain
 possible. Portable exports and independent backups remain separate work.
 
+### ADR-012: Colocate current recovery snapshots for atomic imports
+
+Status: Accepted
+
+Date: 2026-10-19
+
+Native imports must commit new profiles and included backup history atomically;
+portable imports must commit their records and required safety snapshot in the
+same transaction. Separate databases cannot provide that transaction boundary.
+The owner approved moving current snapshots into the primary database rather
+than retaining independent recovery availability with non-atomic saving.
+
+Schema 38 adds `backupSnapshots` to `bookmark-manager-pro`. A verified,
+retry-safe migration copies legacy snapshots and writes its completion marker
+atomically, retaining the original database unchanged. Current snapshot
+deletion does not delete historical legacy copies or migrate them again.
+Current snapshots survive profile deletion but depend on the main database
+opening successfully. External native exports remain necessary for recovery
+after extension-data loss. This supersedes ADR-010's storage-isolation choice;
+its other integrity and synchronization requirements remain.
+
+### ADR-013: Version native and portable export formats
+
+Status: Accepted
+
+The approved Export implementation uses native `.bmpro` v1 for selected durable
+profile categories and optional complete backup history. Plaintext envelopes
+use SHA-256 for corruption detection, not authentication against malicious
+rewriting. Optional encryption uses Web Crypto PBKDF2-SHA256 with 600,000
+iterations, a random 16-byte salt, and AES-256-GCM with a random 12-byte nonce.
+Passwords are transient and are not recoverable by the application. Portable
+JSON v2 preserves bookmark hierarchy and metadata; the reader also accepts
+flat JSON v1. Netscape HTML and CSV retain only their documented bookmark data.
+Portable formats are unencrypted. No dependency or remote service is required.
+
+Folder hierarchy processing is iterative without a fixed bookmark-depth cap;
+file, field, and record limits still apply. Dedicated workers are transient and
+dialog-owned. Their termination does not provide restart or resume semantics.
+Format details and lifecycle contracts are maintained in
+[Data and Storage Design](DATA_STORAGE.md#imports).
+
 ## Proposed decisions
 
-- Export container format and cryptographic parameters
 - Overall storage quota, warnings, and cleanup behavior
 - Search indexing strategy for very large bookmark sets
 - Synchronization conflict policy

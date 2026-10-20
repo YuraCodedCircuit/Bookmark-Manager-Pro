@@ -53,7 +53,9 @@ application services rather than treated as a UI store.
   optional local visible-tab screenshot
 - Settings page: appearance, behavior, permissions, localization, and data tools
 - Focused window: add or edit bookmark and folder workflows when needed
-- Import/export page: validated preview, progress, cancellation, and recovery
+- Import/Export dialogs: validated preview, progress, cancellation, and recovery
+  with transient dedicated workers owned by the dialog, not resumable
+  background-worker jobs
 - Activity page: privacy-safe operational history
 - Background entry point: event routing and resumable jobs
 - Profile-independent Password Generator dialog: transient Web Crypto output,
@@ -160,14 +162,19 @@ remain UI-surface responsibilities because extension workers have no DOM or
 ## State ownership
 
 - IndexedDB owns profiles, profile-scoped activity logs and logging settings,
-  bookmark trees, customization, recovery snapshots, and jobs.
+  bookmark trees, customization, recovery snapshots, and resumable
+  synchronization state in metadata.
 - The schema-32 `folderWallpapers` store owns optimized profile-local folder
   background data. Folder and default-style records store opaque references;
   repositories hydrate appearance reads and remove unreferenced images.
-- Recovery snapshots reside in a separate versioned IndexedDB database behind
-  `BackupRepository`. `ManageBackups` owns capture, validation, integrity
-  verification, retention, and restore orchestration; React receives that
-  service through explicit composition and does not access either database.
+- Current recovery snapshots reside in the primary database's schema-38
+  `backupSnapshots` store behind `BackupRepository`. A verified migration
+  preserves the old database as an unchanged historical copy. Current recovery
+  depends on primary-database availability. `ManageBackups` owns ordinary backup
+  orchestration; the Import writer commits data, included history, required
+  safety snapshots, remembered destinations, and retention in one transaction.
+  React receives services through composition and does not access databases.
+  See [ADR-012](DECISIONS.md#adr-012-colocate-current-recovery-snapshots-for-atomic-imports).
 - The schema-23 `undoHistory` IndexedDB table owns bounded undo/redo patches.
   Browser session storage owns only an opaque session ID, shared across packaged
   extension surfaces and tab-scoped in the webpage preview. Closing the last
@@ -198,6 +205,12 @@ remain UI-surface responsibilities because extension workers have no DOM or
   ready, only the opaque active profile ID. Profile content remains in
   IndexedDB. If session storage is unavailable, preflight safely reruns.
 - React state owns control values and short-lived view state.
+- Import parsing and Export capture, estimates, serialization, and encryption
+  run in local dedicated workers. Import preparation and atomic IndexedDB saves
+  use a separate dialog-owned worker and share the synchronization Web Lock at
+  commit. Worker messages are versioned and runtime validated. Output reaches
+  the browser download adapter as a Blob. No file, password, or Import/Export
+  job payload is durably stored for resume; interruption requires a new attempt.
 - React state exclusively owns Password Generator values and options and image
   crop originals, geometry, zoom, and pending results until the owning dialog
   closes or saves.

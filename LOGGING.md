@@ -59,6 +59,26 @@ disable current-session history. Notification-layer fallback and failed actions
 use content-free diagnostics; routine admission, pointer activity, and timers
 are not logged.
 
+## Import and profile Export boundaries
+
+Import records content-free `INFO` transitions for validation and unlock
+completion, save start/preparation, and successful commit. Cancellation records
+`WARN`; invalid files, failed unlocks, unavailable workers, destination-read
+errors, and save failures record `ERROR`. Stale destinations, excluded records,
+paused imported synchronization, and post-commit refresh failures use `WARN`.
+Success is defined by commit completion, even when later refresh or feedback
+fails. Failed requests use the existing Error notifier; successful saves use
+Success, and actionable degradation uses Warning, subject to profile settings.
+
+Profile Export records `INFO` for start, browser handoff, and cancellation, and
+`ERROR` for load or generation failure. Browser handoff produces Success;
+failures produce Error. Successful handoff does not establish disk completion.
+Password-free estimates, routine progress, filtering, selection, paging, focus,
+and file-card guidance create no operation records or notifications. All
+feedback is failure-isolated and honors existing recording/notification
+settings. Source content, filenames, paths, passwords, encryption material,
+and raw exceptions are excluded.
+
 ## Retention
 
 When automatic removal is enabled, the service applies both the configured

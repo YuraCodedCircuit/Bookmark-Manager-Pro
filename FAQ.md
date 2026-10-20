@@ -12,8 +12,8 @@ bookmarks and folders in a visual, file-manager-style interface.
 
 ### 2. Which browsers are supported?
 
-The project targets current supported versions of Chrome, Firefox, and
-Microsoft Edge.
+Chrome 140+, Firefox 140+, and Microsoft Edge 140+ are supported. The installed
+extension provides browser features that the webpage preview cannot provide.
 
 ### 3. Do I need an online account?
 
@@ -47,8 +47,8 @@ those destinations.
 
 ### 8. Where are profiles stored?
 
-Profiles and their information are stored in the application's local browser
-storage.
+Profiles and their information are saved locally in the browser. Different
+browsers and browser profiles do not automatically share this data.
 
 ### 9. Can I create more than one profile?
 
@@ -61,13 +61,18 @@ to activate.
 
 ### 11. Can content be copied between profiles?
 
-No. Copy and Cut are restricted to one profile, and switching profiles clears
-the pending one-shot operation.
+The app's Copy, Cut, and Paste commands work within one profile. Switching
+profiles clears the pending operation. To add bookmarks to another existing
+profile, export them as JSON, HTML, or CSV and select that profile during Import.
 
 ### 12. Can I duplicate a profile?
 
-Yes. Duplication creates a separate inactive profile while copying the source
-profile's currently supported settings and profile details.
+Yes. Duplication creates a separate inactive profile. The active profile's
+Profiles settings control whether bookmarks/folders, favorites, appearance,
+images, settings, and activity logs are copied, and whether Copy is appended
+to the name. Notes, undo history, recovery snapshots, and synchronization
+connections are not copied by profile duplication. Native Export and Import
+provide a separate way to transfer supported profile data.
 
 ### 13. Why can I not delete a profile?
 
@@ -95,23 +100,28 @@ optional appearance information, and save it.
 
 ### 17. Which bookmark address types are accepted?
 
-HTTP, HTTPS, and FTP addresses are accepted after validation. Executable,
-inline-data, local-file, browser-internal, extension-internal,
-credential-bearing, malformed, and unsupported schemes are rejected.
+HTTP, HTTPS, and FTP addresses are accepted. Local files, browser settings
+pages, extension pages, and addresses that could run scripts are not accepted.
+Addresses containing a username or password are also rejected.
 
 ### 18. Can bookmarks and folders have the same title?
 
-Yes. Titles do not have to be unique. Parent-folder and site information helps
-distinguish otherwise similar undo-history entries.
+Yes. Titles do not have to be unique. Folder and website information helps
+tell similar items apart in the history window.
 
 ### 19. Can I add tags and notes?
 
 Yes. Bookmark and folder editors support comma-separated tags and a note.
-Right-click any editable text field to use Cut, Copy, Paste, Select all, or
-Clear. Custom Paste asks for the browser's optional clipboard-read permission
-when needed; native Ctrl+V continues to work without that extension permission.
-Editable single-line fields also show a Clear input button while they contain
-text.
+Right-click a supported editable text input or textarea to use Cut, Copy,
+Paste, Select all, or Clear. Masked password, number, read-only, and disabled
+fields do not use this custom menu. Custom Paste asks for the browser's optional
+clipboard-read permission when needed; native Ctrl+V continues to work without
+that extension permission.
+Single-line fields with a Clear input control show it while they contain text
+and are editable.
+The manager and Save current URL popup use the same editing menu.
+Selected text stays visibly highlighted while its editing context menu is open;
+Arrow keys navigate the menu, and Escape returns focus to the field.
 
 ### 20. How do I edit an item?
 
@@ -169,8 +179,9 @@ profile when more than one profile exists.
 
 ### 29. Are search queries saved?
 
-No. Queries, results, and search history are not stored or written to the
-activity log.
+The app does not persist queries, results, or search history or write them to
+the activity log. Web mode sends the submitted query to the browser's configured
+search engine; it is no longer confined to the app at that point.
 
 ### 30. How does Web mode work?
 
@@ -195,13 +206,14 @@ It remains available even when no profile is active.
 Choose a length from 1 through 50, lowercase letters, uppercase letters,
 numbers, and no symbols, a safer symbol subset, or all supported symbols. At
 least one letter or number group remains enabled, and ambiguous characters are
-excluded by default.
+excluded by default. The selected length must fit at least one character from
+every enabled group.
 
 ### 34. How are passwords generated and evaluated?
 
-Web Crypto makes unbiased random choices, includes at least one character from
-every enabled group, and shuffles the result. A labeled meter classifies the
-actual result as Weak, Fair, Moderate, Strong, or Very Strong.
+The app uses the browser's secure random generator and includes at least one
+character from each selected group. A meter rates the result as Weak, Fair,
+Moderate, Strong, or Very Strong.
 
 ### 35. Are generated passwords or options saved?
 
@@ -246,7 +258,8 @@ retry.
 
 ### 42. How does Ctrl+Z choose an operation?
 
-Ctrl+Z undoes the newest globally applicable operation by timestamp.
+Ctrl+Z undoes the latest change that can safely be undone in the active
+profile. It does not undo changes in another profile.
 
 ### 43. Why can more than one Undo button be available in history?
 
@@ -264,9 +277,10 @@ Card view but keep their saved values for the next time Card view is selected.
 
 ### 45. Which backgrounds can a folder or card use?
 
-An item can use no background, a solid color, a three-color directional
-gradient, or a local PNG, JPEG, or BMP image. Folder wallpaper sources are
-limited to 1 MB by default. Appearance settings can allow sources up to 10 MB;
+Bookmark and folder cards can use a solid color, a three-color directional
+gradient, or a local PNG, JPEG, or BMP image. A folder's page background also
+offers None. Folder wallpaper sources are limited to 1 MB by default.
+Appearance settings can allow sources up to 10 MB;
 they are resized and compressed locally before only the processed result is
 saved.
 
@@ -314,11 +328,15 @@ browser and editable-field behavior remains available.
 ### 51. Which shortcuts can be changed?
 
 Search, Copy, Cut, Paste, Undo, Redo, and Undo and redo history can be rebound.
+Notes commands can also be rebound, including New note, Save, Preview,
+Important, and the supported text-formatting and link commands.
 
 ### 52. Which key combinations are accepted?
 
 A binding requires a letter or number together with Ctrl, Alt, or Shift.
-Reserved browser/system combinations and duplicates are rejected.
+The app rejects duplicate bindings and certain reserved browser combinations,
+including Ctrl+L, Ctrl+N, Ctrl+R, Ctrl+T, Ctrl+W, and Ctrl+Shift+N. Other
+combinations may still be intercepted by the browser or operating system.
 
 ### 53. How do I cancel shortcut recording?
 
@@ -367,22 +385,26 @@ synchronization, or third-party tracking.
 
 ### 61. How long is bookmark data retained?
 
-Bookmark, folder, profile, and settings data remains until it is changed or
-deleted or the browser removes the extension's stored data.
+Live bookmark, folder, profile, and settings data remains until changed,
+deleted, or removed with the browser's extension data. Undo history, recovery
+snapshots, and downloaded exports can retain earlier copies after a live item
+is edited or deleted; each has its own retention or deletion behavior.
 
 ### 62. How long is undo history retained?
 
-Undo history belongs to the browser session and survives closing all extension
-tabs. After a later browser start, obsolete history is cleaned up in the
-background after an application tab loads. This cleanup does not run in startup
-preflight. The history window offers Undo and Redo for each independent item's
-latest eligible change; dependent actions remain linked. Filters opens a
-separate modal above the history window.
+Undo history lasts for the current browser session, even if all app tabs are
+closed. After the browser restarts, old history is removed when the app opens.
+
+The history window can undo or redo separate items independently when safe.
+Changes that depend on each other stay linked. Filters opens a separate window
+above the history list.
 
 ### 63. Is activity-history retention limited?
 
-Yes. Activity settings bound retention by record count and estimated storage
-size and can automatically remove the oldest records.
+Activity settings specify record-count and estimated-storage limits. When
+automatic deletion is enabled, the oldest records are removed to meet those
+limits. With automatic deletion disabled, those settings do not prune records;
+Clear log remains available.
 
 ### 64. What happens when local storage is unavailable?
 
@@ -391,9 +413,10 @@ storage cannot be used rather than pretending that data was saved.
 
 ### 65. Does uninstalling remove all application data?
 
-Yes. Removing the extension or clearing its extension data also removes its
-local recovery snapshots. Export important information outside the extension
-before removing it.
+Removing the extension or clearing all its extension data removes the local
+databases, including recovery snapshots. Files already downloaded outside the
+extension and text copied to the system clipboard are not deleted by the app.
+Export important information before removing the extension.
 
 ### 66. How do recovery snapshots work?
 
@@ -404,7 +427,7 @@ each enabled trigger.
 
 ### 67. What happens during restore?
 
-Restoring a current profile requires acknowledgment, first creates a safety
+Restoring an existing profile requires acknowledgment, first creates a safety
 snapshot, and then replaces that profile. A snapshot retained for a deleted
 profile is restored as a new profile. Synchronization settings are restored in
 a paused state and must be reviewed before resuming.
@@ -419,12 +442,11 @@ folder, choose a direction, review the preview, and then enable synchronization.
 
 ### 69. When do changes appear in another open application tab?
 
-After synchronization or a successful app mutation changes content, every
-visible tab showing an affected parent folder reloads that folder. This includes
-create, delete, edit, move, copy, duplicate, cut-and-paste, favorite,
-appearance, undo, and redo. A hidden tab waits until visible, and pending
-changes are combined before it reads. Unaffected folders are not reloaded, and
-the new-tab page itself is not refreshed.
+Open app tabs update when bookmarks or folders they are showing change.
+This includes edits, moves, deletions, favorites, appearance changes, Undo,
+Redo, and bookmark synchronization. Tabs in the background update when they
+become visible. The app updates the affected content without refreshing the
+whole page.
 
 Saving a bookmark from the toolbar popup uses the same targeted update, so an
 open tab showing the destination folder displays the new item automatically.
@@ -438,10 +460,10 @@ naming the folder.
 
 ### 71. What happens if content changes while an editor is open?
 
-Saving a bookmark or folder editor fails safely if another surface changed that
-item after the editor opened. New bookmarks and folders use the latest stored
-sibling order when they are saved, preventing duplicate positions when more
-than one creation window is open.
+If another app tab changes an item being edited, the app refuses to overwrite
+that newer version. Reopen the editor to work with the latest values. New items
+use the folder's current order when saved, even if another window also adds
+items.
 
 ## Browser differences and troubleshooting
 
@@ -505,10 +527,134 @@ information.
 
 ### 80. How are multiple notifications displayed?
 
-Every triggered notification receives its own card, including repeated types.
+When notifications are enabled, each delivered notification receives its own
+card, including repeated types.
 Settings controls the corner, newest/oldest order, visible limit, and timeouts.
 Extra cards wait until a slot and enough viewport space are available. Newest
 first places new cards nearest the selected corner; Oldest first puts them
 behind older cards. Only hovering a card pauses that card's timer, which resumes
 on pointer leave. Opening other windows does not restart or pause timers. Error
 notifications remain until manually closed.
+
+## Import and Export
+
+### 81. Where are Import and Export, and which files are supported?
+
+Open the profile menu's Data section and choose Import or Export. Import
+accepts native `.bmpro`, Bookmark Manager Pro bookmark JSON, supported
+CSV, and Netscape browser bookmark HTML (`.html` or `.htm`). Arbitrary JSON or
+HTML documents are not supported. The Choose file card lists the supported
+formats before a file is selected.
+
+### 82. Which export format preserves the most information?
+
+Native `.bmpro` preserves the selected profiles and selected categories:
+bookmarks and folders with their local images, notes, settings, activity, and
+synchronization configuration. Session undo history, browser permissions, and
+external browser bookmark trees are not included. Optional backup history
+contains full saved snapshots even if fewer current-data categories
+are selected. Export initially selects the active profile; other profiles can
+be selected explicitly.
+
+JSON preserves bookmark/folder hierarchy, titles, URLs, tags, notes, and order.
+Browser HTML preserves folders, empty folders, bookmark titles, URLs, and
+supported dates, but omits app styles, images, tags, notes, and settings. CSV
+contains bookmarks in the columns configured in Settings > Export; URL is
+required. CSV cannot preserve empty folders, and its Folder path column is
+descriptive text rather than an instruction to recreate folders on import.
+
+### 83. Are exported files encrypted?
+
+Only native `.bmpro` files offer password encryption, and it is off by default.
+Enable encryption and enter matching passwords to protect a native export.
+New export passwords require at least four characters, including a lowercase
+letter, an uppercase letter, and a number. Only ASCII letters, numbers, and
+the symbols `!@#$%^&*_=+?-` are accepted; longer passwords are allowed.
+Passwords are not saved or recoverable. A forgotten password makes a protected file
+unrecoverable through the extension.
+
+Unencrypted native files and all JSON, HTML, and CSV exports are readable by
+anyone with access to them. They can contain personal information. Files are
+created locally through browser downloads; the browser determines whether a
+save-location prompt appears. Success confirms handoff to the browser, not
+that the download reached disk. Downloaded files remain after a profile or the
+extension is deleted and must be protected or deleted separately.
+
+### 84. Does Import replace existing profiles?
+
+Native imports create separate new profiles and restore any included backup
+history. They do not replace existing profiles or switch the active
+profile. Imported synchronization stays paused until reviewed.
+
+JSON, HTML, and CSV add selected bookmarks and folders to the chosen existing
+profile and destination folder. JSON/HTML preserve supported hierarchy; CSV
+saves selected bookmarks flat. Portable items inherit the destination profile's
+saved appearance defaults rather than importing styles from those formats.
+
+### 85. How are files validated and duplicates handled?
+
+Import checks the whole file before saving, including its format, addresses,
+contents, and size limits. An invalid file is rejected rather than partly
+imported. File contents are displayed as text and cannot run scripts.
+
+Review allows items to be excluded. Selecting or excluding a folder also
+affects its contents; parent folders needed by selected items stay included.
+JSON, HTML, and CSV reviews show up to 200 rows per page and remember selections
+on other pages. Native profiles use a separate selection list.
+
+The destination's Allow, Warn, or Prevent duplicate policy applies to portable
+imports. Allow preserves duplicates, Warn asks for confirmation, and Prevent
+excludes duplicates. The final confirmation shows the actual totals and
+exclusions. If the destination changes before saving, prepare and review again.
+
+### 86. Is a snapshot created before importing?
+
+Settings > Import and Settings > Backup share the Before import preference.
+Automatic snapshots must also be enabled. Confirmation states whether a
+snapshot will be created or why it is not needed or disabled. New native
+profiles and imports with no changes need no pre-import snapshot.
+
+When required, the snapshot and imported items are saved together. If the
+snapshot cannot be created, the import is not saved. A failed or canceled save
+leaves no partial imported items or new snapshot, and keeps existing snapshots.
+A successful import may remove older automatic import snapshots according to
+the saved retention limit.
+
+### 87. Can a large Import or Export be canceled or resumed?
+
+Yes, unfinished work can be canceled, but it cannot resume from where it
+stopped. Large files may take longer or exceed the app's size limits or the
+browser's available memory.
+
+Cancel stops export preparation and asks an unfinished import to stop. If
+cancellation takes effect before changes are saved, no partial imported items
+or new recovery snapshot remain. Changes already saved stay saved; Cancel does
+not undo them.
+
+Canceling the import's save confirmation can keep the preview available for
+another attempt. Closing Import or leaving the page discards the selected file
+and password state. Select the file again to restart. For Export, start another
+export; after a download begins, use the browser's download controls to cancel it.
+
+### 88. Can exported data move between browsers?
+
+Yes. Save a native export and import it in another supported browser to move
+its selected durable data and optional backup history. Local databases are
+not automatically shared. Browser permissions do not transfer, and imported
+synchronization remains paused for review. Earlier readers may reject newer
+formats or deeply nested files. Keep a verified external file before removing
+an extension or its browser profile; local snapshots are removed with that data.
+
+### 89. What happens to old snapshots after migration or profile deletion?
+
+Deleting a profile keeps its recovery snapshots so it can be restored later.
+Current snapshots are stored alongside the app's other data and may be
+unavailable if that storage fails.
+
+When older backup data is first accessed after an upgrade, the app checks and
+copies it to the current storage location. The original copy is kept unchanged.
+Deleting a current snapshot does not remove that older copy.
+
+Removing the extension or clearing all its data removes local snapshots,
+including older copies. Downloaded exports are unaffected. The Privacy Policy
+is available under Information > Legal & privacy in the profile menu.

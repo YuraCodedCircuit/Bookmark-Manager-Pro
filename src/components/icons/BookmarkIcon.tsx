@@ -1,9 +1,13 @@
 import type { SVGProps } from 'react';
 
-export function BookmarkIcon(props: SVGProps<SVGSVGElement>) {
+export function BookmarkIcon({
+  className = '',
+  ...props
+}: SVGProps<SVGSVGElement>) {
   return (
     <svg
       aria-hidden="true"
+      className={`tree-item-icon ${className}`.trim()}
       fill="none"
       viewBox="0 0 20 20"
       xmlns="http://www.w3.org/2000/svg"

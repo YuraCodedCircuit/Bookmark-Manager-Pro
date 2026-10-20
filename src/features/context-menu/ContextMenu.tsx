@@ -41,7 +41,7 @@ const noDisabledItems = new Set<string>();
 
 const bookmarkGroups: readonly (readonly MenuItem[])[] = [
   [
-    { icon: 'open', key: 'open' },
+    { icon: 'open-bookmark', key: 'open' },
     { icon: 'open-new', key: 'openNewTab' },
     { icon: 'open-new', key: 'openNewWindow' },
   ],
@@ -107,6 +107,14 @@ export function ContextMenu({
         : bookmarkGroups;
 
   const getLabelKey = (item: MenuItem): string => {
+    if (item.key === 'open') {
+      const target =
+        request.target?.kind === 'folder' ? 'openFolder' : 'openLink';
+      return `contextMenu.items.${target}.${browserFamily}`;
+    }
+    if (item.key === 'openNewTab' && request.target?.kind === 'folder') {
+      return `contextMenu.items.openFolderNewTab.${browserFamily}`;
+    }
     if (item.key === 'openNewTab' || item.key === 'openNewWindow') {
       return `contextMenu.items.${item.key}.${browserFamily}`;
     }

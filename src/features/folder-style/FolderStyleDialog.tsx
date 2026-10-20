@@ -10,6 +10,7 @@ import type { FolderBackgroundAppearance } from '../../domain/folder';
 import { parseGradientDirection } from '../../shared/gradient-direction';
 import { GradientDirectionControl } from '../../components/GradientDirectionControl';
 import { ImageFitSelect } from '../../components/ImageFitSelect';
+import { ClearIcon } from '../../components/icons/ClearIcon';
 import type { ProfileSettings } from '../../domain/profile-settings';
 import { optimizeFolderWallpaper } from '../../shared/optimize-folder-wallpaper';
 import { useFileInputCancelRef } from '../../shared/file-input-cancel';
@@ -242,7 +243,7 @@ export function FolderStyleDialog({
             onClick={onClose}
             type="button"
           >
-            ×
+            <ClearIcon />
           </button>
         </header>
         <details

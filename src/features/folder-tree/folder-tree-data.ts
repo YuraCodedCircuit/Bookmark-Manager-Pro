@@ -50,17 +50,22 @@ export function buildFolderTree(
     childrenByParent.set(folder.parentId, children);
   }
   const visited = new Set<string>();
-  const build = (folder: FolderTreeSummary): FolderTreeNode => {
-    if (visited.has(folder.id)) return { id: folder.id, name: folder.title };
-    visited.add(folder.id);
-    const children = childrenByParent.get(folder.id) ?? [];
-    return {
-      id: folder.id,
-      name: folder.title,
-      ...(children.length ? { children: children.map(build) } : {}),
-    };
-  };
-  return build(root);
+  const result: FolderTreeNode = { id: root.id, name: root.title };
+  const stack = [{ source: root, node: result }];
+  while (stack.length) {
+    const { source, node } = stack.pop()!;
+    if (visited.has(source.id)) continue;
+    visited.add(source.id);
+    const children = childrenByParent.get(source.id) ?? [];
+    if (children.length)
+      node.children = children.map((child) => ({
+        id: child.id,
+        name: child.title,
+      }));
+    for (let index = children.length - 1; index >= 0; index--)
+      stack.push({ source: children[index]!, node: node.children![index]! });
+  }
+  return result;
 }
 
 export const folderTree: FolderTreeNode = {

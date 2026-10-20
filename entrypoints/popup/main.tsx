@@ -1,6 +1,7 @@
 import '../../src/platform/validation/configure-runtime-validation';
 
 import { StrictMode } from 'react';
+import { requestAndReadClipboardText } from '../../src/platform/clipboard/read-clipboard-text';
 import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 
@@ -43,6 +44,7 @@ const popupScrollbarVisibility = createPopupScrollbarVisibility(
 );
 popupScrollbarVisibility.setBehavior('scrolling');
 const popupDependencies = {
+  readClipboardText: requestAndReadClipboardText,
   activityLog,
   bookmarkManager,
   captureCurrentTab,

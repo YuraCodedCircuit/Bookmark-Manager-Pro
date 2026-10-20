@@ -7,6 +7,7 @@ import { ContextMenuIcon } from '../context-menu/ContextMenuIcon';
 import { writeClipboardText } from '../../platform/clipboard/write-clipboard-text';
 import { prefersReducedMotion } from '../../shared/use-prefers-reduced-motion';
 import type { EditableTextControl } from './editable-text-control';
+import { showInactiveSelection } from './show-inactive-selection';
 
 export interface EditableTextContextMenuRequest {
   selectionEnd: number;
@@ -51,6 +52,16 @@ export function EditableTextContextMenu({
   const hasSelection = request.selectionEnd > request.selectionStart;
   const hasValue = request.target.value.length > 0;
 
+  useLayoutEffect(
+    () =>
+      showInactiveSelection(
+        request.target,
+        request.selectionStart,
+        request.selectionEnd,
+      ),
+    [request],
+  );
+
   useLayoutEffect(() => {
     const menu = menuRef.current;
     if (!menu) return;
@@ -66,7 +77,8 @@ export function EditableTextContextMenu({
     );
     menu.style.left = `${Math.max(viewportGutter, left)}px`;
     menu.style.top = `${Math.max(viewportGutter, top)}px`;
-    menu.style.visibility = 'visible';
+    // Layout effects position before paint. Avoid inherited visibility:hidden:
+    // it can leave menu children unfocusable when animation is disabled.
     menu
       .querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')
       ?.focus();
@@ -85,17 +97,31 @@ export function EditableTextContextMenu({
       if (!menuRef.current?.contains(event.target as Node)) onClose();
     };
     const closeOnViewportChange = () => onClose();
+    const closeOnScroll = (event: Event) => {
+      // Chromium resets a blurred input's horizontal offset; the selection
+      // preview restores it without treating that reset as viewport movement.
+      if (
+        event.target === request.target &&
+        request.target instanceof HTMLInputElement
+      )
+        return;
+      onClose();
+    };
     document.addEventListener('pointerdown', closeOnPointerDown);
     window.addEventListener('blur', closeOnViewportChange);
     window.addEventListener('resize', closeOnViewportChange);
-    window.addEventListener('scroll', closeOnViewportChange, true);
+    window.addEventListener('scroll', closeOnScroll, true);
+    request.target.addEventListener('wheel', closeOnViewportChange, {
+      passive: true,
+    });
     return () => {
       document.removeEventListener('pointerdown', closeOnPointerDown);
       window.removeEventListener('blur', closeOnViewportChange);
       window.removeEventListener('resize', closeOnViewportChange);
-      window.removeEventListener('scroll', closeOnViewportChange, true);
+      window.removeEventListener('scroll', closeOnScroll, true);
+      request.target.removeEventListener('wheel', closeOnViewportChange);
     };
-  }, [onClose]);
+  }, [onClose, request.target]);
 
   const replaceSelection = (value: string) => {
     const availableLength =
@@ -186,7 +212,7 @@ export function EditableTextContextMenu({
       }}
       ref={menuRef}
       role="menu"
-      style={{ left: request.x, top: request.y, visibility: 'hidden' }}
+      style={{ left: request.x, top: request.y }}
     >
       <div className="context-menu__group" role="group">
         {menuItems.map((item) => (

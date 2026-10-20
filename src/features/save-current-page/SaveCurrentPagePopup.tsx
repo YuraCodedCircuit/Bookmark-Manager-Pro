@@ -7,6 +7,14 @@ import type {
   ManageBookmarks,
 } from '../../application/bookmark/manage-bookmarks';
 import type { UndoHistoryService } from '../../application/undo-history/undo-history-service';
+import { NotificationService } from '../../application/notification/notification-service';
+import { defaultNotificationPreferences } from '../../domain/profile-settings';
+import {
+  EditableTextContextMenu,
+  type EditableTextContextMenuRequest,
+} from '../editable-context-menu/EditableTextContextMenu';
+import { getEditableTextControl } from '../editable-context-menu/editable-text-control';
+import { NotificationViewport } from '../notifications/NotificationViewport';
 import {
   addHttpsToHostLikeUrl,
   normalizeBookmarkUrl,
@@ -46,6 +54,8 @@ export interface SaveCurrentPagePopupDependencies {
     'profileActivation' | 'publish' | 'subscribeProfileActivation'
   >;
   initializeUndo(): Promise<boolean>;
+  /** Reads transient text only from an explicit Paste command. */
+  readClipboardText?: () => Promise<string>;
   loadDuplicateLocations(
     profileId: string,
     url: string,
@@ -176,6 +186,15 @@ export function SaveCurrentPagePopup({
   const [folders, setFolders] = useState<readonly FolderTreeSummary[]>([
     ready.root,
   ]);
+  const [editableMenu, setEditableMenu] =
+    useState<EditableTextContextMenuRequest | null>(null);
+  const [notifications] = useState(() => new NotificationService());
+  const notificationPreferences =
+    ready.settings.notificationPreferences ?? defaultNotificationPreferences;
+  useEffect(() => {
+    notifications.configure(notificationPreferences);
+    return () => notifications.clear();
+  }, [notifications, notificationPreferences]);
   const [selectedFolderId, setSelectedFolderId] = useState(ready.root.id);
   const [treeStatus, setTreeStatus] = useState<'loading' | 'ready' | 'failed'>(
     'loading',
@@ -541,85 +560,149 @@ export function SaveCurrentPagePopup({
   }
 
   return (
-    <CreateContentDialog
-      autoCropScreenshot={ready.settings.autoCropPopupScreenshots ?? false}
-      afterNote={
-        <section
-          aria-labelledby="save-current-page-destination"
-          className="save-current-page__destination"
-        >
-          <h2 id="save-current-page-destination">
-            {t('saveCurrentPage.destination')}
-          </h2>
-          <FolderTreePicker
-            folderTree={buildFolderTree(folders)}
-            idPrefix="save-current-page"
-            initiallyExpandedFolderIds={findFolderAncestorIds(
-              folders,
-              selectedFolder.id,
-            )}
-            onSelect={(_path, folderId) => {
-              userSelectedFolderRef.current = true;
-              setSelectedFolderId(folderId);
-            }}
-            selectedFolderId={selectedFolder.id}
-            key={treeStatus}
-          />
-          {treeStatus === 'loading' ? (
-            <p role="status">{t('saveCurrentPage.folderTreeLoading')}</p>
-          ) : null}
-          {treeStatus === 'failed' ? (
-            <div className="save-current-page__tree-error">
-              <p role="alert">{t('saveCurrentPage.folderTreeFailed')}</p>
-              <button onClick={() => void loadFolderTree()} type="button">
-                {t('saveCurrentPage.retryFolders')}
-              </button>
-            </div>
-          ) : null}
-        </section>
-      }
-      defaultAppearance={ready.settings.lastBookmarkAppearance}
-      initialValue={editorValue}
-      isOpen
-      kind="bookmark"
-      onCaptureScreenshot={async () => {
-        try {
-          const image = await dependencies.captureCurrentTab(
-            ready.tab.windowId,
-          );
-          await record(
-            'CURRENT-TAB-SCREENSHOT-CAPTURE-COMPLETE',
-            'INFO',
-            'Succeeded',
-          );
-          return image;
-        } catch (error) {
-          await record(
-            'CURRENT-TAB-SCREENSHOT-CAPTURE-FAILED',
-            'ERROR',
-            'Failed',
-          );
-          throw error;
-        }
+    <div
+      onContextMenu={(event) => {
+        const target = getEditableTextControl(event.target);
+        if (!target) return;
+        event.preventDefault();
+        const bounds = target.getBoundingClientRect();
+        setEditableMenu({
+          target,
+          selectionStart: target.selectionStart ?? target.value.length,
+          selectionEnd: target.selectionEnd ?? target.value.length,
+          x: event.clientX || bounds.left,
+          y: event.clientY || bounds.bottom,
+        });
       }}
-      onClose={dependencies.close}
-      showImageAppearance={false}
-      onAutoCropResult={(outcome) =>
-        record(
-          outcome === 'succeeded'
-            ? 'CURRENT-TAB-SCREENSHOT-AUTO-CROP-COMPLETE'
-            : 'CURRENT-TAB-SCREENSHOT-AUTO-CROP-FALLBACK',
-          outcome === 'succeeded' ? 'INFO' : 'WARN',
-          outcome === 'succeeded' ? 'Succeeded' : 'Failed',
-        )
-      }
-      onCropFailure={() =>
-        record('CURRENT-TAB-IMAGE-CROP-FAILED', 'ERROR', 'Failed')
-      }
-      onCreate={save}
-      parentName={selectedFolder.title}
-      titleKey="saveCurrentPage.title"
-    />
+    >
+      <CreateContentDialog
+        autoCropScreenshot={ready.settings.autoCropPopupScreenshots ?? false}
+        afterNote={
+          <section
+            aria-labelledby="save-current-page-destination"
+            className="save-current-page__destination"
+          >
+            <h2 id="save-current-page-destination">
+              {t('saveCurrentPage.destination')}
+            </h2>
+            <FolderTreePicker
+              folderTree={buildFolderTree(folders)}
+              idPrefix="save-current-page"
+              initiallyExpandedFolderIds={findFolderAncestorIds(
+                folders,
+                selectedFolder.id,
+              )}
+              onSelect={(_path, folderId) => {
+                userSelectedFolderRef.current = true;
+                setSelectedFolderId(folderId);
+              }}
+              selectedFolderId={selectedFolder.id}
+              key={treeStatus}
+            />
+            {treeStatus === 'loading' ? (
+              <p role="status">{t('saveCurrentPage.folderTreeLoading')}</p>
+            ) : null}
+            {treeStatus === 'failed' ? (
+              <div className="save-current-page__tree-error">
+                <p role="alert">{t('saveCurrentPage.folderTreeFailed')}</p>
+                <button onClick={() => void loadFolderTree()} type="button">
+                  {t('saveCurrentPage.retryFolders')}
+                </button>
+              </div>
+            ) : null}
+          </section>
+        }
+        defaultAppearance={ready.settings.lastBookmarkAppearance}
+        initialValue={editorValue}
+        isOpen
+        kind="bookmark"
+        onCaptureScreenshot={async () => {
+          try {
+            const image = await dependencies.captureCurrentTab(
+              ready.tab.windowId,
+            );
+            await record(
+              'CURRENT-TAB-SCREENSHOT-CAPTURE-COMPLETE',
+              'INFO',
+              'Succeeded',
+            );
+            return image;
+          } catch (error) {
+            await record(
+              'CURRENT-TAB-SCREENSHOT-CAPTURE-FAILED',
+              'ERROR',
+              'Failed',
+            );
+            throw error;
+          }
+        }}
+        onClose={dependencies.close}
+        showImageAppearance={false}
+        onAutoCropResult={(outcome) =>
+          record(
+            outcome === 'succeeded'
+              ? 'CURRENT-TAB-SCREENSHOT-AUTO-CROP-COMPLETE'
+              : 'CURRENT-TAB-SCREENSHOT-AUTO-CROP-FALLBACK',
+            outcome === 'succeeded' ? 'INFO' : 'WARN',
+            outcome === 'succeeded' ? 'Succeeded' : 'Failed',
+          )
+        }
+        onCropFailure={() =>
+          record('CURRENT-TAB-IMAGE-CROP-FAILED', 'ERROR', 'Failed')
+        }
+        onCreate={save}
+        parentName={selectedFolder.title}
+        titleKey="saveCurrentPage.title"
+      />
+      {editableMenu ? (
+        <EditableTextContextMenu
+          request={editableMenu}
+          onClose={() => setEditableMenu(null)}
+          readClipboardText={
+            dependencies.readClipboardText ??
+            (async () => {
+              throw new Error('clipboard-read-unavailable');
+            })
+          }
+          onOperationFailed={() => {
+            void recordDiagnostic(
+              'POPUP-TEXT-EDIT-FAILED',
+              'ERROR',
+              'Popup text editing command failed.',
+            );
+            try {
+              notifications.show({
+                level: 'error',
+                title: t('notifications.errorTitle'),
+                message: t('editableContextMenu.operationFailed'),
+              });
+            } catch {
+              console.error('popup-text-edit-notification-failed');
+            }
+          }}
+          onPastePermissionDenied={() => {
+            void recordDiagnostic(
+              'POPUP-CLIPBOARD-READ-DENIED',
+              'WARN',
+              'Popup clipboard permission was unavailable.',
+            );
+            try {
+              notifications.show({
+                level: 'warning',
+                title: t('editableContextMenu.label'),
+                message: t('editableContextMenu.pastePermissionDenied'),
+              });
+            } catch {
+              console.error('popup-text-edit-notification-failed');
+            }
+          }}
+        />
+      ) : null}
+      <NotificationViewport
+        preferences={notificationPreferences}
+        service={notifications}
+      />
+    </div>
   );
 }
 

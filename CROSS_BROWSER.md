@@ -42,6 +42,12 @@ keys, or navigating. The webpage preview reports this capability as unavailable.
 
 ## Expected compatibility boundaries
 
+Firefox uses the platform menu font and base size through CSS `font: menu`
+on the shared application root. Relative heading and supporting-text sizes
+remain distinct in the manager and toolbar popup. Chrome and Edge retain the
+application font stack. This does not read web-page font preferences or require
+the `fontSettings` permission.
+
 Synchronization declares `bookmarks` as an optional permission in every target.
 Grant bookmark access requests permission from a user gesture before folder
 selection becomes available. Browser events and local database changes wake the
@@ -149,7 +155,17 @@ Backup snapshots use IndexedDB and Web Crypto APIs available in the Chrome 140+,
 Edge 140+, and Firefox 140+ support baseline. Each target must verify snapshot
 creation, retention, replacement restore, deleted-profile restore, paused sync
 state, and browser-data removal behavior. Snapshots are browser-profile local
-and do not transfer between browsers.
+and are not automatically shared between browsers. Native `.bmpro` exports can
+include backup history and transfer it through a validated native import, with
+new profile and record identities and synchronization paused.
+
+Import/Export use local dedicated workers, IndexedDB, Web Crypto, Web Locks,
+and Blob downloads without new permissions. Builds pass for all three targets.
+Chromium webpage checks cover portable/native saving, encryption, migration,
+large-file responsiveness, and queued cancellation; packaged Chrome additionally
+has Import validation/save and Export-worker smoke evidence. Packaged
+Firefox/Edge interaction, near-ceiling memory, and hard process-termination
+checks remain unverified. Build success does not replace those runtime checks.
 
 Chrome and Edge may share automated coverage where behavior is identical, but
 both packaged extensions must receive installation smoke tests.

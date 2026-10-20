@@ -1,5 +1,6 @@
 import {
   cleanup,
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -168,6 +169,7 @@ function setup(
       subscribeProfileActivation: vi.fn(() => () => undefined),
     },
     initializeUndo,
+    readClipboardText: vi.fn(async () => 'Replacement'),
     loadDuplicateLocations: vi.fn(async () =>
       typeof initialDuplicate !== 'boolean'
         ? initialDuplicate
@@ -209,6 +211,120 @@ function setup(
 }
 
 describe('SaveCurrentPagePopup appearance options', () => {
+  it.each(['title', 'url', 'tags', 'note'])(
+    'opens the shared menu for %s',
+    async (name) => {
+      setup('allow', false);
+      const editor = await screen.findByRole('dialog', {
+        name: 'Save current URL',
+      });
+      const input = editor.querySelector<
+        HTMLInputElement | HTMLTextAreaElement
+      >(`[name="${name}"]`)!;
+      fireEvent.contextMenu(input);
+      expect(
+        screen.getByRole('menu', { name: 'Text editing actions' }),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it('preserves the selection on permission denial even if diagnostic storage fails', async () => {
+    const dependencies = setup('allow', false);
+    const error = new Error('denied');
+    error.name = 'ClipboardReadPermissionDeniedError';
+    dependencies.readClipboardText.mockRejectedValueOnce(error);
+    dependencies.activityLog.record.mockRejectedValueOnce(
+      new Error('storage unavailable'),
+    );
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
+    const input = editor.querySelector<HTMLInputElement>(
+      'input[name="title"]',
+    )!;
+    input.focus();
+    input.select();
+    fireEvent.contextMenu(input);
+    fireEvent.click(screen.getByRole('menuitem', { name: /Paste/ }));
+    await waitFor(() =>
+      expect(dependencies.activityLog.record).toHaveBeenCalledWith(
+        profileId,
+        expect.objectContaining({
+          eventCode: 'POPUP-CLIPBOARD-READ-DENIED',
+          level: 'WARN',
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith(
+        'current-tab-popup-activity-log-write-failed',
+      ),
+    );
+    expect(input.value).toBe('Current page');
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('reuses selection, menu keyboard navigation, and explicit Paste in the popup', async () => {
+    const dependencies = setup('allow', false);
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
+    const input = editor.querySelector<HTMLInputElement>(
+      'input[name="title"]',
+    )!;
+    input.focus();
+    input.setSelectionRange(0, 7);
+    fireEvent.contextMenu(input, { clientX: 20, clientY: 30 });
+    const menu = screen.getByRole('menu', { name: 'Text editing actions' });
+    expect(within(menu).getByRole('menuitem', { name: /Cut/ })).toHaveFocus();
+    expect(
+      document.querySelector('.editable-selection-preview'),
+    ).not.toBeNull();
+    expect(dependencies.readClipboardText).not.toHaveBeenCalled();
+    fireEvent.keyDown(menu, { key: 'ArrowDown' });
+    expect(within(menu).getByRole('menuitem', { name: /Copy/ })).toHaveFocus();
+    fireEvent.keyDown(menu, { key: 'Escape' });
+    await waitFor(() => expect(input).toHaveFocus());
+    expect(dependencies.close).not.toHaveBeenCalled();
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.querySelector('.editable-selection-preview')).toBeNull();
+    fireEvent.contextMenu(input);
+    fireEvent.click(screen.getByRole('menuitem', { name: /Paste/ }));
+    await waitFor(() => expect(input.value).toBe('Replacement page'));
+    expect(dependencies.readClipboardText).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the field intact and records a safe error when clipboard reading fails', async () => {
+    const dependencies = setup('allow', false);
+    dependencies.readClipboardText.mockRejectedValueOnce(
+      new Error('unavailable'),
+    );
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
+    const input = editor.querySelector<HTMLInputElement>(
+      'input[name="title"]',
+    )!;
+    input.focus();
+    input.select();
+    fireEvent.contextMenu(input);
+    fireEvent.click(screen.getByRole('menuitem', { name: /Paste/ }));
+    await waitFor(() =>
+      expect(dependencies.activityLog.record).toHaveBeenCalledWith(
+        profileId,
+        expect.objectContaining({
+          eventCode: 'POPUP-TEXT-EDIT-FAILED',
+          level: 'ERROR',
+        }),
+      ),
+    );
+    expect(input.value).toBe('Current page');
+    expect(dependencies.close).not.toHaveBeenCalled();
+  });
+
   it('omits uploaded images while keeping screenshot capture available', async () => {
     setup('allow', false);
     const editor = await screen.findByRole('dialog', {

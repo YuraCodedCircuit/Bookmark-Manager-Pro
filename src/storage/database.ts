@@ -3,6 +3,7 @@ import Dexie, { type EntityTable, type Table } from 'dexie';
 import type { Profile } from '../domain/profile';
 import {
   defaultDetailsColumnOrder,
+  defaultImportPreferences,
   type ProfileSettings,
 } from '../domain/profile-settings';
 import type { Bookmark } from '../domain/bookmark';
@@ -15,6 +16,7 @@ import type {
 import type { UndoHistoryRecord } from './undo-history-record';
 import type { Note, NoteFolder } from '../domain/note';
 import type { FolderWallpaper } from '../domain/folder-wallpaper';
+import type { BackupSnapshot } from '../domain/backup';
 
 export interface MetadataRecord {
   key: string;
@@ -34,6 +36,7 @@ export class BookmarkManagerDatabase extends Dexie {
   readonly notes!: EntityTable<Note, 'id'>;
   readonly noteFolders!: EntityTable<NoteFolder, 'id'>;
   readonly folderWallpapers!: EntityTable<FolderWallpaper, 'id'>;
+  readonly backupSnapshots!: EntityTable<BackupSnapshot, 'id'>;
 
   constructor(name = 'bookmark-manager-pro') {
     super(name);
@@ -982,6 +985,22 @@ export class BookmarkManagerDatabase extends Dexie {
             settings.hideEmptyDetailsTableHeader ??= true;
           }),
       );
+    this.version(37)
+      .stores({})
+      .upgrade((transaction) =>
+        transaction
+          .table('profileSettings')
+          .toCollection()
+          .modify((settings) => {
+            settings.importPreferences ??= structuredClone(
+              defaultImportPreferences,
+            );
+          }),
+      );
+    this.version(38).stores({
+      backupSnapshots:
+        '&id, profileId, [profileId+createdAt], type, trigger, createdAt',
+    });
   }
 }
 

@@ -22,6 +22,8 @@ interface ProfileMenuPanelProps {
   onOpenAbout: () => void;
   onOpenBookmarkActivityLog: () => void;
   onOpenBackup?: () => void;
+  onOpenExport?: () => void;
+  onOpenImport?: () => void;
   onOpenChangelog: () => void;
   onOpenHelp: () => void;
   onOpenLegal: () => void;
@@ -71,6 +73,8 @@ export function ProfileMenuPanel({
   onOpenAbout,
   onOpenBookmarkActivityLog,
   onOpenBackup = () => undefined,
+  onOpenExport = () => undefined,
+  onOpenImport,
   onOpenChangelog,
   onOpenHelp,
   onOpenLegal,
@@ -228,6 +232,11 @@ export function ProfileMenuPanel({
                     initializationState.status === 'ready') ||
                   (item === 'undoHistory' &&
                     initializationState.status === 'ready') ||
+                  (item === 'import' &&
+                    Boolean(onOpenImport) &&
+                    initializationState.status === 'ready') ||
+                  (item === 'export' &&
+                    initializationState.status === 'ready') ||
                   (item === 'backup' &&
                     initializationState.status === 'ready') ||
                   (item === 'synchronization' &&
@@ -264,13 +273,17 @@ export function ProfileMenuPanel({
                                           ? onOpenAbout
                                           : item === 'bookmarkActivityLog'
                                             ? onOpenBookmarkActivityLog
-                                            : item === 'backup'
-                                              ? onOpenBackup
-                                              : item === 'undoHistory'
-                                                ? onOpenUndoHistory
-                                                : item === 'synchronization'
-                                                  ? onOpenSynchronization
-                                                  : undefined
+                                            : item === 'import'
+                                              ? onOpenImport
+                                              : item === 'export'
+                                                ? onOpenExport
+                                                : item === 'backup'
+                                                  ? onOpenBackup
+                                                  : item === 'undoHistory'
+                                                    ? onOpenUndoHistory
+                                                    : item === 'synchronization'
+                                                      ? onOpenSynchronization
+                                                      : undefined
                     }
                     onMouseEnter={() => {
                       if (isAvailableCommand) setHighlightedItem(item);

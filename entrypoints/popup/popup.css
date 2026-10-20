@@ -169,6 +169,10 @@ body {
   scrollbar-gutter: auto;
 }
 
+.content-editor form.content-editor__fixed-form {
+  max-height: 100%;
+}
+
 .save-current-page__destination {
   display: grid;
   gap: 7px;
@@ -191,6 +195,11 @@ body {
 
 .save-current-page__destination .folder-tree-filter {
   padding: 0;
+}
+
+.save-current-page__destination .folder-tree-scroll {
+  box-sizing: border-box;
+  padding: 4px;
 }
 
 .content-editor__capture-button {

@@ -32,6 +32,12 @@ describe('CreateFirstProfile', () => {
         username: 'Local user',
       },
       settings: {
+        importPreferences: {
+          autoOpenReview: false,
+          rememberDestination: false,
+          closeAfterSuccess: false,
+          rememberedFolders: {},
+        },
         accentColorMode: 'system',
         animationPreference: 'system',
         autoCropPopupScreenshots: false,

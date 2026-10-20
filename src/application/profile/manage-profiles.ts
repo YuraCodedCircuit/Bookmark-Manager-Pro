@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { profileSchema } from '../../domain/profile';
 import {
   defaultFolderDisplaySettings,
+  defaultImportPreferences,
   defaultProfilePreferences,
   profilePreferencesSchema,
   profileSettingsSchema,
@@ -70,6 +71,7 @@ export class ManageProfiles {
         animationPreference: 'system',
         autoCropPopupScreenshots: false,
         ...defaultFolderDisplaySettings,
+        importPreferences: structuredClone(defaultImportPreferences),
         customAccentColor: '#88bdf2',
         confirmExternalLinks: false,
         dateTimeFormat: 'browser',
@@ -139,6 +141,7 @@ export class ManageProfiles {
           ? sourceSettings
           : {
               ...defaultFolderDisplaySettings,
+              importPreferences: structuredClone(defaultImportPreferences),
               accentColorMode: 'system',
               animationPreference: 'system',
               autoCropPopupScreenshots: false,

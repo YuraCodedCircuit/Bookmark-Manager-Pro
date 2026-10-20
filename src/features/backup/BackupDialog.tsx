@@ -12,6 +12,8 @@ import type { DateTimeFormatPreference } from '../../shared/date-time-format';
 import { formatDateTime } from '../../shared/date-time-format';
 import { ClearIcon } from '../../components/icons/ClearIcon';
 import { ClearableInput } from '../../components/ClearableInput';
+import { ChevronIcon } from '../../components/icons/ChevronIcon';
+import { BackupProfilePicker } from './BackupProfilePicker';
 
 interface BackupDialogProps {
   activeProfile: Profile;
@@ -34,6 +36,7 @@ export type BackupUiEvent =
   | 'restoreFailed';
 
 type ChildView =
+  | { kind: 'profiles' }
   | { kind: 'create' }
   | { kind: 'details'; snapshot: BackupSnapshot }
   | { kind: 'delete'; snapshot: BackupSnapshot }
@@ -64,29 +67,50 @@ export function BackupDialog({
   );
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [child, setChild] = useState<ChildView>(null);
+  const profilePickerButton = useRef<HTMLButtonElement>(null);
+  const pickerWasOpen = useRef(false);
+  useEffect(() => {
+    if (pickerWasOpen.current && child?.kind !== 'profiles')
+      profilePickerButton.current?.focus();
+    pickerWasOpen.current = child?.kind === 'profiles';
+  }, [child]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [status, setStatus] = useState('');
+  const reportRef = useRef(onReport);
+  useEffect(() => {
+    reportRef.current = onReport;
+  }, [onReport]);
 
-  const load = useCallback(async () => {
-    setError(undefined);
-    try {
-      setSnapshots(await service.list());
-    } catch {
-      setError(t('backup.loadFailed'));
-      onReport?.('loadFailed');
-    }
-  }, [onReport, service, t]);
+  const load = useCallback(
+    () =>
+      Promise.resolve()
+        .then(() => service.list())
+        .then((loaded) => {
+          setError(undefined);
+          setSnapshots(loaded);
+        })
+        .catch(() => {
+          setError(t('backup.loadFailed'));
+          reportRef.current?.('loadFailed');
+        }),
+    [service, t],
+  );
 
+  // Reopening a parent native dialog would move it above its child in the top layer.
+  // Keep its lifetime independent of data loading and app callback identities.
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (!dialog.open) dialog.showModal();
     closeRef.current?.focus();
-    void load();
     return () => {
       if (dialog.open) dialog.close();
     };
+  }, []);
+
+  useEffect(() => {
+    void load();
   }, [load]);
 
   useEffect(() => {
@@ -117,14 +141,17 @@ export function BackupDialog({
     return [...byId.entries()];
   }, [profileIds, snapshots]);
   const selectedExists = profileIds.has(profileId);
+  const selectedProfileName =
+    currentProfiles.find(({ profile }) => profile.id === profileId)?.profile
+      .username ??
+    t('backup.deletedProfileName', {
+      name: deletedProfiles.find(([id]) => id === profileId)?.[1].name ?? '',
+    });
   const visible = useMemo(() => {
     const result = snapshots.filter(
       (snapshot) =>
         snapshot.profileId === profileId &&
-        (filter === 'all' ||
-          (filter === 'manual'
-            ? snapshot.type === 'manual'
-            : snapshot.type !== 'manual')),
+        (filter === 'all' || snapshot.type === filter),
     );
     result.sort((left, right) =>
       sort === 'oldest'
@@ -173,41 +200,22 @@ export function BackupDialog({
           </button>
         </header>
         <div className="backup-dialog__toolbar">
-          <label>
-            <span>{t('backup.profile')}</span>
-            <select
-              onChange={(event) => {
-                setProfileId(event.currentTarget.value);
-                setLimit(PAGE_SIZE);
-              }}
-              value={profileId}
+          <div className="backup-dialog__profile-control">
+            <span id="backup-profile-label">{t('backup.profile')}</span>
+            <button
+              ref={profilePickerButton}
+              type="button"
+              className="backup-dialog__profile-button"
+              aria-labelledby="backup-profile-label"
+              aria-describedby="backup-profile-value"
+              title={selectedProfileName}
+              aria-haspopup="dialog"
+              onClick={() => setChild({ kind: 'profiles' })}
             >
-              <optgroup label={t('backup.currentProfiles')}>
-                {currentProfiles.map(({ profile }) => (
-                  <option key={profile.id} value={profile.id}>
-                    {profile.username}
-                  </option>
-                ))}
-              </optgroup>
-              {deletedProfiles.length ? (
-                <optgroup label={t('backup.deletedProfiles')}>
-                  {deletedProfiles.map(([id, item]) => (
-                    <option key={id} value={id}>
-                      {t('backup.deletedProfileOption', {
-                        name: item.name,
-                        date: formatDateTime(
-                          item.deletedAt,
-                          dateTimeFormat,
-                          undefined,
-                          false,
-                        ),
-                      })}
-                    </option>
-                  ))}
-                </optgroup>
-              ) : null}
-            </select>
-          </label>
+              <span id="backup-profile-value">{selectedProfileName}</span>
+              <ChevronIcon />
+            </button>
+          </div>
           <label>
             <span>{t('backup.type')}</span>
             <select
@@ -286,7 +294,7 @@ export function BackupDialog({
                       {t('backup.viewDetails')}
                     </button>
                     <button
-                      className="is-destructive"
+                      className="is-destructive-outline"
                       onClick={() => setChild({ kind: 'delete', snapshot })}
                       type="button"
                     >
@@ -318,15 +326,6 @@ export function BackupDialog({
                     )
                   : t('backup.deletedEmpty')}
               </p>
-              {selectedExists && filter !== 'automatic' ? (
-                <button
-                  className="is-primary"
-                  onClick={() => setChild({ kind: 'create' })}
-                  type="button"
-                >
-                  {t('backup.create')}
-                </button>
-              ) : null}
             </div>
           )}
           {visible.length > limit ? (
@@ -359,7 +358,20 @@ export function BackupDialog({
       <div aria-live="polite" className="visually-hidden">
         {status}
       </div>
-      {child ? (
+      {child?.kind === 'profiles' ? (
+        <BackupProfilePicker
+          current={currentProfiles}
+          deleted={deletedProfiles}
+          selectedId={profileId}
+          onClose={() => setChild(null)}
+          onSelect={(id) => {
+            setProfileId(id);
+            setLimit(PAGE_SIZE);
+            setChild(null);
+          }}
+        />
+      ) : null}
+      {child && child.kind !== 'profiles' ? (
         <div className="backup-dialog__child-backdrop">
           <section
             aria-labelledby="backup-child-title"

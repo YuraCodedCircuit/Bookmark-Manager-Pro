@@ -1,42 +1,44 @@
-# What's New in 0.6.2
+# What's New in 0.7.0
 
-Released October 14, 2026.
+Released October 20, 2026.
 
-This release improves independent Undo and Redo, notification behavior, local
-storage protection, and image and form controls.
+This release adds local Import and Export, with file review, optional encrypted
+exports, and improvements to dialogs, menus, and profile management.
 
 ## Highlights
 
-- **Independent Undo and Redo** - The history window can reverse the latest
-  eligible change for each independent item without undoing unrelated items.
-  Filters opens in a focused modal. History survives closing extension tabs
-  for the browser session, with obsolete history cleaned up after a later load.
-- **Predictable notifications** - Every trigger receives a separate card.
-  Cards follow the saved corner, order, and limit, and wait when the viewport
-  has no room. Only hovering a card pauses its timer; other windows do not
-  restart or pause it. Error notifications remain until manually closed.
-- **Local storage protection** - Required Unlimited Storage permission protects
-  extension databases from automatic browser eviction. It does not prevent
-  explicit deletion, uninstall, browser-profile loss, or disk failure.
-- **Folder background cropping** - Customize folder style now offers Crop image
-  below its preview. Crop changes stay pending until Save style.
+- **Import with review** - Import native profiles or selected bookmarks and
+  folders from JSON, HTML, and CSV. Review the contents before saving, choose a
+  destination, and resolve duplicate warnings. Folder trees and paged review
+  help navigate larger files.
+- **Export profiles and bookmarks** - Save selected profiles to a native file
+  with stored images, optional backup history, and optional password encryption.
+  Export bookmarks as JSON, CSV, or browser-compatible HTML. Configure CSV
+  columns and their order in Settings.
+- **Local file processing** - Import files, previews, and passwords stay local.
+  Passwords are not remembered, and closing the dialog discards transient file
+  data. Progress and cancellation are available during supported processing.
 
 ## Other Improvements
 
-- Welcome highlights opening a new tab to access bookmarks directly.
+- Profile lists and backup browsing are easier to navigate, with clearer
+  validation and searchable profile selection.
+- Bookmark and folder editors keep their actions available while scrolling.
+- Dialogs, menus, destructive controls, and bookmark/folder icons use more
+  consistent visual feedback.
+- Text fields share editing menus and visible selection highlights, including
+  the Save current URL popup.
+- Item menus distinguish opening links from folders. Firefox uses its native
+  UI font and base size throughout the app.
+- Privacy documentation explains local file processing, exported profile data,
+  and recovery snapshots.
 
-- Date modified and Type columns fit their longest text automatically.
-- Crop image has a top-right X and balanced preview spacing.
-- Buttons show subtle theme-aware hover feedback while retaining red
-  destructive colors, and input Clear buttons keep a consistent square size.
-- The Privacy Policy effective date and permission documentation are updated.
+## Compatibility Notes
 
-## Known Limitations
-
-Nested crop-dialog keyboard focus return can be intermittent in some host
-contexts. Firefox manual verification and store-update testing remain pending.
-Unlimited Storage reduces one storage-loss risk; the reported Edge data-loss
-incident's original cause has not been established.
+The storage update moves current recovery snapshots into the primary database.
+The original backup database remains available as an unchanged recovery copy.
+Export important data before downgrading: older versions do not understand all
+data and file formats introduced in this release.
 
 ## Full Changelog
 

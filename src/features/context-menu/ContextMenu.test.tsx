@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import '../../localization/i18n';
 import type { Bookmark } from '../../domain/bookmark';
+import type { Folder } from '../../domain/folder';
 import { ContextMenu } from './ContextMenu';
 
 const bookmark: Bookmark = {
@@ -48,6 +49,11 @@ describe('ContextMenu bookmark link commands', () => {
       );
 
       const menu = screen.getByRole('menu', { name: 'Bookmark actions' });
+      const open = within(menu).getByRole('menuitem', {
+        name: browserFamily === 'firefox' ? 'Open Link' : 'Open link',
+      });
+      expect(open).toHaveFocus();
+      expect(open.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
       expect(
         within(menu).getByRole('menuitem', { name: newTabLabel }),
       ).toBeVisible();
@@ -60,6 +66,49 @@ describe('ContextMenu bookmark link commands', () => {
       expect(
         within(menu).queryByRole('menuitem', { name: /private|incognito/i }),
       ).toBeNull();
+    },
+  );
+});
+
+describe('ContextMenu folder commands', () => {
+  it.each(['chrome', 'edge', 'firefox', 'unknown'] as const)(
+    'uses folder terminology for %s',
+    (browserFamily) => {
+      const folder: Folder = {
+        ...bookmark,
+        backgroundAppearance: { kind: 'none' },
+        bookmarkView: 'card',
+        detailsTableTransparency: 0,
+        includeNavigationBackground: false,
+        navigationTransparency: 45,
+        isRoot: false,
+      };
+      render(
+        <ContextMenu
+          browserFamily={browserFamily}
+          onClose={vi.fn()}
+          request={{
+            kind: 'bookmark',
+            target: { kind: 'folder', value: folder },
+            x: 20,
+            y: 20,
+          }}
+        />,
+      );
+      const open = screen.getByRole('menuitem', {
+        name: browserFamily === 'firefox' ? 'Open Folder' : 'Open folder',
+      });
+      expect(open).toHaveFocus();
+      expect(open.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+      expect(
+        screen.getByRole('menuitem', {
+          name:
+            browserFamily === 'firefox'
+              ? 'Open Folder in New Tab'
+              : 'Open folder in new tab',
+        }),
+      ).toBeVisible();
+      expect(screen.queryByRole('menuitem', { name: /open link/i })).toBeNull();
     },
   );
 });

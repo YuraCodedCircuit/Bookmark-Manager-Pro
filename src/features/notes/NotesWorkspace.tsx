@@ -1747,7 +1747,9 @@ export function NotesWorkspace({
               <button onClick={() => setDeleteFolderDialog(null)} type="button">
                 {t('notes.cancel')}
               </button>
-              <button type="submit">{t('notes.deleteFolder')}</button>
+              <button className="is-destructive" type="submit">
+                {t('notes.deleteFolder')}
+              </button>
             </div>
           </form>
         </div>

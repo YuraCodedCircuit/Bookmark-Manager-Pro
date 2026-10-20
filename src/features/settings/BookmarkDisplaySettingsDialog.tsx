@@ -8,6 +8,7 @@ import type {
 import type { ActivityLogSettings } from '../../domain/activity-log';
 import {
   defaultBackupPreferences,
+  defaultImportPreferences,
   defaultFolderDisplaySettings,
   defaultFolderAppearanceSettings,
   defaultNotificationPreferences,
@@ -43,6 +44,8 @@ import { ClearableInput } from '../../components/ClearableInput';
 import { optimizeFolderWallpaper } from '../../shared/optimize-folder-wallpaper';
 import { parseGradientDirection } from '../../shared/gradient-direction';
 import { useFileInputCancelRef } from '../../shared/file-input-cancel';
+import { defaultExportPreferences } from '../../domain/csv-export';
+import { CsvExportSettings } from './CsvExportSettings';
 
 const FEATURE_REQUEST_URL =
   'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues/new';
@@ -54,6 +57,7 @@ const createRandomColor = (): string =>
 
 interface BookmarkDisplaySettingsDialogProps {
   isOpen: boolean;
+  initialCategory?: SettingsCategory;
   onClose: () => void;
   onSave: (value: ProfileSettings) => Promise<void>;
   onSaveActivitySettings: (value: ActivityLogSettings) => Promise<void>;
@@ -76,6 +80,7 @@ interface BookmarkDisplaySettingsDialogProps {
  */
 export function BookmarkDisplaySettingsDialog({
   isOpen,
+  initialCategory = 'general',
   activityLogSettings,
   onClose,
   onSave,
@@ -95,6 +100,9 @@ export function BookmarkDisplaySettingsDialog({
   const searchRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLElement>(null);
   const [search, setSearch] = useState('');
+  const [exportPreferences, setExportPreferences] = useState(
+    settings.exportPreferences ?? defaultExportPreferences,
+  );
   const [selectedCategory, setSelectedCategory] =
     useState<SettingsCategory>('general');
   const [saving, setSaving] = useState(false);
@@ -237,6 +245,8 @@ export function BookmarkDisplaySettingsDialog({
   const showBookmarks =
     selectedCategory === 'bookmarks' && selectedCategoryMatches;
   const showSearch = selectedCategory === 'search' && selectedCategoryMatches;
+  const showImport = selectedCategory === 'import' && selectedCategoryMatches;
+  const showExport = selectedCategory === 'export' && selectedCategoryMatches;
   const showBackup = selectedCategory === 'backup' && selectedCategoryMatches;
   const showShortcuts =
     selectedCategory === 'shortcuts' && selectedCategoryMatches;
@@ -246,7 +256,10 @@ export function BookmarkDisplaySettingsDialog({
     if (!dialog) return;
     if (isOpen && !dialog.open) {
       setSearch('');
-      setSelectedCategory('general');
+      setExportPreferences(
+        settings.exportPreferences ?? defaultExportPreferences,
+      );
+      setSelectedCategory(initialCategory);
       setError(null);
       setRequestingToolbarPermission(false);
       setToolbarSavedStatusPermissionAvailable(
@@ -325,8 +338,10 @@ export function BookmarkDisplaySettingsDialog({
       else dialog.removeAttribute('open');
     }
   }, [
+    initialCategory,
     isOpen,
     settings.accentColorMode,
+    settings.exportPreferences,
     settings.bookmarkSortBy,
     settings.searchPreferences,
     settings.shortcutPreferences,
@@ -565,124 +580,158 @@ export function BookmarkDisplaySettingsDialog({
                                   : 3,
                           },
                         }
-                      : showBackup
-                        ? {
-                            ...settings,
-                            backupPreferences: {
-                              automaticEnabled: data.has(
-                                'backupAutomaticEnabled',
-                              ),
-                              beforeDatabaseUpgrade: data.has(
-                                'backupBeforeDatabaseUpgrade',
-                              ),
-                              beforeImport: data.has('backupBeforeImport'),
-                              beforeProfileReset: data.has(
-                                'backupBeforeProfileReset',
-                              ),
-                              beforeSynchronization: data.has(
-                                'backupBeforeSynchronization',
-                              ),
-                              retentionPerTrigger: [3, 10, 20].includes(
-                                Number(data.get('backupRetention')),
-                              )
-                                ? (Number(data.get('backupRetention')) as
-                                    3 | 10 | 20)
-                                : 5,
-                            },
-                          }
-                        : showSecurity
+                      : showExport
+                        ? { ...settings, exportPreferences }
+                        : showImport
                           ? {
                               ...settings,
-                              confirmExternalLinks: data.has(
-                                'confirmExternalLinks',
-                              ),
+                              backupPreferences: {
+                                ...(settings.backupPreferences ??
+                                  defaultBackupPreferences),
+                                beforeImport: data.has('backupBeforeImport'),
+                              },
+                              importPreferences: {
+                                autoOpenReview: data.has(
+                                  'importAutoOpenReview',
+                                ),
+                                rememberDestination: data.has(
+                                  'importRememberDestination',
+                                ),
+                                closeAfterSuccess: data.has(
+                                  'importCloseAfterSuccess',
+                                ),
+                                rememberedFolders: data.has(
+                                  'importRememberDestination',
+                                )
+                                  ? (settings.importPreferences
+                                      ?.rememberedFolders ?? {})
+                                  : {},
+                              },
                             }
-                          : showAccessibility
+                          : showBackup
                             ? {
                                 ...settings,
-                                animationPreference:
-                                  data.get('animationPreference') === 'reduced'
-                                    ? 'reduced'
-                                    : data.get('animationPreference') === 'none'
-                                      ? 'none'
-                                      : 'system',
-                                highContrast: data.has('highContrast'),
-                                showDetailsColumnReorderControls: data.has(
-                                  'showDetailsColumnReorderControls',
-                                ),
+                                backupPreferences: {
+                                  ...(settings.backupPreferences ??
+                                    defaultBackupPreferences),
+                                  automaticEnabled: data.has(
+                                    'backupAutomaticEnabled',
+                                  ),
+                                  beforeImport: data.has('backupBeforeImport'),
+                                  beforeSynchronization: data.has(
+                                    'backupBeforeSynchronization',
+                                  ),
+                                  retentionPerTrigger: [3, 10, 20].includes(
+                                    Number(data.get('backupRetention')),
+                                  )
+                                    ? (Number(data.get('backupRetention')) as
+                                        3 | 10 | 20)
+                                    : 5,
+                                },
                               }
-                            : showShortcuts
-                              ? { ...settings, shortcutPreferences }
-                              : {
+                            : showSecurity
+                              ? {
                                   ...settings,
-                                  accentColorMode,
-                                  allowLargeWallpaperImports,
-                                  hideEmptyDetailsTableHeader: data.has(
-                                    'hideEmptyDetailsTableHeader',
+                                  confirmExternalLinks: data.has(
+                                    'confirmExternalLinks',
                                   ),
-                                  defaultFolderBackgroundAppearance,
-                                  defaultFolderDetailsTableTransparency: Number(
-                                    data.get(
-                                      'defaultFolderDetailsTableTransparency',
-                                    ) ?? 0,
-                                  ),
-                                  defaultFolderIncludeNavigationBackground:
-                                    folderBackgroundKind !== 'none' &&
-                                    data.has(
-                                      'defaultFolderIncludeNavigationBackground',
+                                }
+                              : showAccessibility
+                                ? {
+                                    ...settings,
+                                    animationPreference:
+                                      data.get('animationPreference') ===
+                                      'reduced'
+                                        ? 'reduced'
+                                        : data.get('animationPreference') ===
+                                            'none'
+                                          ? 'none'
+                                          : 'system',
+                                    highContrast: data.has('highContrast'),
+                                    showDetailsColumnReorderControls: data.has(
+                                      'showDetailsColumnReorderControls',
                                     ),
-                                  defaultFolderNavigationTransparency: Number(
-                                    data.get(
-                                      'defaultFolderNavigationTransparency',
-                                    ) ?? 70,
-                                  ),
-                                  bookmarkView: bookmarkView,
-                                  cardSize,
-                                  cardSpacing,
-                                  bookmarkSortBy:
-                                    data.get('bookmarkSortBy') === 'title'
-                                      ? 'title'
-                                      : data.get('bookmarkSortBy') ===
-                                          'createdAt'
-                                        ? 'createdAt'
-                                        : data.get('bookmarkSortBy') ===
-                                            'updatedAt'
-                                          ? 'updatedAt'
+                                  }
+                                : showShortcuts
+                                  ? { ...settings, shortcutPreferences }
+                                  : {
+                                      ...settings,
+                                      accentColorMode,
+                                      allowLargeWallpaperImports,
+                                      hideEmptyDetailsTableHeader: data.has(
+                                        'hideEmptyDetailsTableHeader',
+                                      ),
+                                      defaultFolderBackgroundAppearance,
+                                      defaultFolderDetailsTableTransparency:
+                                        Number(
+                                          data.get(
+                                            'defaultFolderDetailsTableTransparency',
+                                          ) ?? 0,
+                                        ),
+                                      defaultFolderIncludeNavigationBackground:
+                                        folderBackgroundKind !== 'none' &&
+                                        data.has(
+                                          'defaultFolderIncludeNavigationBackground',
+                                        ),
+                                      defaultFolderNavigationTransparency:
+                                        Number(
+                                          data.get(
+                                            'defaultFolderNavigationTransparency',
+                                          ) ?? 70,
+                                        ),
+                                      bookmarkView: bookmarkView,
+                                      cardSize,
+                                      cardSpacing,
+                                      bookmarkSortBy:
+                                        data.get('bookmarkSortBy') === 'title'
+                                          ? 'title'
                                           : data.get('bookmarkSortBy') ===
+                                              'createdAt'
+                                            ? 'createdAt'
+                                            : data.get('bookmarkSortBy') ===
+                                                'updatedAt'
+                                              ? 'updatedAt'
+                                              : data.get('bookmarkSortBy') ===
+                                                  'domain'
+                                                ? 'domain'
+                                                : 'manual',
+                                      bookmarkSortDirection:
+                                        data.get('bookmarkSortDirection') ===
+                                        'descending'
+                                          ? 'descending'
+                                          : 'ascending',
+                                      bookmarkGroupBy:
+                                        data.get('bookmarkGroupBy') === 'type'
+                                          ? 'type'
+                                          : data.get('bookmarkGroupBy') ===
                                               'domain'
                                             ? 'domain'
-                                            : 'manual',
-                                  bookmarkSortDirection:
-                                    data.get('bookmarkSortDirection') ===
-                                    'descending'
-                                      ? 'descending'
-                                      : 'ascending',
-                                  bookmarkGroupBy:
-                                    data.get('bookmarkGroupBy') === 'type'
-                                      ? 'type'
-                                      : data.get('bookmarkGroupBy') === 'domain'
-                                        ? 'domain'
-                                        : 'none',
-                                  detailsColumnOrder: [...detailsColumnOrder],
-                                  customAccentColor:
-                                    data.get('customAccentColor')?.toString() ||
-                                    settings.customAccentColor ||
-                                    '#88bdf2',
-                                  profilePreferences: currentPreferences,
-                                  scrollbarBehavior:
-                                    data.get('scrollbarBehavior') === 'always'
-                                      ? 'always'
-                                      : data.get('scrollbarBehavior') ===
-                                          'scrolling'
-                                        ? 'scrolling'
-                                        : 'system',
-                                  theme:
-                                    data.get('theme') === 'light'
-                                      ? 'light'
-                                      : data.get('theme') === 'dark'
-                                        ? 'dark'
-                                        : 'system',
-                                },
+                                            : 'none',
+                                      detailsColumnOrder: [
+                                        ...detailsColumnOrder,
+                                      ],
+                                      customAccentColor:
+                                        data
+                                          .get('customAccentColor')
+                                          ?.toString() ||
+                                        settings.customAccentColor ||
+                                        '#88bdf2',
+                                      profilePreferences: currentPreferences,
+                                      scrollbarBehavior:
+                                        data.get('scrollbarBehavior') ===
+                                        'always'
+                                          ? 'always'
+                                          : data.get('scrollbarBehavior') ===
+                                              'scrolling'
+                                            ? 'scrolling'
+                                            : 'system',
+                                      theme:
+                                        data.get('theme') === 'light'
+                                          ? 'light'
+                                          : data.get('theme') === 'dark'
+                                            ? 'dark'
+                                            : 'system',
+                                    },
         );
       if (showGeneral)
         await onSaveUpdateAnnouncements(data.has('showWhatsNewAfterUpdate'));
@@ -1916,6 +1965,88 @@ export function BookmarkDisplaySettingsDialog({
                   </p>
                 </fieldset>
               </section>
+            ) : showExport ? (
+              <CsvExportSettings
+                value={exportPreferences}
+                onChange={setExportPreferences}
+              />
+            ) : showImport ? (
+              <section aria-labelledby="settings-import-title" key="import">
+                <div className="settings-dialog__section-heading">
+                  <h2 id="settings-import-title">
+                    {t('displaySettings.category.import')}
+                  </h2>
+                  <p>{t('displaySettings.importSettings.description')}</p>
+                </div>
+                <fieldset>
+                  <legend>{t('displaySettings.importSettings.options')}</legend>
+                  <label className="settings-checkbox-row">
+                    <input
+                      type="checkbox"
+                      name="backupBeforeImport"
+                      defaultChecked={
+                        (settings.backupPreferences ?? defaultBackupPreferences)
+                          .beforeImport
+                      }
+                    />
+                    <span>
+                      {t('displaySettings.importSettings.beforeImport')}
+                    </span>
+                  </label>
+                  <p className="settings-dialog__help">
+                    {t('displaySettings.importSettings.snapshotHelp')}
+                  </p>
+                  {(
+                    [
+                      'autoOpenReview',
+                      'rememberDestination',
+                      'closeAfterSuccess',
+                    ] as const
+                  ).map((option) => (
+                    <label className="settings-checkbox-row" key={option}>
+                      <input
+                        type="checkbox"
+                        name={
+                          {
+                            autoOpenReview: 'importAutoOpenReview',
+                            rememberDestination: 'importRememberDestination',
+                            closeAfterSuccess: 'importCloseAfterSuccess',
+                          }[option]
+                        }
+                        defaultChecked={
+                          (settings.importPreferences ??
+                            defaultImportPreferences)[option]
+                        }
+                      />
+                      <span>
+                        {t('displaySettings.importSettings.' + option)}
+                      </span>
+                    </label>
+                  ))}
+                  <p className="settings-dialog__help">
+                    {t('displaySettings.importSettings.privacy')}
+                  </p>
+                  <p className="settings-dialog__help">
+                    {t('displaySettings.importSettings.previewLimit')}
+                  </p>
+                </fieldset>
+                <fieldset>
+                  <legend>{t('displaySettings.importSettings.related')}</legend>
+                  <div className="settings-dialog__related-actions">
+                    {(['bookmarks', 'backup', 'appearance'] as const).map(
+                      (category) => (
+                        <button
+                          type="button"
+                          key={category}
+                          onClick={() => setSelectedCategory(category)}
+                        >
+                          {t('displaySettings.category.' + category)}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </fieldset>
+              </section>
             ) : showBackup ? (
               <section aria-labelledby="settings-backup-title" key="backup">
                 <div className="settings-dialog__section-heading">
@@ -1945,7 +2076,7 @@ export function BookmarkDisplaySettingsDialog({
                 </fieldset>
                 <fieldset>
                   <legend>{t('displaySettings.backupSettings.before')}</legend>
-                  {(['Synchronization'] as const).map((trigger) => (
+                  {(['Import', 'Synchronization'] as const).map((trigger) => (
                     <label className="settings-checkbox-row" key={trigger}>
                       <input
                         defaultChecked={
@@ -2130,6 +2261,8 @@ export function BookmarkDisplaySettingsDialog({
                 !showNotifications &&
                 !showBookmarks &&
                 !showSearch &&
+                !showImport &&
+                !showExport &&
                 !showBackup)
             }
             type="submit"

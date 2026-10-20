@@ -1,6 +1,6 @@
 # Accessibility Statement
 
-**Updated:** October 14, 2026
+**Updated:** October 20, 2026
 
 Bookmark Manager Pro aims to provide an interface that can be used with a
 keyboard, screen reader, text zoom, reduced motion, and higher-contrast display
@@ -31,6 +31,11 @@ Implemented accessibility behavior includes:
 - Follow-system, reduced-animation, and no-animation preferences.
 - A profile-owned high-contrast option.
 - Layouts intended to remain usable with long text and browser zoom.
+- Import and Export use labeled native controls, modal focus management,
+  localized progress and errors, keyboard-accessible profile selection, and
+  cancellation. Portable Import review renders up to 200 rows per page while
+  preserving full selection and subtree counts. Child dialogs close before
+  their parent and restore focus to the invoking control.
 
 ## Known limitations
 
@@ -38,8 +43,10 @@ Implemented accessibility behavior includes:
   audit.
 - English (United States) is currently the only complete interface language.
 - Browser and assistive-technology combinations may expose different behavior.
-- Import, Export, and Advanced settings are visible but unavailable while those
-  features are being developed. Backup is implemented.
+- Import, Export, and Backup are implemented. Advanced settings remain
+  unavailable. Import/Export have Chromium webpage checks and a packaged
+  Chrome Import smoke check; these do not establish screen-reader behavior or
+  packaged Firefox/Edge interaction. Those combinations remain unverified.
 - A nested crop-dialog check has exposed intermittent focus return to the Crop
   image trigger. Automatic focus restoration is not consistently verified in
   every host context; keyboard Tab navigation remains available.

@@ -22,6 +22,7 @@ interface Props {
   language: string;
   profiles: readonly ProfileListItem[];
   onClose(): void;
+  onValidationError(message: string): void;
   onCreate(input: ManagedProfileInput): Promise<void>;
   onDelete(profileId: string): Promise<void>;
   onDuplicate(profileId: string): Promise<void>;
@@ -36,6 +37,7 @@ export function ProfileManagerDialog({
   language,
   profiles,
   onClose,
+  onValidationError,
   onCreate,
   onDelete,
   onDuplicate,
@@ -45,6 +47,8 @@ export function ProfileManagerDialog({
   const { t, i18n } = useTranslation();
   const iconInputCancelRef = useFileInputCancelRef<HTMLInputElement>();
   const ref = useRef<HTMLDialogElement>(null);
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const [usernameInvalid, setUsernameInvalid] = useState(false);
   const [editingId, setEditingId] = useState<string>();
   const [username, setUsername] = useState('');
   const [icon, setIcon] = useState<string>();
@@ -72,6 +76,7 @@ export function ProfileManagerDialog({
   }, [isOpen]);
 
   const reset = () => {
+    setUsernameInvalid(false);
     setEditingId(undefined);
     setUsername('');
     setIcon(undefined);
@@ -79,6 +84,16 @@ export function ProfileManagerDialog({
   };
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (!username.trim() || username.trim().length > 80) {
+      setUsernameInvalid(true);
+      usernameRef.current?.focus();
+      try {
+        onValidationError(t('profiles.usernameError'));
+      } catch {
+        console.error('profile-validation-notification-failed');
+      }
+      return;
+    }
     try {
       const input = { username, icon, language };
       if (editingId) await onUpdate(editingId, input);
@@ -129,25 +144,16 @@ export function ProfileManagerDialog({
           <ClearIcon />
         </button>
       </header>
-      <form className="profile-editor" onSubmit={(event) => void submit(event)}>
-        <ProfileAvatar
-          fallback={defaultProfileIcon}
-          profile={{ username, icon }}
-        />
-        <div className="profile-editor__fields">
-          <h2>
-            {t(editingId ? 'profiles.editTitle' : 'profiles.createTitle')}
-          </h2>
-          <label>
-            {t('profiles.username')}
-            <ClearableInput
-              autoFocus
-              maxLength={80}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              value={username}
-            />
-          </label>
+      <form
+        className="profile-editor"
+        noValidate
+        onSubmit={(event) => void submit(event)}
+      >
+        <div className="profile-editor__image">
+          <ProfileAvatar
+            fallback={defaultProfileIcon}
+            profile={{ username, icon }}
+          />
           <div className="profile-editor__icon-actions">
             <label className="profile-file">
               {t('profiles.chooseIcon')}
@@ -169,19 +175,40 @@ export function ProfileManagerDialog({
             ) : null}
           </div>
           <small>{t('profiles.iconHelp')}</small>
+        </div>
+        <div className="profile-editor__fields">
+          <h2>
+            {t(editingId ? 'profiles.editTitle' : 'profiles.createTitle')}
+          </h2>
+          <label>
+            {t('profiles.username')}
+            <ClearableInput
+              autoFocus
+              ref={usernameRef}
+              aria-invalid={usernameInvalid}
+              maxLength={80}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                if (e.target.value.trim() && e.target.value.trim().length <= 80)
+                  setUsernameInvalid(false);
+              }}
+              required
+              value={username}
+            />
+          </label>
           {error ? <p role="alert">{error}</p> : null}
           <div className="profile-editor__actions">
+            {editingId ? (
+              <button className="profile-button" onClick={reset} type="button">
+                {t('profiles.cancel')}
+              </button>
+            ) : null}
             <button
               className="profile-button profile-button--primary"
               type="submit"
             >
               {t(editingId ? 'profiles.save' : 'profiles.create')}
             </button>
-            {editingId ? (
-              <button className="profile-button" onClick={reset} type="button">
-                {t('profiles.cancel')}
-              </button>
-            ) : null}
           </div>
         </div>
       </form>
@@ -195,7 +222,10 @@ export function ProfileManagerDialog({
         </div>
         <div className="profile-list">
           {profiles.map(({ bookmarkCount, folderCount, profile, isActive }) => (
-            <article className="profile-row" key={profile.id}>
+            <article
+              className={`profile-row${isActive ? ' profile-row--active' : ''}`}
+              key={profile.id}
+            >
               <ProfileAvatar fallback={defaultProfileIcon} profile={profile} />
               <div className="profile-row__details">
                 <strong>{profile.username}</strong>
@@ -236,6 +266,7 @@ export function ProfileManagerDialog({
                 className="profile-button"
                 onClick={() => {
                   setEditingId(profile.id);
+                  setUsernameInvalid(false);
                   setUsername(profile.username);
                   setIcon(profile.icon);
                 }}

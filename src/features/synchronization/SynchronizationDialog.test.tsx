@@ -391,10 +391,10 @@ describe('SynchronizationDialog', () => {
       screen.getByRole('button', { name: 'Close synchronization' }),
     ).toHaveFocus();
     expect(
-      screen.getByRole('checkbox', {
+      screen.queryByRole('checkbox', {
         name: 'Create a recovery snapshot (Unavailable)',
       }),
-    ).toBeDisabled();
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Enable synchronization' }),
     ).toBeDisabled();

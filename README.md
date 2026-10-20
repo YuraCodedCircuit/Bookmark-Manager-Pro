@@ -1,122 +1,89 @@
 # Bookmark Manager Pro
 
-Bookmark Manager Pro is a free, local-first browser extension for organizing
-bookmarks and folders in a visual, file-manager-style interface. It is being
-built for Chrome, Firefox, and Microsoft Edge from one TypeScript codebase.
+**Find what you saved. Keep it your own.**
 
-Bookmark, profile, settings, activity, and undo data stay in browser-managed
-local storage. The extension has no accounts, cloud storage, analytics,
-advertising, telemetry, or third-party tracking.
+A useful link should be easy to find again. Bookmark Manager Pro brings visual
+organization and familiar folder navigation to your browser, helping you turn
+saved pages into a collection that makes sense.
+
+Whether you save a few everyday favorites or collect references for work,
+study, and personal projects, Bookmark Manager Pro gives those links a place
+you can recognize, organize, and return to.
+
+It is free, open source, and local-first, built for Chrome, Firefox, and
+Microsoft Edge. No account or subscription is required.
 
 <img src="screenshots/Bookmark-Manager-Pro_1.png" alt="Bookmark Manager Pro home folder with visual bookmark and folder organization" width="900" />
 
-_See the [screenshot gallery](screenshots/) for more views of the extension._
+_Explore the [screenshot gallery](screenshots/) for more views._
 
 ## Features
 
-- Multiple local profiles with separate bookmarks, settings, and activity.
-- Nested folders with breadcrumbs, a searchable folder tree, favorites, and
-  recent items.
-- Card, list, and sortable details views stored per folder.
-- Bookmark and folder colors, gradients, images, layout, spacing, sorting, and
-  navigation-background controls.
-- Locally optimized folder wallpapers with profile defaults and shared storage
-  when multiple folders use the same image.
-- Local bookmark search with configurable fields, matching, location, sorting,
-  and cross-profile grouping.
-- Capability-checked Web search suggestions through the browser Search API.
-- A profile-independent password generator with Web Crypto randomness,
-  configurable character sets, strength feedback, and explicit clipboard copy.
-- Copy, duplicate, cut, and one-shot paste with profile and folder-cycle safety.
-- Timestamp-based keyboard undo plus independent per-item undo from the history
-  window.
-- Customizable application shortcuts with conflict and reserved-key checks.
-- Activity logging controls, external-link confirmation, reduced motion, no
-  animations, and high contrast.
-- Offline Help & FAQ, changelog, privacy, terms, application-license, and
-  third-party-license readers.
+- **Find your way back.** Search your collection and navigate familiar folders
+  instead of retracing the steps that led to a page.
+- **Recognize what matters.** Visual bookmarks and customizable appearances
+  make saved pages easier to distinguish at a glance.
+- **Give every project its place.** Organize related links together and use
+  separate local profiles for different parts of your day.
+- **Make the workspace yours.** Choose a presentation that suits how you
+  browse, read, and organize information.
+- **Keep a copy beyond your browser.** Import and export help move saved
+  information, while local recovery tools provide another way to recover work.
+- **Keep your collection local.** Manage bookmarks without an online account,
+  cloud storage, advertising, analytics, or third-party tracking.
 
-| Folder organization                                                     | Reorderable details columns                                                          |
+For current capabilities, supported formats, and everyday instructions, see
+[Help & FAQ](FAQ.md).
+
+| Visual organization                                                     | A detailed view when it helps                                                        |
 | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | ![Visual folders in Card view](screenshots/Bookmark-Manager-Pro_12.png) | ![Folders in the reorderable Details table](screenshots/Bookmark-Manager-Pro_14.png) |
 
 ## Current status
 
-Bookmark Manager Pro is in Alpha and is developed in small, reviewed increments.
-Core profile, folder, bookmark, search, appearance, shortcut, activity, undo,
-backup, help, and legal-document surfaces are implemented. Import, Export, and
-Advanced settings remain visible but disabled until those features are built.
-Bookmark synchronization pairs one browser folder with one extension folder per
-profile, supports either or both directions, and reconciles the active profile
-in the background after a reviewed preview. Bookmark access is optional.
-Local recovery snapshots can be created, inspected, restored, and deleted from
-the profile menu. Optional automatic snapshots can run before synchronization.
-Bookmark and folder images can be cropped locally before saving, and bookmark
-context actions can copy an address or open it in a new browser window.
+Bookmark Manager Pro is in Alpha and under active development. The interface
+and workflows continue to evolve through small, reviewed improvements.
+Feedback helps shape the project as it develops. Follow the
+[changelog](CHANGELOG.md) for updates and the [roadmap](ROADMAP.md) for direction.
 
-This is a greenfield implementation. It does not currently migrate data from
-the legacy Bookmark Manager Pro extension. See the
-[roadmap](ROADMAP.md) for planned work and the [changelog](CHANGELOG.md) for the
-current retained behavior.
+## Get started
+
+Visit the [installation guide](INSTALLATION.md) for browser-store links,
+available packages, and manual installation instructions.
+
+Already using the extension? [Help & FAQ](FAQ.md) explains the current
+workflows and answers common questions.
 
 ## Privacy and security
 
-Bookmark Manager Pro does not transmit stored bookmark or profile data to online
-services. Information can leave the extension only through an explicit action,
-such as opening an external address or asking the browser's configured search
-engine to search. See the [Privacy Policy](PRIVACY_POLICY.md) for the complete
-description.
+Local-first storage is central to Bookmark Manager Pro. Read the
+[Privacy Policy](PRIVACY_POLICY.md) for how information is handled, including
+user-requested actions that take information outside extension storage.
 
-Use the public [issue tracker](https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues)
-for non-sensitive bugs and suggestions. Report suspected vulnerabilities through
+Use the public
+[issue tracker](https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues)
+for non-sensitive questions, suggestions, and bug reports. Report suspected
+vulnerabilities through
 [GitHub private vulnerability reporting](https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/security/advisories/new).
 
-## Installation
+## Contribute
 
-Existing listings are available for
-[Firefox](https://addons.mozilla.org/en-US/firefox/addon/bookmark-manager-pro/)
-and [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/bookmark-manager-pro/kicpilbdojnnoemoeihibebccijpbidh).
-Browser stores may offer an older version while the latest release awaits
-submission or approval. Chrome development packages and
-manual installation instructions are described in [INSTALLATION.md](INSTALLATION.md).
+Help improve Bookmark Manager Pro through feedback, documentation, or code.
+Start with the [contribution guide](CONTRIBUTING.md) and
+[Code of Conduct](CODE_OF_CONDUCT.md). Setup, requirements, and build commands
+are maintained in the [development guide](DEVELOPMENT.md).
 
-## Development
-
-Requirements are declared in `package.json` and `.nvmrc`.
-
-```text
-pnpm install --frozen-lockfile
-pnpm dev
-```
-
-The local preview runs at `http://127.0.0.1:5173/`. Browser-specific production
-builds use:
-
-```text
-pnpm build:chrome
-pnpm build:firefox
-pnpm build:edge
-```
-
-The main stack is TypeScript, WXT, React, Zustand, Dexie/IndexedDB,
-`webextension-polyfill`, Zod, `dnd-kit`, i18next, Web Crypto, Vitest, React
-Testing Library, and Playwright.
-
-## Contributing and accessibility
-
-Contributions are welcome when they follow [CONTRIBUTING.md](CONTRIBUTING.md)
-and the [Code of Conduct](CODE_OF_CONDUCT.md). The project targets WCAG 2.2 Level
-AA, but the Alpha implementation has not completed a formal conformance audit.
-Current behavior and limitations are described in the
+Keyboard access and accessible presentation are part of the project's design.
+Current goals and known limitations are documented in the
 [Accessibility Statement](ACCESSIBILITY_STATEMENT.md).
 
 ## Documentation
 
-### Users and releases
+### Everyday use and updates
 
-- [Help and frequently asked questions](FAQ.md)
-- [Changelog](CHANGELOG.md)
+- [Help & FAQ](FAQ.md)
 - [Installation](INSTALLATION.md)
+- [Changelog](CHANGELOG.md)
 - [Roadmap](ROADMAP.md)
 
 ### Privacy, security, and licensing
@@ -129,7 +96,7 @@ Current behavior and limitations are described in the
 - [Application license](LICENSE.md)
 - [Third-party licenses and notices](THIRD_PARTY_LICENSES.md)
 
-### Development and product design
+### Development and design
 
 - [Development guide](DEVELOPMENT.md)
 - [Architecture](ARCHITECTURE.md)
@@ -140,9 +107,7 @@ Current behavior and limitations are described in the
 
 ## License
 
-Bookmark Manager Pro is licensed under GNU GPLv3 only. See [LICENSE.md](LICENSE.md)
-and [third-party notices](THIRD_PARTY_LICENSES.md).
+Bookmark Manager Pro is licensed under GNU GPLv3 only. See
+[LICENSE.md](LICENSE.md) and [third-party notices](THIRD_PARTY_LICENSES.md).
 
 Copyright (c) 2026 YuraCodedCircuit.
-
-Thank you for choosing Bookmark Manager Pro!

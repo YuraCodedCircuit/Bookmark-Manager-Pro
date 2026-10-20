@@ -664,12 +664,6 @@ export function SynchronizationDialog({
                 </p>
               ) : null}
             </fieldset>
-            <div className="sync-dialog__snapshot">
-              <label>
-                <input type="checkbox" disabled checked={false} />
-                {t('sync.snapshotUnavailable')}
-              </label>
-            </div>
             <section
               className="sync-dialog__preview"
               aria-labelledby="sync-preview-title"

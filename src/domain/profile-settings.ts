@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { exportPreferencesSchema } from './csv-export';
 import { itemAppearanceSchema, nonImageItemAppearanceSchema } from './bookmark';
 import { searchPreferencesSchema } from './bookmark-search';
 import { shortcutPreferencesSchema } from './keyboard-shortcuts';
@@ -211,6 +212,16 @@ export const defaultProfilePreferences = profilePreferencesSchema.parse({
   startupProfileMode: 'active',
 });
 
+/** Profile-owned import choices; remembered values contain app IDs only, never source paths. */
+export const importPreferencesSchema = z.object({
+  autoOpenReview: z.boolean().default(false),
+  rememberDestination: z.boolean().default(false),
+  closeAfterSuccess: z.boolean().default(false),
+  rememberedFolders: z.record(z.uuid(), z.uuid()).default({}),
+});
+export const defaultImportPreferences = importPreferencesSchema.parse({});
+export type ImportPreferences = z.infer<typeof importPreferencesSchema>;
+
 export const profileSettingsSchema = z.object({
   profileId: z.uuid(),
   theme: themePreferenceSchema,
@@ -279,6 +290,9 @@ export const profileSettingsSchema = z.object({
     .optional(),
   shortcutPreferences: shortcutPreferencesSchema.optional(),
   backupPreferences: backupPreferencesSchema.optional(),
+  importPreferences: importPreferencesSchema.optional(),
+  // Keep absent settings absent so older native/backup payloads retain their checksums.
+  exportPreferences: exportPreferencesSchema.optional(),
 });
 
 export type ProfileSettings = z.infer<typeof profileSettingsSchema>;

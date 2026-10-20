@@ -48,10 +48,22 @@ export const bookmarkSchema = z.object({
   id: z.uuid(),
   profileId: z.uuid(),
   parentId: z.uuid(),
-  title: z.string().trim().min(1).max(200),
+  title: z
+    .string()
+    .trim()
+    .min(1)
+    .refine(
+      (value) => value.length <= (value.startsWith("'") ? 201 : 200),
+      'bookmark-title-too-long',
+    ),
   url: safeBookmarkUrlSchema,
   tags: z.array(z.string().trim().min(1).max(80)).max(50),
-  note: z.string().max(10_000),
+  note: z
+    .string()
+    .refine(
+      (value) => value.length <= (value.startsWith("'") ? 10_001 : 10_000),
+      'bookmark-note-too-long',
+    ),
   favicon: z
     .string()
     .max(1_500_000)

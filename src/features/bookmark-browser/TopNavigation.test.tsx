@@ -60,6 +60,10 @@ describe('TopNavigation', () => {
     );
 
     const search = screen.getByRole('button', { name: 'Open search' });
+    expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
     const profile = screen.getByRole('button', { name: 'Open profile menu' });
     expect(search.nextElementSibling).toBe(profile);
     expect(search.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');

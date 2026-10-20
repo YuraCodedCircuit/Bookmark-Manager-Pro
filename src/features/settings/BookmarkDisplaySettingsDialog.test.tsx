@@ -78,7 +78,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
         .getByRole('button', { name: 'Advanced' })
         .querySelectorAll('ellipse'),
     ).toHaveLength(1);
-    for (const category of ['Import', 'Export', 'Advanced']) {
+    for (const category of ['Advanced']) {
       const button = within(categoryNavigation).getByRole('button', {
         name: category,
       });
@@ -316,7 +316,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
     ).toBeEnabled();
     expect(
       within(navigation).getByRole('button', { name: 'Import' }),
-    ).toBeDisabled();
+    ).toBeEnabled();
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
 
     expect(onClose).toHaveBeenCalledOnce();
@@ -398,7 +398,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
     ).toHaveTextContent('bookmarks');
   });
 
-  it('keeps future data categories visible but unavailable', async () => {
+  it('enables Export while keeping Advanced unavailable', async () => {
     const user = userEvent.setup();
     render(
       <BookmarkDisplaySettingsDialog
@@ -414,16 +414,20 @@ describe('BookmarkDisplaySettingsDialog', () => {
     );
     const dialog = screen.getByRole('dialog', { name: 'Settings' });
     const general = within(dialog).getByRole('button', { name: 'General' });
-    const importCategory = within(dialog).getByRole('button', {
-      name: 'Import',
+    const exportCategory = within(dialog).getByRole('button', {
+      name: 'Export',
     });
 
-    await user.click(importCategory);
+    await user.click(exportCategory);
 
-    expect(importCategory).toBeDisabled();
-    expect(general).toHaveAttribute('aria-current', 'page');
+    expect(exportCategory).toBeEnabled();
+    expect(exportCategory).toHaveAttribute('aria-current', 'page');
+    expect(general).not.toHaveAttribute('aria-current');
     expect(
-      within(dialog).getByRole('heading', { name: 'General' }),
+      within(dialog).getByRole('button', { name: 'Advanced' }),
+    ).toBeDisabled();
+    expect(
+      within(dialog).getByRole('heading', { name: 'Export' }),
     ).toBeVisible();
   });
 
@@ -894,6 +898,192 @@ describe('BookmarkDisplaySettingsDialog', () => {
           position: 'top-left',
           stackLimit: 6,
         },
+      }),
+    );
+  });
+  it('edits CSV export columns, restores defaults, and saves ordered profile preferences', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn(async () => {});
+    render(
+      <BookmarkDisplaySettingsDialog
+        activityLogSettings={activityLogSettings}
+        isOpen
+        onClose={vi.fn()}
+        onSave={onSave}
+        onSaveActivitySettings={vi.fn(async () => {})}
+        profiles={[]}
+        settings={settings}
+        storageUsage={[]}
+        initialCategory="export"
+      />,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+    expect(
+      within(dialog).getByRole('checkbox', { name: 'URL' }),
+    ).toBeDisabled();
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Note' }));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Move URL up' }),
+    );
+    expect(
+      within(dialog).getByRole('textbox', { name: 'Header preview' }),
+    ).toHaveValue('Profile ID,Profile,Folder path,URL,Title,Tags');
+    expect(onSave).not.toHaveBeenCalled();
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Restore defaults' }),
+    );
+    expect(
+      within(dialog).getByRole('checkbox', { name: 'Note' }),
+    ).toBeChecked();
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Note' }));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Move URL up' }),
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exportPreferences: {
+          csvColumnOrder: [
+            'profileId',
+            'profile',
+            'folderPath',
+            'url',
+            'title',
+            'tags',
+            'note',
+          ],
+          csvEnabledColumns: [
+            'profileId',
+            'profile',
+            'folderPath',
+            'title',
+            'url',
+            'tags',
+          ],
+        },
+      }),
+    );
+  });
+  it('enables Import and saves its three off-by-default preferences for the current profile', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn(async () => {});
+    render(
+      <BookmarkDisplaySettingsDialog
+        activityLogSettings={activityLogSettings}
+        isOpen
+        onClose={vi.fn()}
+        onSave={onSave}
+        onSaveActivitySettings={vi.fn(async () => {})}
+        profiles={[]}
+        settings={settings}
+        storageUsage={[]}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+    await user.click(within(dialog).getByRole('button', { name: 'Import' }));
+    for (const label of [
+      'Automatically open item review',
+      'Remember destination folder',
+      'Close Import after success',
+    ]) {
+      const option = within(dialog).getByRole('checkbox', {
+        name: label,
+      });
+      expect(option).not.toBeChecked();
+      await user.click(option);
+    }
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        profileId: settings.profileId,
+        importPreferences: {
+          autoOpenReview: true,
+          rememberDestination: true,
+          closeAfterSuccess: true,
+          rememberedFolders: {},
+        },
+      }),
+    );
+  });
+  it.each([true, false])(
+    'edits the shared snapshot-before-import preference from Import without changing the automatic setting (%s)',
+    async (automaticEnabled) => {
+      const user = userEvent.setup();
+      const onSave = vi.fn(async () => {});
+      render(
+        <BookmarkDisplaySettingsDialog
+          activityLogSettings={activityLogSettings}
+          isOpen
+          onClose={vi.fn()}
+          onSave={onSave}
+          onSaveActivitySettings={vi.fn(async () => {})}
+          profiles={[]}
+          settings={{
+            ...settings,
+            backupPreferences: {
+              automaticEnabled,
+              beforeImport: true,
+              beforeDatabaseUpgrade: false,
+              beforeProfileReset: true,
+              beforeSynchronization: false,
+              retentionPerTrigger: 10,
+            },
+          }}
+          storageUsage={[]}
+          initialCategory="import"
+        />,
+      );
+      const dialog = screen.getByRole('dialog', { name: 'Settings' });
+      const option = within(dialog).getByRole('checkbox', {
+        name: 'Create a snapshot before importing',
+      });
+      expect(option).toBeChecked();
+      await user.click(option);
+      await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          backupPreferences: {
+            automaticEnabled,
+            beforeImport: false,
+            beforeDatabaseUpgrade: false,
+            beforeProfileReset: true,
+            beforeSynchronization: false,
+            retentionPerTrigger: 10,
+          },
+        }),
+      );
+    },
+  );
+  it('exposes the Import backup trigger and preserves hidden backup preferences', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn(async () => {});
+    render(
+      <BookmarkDisplaySettingsDialog
+        activityLogSettings={activityLogSettings}
+        isOpen
+        onClose={vi.fn()}
+        onSave={onSave}
+        onSaveActivitySettings={vi.fn(async () => {})}
+        profiles={[]}
+        settings={settings}
+        storageUsage={[]}
+        initialCategory="backup"
+      />,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+    const option = within(dialog).getByRole('checkbox', {
+      name: 'Import',
+    });
+    expect(option).toBeChecked();
+    await user.click(option);
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        backupPreferences: expect.objectContaining({
+          beforeImport: false,
+          beforeDatabaseUpgrade: true,
+          beforeProfileReset: true,
+        }),
       }),
     );
   });
