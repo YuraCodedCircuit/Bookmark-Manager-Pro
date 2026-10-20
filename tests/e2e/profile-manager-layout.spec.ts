@@ -2,9 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
 
-test('scrolls the complete profile manager in a short viewport', async ({
-  page,
-}) => {
+test('scrolls profile rows with fixed controls', async ({ page }) => {
   const styles = await readFile('src/styles/global.css', 'utf8');
   await page.setViewportSize({ height: 520, width: 960 });
   await page.setContent(`
@@ -13,13 +11,13 @@ test('scrolls the complete profile manager in a short viewport', async ({
       <header class="profile-window__header"><h1>Manage profiles</h1></header>
       <form class="profile-editor">
         <div class="profile-avatar"></div>
-        <div class="profile-editor__fields" style="height: 280px"></div>
+        <div class="profile-editor__fields" style="height: 160px"></div>
       </form>
       <section class="profile-manager__list">
         <div class="profile-manager__list-heading"><h2>Profiles</h2></div>
         <div class="profile-list">
           ${Array.from(
-            { length: 4 },
+            { length: 8 },
             (_, index) =>
               `<article class="profile-row">Profile ${index + 1}</article>`,
           ).join('')}
@@ -32,17 +30,28 @@ test('scrolls the complete profile manager in a short viewport', async ({
   const list = page.locator('.profile-manager .profile-list');
   const rows = page.locator('.profile-manager .profile-row');
 
-  await expect(manager).toHaveCSS('overflow-y', 'auto');
-  await expect(list).toHaveCSS('overflow-y', 'visible');
-  await expect(rows).toHaveCount(4);
+  await expect(manager).toHaveCSS('overflow-y', 'hidden');
+  await expect(list).toHaveCSS('overflow-y', 'auto');
+  await expect(rows).toHaveCount(8);
   await expect(rows.first()).toHaveCSS('height', '86px');
   await expect
     .poll(() =>
-      manager.evaluate(
-        (element) => element.scrollHeight > element.clientHeight,
-      ),
+      list.evaluate((element) => element.scrollHeight > element.clientHeight),
     )
     .toBe(true);
+  const header = manager.locator('header');
+  const editor = manager.locator('form');
+  const headerBefore = await header.boundingBox();
+  const editorBefore = await editor.boundingBox();
+  await list.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  expect(await list.evaluate((element) => element.scrollTop)).toBeGreaterThan(
+    0,
+  );
+  expect(await header.boundingBox()).toEqual(headerBefore);
+  expect(await editor.boundingBox()).toEqual(editorBefore);
+  await expect(rows.last()).toBeInViewport();
 });
 
 test('uses one visual surface and backdrop across application windows', async ({
