@@ -57,6 +57,21 @@ const source: SearchProfileSource = {
 };
 
 describe('searchBookmarks', () => {
+  it('uses the supplied display separator without changing matching or folder names', () => {
+    const input = {
+      activeProfileId: profileId,
+      currentFolderId: rootId,
+      preferences: defaultSearchPreferences,
+      query: 'typescript',
+      sources: [source],
+    };
+    const unix = searchBookmarks({ ...input, pathSeparator: '/' });
+    const windows = searchBookmarks({ ...input, pathSeparator: '\\' });
+    expect(windows[0]?.parentPath).toBe('Home \\ Research');
+    expect(windows.map((result) => result.item.id)).toEqual(
+      unix.map((result) => result.item.id),
+    );
+  });
   it('searches supported fields and includes a folder path', () => {
     const results = searchBookmarks({
       activeProfileId: profileId,
@@ -70,7 +85,7 @@ describe('searchBookmarks', () => {
     expect(results[0]).toMatchObject({
       kind: 'bookmark',
       matchedField: 'tags',
-      parentPath: 'Home › Research',
+      parentPath: 'Home / Research',
       profileName: 'Personal',
     });
   });

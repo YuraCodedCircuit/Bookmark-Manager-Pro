@@ -17,6 +17,7 @@ import packageMetadata from '../package.json';
 import { i18n } from './localization/i18n';
 import { App } from './presentation/App';
 import { createContentChangeBridge } from './platform/content-change/create-content-change-bridge';
+import { watchUrlMatchChanges } from './storage/watch-url-match-changes';
 import './styles/global.css';
 import { scheduleAfterPageLoad } from './platform/lifecycle/schedule-after-page-load';
 
@@ -107,6 +108,7 @@ async function bootstrap(applicationRoot: HTMLDivElement): Promise<void> {
     <StrictMode>
       <I18nextProvider i18n={i18n}>
         <App
+          subscribeUrlMatchChanges={watchUrlMatchChanges}
           activityLog={activityLog}
           backupManager={backupManager}
           applicationVersion={packageMetadata.version}

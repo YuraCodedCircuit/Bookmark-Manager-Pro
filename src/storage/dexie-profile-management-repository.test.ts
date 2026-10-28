@@ -252,6 +252,8 @@ describe('DexieProfileManagementRepository', () => {
       defaultActivityLogSettings(secondId),
     );
     await database.activity.add({
+      sessionId: 'earlier',
+      sequence: 0,
       action: 'Update',
       applicationVersion: '0.0.2',
       browserTarget: 'Edge v.140.0.0',
@@ -330,7 +332,7 @@ describe('DexieProfileManagementRepository', () => {
     ).resolves.toBeUndefined();
     await expect(
       database.activity.where('profileId').equals(secondId).count(),
-    ).resolves.toBe(0);
+    ).resolves.toBe(1);
     await expect(
       database.activityLogSettings.get(secondId),
     ).resolves.toBeUndefined();

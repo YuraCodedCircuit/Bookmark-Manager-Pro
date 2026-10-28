@@ -273,9 +273,30 @@ export class ManageBookmarks {
     });
   }
 
-  async deleteItem(profileId: string, itemId: string): Promise<void> {
+  /** Deletes a profile-owned item; bookmark-only callers cannot delete folders. */
+  async deleteItem(
+    profileId: string,
+    itemId: string,
+    expectedKind?: 'bookmark',
+  ): Promise<void> {
     const validatedProfileId = z.uuid().parse(profileId);
     const validatedItemId = z.uuid().parse(itemId);
+    z.literal('bookmark').optional().parse(expectedKind);
+    if (expectedKind === 'bookmark') {
+      if (
+        !(await this.repository.getBookmark(
+          validatedProfileId,
+          validatedItemId,
+        ))
+      )
+        throw new Error('delete-bookmark-not-found');
+      await this.repository.deleteItem(
+        validatedProfileId,
+        validatedItemId,
+        'bookmark',
+      );
+      return;
+    }
     const folder = await this.repository.getFolder(
       validatedProfileId,
       validatedItemId,

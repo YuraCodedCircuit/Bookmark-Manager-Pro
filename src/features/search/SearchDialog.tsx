@@ -5,9 +5,17 @@ import { BookmarkIcon } from '../../components/icons/BookmarkIcon';
 import { ChevronIcon } from '../../components/icons/ChevronIcon';
 import { ClearIcon } from '../../components/icons/ClearIcon';
 import { ClearableInput } from '../../components/ClearableInput';
+import { DialogBadges } from '../../components/DialogBadges';
+import type { DialogBadgeDefinition } from '../../components/dialog-badges';
+import packageMetadata from '../../../package.json';
 import { FolderIcon } from '../../components/icons/FolderIcon';
+import { getPathSeparator } from '../../platform/navigation/path-separator';
 import { ContextMenuIcon } from '../context-menu/ContextMenuIcon';
 import { SearchOptions } from './SearchOptions';
+import { UrlMatchesPanel } from './UrlMatchesPanel';
+import type { UrlMatchDetails } from '../../application/search/url-match-actions';
+import type { UrlMatchMember } from '../../domain/url-matches';
+import type { UrlMatchScanOutcome } from '../../application/search/url-match-snapshot';
 import {
   searchBookmarks,
   type BookmarkSearchResult,
@@ -19,6 +27,16 @@ import {
   type BookmarkClickOpening,
 } from '../../shared/bookmark-click-opening';
 
+/** Manually maintained feature status; visible only in the URL matches mode. */
+const urlMatchBadges: readonly DialogBadgeDefinition[] = [
+  {
+    id: 'url-matches-experimental',
+    kind: 'experimental',
+    titleKey: 'dialogBadges.experimental',
+    descriptionKey: 'dialogBadges.urlMatchesExperimental',
+  },
+];
+
 interface Props {
   activeProfileId: string;
   bookmarkOpening: 'current-tab' | 'new-tab';
@@ -28,17 +46,38 @@ interface Props {
   isOpen: boolean;
   loadFailed: boolean;
   onClose(): void;
+  onInspectResult?(
+    result: BookmarkSearchResult,
+    trigger: HTMLButtonElement,
+  ): Promise<void>;
+  onConfirmResultProfileChange?(): Promise<boolean>;
   onOpenResult(
     result: BookmarkSearchResult,
     opening: BookmarkClickOpening,
   ): void | Promise<void>;
   onWebSearch(query: string): Promise<void>;
   onWebUnavailable(): void;
+  onLoadUrlMatches?(): Promise<readonly SearchProfileSource[]>;
+  onSubscribeUrlMatchChanges?:
+    ((listener: () => void) => () => void) | undefined;
+  onInspectUrlMatch?(member: UrlMatchMember): Promise<UrlMatchDetails>;
+  /** Opens the fresh containing folder; Bookmarks confirms a profile change first. */
+  onOpenUrlMatchFolder?(
+    member: BookmarkSearchResult,
+    source?: 'Search window' | 'URL matches',
+  ): Promise<void>;
+  onDeleteUrlMatch?(member: UrlMatchMember): Promise<boolean>;
+  onCopyUrlMatchInfo?(details: UrlMatchDetails, value: string): Promise<void>;
+  onUrlMatchScan?(
+    outcome: UrlMatchScanOutcome,
+    explicit: boolean,
+    notifyFailure: boolean,
+  ): void | Promise<void>;
   sources: readonly SearchProfileSource[];
   webSearchAvailable: boolean;
 }
 
-/** Presents local search and an API-only web-search action suggestion. */
+/** Presents local search, snapshot-based URL matches, and API-only web search. */
 export function SearchDialog({
   activeProfileId,
   bookmarkOpening,
@@ -48,22 +87,50 @@ export function SearchDialog({
   isOpen,
   loadFailed,
   onClose,
+  onInspectResult,
+  onConfirmResultProfileChange,
   onOpenResult,
   onWebSearch,
   onWebUnavailable,
+  onLoadUrlMatches,
+  onSubscribeUrlMatchChanges,
+  onInspectUrlMatch,
+  onOpenUrlMatchFolder,
+  onDeleteUrlMatch,
+  onCopyUrlMatchInfo,
+  onUrlMatchScan,
   sources,
   webSearchAvailable,
 }: Props) {
   const { t } = useTranslation();
+  const pathSeparator = getPathSeparator();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const optionsButtonRef = useRef<HTMLButtonElement>(null);
   const optionsDialogRef = useRef<HTMLDialogElement>(null);
   const firstResultRef = useRef<HTMLButtonElement>(null);
-  const [mode, setMode] = useState<'bookmarks' | 'web'>('bookmarks');
+  const [mode, setMode] = useState<'bookmarks' | 'web' | 'matches'>(
+    'bookmarks',
+  );
+  const [matchFilter, setMatchFilter] = useState('');
+  const [matchToolbarHost, setMatchToolbarHost] =
+    useState<HTMLDivElement | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [resultActionBusy, setResultActionBusy] = useState(false);
+  const [resultActionError, setResultActionError] = useState('');
   const [preferences, setPreferences] = useState(initialPreferences);
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+    if (!isOpen) {
+      setMode('bookmarks');
+      setMatchFilter('');
+      setQuery('');
+      setResultActionError('');
+      setOptionsOpen(false);
+    }
+  }
   const deferredQuery = useDeferredValue(query);
 
   useEffect(() => {
@@ -117,6 +184,7 @@ export function SearchDialog({
             preferences,
             query: deferredQuery,
             sources,
+            pathSeparator,
           })
         : [],
     [
@@ -126,22 +194,28 @@ export function SearchDialog({
       mode,
       preferences,
       sources,
+      pathSeparator,
     ],
   );
   const groupByProfile = preferences.allProfiles && sources.length > 1;
   const groups = useMemo(() => {
-    if (!groupByProfile) return [['', results] as const];
+    if (!groupByProfile) return [['', '', results] as const];
+    // Display names can repeat; ownership and the Active badge depend on IDs.
     const grouped = new Map<string, BookmarkSearchResult[]>();
     for (const result of results)
-      grouped.set(result.profileName, [
-        ...(grouped.get(result.profileName) ?? []),
+      grouped.set(result.profileId, [
+        ...(grouped.get(result.profileId) ?? []),
         result,
       ]);
-    return [...grouped.entries()];
+    return [...grouped.entries()].map(
+      ([profileId, items]) =>
+        [profileId, items[0]?.profileName ?? '', items] as const,
+    );
   }, [groupByProfile, results]);
   const normalizedQuery = query.trim();
   const resetTransientState = () => {
     setQuery('');
+    setMatchFilter('');
     setOptionsOpen(false);
     setMode('bookmarks');
   };
@@ -165,7 +239,15 @@ export function SearchDialog({
     >
       <header className="search-window__header">
         <div>
-          <h1 id="search-window-title">{t('searchWindow.title')}</h1>
+          <div className="dialog-heading-with-badges">
+            <h1 id="search-window-title">{t('searchWindow.title')}</h1>
+            {isOpen && mode === 'matches' ? (
+              <DialogBadges
+                badges={urlMatchBadges}
+                version={packageMetadata.version}
+              />
+            ) : null}
+          </div>
           <p>{t('searchWindow.summary')}</p>
         </div>
         <button
@@ -201,13 +283,24 @@ export function SearchDialog({
           >
             {t('searchWindow.modes.web')}
           </button>
+          <button
+            aria-pressed={mode === 'matches'}
+            onClick={() => setMode('matches')}
+            type="button"
+          >
+            {t('urlMatches.title')}
+          </button>
         </div>
         <div className="search-window__query-row">
           <label className="search-window__query">
             <span>{t('searchWindow.queryLabel')}</span>
             <ClearableInput
               aria-describedby="search-window-query-help"
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) =>
+                mode === 'matches'
+                  ? setMatchFilter(event.target.value)
+                  : setQuery(event.target.value)
+              }
               onKeyDown={(event) => {
                 if (event.key === 'ArrowDown' && firstResultRef.current) {
                   event.preventDefault();
@@ -215,15 +308,22 @@ export function SearchDialog({
                 }
               }}
               placeholder={t(
-                mode === 'web'
-                  ? 'searchWindow.webPlaceholder'
-                  : 'searchWindow.bookmarkPlaceholder',
+                mode === 'matches'
+                  ? 'urlMatches.filterPlaceholder'
+                  : mode === 'web'
+                    ? 'searchWindow.webPlaceholder'
+                    : 'searchWindow.bookmarkPlaceholder',
               )}
               ref={inputRef}
               type="search"
-              value={query}
+              value={mode === 'matches' ? matchFilter : query}
             />
           </label>
+          <div
+            hidden={mode !== 'matches'}
+            ref={setMatchToolbarHost}
+            className="url-matches__toolbar"
+          />
           {mode === 'bookmarks' ? (
             <button
               aria-controls="search-window-options"
@@ -241,7 +341,11 @@ export function SearchDialog({
           ) : null}
         </div>
         <p className="search-window__query-help" id="search-window-query-help">
-          {t('searchWindow.queryHelp')}
+          {t(
+            mode === 'matches'
+              ? 'urlMatches.filterHelp'
+              : 'searchWindow.queryHelp',
+          )}
         </p>
       </section>
 
@@ -280,8 +384,38 @@ export function SearchDialog({
         </footer>
       </dialog>
 
-      <section aria-live="polite" className="search-window__results">
-        {normalizedQuery.length < 2 ? (
+      <section
+        aria-live={mode === 'matches' ? undefined : 'polite'}
+        className="search-window__results"
+      >
+        {isOpen ? (
+          <UrlMatchesPanel
+            subscribeChanges={onSubscribeUrlMatchChanges}
+            toolbarHost={matchToolbarHost}
+            active={mode === 'matches'}
+            {...(onInspectUrlMatch ? { onInspect: onInspectUrlMatch } : {})}
+            {...(onOpenUrlMatchFolder
+              ? { onOpenFolder: onOpenUrlMatchFolder }
+              : {})}
+            {...(onDeleteUrlMatch ? { onDelete: onDeleteUrlMatch } : {})}
+            {...(onCopyUrlMatchInfo ? { onCopyInfo: onCopyUrlMatchInfo } : {})}
+            activeProfileId={activeProfileId}
+            bookmarkOpening={bookmarkOpening}
+            filter={matchFilter}
+            loadSnapshot={
+              onLoadUrlMatches ??
+              (() =>
+                Promise.reject(new Error('url-matches-loader-unavailable')))
+            }
+            onScan={onUrlMatchScan ?? (() => undefined)}
+            onOpenResult={(result, opening) => {
+              resetTransientState();
+              return onOpenResult(result, opening);
+            }}
+          />
+        ) : null}
+        {resultActionError ? <p role="alert">{resultActionError}</p> : null}
+        {mode === 'matches' ? null : normalizedQuery.length < 2 ? (
           <p className="search-window__empty">{t('searchWindow.typeMore')}</p>
         ) : mode === 'web' ? (
           <button
@@ -318,17 +452,30 @@ export function SearchDialog({
         ) : (
           <>
             <h2>{t('searchWindow.resultCount', { count: results.length })}</h2>
-            {groups.map(([profileName, profileResults]) => (
+            {groups.map(([profileId, profileName, profileResults]) => (
               <section
                 className="search-window__result-group"
-                key={profileName || 'results'}
+                key={profileId || 'results'}
               >
-                {profileName ? <h3>{profileName}</h3> : null}
+                {profileName ? (
+                  <h3>
+                    <span>{profileName}</span>
+                    {profileId === activeProfileId ? (
+                      <span className="profile-status">
+                        {t('profiles.active')}
+                      </span>
+                    ) : null}
+                  </h3>
+                ) : null}
                 <ul>
                   {profileResults.map((result, index) => (
-                    <li key={`${result.profileId}:${result.item.id}`}>
+                    <li
+                      className="search-window__result-row"
+                      key={`${result.profileId}:${result.item.id}`}
+                    >
                       <button
                         className="search-window__result"
+                        disabled={resultActionBusy}
                         onClick={(event) => {
                           resetTransientState();
                           void onOpenResult(
@@ -342,7 +489,7 @@ export function SearchDialog({
                           );
                         }}
                         ref={
-                          index === 0 && profileName === groups[0]?.[0]
+                          index === 0 && profileId === groups[0]?.[0]
                             ? firstResultRef
                             : undefined
                         }
@@ -359,7 +506,11 @@ export function SearchDialog({
                           )}
                         </span>
                         <span className="search-window__result-copy">
-                          <strong>{result.item.title}</strong>
+                          <strong
+                            id={`search-result-${result.profileId}-${result.item.id}`}
+                          >
+                            {result.item.title}
+                          </strong>
                           {'url' in result.item ? (
                             <span>{result.item.url}</span>
                           ) : null}
@@ -369,6 +520,75 @@ export function SearchDialog({
                           {t(`searchWindow.fields.${result.matchedField}`)}
                         </span>
                       </button>
+                      <div className="search-window__result-actions">
+                        {onInspectResult ? (
+                          <button
+                            type="button"
+                            disabled={resultActionBusy}
+                            aria-label={t('urlMatches.getInfo')}
+                            aria-describedby={`search-result-${result.profileId}-${result.item.id}`}
+                            title={t('urlMatches.getInfo')}
+                            onClick={async (event) => {
+                              setResultActionBusy(true);
+                              setResultActionError('');
+                              try {
+                                await onInspectResult(
+                                  result,
+                                  event.currentTarget,
+                                );
+                              } catch {
+                                setResultActionError(
+                                  t('searchWindow.infoFailed'),
+                                );
+                              } finally {
+                                setResultActionBusy(false);
+                              }
+                            }}
+                          >
+                            <ContextMenuIcon name="info" />
+                          </button>
+                        ) : null}
+                        {onOpenUrlMatchFolder ? (
+                          <button
+                            type="button"
+                            disabled={resultActionBusy}
+                            aria-label={t('searchWindow.openParentFolder')}
+                            aria-describedby={`search-result-${result.profileId}-${result.item.id}`}
+                            title={t('searchWindow.openParentFolder')}
+                            onClick={async (event) => {
+                              const trigger = event.currentTarget;
+                              setResultActionBusy(true);
+                              setResultActionError('');
+                              try {
+                                if (
+                                  result.profileId !== activeProfileId &&
+                                  !(await onConfirmResultProfileChange?.())
+                                )
+                                  return;
+                                await onOpenUrlMatchFolder(
+                                  result,
+                                  'Search window',
+                                );
+                              } catch {
+                                setResultActionError(
+                                  t('searchWindow.resultOpenFailed'),
+                                );
+                              } finally {
+                                setResultActionBusy(false);
+                                requestAnimationFrame(() => {
+                                  if (
+                                    trigger.isConnected &&
+                                    trigger.closest('dialog')?.open
+                                  )
+                                    trigger.focus();
+                                });
+                              }
+                            }}
+                          >
+                            <ContextMenuIcon name="open" />
+                          </button>
+                        ) : null}
+                      </div>
                     </li>
                   ))}
                 </ul>

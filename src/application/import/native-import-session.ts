@@ -3,9 +3,13 @@ import {
   inspectNativeExport,
   type ExportPayload,
 } from '../../domain/profile-export';
+import type { ActivityReason } from '../../domain/activity-log';
 
 /** Fixed operation metadata; imported values and exception details never enter events. */
 export interface ImportValidationEvent {
+  readonly reason?: ActivityReason | undefined;
+  readonly operationId?: string | undefined;
+  readonly itemsAffected?: number | undefined;
   readonly level: 'INFO' | 'WARN' | 'ERROR';
   readonly code:
     | 'import.validation.started'
@@ -25,6 +29,7 @@ export interface ImportValidationEvent {
     | 'import.save.cancelled'
     | 'import.save.changed'
     | 'import.save.excluded'
+    | 'import.save.activity-excluded'
     | 'import.save.paused'
     | 'import.save.refresh-failed';
 }

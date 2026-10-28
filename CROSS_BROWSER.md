@@ -169,3 +169,13 @@ checks remain unverified. Build success does not replace those runtime checks.
 
 Chrome and Edge may share automated coverage where behavior is identical, but
 both packaged extensions must receive installation smoke tests.
+
+## Folder-tab background handoff
+
+Folder tabs use local background open/readiness/claim messages and session
+bindings without the optional `tabs` permission. The temporary page navigates
+itself after its browser-provided sender is validated; tab URL inspection is
+not required. Chrome's packaged-extension lifecycle was verified without tab
+access. Firefox and Edge builds pass; real-browser lifecycle and assistive
+technology checks for this increment remain pending. Session storage failure
+returns an error, with no durable-storage or query-URL fallback.

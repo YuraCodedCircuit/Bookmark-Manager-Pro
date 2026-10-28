@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { getPathSeparator } from '../../platform/navigation/path-separator';
 
 import { ClearableInput } from '../../components/ClearableInput';
 
@@ -210,7 +211,10 @@ export interface NotesWorkspaceProps {
   onConfirm: (kind: 'delete' | 'deleteFolder' | 'discard') => Promise<boolean>;
   onOpenLink: (url: string, changed: boolean) => Promise<void>;
   onMutation?: (action: NotesMutationAction) => void | Promise<void>;
-  onMutationError?: (action: NotesMutationAction) => void | Promise<void>;
+  onMutationError?: (
+    action: NotesMutationAction,
+    reason?: 'conflict',
+  ) => void | Promise<void>;
 }
 
 export type NotesMutationAction =
@@ -761,7 +765,12 @@ export function NotesWorkspace({
           ? t('notes.saveConflict')
           : t('notes.saveFailed'),
       );
-      void onMutationError?.('note-saved');
+      void onMutationError?.(
+        'note-saved',
+        error instanceof Error && error.message === 'note-save-conflict'
+          ? 'conflict'
+          : undefined,
+      );
     } finally {
       setIsSaving(false);
     }
@@ -1326,7 +1335,7 @@ export function NotesWorkspace({
                 </button>
                 {folderPath.map((folder) => (
                   <Fragment key={folder.id}>
-                    <span aria-hidden="true"> / </span>
+                    <span aria-hidden="true"> {getPathSeparator()} </span>
                     <button
                       onClick={() => void chooseView({ folderId: folder.id })}
                       type="button"

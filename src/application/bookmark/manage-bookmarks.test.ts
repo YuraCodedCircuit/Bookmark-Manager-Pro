@@ -85,6 +85,33 @@ function repository(): BookmarkRepository {
 }
 
 describe('ManageBookmarks', () => {
+  it('forwards bookmark-only deletion and refuses a folder with that identifier', async () => {
+    const storage = repository();
+    const service = new ManageBookmarks(storage);
+    await expect(
+      service.deleteItem(profileId, rootId, 'bookmark'),
+    ).rejects.toThrow('delete-bookmark-not-found');
+    expect(storage.deleteItem).not.toHaveBeenCalled();
+    vi.mocked(storage.getBookmark).mockResolvedValue({
+      id: itemId,
+      profileId,
+      parentId: rootId,
+      title: 'Bookmark',
+      url: 'https://example.com/',
+      note: '',
+      tags: [],
+      createdAt: 1,
+      updatedAt: 1,
+      index: 0,
+      cardAppearance: root.cardAppearance,
+    });
+    await service.deleteItem(profileId, itemId, 'bookmark');
+    expect(storage.deleteItem).toHaveBeenCalledWith(
+      profileId,
+      itemId,
+      'bookmark',
+    );
+  });
   it('matches duplicate bookmarks by canonical URL across the profile', async () => {
     const repo = repository();
     vi.mocked(repo.listBookmarksByUrl).mockResolvedValue([

@@ -26,6 +26,8 @@ export interface ImportSavePlan {
   excluded: number;
   duplicatePolicy: 'allow' | 'warn' | 'prevent';
   synchronizationPaused?: boolean;
+  /** Older embedded log rows were deliberately excluded from this import. */
+  activityHistoryExcluded?: boolean;
   /** Destination backup policy resolved while preparing this reviewed transaction. */
   snapshotMode:
     'enabled' | 'disabled' | 'automatic-disabled' | 'not-needed' | 'no-changes';

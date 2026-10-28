@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   previewInitialSync,
+  syncSelectedPath,
+  syncFolderOptions,
   validateSyncTree,
   type SyncNode,
 } from './sync-preview';
@@ -14,6 +16,18 @@ const bookmark: SyncNode = {
   index: 0,
 };
 describe('initial synchronization preview', () => {
+  it('formats only selection labels with the supplied separator', () => {
+    const nodes = [
+      root,
+      { id: 'child', parentId: root.id, title: 'Child › name', index: 0 },
+    ];
+    expect(syncSelectedPath(nodes, 'child', '\\')).toBe('Root \\ Child › name');
+    expect(syncSelectedPath(nodes, 'child', '/')).toBe('Root / Child › name');
+    expect(syncFolderOptions(nodes, '\\')[1]?.label).toBe(
+      'Root \\ Child › name',
+    );
+    expect(nodes[1]?.parentId).toBe(root.id);
+  });
   it('proposes additions in the allowed direction without initial deletions', () => {
     const extension = [root, bookmark];
     const browser = [

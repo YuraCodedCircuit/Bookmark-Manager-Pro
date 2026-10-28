@@ -2,6 +2,12 @@ import { z } from 'zod';
 
 export const BACKGROUND_PROTOCOL_VERSION = 1 as const;
 
+/** Identity-only request; the worker never accepts a caller-supplied session. */
+export const activitySessionRequestSchema = z.object({
+  protocolVersion: z.literal(1),
+  type: z.literal('activity-session.get'),
+});
+
 const capabilitySchema = z.object({
   id: z.enum([
     'extension-startup',
@@ -27,6 +33,7 @@ export const backgroundPreflightSnapshotSchema = z.object({
   schemaVersion: z.literal(1),
   operationId: z.uuid(),
   completedAt: z.iso.datetime(),
+  purpose: z.enum(['startup', 'update']).optional(),
   language: z.string().min(1),
   initialization: initializationSchema,
   capabilities: z.array(capabilitySchema),

@@ -90,7 +90,9 @@ database as application data, allowing imports and their required snapshots to
 commit or roll back together. They no longer remain independently accessible
 when that database cannot open.
 A snapshot can contain the selected profile's bookmarks, folders, favorites,
-local images, settings, activity records, and synchronization configuration.
+local images, settings, and synchronization configuration. New snapshots exclude
+activity records and session details; restoring older snapshots ignores them
+and preserves current local history.
 Snapshots are never uploaded. Restored synchronization connections are paused
 until reviewed by the user.
 
@@ -131,7 +133,7 @@ separate suggestion service.
 
 Profile exports create local files through the browser's download mechanism.
 Native `.bmpro` files can include selected profiles' bookmarks, folders,
-favorites, notes, images and screenshots, settings, activity records, and
+favorites, notes, images and screenshots, settings, and
 synchronization configuration. Optional backup history contains complete
 historical snapshots even when fewer current-data categories are selected.
 JSON, HTML, and CSV exports contain their supported bookmark data; these files
@@ -147,10 +149,11 @@ local; they do not send data to a service. Downloaded files are outside the
 extension's managed storage and are not deleted when a profile or the extension
 is removed.
 
-When a user explicitly exports an activity log, the extension creates a local
-plain-text file through the browser. The user controls where that file is saved
-and whether it is later shared. Exported activity records exclude bookmark
-titles, addresses, profile identifiers, search text, notes, and copied content.
+Activity history has no extension-provided export or clipboard-copy action.
+Activity records and session details are excluded from profile exports and
+included historical snapshots. Older imported log data is ignored. This policy
+does not prevent operating-system or browser tools from inspecting local
+storage, and it does not delete files exported by earlier versions.
 
 ## Browser permissions
 

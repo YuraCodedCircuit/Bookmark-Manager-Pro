@@ -124,6 +124,28 @@ async function fixture(
   };
 }
 describe('durable synchronization', () => {
+  it('summarizes changed work and sends only a recovery signal for a healthy no-op wake', async () => {
+    const f = await fixture();
+    await f.enable();
+    expect(f.report).toHaveBeenCalledWith(profileId, 'completed', {
+      changed: expect.any(Number),
+      direction: expect.stringMatching(/^(extension|browser|both)$/),
+    });
+    const completed = (f.report.mock.calls as unknown[][]).find(
+      (call) => call[1] === 'completed',
+    )!;
+    expect((completed[2] as { changed: number }).changed).toBeGreaterThan(0);
+    f.report.mockClear();
+    await f.wake();
+    expect(f.report).toHaveBeenCalledExactlyOnceWith(profileId, 'recovered');
+  });
+  it('reports a wake storage fault only with a verified owning profile', async () => {
+    const f = await fixture();
+    vi.spyOn(f.repo, 'get').mockRejectedValue(new Error('private detail'));
+    await f.wake();
+    expect(f.report).toHaveBeenCalledExactlyOnceWith(profileId, 'wake-failed');
+    expect(JSON.stringify(f.report.mock.calls)).not.toContain('private');
+  });
   it('publishes one profile-scoped change after extension mutations complete', async () => {
     const f = await fixture('browser-to-extension');
 

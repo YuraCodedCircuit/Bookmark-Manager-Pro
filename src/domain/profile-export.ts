@@ -11,6 +11,7 @@ import {
   backupPayloadSchema,
   backupSnapshotSchema,
   digestBackupPayload,
+  encodeBackupPayload,
 } from './backup';
 
 export const exportCategories = [
@@ -333,6 +334,13 @@ export async function encodeNativeExport(
 ): Promise<string> {
   const payload = validateExport(input);
   await verifyBackups(payload);
+  for (const profile of payload.profiles)
+    if (profile.activity) profile.activity = [];
+  for (const snapshot of payload.backups) {
+    snapshot.payload.activity = [];
+    snapshot.digest = await digestBackupPayload(snapshot.payload);
+    snapshot.sizeBytes = encodeBackupPayload(snapshot.payload).byteLength;
+  }
   const content = JSON.stringify(payload);
   if (bytes(content).byteLength > MAX_EXPORT_BYTES)
     throw new Error('export-too-large');
@@ -376,6 +384,13 @@ export function estimateNativeExportBytes(
   encrypted: boolean,
 ): number {
   const payload = validateExport(input);
+  for (const profile of payload.profiles)
+    if (profile.activity) profile.activity = [];
+  for (const snapshot of payload.backups) {
+    snapshot.payload.activity = [];
+    snapshot.digest = '0'.repeat(64);
+    snapshot.sizeBytes = encodeBackupPayload(snapshot.payload).byteLength;
+  }
   const payloadSize = bytes(JSON.stringify(payload)).byteLength;
   if (payloadSize > MAX_EXPORT_BYTES) throw new Error('export-too-large');
   if (!encrypted)

@@ -581,6 +581,38 @@ describe('SaveCurrentPagePopup duplicate handling', () => {
     ).toBeVisible();
   });
 
+  it('keeps a committed save successful when Undo recording fails', async () => {
+    const user = userEvent.setup();
+    const dependencies = setup('allow', true);
+    dependencies.undoHistory.record.mockRejectedValueOnce(
+      new Error('private Undo failure'),
+    );
+    const editor = await screen.findByRole('dialog', {
+      name: 'Save current URL',
+    });
+    await user.click(
+      within(editor).getByRole('button', { name: 'Save bookmark' }),
+    );
+    await waitFor(() =>
+      expect(dependencies.activityLog.record).toHaveBeenCalledWith(
+        profileId,
+        expect.objectContaining({
+          eventCode: 'CURRENT-TAB-UNDO-HISTORY-DEGRADED',
+          level: 'WARN',
+        }),
+      ),
+    );
+    expect(dependencies.bookmarkManager.createBookmark).toHaveBeenCalledOnce();
+    expect(dependencies.activityLog.record).not.toHaveBeenCalledWith(
+      profileId,
+      expect.objectContaining({
+        eventCode: 'CURRENT-TAB-BOOKMARK-CREATE-FAILED',
+      }),
+    );
+    expect(
+      JSON.stringify(dependencies.activityLog.record.mock.calls),
+    ).not.toContain('private');
+  });
   it('skips duplicate lookup when the profile allows copies', async () => {
     const user = userEvent.setup();
     const listBookmarkLocationsByUrl = vi.fn(async () => [

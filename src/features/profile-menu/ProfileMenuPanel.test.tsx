@@ -14,6 +14,8 @@ afterEach(cleanup);
 
 describe('ProfileMenuPanel', () => {
   it('highlights enabled commands only while the mouse is over them', () => {
+    const profileName = 'ProfileNameWithoutSpaces'.repeat(3);
+    const onClose = vi.fn();
     const onOpenSynchronization = vi.fn();
     const onOpenSearch = vi.fn();
     const onOpenExport = vi.fn();
@@ -24,7 +26,7 @@ describe('ProfileMenuPanel', () => {
             createdAt: 1,
             id: 'df6f88b6-10c7-43d7-b516-a063b77db6c6',
             updatedAt: 1,
-            username: 'Local user',
+            username: profileName,
           },
           settings: {
             bookmarkView: 'card',
@@ -38,7 +40,7 @@ describe('ProfileMenuPanel', () => {
         }}
         isOpen
         onAfterClose={vi.fn()}
-        onClose={vi.fn()}
+        onClose={onClose}
         onManageProfiles={vi.fn()}
         onOpenAbout={vi.fn()}
         onOpenBookmarkActivityLog={vi.fn()}
@@ -56,6 +58,34 @@ describe('ProfileMenuPanel', () => {
       />,
     );
     const menu = screen.getByRole('dialog', { name: 'Profile menu' });
+    const name = within(menu).getByText(profileName, { selector: 'strong' });
+    const fullName = within(menu).getByText(profileName, {
+      selector: '.profile-menu__full-name',
+    });
+    expect(name).toHaveAttribute('tabindex', '0');
+    expect(fullName).not.toBeVisible();
+    Object.defineProperties(name, {
+      clientHeight: { configurable: true, value: 44 },
+      scrollHeight: { configurable: true, value: 44 },
+    });
+    fireEvent.mouseEnter(name.parentElement!);
+    expect(fullName).not.toBeVisible();
+    fireEvent.focus(name);
+    expect(fullName).not.toBeVisible();
+    Object.defineProperty(name, 'scrollHeight', {
+      configurable: true,
+      value: 88,
+    });
+    fireEvent.mouseEnter(name.parentElement!);
+    expect(fullName).toBeVisible();
+    fireEvent.mouseLeave(name.parentElement!);
+    expect(fullName).not.toBeVisible();
+    fireEvent.focus(name);
+    expect(fullName).toBeVisible();
+    fireEvent.keyDown(name, { key: 'Escape' });
+    expect(fullName).not.toBeVisible();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(name).toHaveTextContent(profileName);
     const synchronization = within(menu).getByRole('button', {
       name: 'Bookmark synchronization',
     });

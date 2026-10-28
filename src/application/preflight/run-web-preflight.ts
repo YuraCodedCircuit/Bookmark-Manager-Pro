@@ -52,6 +52,10 @@ export class RunWebPreflight {
     private readonly activityLogger: PreflightActivityLogger,
     private readonly createOperationId: () => string = () =>
       crypto.randomUUID(),
+    private readonly extension = false,
+    private readonly finish: (succeeded: boolean) => Promise<void> = async () =>
+      undefined,
+    private readonly extensionCapabilities: () => WebPreflightSnapshot['capabilities'] = () => [],
   ) {}
 
   /** Loads initialization data, resolves localization, and returns render input. */
@@ -88,6 +92,7 @@ export class RunWebPreflight {
           source: 'Preflight service',
         });
       }
+      this.finishSafely(false);
       throw error;
     }
 
@@ -122,14 +127,20 @@ export class RunWebPreflight {
       });
     }
 
+    this.finishSafely(
+      initialization.status === 'ready' ||
+        initialization.status === 'first-run',
+    );
     return {
       operationId: this.createOperationId(),
       language,
-      capabilities: WEB_UNAVAILABLE_CAPABILITIES.map((id) => ({
-        id,
-        status: 'unavailable',
-        reason: 'web-preview',
-      })),
+      capabilities: this.extension
+        ? this.extensionCapabilities()
+        : WEB_UNAVAILABLE_CAPABILITIES.map((id) => ({
+            id,
+            status: 'unavailable',
+            reason: 'web-preview',
+          })),
       initialization,
     };
   }
@@ -139,13 +150,25 @@ export class RunWebPreflight {
     this.uiReadyRecorder.record(operationId);
   }
 
+  private finishSafely(succeeded: boolean): void {
+    try {
+      void this.finish(succeeded).catch(() =>
+        console.error('preflight-session-finish-failed'),
+      );
+    } catch {
+      console.error('preflight-session-finish-failed');
+    }
+  }
+
   /** Logging failures are diagnosed without changing the startup result. */
   private async recordSafely(
     profileId: string,
     input: Parameters<PreflightActivityLogger['record']>[1],
   ): Promise<void> {
     try {
-      await this.activityLogger.record(profileId, input);
+      void this.activityLogger
+        .record(profileId, input)
+        .catch(() => console.error('preflight-activity-log-write-failed'));
     } catch {
       console.error('preflight-activity-log-write-failed');
     }

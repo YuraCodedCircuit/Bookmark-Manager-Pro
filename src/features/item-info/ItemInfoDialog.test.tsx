@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -24,6 +24,26 @@ const bookmark: Bookmark = {
 afterEach(cleanup);
 
 describe('ItemInfoDialog', () => {
+  it('contains cancellation when nested inside another dialog', () => {
+    const onClose = vi.fn();
+    const parentCancel = vi.fn();
+    render(
+      <dialog open aria-label="Parent" onCancel={parentCancel}>
+        <ItemInfoDialog
+          item={{ kind: 'bookmark', value: bookmark }}
+          parentName="Home"
+          onClose={onClose}
+          onCopy={vi.fn()}
+        />
+      </dialog>,
+    );
+    fireEvent(
+      screen.getByRole('dialog', { name: 'Get info' }),
+      new Event('cancel', { bubbles: true, cancelable: true }),
+    );
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(parentCancel).not.toHaveBeenCalled();
+  });
   it('shows bookmark metadata and copies only the selected displayed value', async () => {
     const user = userEvent.setup();
     const onCopy = vi.fn().mockResolvedValue(undefined);
@@ -32,12 +52,17 @@ describe('ItemInfoDialog', () => {
         item={{ kind: 'bookmark', value: bookmark }}
         onClose={vi.fn()}
         onCopy={onCopy}
-        parentName="Home"
+        parentName="Home / Projects / References"
+        profileName="Other profile"
       />,
     );
 
     const dialog = screen.getByRole('dialog', { name: 'Get info' });
     expect(dialog).toBeVisible();
+    expect(screen.getByText('Other profile', { exact: true })).toBeVisible();
+    expect(
+      screen.getByText('Home / Projects / References', { exact: true }),
+    ).toBeVisible();
     expect(dialog.querySelector('.item-info-dialog__type-icon')).toContainHTML(
       '<svg',
     );
@@ -52,14 +77,28 @@ describe('ItemInfoDialog', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('https://example.com/')).toBeVisible();
     expect(screen.getByText('Bookmark')).toBeVisible();
-    expect(screen.getByText('Home')).toBeVisible();
     expect(screen.queryByText('Technical details')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy Created' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Copy Profile' }));
+    expect(onCopy).toHaveBeenCalledWith('profile', 'Other profile');
+    await user.click(
+      screen.getByRole('button', { name: 'Copy Parent folder' }),
+    );
+    expect(onCopy).toHaveBeenCalledWith(
+      'parent',
+      'Home / Projects / References',
+    );
     expect(
       screen.getByRole('button', { name: 'Copy Last modified' }),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Copy ID' })).not.toBeVisible();
     await user.click(screen.getByText('More details'));
+    expect(
+      screen.queryByRole('button', { name: 'Copy Tags' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Copy Note' }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText('More details').closest('details')).toHaveAttribute(
       'open',
     );
@@ -71,6 +110,49 @@ describe('ItemInfoDialog', () => {
     expect(screen.getByText('Appearance type')).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Copy Position' }));
     expect(onCopy).toHaveBeenLastCalledWith('position', '1');
+  });
+
+  it('keeps real values copyable even when their text is None', async () => {
+    const user = userEvent.setup();
+    const onCopy = vi.fn().mockResolvedValue(undefined);
+    render(
+      <ItemInfoDialog
+        item={{
+          kind: 'bookmark',
+          value: { ...bookmark, tags: ['None'], note: 'None' },
+        }}
+        onClose={vi.fn()}
+        onCopy={onCopy}
+        parentName="Home"
+      />,
+    );
+    expect(
+      screen.queryByText('Profile', { exact: true }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByText('More details'));
+    await user.click(screen.getByRole('button', { name: 'Copy Tags' }));
+    expect(onCopy).toHaveBeenCalledWith('tags', 'None');
+    await user.click(screen.getByRole('button', { name: 'Copy Note' }));
+    expect(onCopy).toHaveBeenCalledWith('note', 'None');
+  });
+
+  it('omits copy actions for absent parent and whitespace-only notes', async () => {
+    const user = userEvent.setup();
+    render(
+      <ItemInfoDialog
+        item={{ kind: 'bookmark', value: { ...bookmark, note: '   ' } }}
+        onClose={vi.fn()}
+        onCopy={vi.fn()}
+        parentName="None"
+      />,
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Copy Parent folder' }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByText('More details'));
+    expect(
+      screen.queryByRole('button', { name: 'Copy Note' }),
+    ).not.toBeInTheDocument();
   });
 
   it('omits the URL row for folders', () => {
@@ -94,7 +176,7 @@ describe('ItemInfoDialog', () => {
       profileId: bookmark.profileId,
       tags: [],
       title:
-        'A folder title that remains fully available when its visual presentation is limited to three lines',
+        'A long folder title that wraps fully instead of being limited to three lines',
       updatedAt: 2,
     };
     render(

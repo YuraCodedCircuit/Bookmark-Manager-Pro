@@ -1,4 +1,4 @@
-/** Ordered Settings navigation categories shared by the dialog and its icons. */
+/** Ordered Settings categories, including reserved definitions used by icons. */
 export const settingsCategories = [
   'general',
   'appearance',
@@ -18,6 +18,10 @@ export const settingsCategories = [
 ] as const;
 
 export type SettingsCategory = (typeof settingsCategories)[number];
+
+/** Advanced stays out of navigation and search until the owner requests it. */
+export const visibleSettingsCategories: readonly SettingsCategory[] =
+  settingsCategories.filter((category) => category !== 'advanced');
 
 const disabledSettingsCategories = new Set<SettingsCategory>(['advanced']);
 

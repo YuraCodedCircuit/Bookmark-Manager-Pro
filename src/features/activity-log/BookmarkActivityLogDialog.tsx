@@ -1,706 +1,1060 @@
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
 import type { ManageActivityLog } from '../../application/activity-log/manage-activity-log';
-import { defaultActivityLogSettings } from '../../application/activity-log/manage-activity-log';
 import { ClearIcon } from '../../components/icons/ClearIcon';
+import { ChevronIcon } from '../../components/icons/ChevronIcon';
 import { ClearableInput } from '../../components/ClearableInput';
 import type {
   ActivityLogEntry,
-  ActivityLogLevel,
   ActivityLogSettings,
+  ActivitySession,
 } from '../../domain/activity-log';
-import { downloadTextFile } from '../../platform/files/download-text-file';
-import { formatDateTime } from '../../shared/date-time-format';
-import type { DateTimeFormatPreference } from '../../shared/date-time-format';
+import {
+  localDay,
+  matchesActivityDate,
+  type ActivityDateSelection,
+} from '../../domain/activity-log-dates';
+import {
+  formatDateTime,
+  type DateTimeFormatPreference,
+} from '../../shared/date-time-format';
 import type { NotificationInput } from '../../application/notification/notification-service';
+import { ActivityLogDateDialog } from './ActivityLogDateDialog';
+import { ActivityLogProfileDialog } from './ActivityLogProfileDialog';
+import { setLogDialogOpen } from './native-dialog';
+import packageMetadata from '../../../package.json';
+import { DialogBadges } from '../../components/DialogBadges';
+import { activityLogBadges } from './activity-log-badges';
 
-interface Props {
-  activityLog: Pick<
-    ManageActivityLog,
-    | 'clear'
-    | 'createExport'
-    | 'getSettings'
-    | 'list'
-    | 'record'
-    | 'updateSettings'
+type Service = Pick<
+  ManageActivityLog,
+  'clear' | 'getSettings' | 'list' | 'record' | 'updateSettings'
+> &
+  Partial<
+    Pick<
+      ManageActivityLog,
+      | 'sessions'
+      | 'profiles'
+      | 'full'
+      | 'subscribe'
+      | 'currentSession'
+      | 'updateOptions'
+    >
   >;
+interface Props {
+  activityLog: Service;
   isOpen: boolean;
   onClose(): void;
+  onOpenSettings?(): void;
+  requestClearConfirmation(sessionId?: string): Promise<boolean>;
   onNotify?(input: NotificationInput): void;
   profileId: string;
   dateTimeFormat?: DateTimeFormatPreference;
 }
-
-type LevelFilter = 'ALL' | ActivityLogLevel;
-
 const ignoreNotification = () => undefined;
 
-function DisclosureChevron({
-  direction,
-}: {
-  direction: 'down' | 'right' | 'up';
-}) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`activity-log__chevron activity-log__chevron--${direction}`}
-    />
-  );
+/** Tests the latest matching event edge in either presentation direction. */
+function latestVisible(
+  container: HTMLElement | null,
+  order: ActivityLogSettings['eventOrder'],
+): boolean {
+  const edge = container
+    ?.querySelector<HTMLElement>('[data-latest="true"]')
+    ?.getBoundingClientRect();
+  const viewport = container?.getBoundingClientRect();
+  if (!edge || !viewport) return false;
+  const position = order === 'oldest' ? edge.bottom : edge.top;
+  return position >= viewport.top - 8 && position <= viewport.bottom + 8;
 }
 
-/** A stable detail row with native hover help and a screen-reader description. */
-function DetailRow({
-  help,
-  id,
-  label,
-  value,
-}: {
-  help: string;
-  id: string;
-  label: string;
-  value: ReactNode;
-}) {
-  const helpId = `${id}-help`;
-  return (
-    <div
-      aria-describedby={helpId}
-      className="activity-log__detail-row"
-      title={help}
-    >
-      <dt>{label}</dt>
-      <dd>{value}</dd>
-      <span className="visually-hidden" id={helpId}>
-        {help}
-      </span>
-    </div>
-  );
-}
-
-/** Durable activity-log surface backed by the active profile's log service. */
+/** Shared live history. Search, filters, expansion, and date drafts are transient. */
 export function BookmarkActivityLogDialog({
   activityLog,
   isOpen,
   onClose,
+  onOpenSettings,
+  requestClearConfirmation,
   onNotify = ignoreNotification,
   profileId,
   dateTimeFormat = 'browser',
 }: Props) {
   const { t, i18n } = useTranslation();
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const options = useRef<HTMLDialogElement>(null);
+  const optionsTrigger = useRef<HTMLButtonElement>(null);
+  const dateTrigger = useRef<HTMLButtonElement>(null);
+  const profileTrigger = useRef<HTMLButtonElement>(null);
+  const events = useRef<HTMLElement>(null);
+  const follow = useRef(true);
+  const loaded = useRef(false);
+  const ids = useRef(new Set<string>());
   const [entries, setEntries] = useState<readonly ActivityLogEntry[]>([]);
-  const [settings, setSettings] = useState<ActivityLogSettings>(() =>
-    defaultActivityLogSettings(profileId),
+  const [sessions, setSessions] = useState<readonly ActivitySession[]>([]);
+  const [profiles, setProfiles] = useState<
+    readonly { id: string; username: string }[]
+  >([]);
+  const [current, setCurrent] = useState('');
+  const [sessionOrder, setSessionOrder] = useState<'newest' | 'oldest'>(
+    'newest',
   );
-  const [level, setLevel] = useState<LevelFilter>('ALL');
-  const [category, setCategory] = useState('ALL');
-  const [dateRange, setDateRange] = useState('ALL');
+  const [eventOrder, setEventOrder] = useState<'oldest' | 'newest'>('oldest');
+  const eventOrderRef = useRef<'oldest' | 'newest'>('oldest');
+  const [full, setFull] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  /** Keeps log-operation diagnostics best-effort and free of recursive failures. */
-  const recordSafely = useCallback(
-    async (input: Parameters<ManageActivityLog['record']>[1]) => {
+  const [level, setLevel] = useState('ALL');
+  const [category, setCategory] = useState('ALL');
+  const [profile, setProfile] = useState('CURRENT');
+  const [dates, setDates] = useState<ActivityDateSelection>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [limits, setLimits] = useState<Record<string, number>>({});
+  const [groupStart, setGroupStart] = useState(0);
+  const [newEvents, setNewEvents] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+    if (!isOpen) {
+      setSessionOrder('newest');
+      setEventOrder('oldest');
+      setQuery('');
+      setLevel('ALL');
+      setCategory('ALL');
+      setProfile('CURRENT');
+      setDates(null);
+      setExpanded({});
+      setLimits({});
+      setGroupStart(0);
+      setNewEvents(false);
+      setOptionsOpen(false);
+      setDateOpen(false);
+      setProfileOpen(false);
+    }
+  }
+  const notify = useCallback(
+    (input: NotificationInput) => {
       try {
-        await activityLog.record(profileId, input);
+        onNotify(input);
+      } catch {
+        console.error('activity-log-notification-failed');
+      }
+    },
+    [onNotify],
+  );
+  const record = useCallback(
+    async (eventCode: string, success: boolean, message: string) => {
+      try {
+        await activityLog.record(null, {
+          action: 'Manage log',
+          category: 'Application',
+          dataChanged: success,
+          durationMs: 0,
+          eventCode,
+          itemType: 'Activity log',
+          itemsAffected: 0,
+          kind: success ? 'ACTIVITY' : 'DIAGNOSTIC',
+          level: success ? 'INFO' : 'ERROR',
+          message,
+          outcome: success ? 'Succeeded' : 'Failed',
+          source: 'Activity log window',
+        });
       } catch {
         console.error('activity-log-operation-record-failed');
       }
     },
-    [activityLog, profileId],
+    [activityLog],
   );
-
-  /** Refreshes visible records without changing a completed primary operation. */
-  const refreshEntriesSafely = useCallback(async () => {
-    try {
-      setEntries(await activityLog.list(profileId));
-    } catch {
-      console.error('activity-log-refresh-failed');
-    }
+  const load = useCallback(async () => {
+    const [rows, groups, names, capacity, identity] = await Promise.all([
+      activityLog.list(profileId),
+      activityLog.sessions?.() ?? [],
+      activityLog.profiles?.() ?? [],
+      activityLog.full?.() ?? false,
+      activityLog.currentSession?.(),
+    ]);
+    return { rows, groups, names, capacity, identity };
   }, [activityLog, profileId]);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [confirmingClear, setConfirmingClear] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filterNow, setFilterNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (isOpen && !dialog.open) {
-      if (typeof dialog.showModal === 'function') dialog.showModal();
-      else dialog.setAttribute('open', '');
-    } else if (!isOpen && dialog.open) {
-      if (typeof dialog.close === 'function') dialog.close();
-      else dialog.removeAttribute('open');
-    }
-  }, [isOpen]);
-
   useEffect(() => {
     if (!isOpen) return;
-    const previousOverflow = document.documentElement.style.overflowY;
-    document.documentElement.style.overflowY = 'hidden';
-    let cancelled = false;
-    const load = async () => {
-      const startedAt = performance.now();
+    let disposed = false;
+    let running = false;
+    let again = false;
+    let failureReported = false;
+    const refresh = async () => {
+      if (running) {
+        again = true;
+        return;
+      }
+      running = true;
       try {
-        const [loadedEntries, loadedSettings] = await Promise.all([
-          activityLog.list(profileId),
-          activityLog.getSettings(profileId),
-        ]);
-        if (!cancelled) {
-          setFilterNow(Date.now());
-          setEntries(loadedEntries);
-          setSettings(loadedSettings);
+        do {
+          again = false;
+          const result = await load();
+          if (disposed) return;
+          if (failureReported) {
+            failureReported = false;
+            void record(
+              'ACTIVITY-LOG-LOAD-COMPLETE',
+              true,
+              t('activityLog.title'),
+            );
+          }
+          const container = events.current;
+          const anchor = container
+            ? Array.from(
+                container.querySelectorAll<HTMLElement>('[data-event]'),
+              ).find(
+                (element) =>
+                  element.getBoundingClientRect().bottom >=
+                  container.getBoundingClientRect().top,
+              )
+            : undefined;
+          const anchorId = anchor?.dataset.event;
+          const offset = anchor?.getBoundingClientRect().top;
+          const incoming =
+            loaded.current &&
+            result.rows.some((entry) => !ids.current.has(entry.id));
+          if (
+            !loaded.current &&
+            eventOrderRef.current === 'oldest' &&
+            result.rows.filter(
+              (entry) => entry.sessionId === result.identity?.id,
+            ).length > 50
+          )
+            follow.current = false;
+          ids.current = new Set(result.rows.map((entry) => entry.id));
+          loaded.current = true;
+          setEntries(result.rows);
+          setSessions(result.groups);
+          setProfiles(result.names);
+          setFull(result.capacity);
+          setCurrent(result.identity?.id ?? '');
           setError(null);
-        }
+          if (incoming) {
+            follow.current =
+              follow.current && latestVisible(container, eventOrderRef.current);
+            if (follow.current) {
+              const id = result.identity?.id;
+              if (id)
+                setLimits((value) => ({
+                  ...value,
+                  [id]: result.rows.filter((entry) => entry.sessionId === id)
+                    .length,
+                }));
+              requestAnimationFrame(() =>
+                container
+                  ?.querySelector<HTMLElement>('[data-latest="true"]')
+                  ?.scrollIntoView?.({ block: 'nearest' }),
+              );
+            } else {
+              setNewEvents(true);
+              requestAnimationFrame(() => {
+                const next = anchorId
+                  ? container?.querySelector<HTMLElement>(
+                      `[data-event="${anchorId}"]`,
+                    )
+                  : undefined;
+                if (container && next && offset !== undefined)
+                  container.scrollTop +=
+                    next.getBoundingClientRect().top - offset;
+              });
+            }
+          }
+        } while (again);
       } catch {
-        await recordSafely({
-          action: 'Load',
-          category: 'Application',
-          dataChanged: false,
-          durationMs: Math.round(performance.now() - startedAt),
-          eventCode: 'ACTIVITY-LOG-LOAD-FAILED',
-          itemType: 'Activity log',
-          itemsAffected: 0,
-          kind: 'DIAGNOSTIC',
-          level: 'ERROR',
-          message: t('activityLog.messages.loadFailed'),
-          outcome: 'Failed',
-          source: 'Activity log window',
-        });
-        if (!cancelled) {
+        if (!disposed) {
           setError(t('activityLog.loadError'));
-          onNotify({
-            level: 'error',
-            message: t('activityLog.messages.loadFailed'),
-            title: t('notifications.errorTitle'),
-          });
+          if (!failureReported) {
+            failureReported = true;
+            await record(
+              'ACTIVITY-LOG-LOAD-FAILED',
+              false,
+              t('activityLog.messages.loadFailed'),
+            );
+            notify({
+              level: 'error',
+              title: t('notifications.errorTitle'),
+              message: t('activityLog.messages.loadFailed'),
+            });
+          }
         }
+      } finally {
+        running = false;
       }
     };
-    void load();
+    void refresh();
+    const unsubscribe = activityLog.subscribe?.(() => {
+      void refresh();
+    });
     return () => {
-      cancelled = true;
-      document.documentElement.style.overflowY = previousOverflow;
+      disposed = true;
+      unsubscribe?.();
+      loaded.current = false;
     };
-  }, [activityLog, isOpen, onNotify, profileId, recordSafely, t]);
-
-  const filteredEntries = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    return entries.filter((entry) => {
-      const ageDays = (filterNow - entry.timestamp) / 86_400_000;
-      const matchesDate =
-        dateRange === 'ALL' ||
-        (dateRange === 'TODAY' ? ageDays < 1 : ageDays <= 7);
+  }, [isOpen, load, activityLog, record, t, notify]);
+  useEffect(() => {
+    const element = dialog.current;
+    const search = element?.querySelector<HTMLInputElement>(
+      '.activity-log__search input',
+    );
+    // Native showModal must choose Search before it can focus a header badge.
+    if (isOpen && search) search.autofocus = true;
+    setLogDialogOpen(element, isOpen);
+    if (isOpen) search?.focus({ preventScroll: true });
+    else {
+      follow.current = true;
+      eventOrderRef.current = 'oldest';
+    }
+  }, [isOpen]);
+  useEffect(() => {
+    const element = options.current;
+    setLogDialogOpen(element, isOpen && optionsOpen);
+    if (isOpen && optionsOpen)
+      requestAnimationFrame(() =>
+        element
+          ?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')
+          ?.focus(),
+      );
+  }, [isOpen, optionsOpen]);
+  const resetTransient = () => {
+    setQuery('');
+    setLevel('ALL');
+    setCategory('ALL');
+    setProfile('CURRENT');
+    setDates(null);
+    setExpanded({});
+    setLimits({});
+    setGroupStart(0);
+    setNewEvents(false);
+    setOptionsOpen(false);
+    setDateOpen(false);
+    setProfileOpen(false);
+    follow.current = true;
+  };
+  const close = () => {
+    resetTransient();
+    onClose();
+  };
+  const closeOptions = () => {
+    setOptionsOpen(false);
+    requestAnimationFrame(() => optionsTrigger.current?.focus());
+  };
+  const closeDates = () => {
+    setDateOpen(false);
+    requestAnimationFrame(() => dateTrigger.current?.focus());
+  };
+  const closeProfiles = () => {
+    setProfileOpen(false);
+    requestAnimationFrame(() => profileTrigger.current?.focus());
+  };
+  const baseMatches = useCallback(
+    (entry: ActivityLogEntry) => {
+      const target = profile === 'CURRENT' ? profileId : profile;
       return (
         (level === 'ALL' || entry.level === level) &&
         (category === 'ALL' || entry.category === category) &&
-        matchesDate &&
-        (!normalizedQuery ||
-          `${entry.message} ${entry.eventCode} ${entry.category}`
-            .toLowerCase()
-            .includes(normalizedQuery))
+        (profile === 'ALL' ||
+          (profile === 'APPLICATION'
+            ? !entry.profileId
+            : !entry.profileId || entry.profileId === target)) &&
+        (!query.trim() ||
+          `${entry.message} ${entry.eventCode} ${entry.source} ${entry.action}`
+            .toLocaleLowerCase()
+            .includes(query.trim().toLocaleLowerCase()))
       );
-    });
-  }, [category, dateRange, entries, filterNow, level, query]);
-
-  const saveSettings = async (next: ActivityLogSettings) => {
-    const startedAt = performance.now();
-    setSettings(next);
-    const input = {
-      activityEnabled: next.activityEnabled,
-      autoDeleteOldest: next.autoDeleteOldest,
-      diagnosticsEnabled: next.diagnosticsEnabled,
-      enabled: next.enabled,
-      includeDiagnosticsExport: next.includeDiagnosticsExport,
-      maximumStorageMb: next.maximumStorageMb,
-      minimumLevel: next.minimumLevel,
-      retentionCount: next.retentionCount,
-    };
-    try {
-      await activityLog.updateSettings(profileId, input);
-      await recordSafely({
-        action: 'Update',
-        category: 'Application',
-        dataChanged: true,
-        durationMs: Math.round(performance.now() - startedAt),
-        eventCode: 'ACTIVITY-LOG-SETTINGS-UPDATE-COMPLETE',
-        itemType: 'Activity log settings',
-        itemsAffected: 1,
-        kind: 'DIAGNOSTIC',
-        level: 'INFO',
-        message: t('activityLog.messages.settingsUpdated'),
-        outcome: 'Succeeded',
-        source: 'Activity log window',
-      });
-      await refreshEntriesSafely();
-      setError(null);
-      onNotify({
-        level: 'success',
-        message: t('activityLog.messages.settingsUpdated'),
-        title: t('notifications.activityLogSettingsSavedTitle'),
-      });
-    } catch {
-      await recordSafely({
-        action: 'Update',
-        category: 'Application',
-        dataChanged: false,
-        durationMs: Math.round(performance.now() - startedAt),
-        eventCode: 'ACTIVITY-LOG-SETTINGS-UPDATE-FAILED',
-        itemType: 'Activity log settings',
-        itemsAffected: 0,
-        kind: 'DIAGNOSTIC',
-        level: 'ERROR',
-        message: t('activityLog.messages.settingsUpdateFailed'),
-        outcome: 'Failed',
-        source: 'Activity log window',
-      });
-      setError(t('activityLog.saveError'));
-      onNotify({
-        level: 'error',
-        message: t('activityLog.messages.settingsUpdateFailed'),
-        title: t('notifications.errorTitle'),
-      });
+    },
+    [level, category, profile, profileId, query],
+  );
+  const matching = useMemo(
+    () =>
+      entries.filter(
+        (entry) =>
+          baseMatches(entry) && matchesActivityDate(entry.timestamp, dates),
+      ),
+    [entries, baseMatches, dates],
+  );
+  const activityDays = useMemo(
+    () =>
+      new Set(
+        entries
+          .filter(baseMatches)
+          .map((entry) => localDay(new Date(entry.timestamp))),
+      ),
+    [entries, baseMatches],
+  );
+  const names = new Map(profiles.map((item) => [item.id, item.username]));
+  const profileLabel = (id: string | null) =>
+    id
+      ? (names.get(id) ?? t('activityRebuild.deletedProfile'))
+      : t('activityRebuild.applicationWide');
+  const profileChoices = [
+    { id: 'ALL', name: t('activityRebuild.allProfiles') },
+    {
+      id: 'CURRENT',
+      name: profileLabel(profileId),
+      active: true,
+    },
+    { id: 'APPLICATION', name: t('activityRebuild.applicationWide') },
+    ...[
+      ...new Set([
+        ...profiles.map((item) => item.id),
+        ...entries.flatMap((entry) =>
+          entry.profileId ? [entry.profileId] : [],
+        ),
+      ]),
+    ]
+      .filter((id) => id !== profileId)
+      .map((id) => ({ id, name: profileLabel(id) })),
+  ];
+  const groups = useMemo(() => {
+    const byId = new Map(sessions.map((session) => [session.id, session]));
+    const retainedCounts = new Map<string, number>();
+    const matchingRows = new Map<string, ActivityLogEntry[]>();
+    for (const entry of entries)
+      retainedCounts.set(
+        entry.sessionId,
+        (retainedCounts.get(entry.sessionId) ?? 0) + 1,
+      );
+    for (const entry of matching) {
+      const group = matchingRows.get(entry.sessionId) ?? [];
+      group.push(entry);
+      matchingRows.set(entry.sessionId, group);
     }
-  };
-
-  const settingInput = (patch: Partial<ActivityLogSettings>) =>
-    void saveSettings({ ...settings, ...patch, profileId });
-
-  const clearEntries = async () => {
-    const startedAt = performance.now();
+    for (const entry of entries)
+      if (!byId.has(entry.sessionId))
+        byId.set(entry.sessionId, {
+          id: entry.sessionId,
+          startedAt: entry.timestamp,
+          origin: 'earlier',
+          startup: 'not-recorded',
+          trimmedCount: 0,
+          omittedCount: 0,
+          cleared: false,
+        });
+    return [...byId.values()]
+      .map((session) => ({
+        session,
+        rows: (matchingRows.get(session.id) ?? []).sort(
+          (a, b) =>
+            (a.timestamp - b.timestamp ||
+              a.sequence - b.sequence ||
+              a.id.localeCompare(b.id)) * (eventOrder === 'oldest' ? 1 : -1),
+        ),
+        retained: retainedCounts.get(session.id) ?? 0,
+      }))
+      .filter(
+        (group) =>
+          group.rows.length > 0 ||
+          (!query &&
+            level === 'ALL' &&
+            category === 'ALL' &&
+            (profile === 'ALL' || profile === 'CURRENT') &&
+            dates === null),
+      )
+      .sort(
+        (a, b) =>
+          (a.session.startedAt - b.session.startedAt ||
+            a.session.id.localeCompare(b.session.id)) *
+          (sessionOrder === 'oldest' ? 1 : -1),
+      );
+  }, [
+    sessions,
+    entries,
+    matching,
+    eventOrder,
+    sessionOrder,
+    query,
+    level,
+    category,
+    profile,
+    dates,
+  ]);
+  const pageStart = Math.min(
+    groupStart,
+    Math.max(0, Math.floor((groups.length - 1) / 50) * 50),
+  );
+  const clear = async (sessionId?: string) => {
+    if (busy) return;
+    setBusy(true);
+    const trigger = document.activeElement;
     try {
-      await activityLog.clear(profileId);
-      await recordSafely({
-        action: 'Clear',
-        category: 'Application',
-        dataChanged: true,
-        durationMs: Math.round(performance.now() - startedAt),
-        eventCode: 'ACTIVITY-LOG-CLEAR-COMPLETE',
-        itemType: 'Activity log entries',
-        itemsAffected: entries.length,
-        kind: 'ACTIVITY',
-        level: 'INFO',
-        message: t('activityLog.messages.cleared'),
-        outcome: 'Succeeded',
-        source: 'Activity log window',
-      });
-      await refreshEntriesSafely();
-      setConfirmingClear(false);
-      setError(null);
-      onNotify({
+      if (!(await requestClearConfirmation(sessionId))) return;
+      await activityLog.clear(profileId, sessionId);
+      await record(
+        'ACTIVITY-LOG-CLEAR-COMPLETE',
+        true,
+        t('activityLog.messages.cleared'),
+      );
+      const result = await load();
+      setEntries(result.rows);
+      setSessions(result.groups);
+      setFull(result.capacity);
+      notify({
         level: 'success',
-        message: t('activityLog.messages.cleared'),
         title: t('notifications.activityLogClearedTitle'),
+        message: t('activityLog.messages.cleared'),
       });
     } catch {
-      await recordSafely({
-        action: 'Clear',
-        category: 'Application',
-        dataChanged: false,
-        durationMs: Math.round(performance.now() - startedAt),
-        eventCode: 'ACTIVITY-LOG-CLEAR-FAILED',
-        itemType: 'Activity log entries',
-        itemsAffected: 0,
-        kind: 'DIAGNOSTIC',
-        level: 'ERROR',
-        message: t('activityLog.messages.clearFailed'),
-        outcome: 'Failed',
-        source: 'Activity log window',
-      });
       setError(t('activityLog.clearError'));
-      onNotify({
+      await record(
+        'ACTIVITY-LOG-CLEAR-FAILED',
+        false,
+        t('activityLog.messages.clearFailed'),
+      );
+      notify({
         level: 'error',
+        title: t('notifications.errorTitle'),
         message: t('activityLog.messages.clearFailed'),
-        title: t('notifications.errorTitle'),
+      });
+    } finally {
+      setBusy(false);
+      requestAnimationFrame(() => {
+        if (trigger instanceof HTMLElement && trigger.isConnected)
+          trigger.focus();
       });
     }
   };
-
-  const exportEntries = async () => {
-    const startedAt = performance.now();
-    try {
-      downloadTextFile(await activityLog.createExport(profileId));
-      await recordSafely({
-        action: 'Export',
-        category: 'Application',
-        dataChanged: false,
-        durationMs: Math.round(performance.now() - startedAt),
-        eventCode: 'ACTIVITY-LOG-EXPORT-COMPLETE',
-        itemType: 'Activity log export',
-        itemsAffected: entries.length,
-        kind: 'ACTIVITY',
-        level: 'INFO',
-        message: t('activityLog.messages.exported'),
-        outcome: 'Succeeded',
-        source: 'Activity log window',
-      });
-      await refreshEntriesSafely();
-      setError(null);
-      onNotify({
-        level: 'success',
-        message: t('activityLog.messages.exported'),
-        title: t('notifications.activityLogExportedTitle'),
-      });
-    } catch {
-      await recordSafely({
-        action: 'Export',
-        category: 'Application',
-        dataChanged: false,
-        durationMs: Math.round(performance.now() - startedAt),
-        eventCode: 'ACTIVITY-LOG-EXPORT-FAILED',
-        itemType: 'Activity log export',
-        itemsAffected: 0,
-        kind: 'DIAGNOSTIC',
-        level: 'ERROR',
-        message: t('activityLog.messages.exportFailed'),
-        outcome: 'Failed',
-        source: 'Activity log window',
-      });
-      setError(t('activityLog.exportError'));
-      onNotify({
-        level: 'error',
-        message: t('activityLog.messages.exportFailed'),
-        title: t('notifications.errorTitle'),
-      });
-    }
-  };
-
+  const time = (timestamp: number) =>
+    formatDateTime(timestamp, dateTimeFormat, i18n.language);
   return (
     <dialog
+      ref={dialog}
       aria-labelledby="activity-log-title"
       className="profile-window activity-log-window"
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        close();
       }}
-      ref={dialogRef}
     >
       <header className="profile-window__header activity-log__header">
         <div>
-          <div className="activity-log__title-row">
+          <div className="dialog-heading-with-badges">
             <h1 id="activity-log-title">{t('activityLog.title')}</h1>
-            <span>{t('activityLog.localBadge')}</span>
+            {isOpen ? (
+              <DialogBadges
+                badges={activityLogBadges}
+                version={packageMetadata.version}
+              />
+            ) : null}
           </div>
-          <p>{t('activityLog.summary')}</p>
+          <p>{t('activityRebuild.summary')}</p>
         </div>
         <button
-          aria-label={t('activityLog.close')}
-          onClick={onClose}
           type="button"
+          aria-label={t('activityLog.close')}
+          onClick={close}
         >
           <ClearIcon />
         </button>
       </header>
-      <section
-        aria-label={t('activityLog.filters.label')}
-        className="activity-log__filters"
-      >
-        <fieldset>
-          <legend>{t('activityLog.filters.level')}</legend>
-          <div className="activity-log__levels">
-            {(['ALL', 'INFO', 'WARN', 'ERROR'] as const).map((value) => (
-              <button
-                aria-pressed={level === value}
-                key={value}
-                onClick={() => setLevel(value)}
-                type="button"
-              >
-                {t(`activityLog.levels.${value.toLowerCase()}`)}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <label>
-          <span>{t('activityLog.filters.category')}</span>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            <option value="ALL">{t('activityLog.categories.all')}</option>
-            <option value="Application">
-              {t('activityLog.categories.application')}
-            </option>
-            <option value="Bookmarks">
-              {t('activityLog.categories.bookmarks')}
-            </option>
-            <option value="Notes">{t('activityLog.categories.notes')}</option>
-            <option value="Profiles">
-              {t('activityLog.categories.profiles')}
-            </option>
-          </select>
-        </label>
-        <label>
-          <span>{t('activityLog.filters.date')}</span>
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-          >
-            <option value="ALL">{t('activityLog.dates.all')}</option>
-            <option value="TODAY">{t('activityLog.dates.today')}</option>
-            <option value="SEVEN_DAYS">
-              {t('activityLog.dates.sevenDays')}
-            </option>
-          </select>
-        </label>
+      <section className="activity-log__toolbar">
         <label className="activity-log__search">
           <span>{t('activityLog.filters.search')}</span>
           <ClearableInput
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('activityLog.filters.searchPlaceholder')}
             type="search"
             value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setGroupStart(0);
+            }}
+            placeholder={t('activityLog.filters.searchPlaceholder')}
           />
         </label>
+        <button
+          ref={optionsTrigger}
+          type="button"
+          className="profile-button"
+          aria-haspopup="dialog"
+          onClick={() => setOptionsOpen(true)}
+        >
+          {t('activityLog.viewOptions')}
+        </button>
       </section>
+      <p className="activity-log-count" role="status">
+        {t('activityRebuild.counts', {
+          matching: matching.length,
+          retained: entries.length,
+        })}
+      </p>
       {error ? (
         <p className="activity-log__error" role="alert">
           {error}
+          <button
+            className="profile-button"
+            type="button"
+            onClick={() => {
+              void load()
+                .then((result) => {
+                  setEntries(result.rows);
+                  setSessions(result.groups);
+                  setError(null);
+                })
+                .catch(() => setError(t('activityLog.loadError')));
+            }}
+          >
+            {t('activityRebuild.retry')}
+          </button>
         </p>
       ) : null}
-      <section
-        aria-label={t('activityLog.eventsLabel')}
-        className="activity-log__events"
-      >
-        {filteredEntries.length ? (
-          <ol>
-            {filteredEntries.map((entry) => {
-              const isExpanded = expandedId === entry.id;
-              const time = formatDateTime(
-                entry.timestamp,
-                dateTimeFormat,
-                i18n.language,
-              );
-              const detailRows: Array<[string, ReactNode]> = [
-                ['eventCode', entry.eventCode],
-                ['outcome', entry.outcome],
-                ['source', entry.source],
-                ['action', entry.action],
-                ['itemType', entry.itemType],
-                ['itemsAffected', entry.itemsAffected],
-                [
-                  'dataChanged',
-                  t(
-                    entry.dataChanged
-                      ? 'activityLog.details.yes'
-                      : 'activityLog.details.no',
-                  ),
-                ],
-                [
-                  'duration',
-                  t('activityLog.details.milliseconds', {
-                    count: entry.durationMs,
-                  }),
-                ],
-                ['application', entry.applicationVersion],
-                ['schemaVersion', entry.schemaVersion],
-                ['browserTarget', entry.browserTarget],
-                [
-                  'operationId',
-                  <code key="operation">{entry.operationId}</code>,
-                ],
-              ];
-              return (
-                <li
-                  className={`activity-log__event activity-log__event--${entry.level.toLowerCase()}`}
-                  key={entry.id}
-                >
-                  <button
-                    aria-expanded={isExpanded}
-                    className="activity-log__event-summary"
-                    onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                    type="button"
-                  >
-                    <DisclosureChevron
-                      direction={isExpanded ? 'down' : 'right'}
-                    />
-                    <time>{time}</time>
-                    <strong>
-                      {t(`activityLog.levels.${entry.level.toLowerCase()}`)}
-                    </strong>
-                    <span>{entry.message}</span>
-                    <small>
-                      {t(
-                        `activityLog.categories.${entry.category.toLowerCase()}`,
-                      )}
-                    </small>
-                  </button>
-                  {isExpanded ? (
-                    <dl className="activity-log__details">
-                      {detailRows.map(([key, value]) => (
-                        <DetailRow
-                          help={t(`activityLog.details.help.${key}`)}
-                          id={`${entry.id}-${key}`}
-                          key={key}
-                          label={t(`activityLog.details.${key}`)}
-                          value={value}
-                        />
-                      ))}
-                    </dl>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ol>
-        ) : (
-          <div className="activity-log__empty">
-            <strong>{t('activityLog.empty.title')}</strong>
-            <span>{t('activityLog.empty.summary')}</span>
-          </div>
-        )}
-      </section>
-      <section className="activity-log__settings">
-        <button
-          aria-expanded={settingsOpen}
-          className="activity-log__settings-toggle"
-          onClick={() => setSettingsOpen((value) => !value)}
-          type="button"
-        >
-          <strong>{t('activityLog.settings.title')}</strong>
-          <DisclosureChevron direction={settingsOpen ? 'up' : 'down'} />
-        </button>
-        {settingsOpen ? (
-          <div className="activity-log__settings-grid">
-            <label>
-              <input
-                checked={settings.activityEnabled}
-                onChange={(e) =>
-                  settingInput({ activityEnabled: e.target.checked })
-                }
-                type="checkbox"
-              />{' '}
-              {t('activityLog.settings.activity')}
-            </label>
-            <label>
-              <input
-                checked={settings.diagnosticsEnabled}
-                onChange={(e) =>
-                  settingInput({ diagnosticsEnabled: e.target.checked })
-                }
-                type="checkbox"
-              />{' '}
-              {t('activityLog.settings.diagnostics')}
-            </label>
-            <label>
-              <span>{t('activityLog.settings.minimumLevel')}</span>
-              <select
-                value={settings.minimumLevel}
-                onChange={(e) =>
-                  settingInput({
-                    minimumLevel: e.target.value as ActivityLogLevel,
-                  })
-                }
-              >
-                <option>INFO</option>
-                <option>WARN</option>
-                <option>ERROR</option>
-              </select>
-            </label>
-            <label>
-              <span>{t('activityLog.settings.retention')}</span>
-              <input
-                min="100"
-                onChange={(e) =>
-                  settingInput({
-                    retentionCount: Math.max(100, Number(e.target.value)),
-                  })
-                }
-                type="number"
-                value={settings.retentionCount}
-              />
-            </label>
-            <label>
-              <span>{t('activityLog.settings.maximumSize')}</span>
-              <select
-                value={settings.maximumStorageMb}
-                onChange={(e) =>
-                  settingInput({ maximumStorageMb: Number(e.target.value) })
-                }
-              >
-                <option value="10">10 MB</option>
-                <option value="25">25 MB</option>
-                <option value="50">50 MB</option>
-              </select>
-            </label>
-            <label>
-              <input
-                checked={settings.autoDeleteOldest}
-                onChange={(e) =>
-                  settingInput({ autoDeleteOldest: e.target.checked })
-                }
-                type="checkbox"
-              />{' '}
-              {t('activityLog.settings.autoDelete')}
-            </label>
-            <label>
-              <input
-                checked={settings.includeDiagnosticsExport}
-                onChange={(e) =>
-                  settingInput({ includeDiagnosticsExport: e.target.checked })
-                }
-                type="checkbox"
-              />{' '}
-              {t('activityLog.settings.includeDiagnostics')}
-            </label>
-            <button
-              className="profile-button"
-              onClick={() =>
-                void saveSettings(defaultActivityLogSettings(profileId))
-              }
-              type="button"
-            >
-              {t('activityLog.settings.reset')}
-            </button>
-          </div>
-        ) : null}
-      </section>
-      <footer className="activity-log__footer">
-        {confirmingClear ? (
-          <div className="activity-log__confirmation" role="alert">
-            <span>{t('activityLog.clear.confirm')}</span>
-            <button
-              className="profile-button profile-button--danger profile-button--danger-filled"
-              onClick={() => void clearEntries()}
-              type="button"
-            >
-              {t('activityLog.clear.clearLog')}
-            </button>
-            <button
-              className="profile-button"
-              onClick={() => setConfirmingClear(false)}
-              type="button"
-            >
-              {t('activityLog.clear.cancel')}
-            </button>
-          </div>
-        ) : (
+      {full ? (
+        <div className="activity-log-capacity" role="alert">
+          <strong>{t('activityRebuild.full')}</strong>
+          <p>{t('activityRebuild.fullHelp')}</p>
           <button
-            className="profile-button profile-button--danger"
-            onClick={() => setConfirmingClear(true)}
             type="button"
+            className="profile-button profile-button--danger"
+            onClick={() => {
+              void clear();
+            }}
           >
-            {t('activityLog.clear.action')}
+            {t('activityRebuild.clearAll')}
           </button>
-        )}
-        {!confirmingClear ? (
-          <div className="activity-log__export">
+          <button
+            type="button"
+            className="profile-button"
+            onClick={onOpenSettings ?? (() => setOptionsOpen(true))}
+          >
+            {t(
+              onOpenSettings
+                ? 'activityLog.openSettings'
+                : 'activityLog.viewOptions',
+            )}
+          </button>
+        </div>
+      ) : null}
+      {newEvents ? (
+        <button
+          className="profile-button"
+          type="button"
+          onClick={() => {
+            setNewEvents(false);
+            follow.current = true;
+            setExpanded((value) => ({ ...value, [current]: true }));
+            setGroupStart(
+              Math.floor(
+                Math.max(
+                  0,
+                  groups.findIndex((group) => group.session.id === current),
+                ) / 50,
+              ) * 50,
+            );
+            const count = matching.filter(
+              (entry) => entry.sessionId === current,
+            ).length;
+            setLimits((value) => ({ ...value, [current]: count }));
+            requestAnimationFrame(() =>
+              events.current
+                ?.querySelector<HTMLElement>('[data-latest="true"]')
+                ?.scrollIntoView?.({ block: 'nearest' }),
+            );
+          }}
+        >
+          {t('activityRebuild.newEvents')}
+        </button>
+      ) : null}
+      <section
+        ref={events}
+        className="activity-log__events"
+        aria-label={t('activityLog.eventsLabel')}
+        onScroll={() => {
+          follow.current = latestVisible(events.current, eventOrder);
+        }}
+      >
+        {groups
+          .slice(pageStart, pageStart + 50)
+          .map(({ session, rows, retained }) => {
+            const open = expanded[session.id] ?? session.id === current;
+            const title =
+              session.origin === 'earlier'
+                ? t('activityRebuild.earlier')
+                : `${t(session.origin === 'startup' ? 'activityRebuild.session' : 'activityRebuild.detected')} ${time(session.startedAt)}`;
+            const visible = rows.slice(0, limits[session.id] ?? 50);
+            const latest =
+              eventOrder === 'oldest' ? rows.at(-1)?.id : rows[0]?.id;
+            return (
+              <section key={session.id} className="activity-session">
+                <header className="activity-session__header">
+                  <div className="activity-session__title-row">
+                    <button
+                      className="profile-button activity-session__toggle"
+                      type="button"
+                      aria-expanded={open}
+                      aria-label={title}
+                      title={title}
+                      onClick={() =>
+                        setExpanded((value) => ({
+                          ...value,
+                          [session.id]: !open,
+                        }))
+                      }
+                    >
+                      <ChevronIcon />
+                      <span>
+                        {session.origin === 'earlier'
+                          ? t('activityRebuild.earlier')
+                          : time(session.startedAt)}
+                      </span>
+                    </button>
+                    <button
+                      className="profile-button profile-button--danger activity-session__clear"
+                      type="button"
+                      disabled={busy}
+                      aria-label={t('activityRebuild.clearSession')}
+                      onClick={() => {
+                        void clear(session.id);
+                      }}
+                    >
+                      {t('activityRebuild.clearSessionShort')}
+                    </button>
+                  </div>
+                  <p>
+                    {t('activityRebuild.sessionSummary', {
+                      status: t(`activityRebuild.startup.${session.startup}`),
+                      matching: rows.length,
+                      retained,
+                    })}
+                  </p>
+                  {session.recordingResumed ? (
+                    <p>{t('activityRebuild.recordingResumed')}</p>
+                  ) : null}
+                  {session.trimmedCount ? (
+                    <p>
+                      {t('activityRebuild.trimmed', {
+                        count: session.trimmedCount,
+                      })}
+                    </p>
+                  ) : null}
+                  {session.omittedCount ? (
+                    <p>
+                      {t('activityRebuild.omitted', {
+                        count: session.omittedCount,
+                      })}
+                    </p>
+                  ) : null}
+                  {session.cleared ? (
+                    <p>{t('activityRebuild.cleared')}</p>
+                  ) : null}
+                </header>
+                {open ? (
+                  <>
+                    <ol>
+                      {visible.map((entry) => (
+                        <li
+                          key={entry.id}
+                          data-event={entry.id}
+                          data-latest={
+                            session.id === current && entry.id === latest
+                          }
+                          className={`activity-log__event activity-log__event--${entry.level.toLowerCase()}`}
+                        >
+                          <details>
+                            <summary className="activity-log__event-summary">
+                              <span
+                                aria-hidden="true"
+                                className="activity-log__chevron"
+                              />
+                              <time>{time(entry.timestamp)}</time>
+                              <strong>
+                                {t(
+                                  `activityLog.levels.${entry.level.toLowerCase()}`,
+                                )}
+                              </strong>
+                              <span>{entry.message}</span>
+                              <small>
+                                {t(
+                                  `activityLog.categories.${entry.category.toLowerCase()}`,
+                                )}
+                              </small>
+                            </summary>
+                            <dl className="activity-log__details">
+                              <div className="activity-log__detail-row">
+                                <dt>{t('activityRebuild.profileFilter')}</dt>
+                                <dd>{profileLabel(entry.profileId)}</dd>
+                              </div>
+                              {(
+                                [
+                                  'eventCode',
+                                  'outcome',
+                                  'source',
+                                  'action',
+                                  'itemType',
+                                  'itemsAffected',
+                                  'dataChanged',
+                                  'durationMs',
+                                  'applicationVersion',
+                                  'schemaVersion',
+                                  'browserTarget',
+                                  'operationId',
+                                ] as const
+                              ).map((key) => {
+                                const detail =
+                                  key === 'durationMs'
+                                    ? 'duration'
+                                    : key === 'applicationVersion'
+                                      ? 'application'
+                                      : key;
+                                const value =
+                                  key === 'dataChanged'
+                                    ? t(
+                                        entry.dataChanged
+                                          ? 'activityLog.details.yes'
+                                          : 'activityLog.details.no',
+                                      )
+                                    : key === 'durationMs'
+                                      ? t('activityLog.details.milliseconds', {
+                                          count: entry.durationMs,
+                                        })
+                                      : entry[key];
+                                return (
+                                  <div
+                                    className="activity-log__detail-row"
+                                    key={key}
+                                    title={t(
+                                      `activityLog.details.help.${detail}`,
+                                    )}
+                                  >
+                                    <dt>
+                                      {t(`activityLog.details.${detail}`)}
+                                    </dt>
+                                    <dd>{String(value)}</dd>
+                                    <span className="visually-hidden">
+                                      {t(`activityLog.details.help.${detail}`)}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </dl>
+                          </details>
+                        </li>
+                      ))}
+                    </ol>
+                    {visible.length < rows.length ? (
+                      <button
+                        type="button"
+                        className="profile-button"
+                        onClick={() =>
+                          setLimits((value) => ({
+                            ...value,
+                            [session.id]: (value[session.id] ?? 50) + 50,
+                          }))
+                        }
+                      >
+                        {t('activityRebuild.showMoreEvents')}
+                      </button>
+                    ) : null}
+                  </>
+                ) : null}
+              </section>
+            );
+          })}
+        {!groups.length ? <p>{t('activityLog.empty.title')}</p> : null}
+        {pageStart > 0 ? (
+          <button
+            className="profile-button"
+            type="button"
+            onClick={() => setGroupStart(Math.max(0, pageStart - 50))}
+          >
+            {t('activityRebuild.previousSessions')}
+          </button>
+        ) : null}
+        {groups.length > pageStart + 50 ? (
+          <button
+            className="profile-button"
+            type="button"
+            onClick={() => setGroupStart(pageStart + 50)}
+          >
+            {t('activityRebuild.showMoreSessions')}
+          </button>
+        ) : null}
+      </section>
+      <dialog
+        ref={options}
+        className="profile-window activity-log-options"
+        aria-labelledby="activity-log-options-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          closeOptions();
+        }}
+      >
+        <header className="profile-window__header">
+          <h1 id="activity-log-options-title">
+            {t('activityLog.options.title')}
+          </h1>
+          <button
+            type="button"
+            aria-label={t('activityLog.options.close')}
+            onClick={closeOptions}
+          >
+            <ClearIcon />
+          </button>
+        </header>
+        <div className="activity-log-options__content">
+          <section
+            className="activity-log__filters"
+            aria-label={t('activityLog.filters.label')}
+          >
+            <fieldset>
+              <legend>{t('activityLog.filters.level')}</legend>
+              <div className="activity-log__levels">
+                {['ALL', 'INFO', 'WARN', 'ERROR'].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={value === level}
+                    onClick={() => {
+                      setLevel(value);
+                      setGroupStart(0);
+                    }}
+                  >
+                    {t(`activityLog.levels.${value.toLowerCase()}`)}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <label>
+              {t('activityLog.filters.category')}
+              <select
+                value={category}
+                onChange={(event) => {
+                  setCategory(event.target.value);
+                  setGroupStart(0);
+                }}
+              >
+                {['ALL', 'Application', 'Bookmarks', 'Notes', 'Profiles'].map(
+                  (value) => (
+                    <option key={value} value={value}>
+                      {t(`activityLog.categories.${value.toLowerCase()}`)}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+            <label>
+              <span id="activity-profile-label">
+                {t('activityRebuild.profileFilter')}
+              </span>
+              <button
+                ref={profileTrigger}
+                type="button"
+                className="profile-button"
+                aria-haspopup="dialog"
+                aria-labelledby="activity-profile-label activity-profile-selection"
+                onClick={() => setProfileOpen(true)}
+              >
+                <span id="activity-profile-selection">
+                  {profileChoices.find((choice) => choice.id === profile)?.name}
+                </span>
+              </button>
+            </label>
+            <button
+              ref={dateTrigger}
+              type="button"
+              className="profile-button"
+              aria-haspopup="dialog"
+              onClick={() => setDateOpen(true)}
+            >
+              {t('activityLog.filters.date')}:{' '}
+              {dates === null
+                ? t('activityRebuild.preset.all')
+                : t('activityRebuild.custom')}
+            </button>
+          </section>
+          <div className="activity-log__filters">
+            <label>
+              {t('activityRebuild.sessionOrder')}
+              <select
+                value={sessionOrder}
+                onChange={(event) => {
+                  setSessionOrder(event.target.value as 'newest' | 'oldest');
+                  setGroupStart(0);
+                }}
+              >
+                {['newest', 'oldest'].map((value) => (
+                  <option key={value} value={value}>
+                    {t(`activityRebuild.${value}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('activityRebuild.eventOrder')}
+              <select
+                value={eventOrder}
+                onChange={(event) => {
+                  const value = event.target.value as 'newest' | 'oldest';
+                  eventOrderRef.current = value;
+                  setEventOrder(value);
+                }}
+              >
+                {['oldest', 'newest'].map((value) => (
+                  <option key={value} value={value}>
+                    {t(`activityRebuild.${value}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+        <footer className="activity-log__footer">
+          {onOpenSettings ? (
             <button
               className="profile-button"
-              onClick={() => void exportEntries()}
               type="button"
+              onClick={onOpenSettings}
             >
-              {t('activityLog.export.action')}
+              {t('activityLog.openSettings')}
             </button>
-            <small>{t('activityLog.export.ready')}</small>
-          </div>
-        ) : null}
+          ) : null}
+          <button
+            className="profile-button"
+            type="button"
+            onClick={closeOptions}
+          >
+            {t('searchWindow.options.closeAction')}
+          </button>
+        </footer>
+      </dialog>
+      {profileOpen && optionsOpen && isOpen ? (
+        <ActivityLogProfileDialog
+          choices={profileChoices}
+          selected={profile}
+          onSelect={(id) => {
+            setProfile(id);
+            setGroupStart(0);
+          }}
+          onClose={closeProfiles}
+        />
+      ) : null}
+      {dateOpen && isOpen ? (
+        <ActivityLogDateDialog
+          selection={dates}
+          activityDays={activityDays}
+          onClose={closeDates}
+          onApply={(value) => {
+            setDates(value);
+            setGroupStart(0);
+            closeDates();
+          }}
+        />
+      ) : null}
+      <footer className="activity-log__footer">
+        <button
+          className="profile-button profile-button--danger"
+          disabled={busy}
+          type="button"
+          onClick={() => {
+            void clear();
+          }}
+        >
+          {t('activityRebuild.clearAll')}
+        </button>
+        <button className="profile-button" type="button" onClick={close}>
+          {t('searchWindow.options.closeAction')}
+        </button>
       </footer>
     </dialog>
   );

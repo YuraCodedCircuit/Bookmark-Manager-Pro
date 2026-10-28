@@ -54,6 +54,77 @@ beforeEach(() => {
 afterEach(() => document.body.replaceChildren());
 
 describe('BackupDialog', () => {
+  it('reports a committed restore degradation instead of a failed restore when refresh fails', async () => {
+    const user = userEvent.setup();
+    const report = vi.fn();
+    const restore = vi.fn(async () => profileId);
+    render(
+      <BackupDialog
+        activeProfile={snapshot.payload.profile}
+        dateTimeFormat="iso"
+        onClose={vi.fn()}
+        onReport={report}
+        onRestored={async () => {
+          throw new Error('private refresh detail');
+        }}
+        profiles={[{ isActive: true, profile: snapshot.payload.profile }]}
+        storageUsage={[]}
+        service={{
+          create: vi.fn(),
+          delete: vi.fn(),
+          list: async () => [snapshot],
+          restore,
+        }}
+      />,
+    );
+    await user.click(
+      within(await screen.findByRole('listitem')).getByRole('button', {
+        name: 'Restore',
+      }),
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Restore snapshot' });
+    await user.click(within(dialog).getByRole('checkbox'));
+    await user.click(within(dialog).getByRole('button', { name: 'Restore' }));
+    expect(
+      await screen.findByText(/Changes were saved, but the view/),
+    ).toBeVisible();
+    expect(restore).toHaveBeenCalledOnce();
+    expect(report).toHaveBeenCalledExactlyOnceWith(
+      'restoreDegraded',
+      profileId,
+    );
+    expect(JSON.stringify(report.mock.calls)).not.toContain('private');
+  });
+  it('preserves a load error when its feedback callback fails', async () => {
+    const diagnostic = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    render(
+      <BackupDialog
+        activeProfile={snapshot.payload.profile}
+        dateTimeFormat="iso"
+        onClose={vi.fn()}
+        onRestored={vi.fn(async () => undefined)}
+        profiles={[]}
+        storageUsage={[]}
+        service={{
+          create: vi.fn(),
+          delete: vi.fn(),
+          restore: vi.fn(),
+          list: vi.fn(async () => {
+            throw new Error('synthetic');
+          }),
+        }}
+        onReport={() => {
+          throw new Error('synthetic');
+        }}
+      />,
+    );
+    expect(await screen.findByRole('alert')).toBeVisible();
+    expect(diagnostic).toHaveBeenCalledWith('backup-feedback-failed');
+    diagnostic.mockRestore();
+  });
+
   it('reports an outstanding load failure to the latest callback without reopening the dialog', async () => {
     let reject!: (reason: Error) => void;
     const service = {

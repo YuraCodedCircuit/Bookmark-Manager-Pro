@@ -75,7 +75,7 @@ export function ExportDialog({
   const profilePickerButton = useRef<HTMLButtonElement>(null);
   const wasProfilePickerOpen = useRef(false);
   const [categories, setCategories] = useState<ExportCategory[]>([
-    ...exportCategories,
+    ...exportCategories.filter((category) => category !== 'activity'),
   ]);
   const [backups, setBackups] = useState(false);
   const [encrypted, setEncrypted] = useState(false);
@@ -433,35 +433,37 @@ export function ExportDialog({
                 disabled={busy}
                 aria-labelledby="export-data-heading"
               >
-                {exportCategories.map((category) => (
-                  <label className="settings-checkbox-row" key={category}>
-                    <input
-                      type="checkbox"
-                      disabled={format !== 'bmpro'}
-                      checked={
-                        format === 'bmpro'
-                          ? categories.includes(category)
-                          : category === 'bookmarks'
-                      }
-                      onChange={(event) =>
-                        setCategories((current) =>
-                          event.target.checked
-                            ? [...current, category]
-                            : current.filter((value) => value !== category),
-                        )
-                      }
-                    />
-                    <span>
-                      {t(
-                        category === 'bookmarks' && format !== 'bmpro'
-                          ? format === 'csv'
-                            ? 'export.csvBookmarks'
-                            : 'export.portableBookmarks'
-                          : `export.categories.${category}`,
-                      )}
-                    </span>
-                  </label>
-                ))}
+                {exportCategories
+                  .filter((category) => category !== 'activity')
+                  .map((category) => (
+                    <label className="settings-checkbox-row" key={category}>
+                      <input
+                        type="checkbox"
+                        disabled={format !== 'bmpro'}
+                        checked={
+                          format === 'bmpro'
+                            ? categories.includes(category)
+                            : category === 'bookmarks'
+                        }
+                        onChange={(event) =>
+                          setCategories((current) =>
+                            event.target.checked
+                              ? [...current, category]
+                              : current.filter((value) => value !== category),
+                          )
+                        }
+                      />
+                      <span>
+                        {t(
+                          category === 'bookmarks' && format !== 'bmpro'
+                            ? format === 'csv'
+                              ? 'export.csvBookmarks'
+                              : 'export.portableBookmarks'
+                            : `export.categories.${category}`,
+                        )}
+                      </span>
+                    </label>
+                  ))}
                 <label className="settings-checkbox-row export-dialog__backup-option">
                   <input
                     type="checkbox"

@@ -16,6 +16,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'react-i18next';
+import { FolderIcon } from '../../components/icons/FolderIcon';
+import { BookmarkIcon } from '../../components/icons/BookmarkIcon';
 
 import type { Bookmark } from '../../domain/bookmark';
 import type { Folder } from '../../domain/folder';
@@ -208,6 +210,7 @@ export function BookmarkDetailsTable({
         <td className="bookmark-details-table__flexible-cell" key={column}>
           {item.kind === 'folder' ? (
             <button
+              className="bookmark-details-table__title"
               onClick={(event) => {
                 if (folderOpening === 'single-click' || event.detail === 0)
                   onOpenFolder(item.value);
@@ -218,10 +221,12 @@ export function BookmarkDetailsTable({
               title={item.value.title}
               type="button"
             >
-              {item.value.title}
+              <FolderIcon />
+              <span>{item.value.title}</span>
             </button>
           ) : (
             <a
+              className="bookmark-details-table__title"
               href={item.value.url}
               onClick={(event) => {
                 if (!onOpenBookmark) return;
@@ -235,7 +240,8 @@ export function BookmarkDetailsTable({
               target={bookmarkOpening === 'new-tab' ? '_blank' : '_self'}
               title={item.value.title}
             >
-              {item.value.title}
+              <BookmarkIcon />
+              <span>{item.value.title}</span>
             </a>
           )}
         </td>

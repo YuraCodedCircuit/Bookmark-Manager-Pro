@@ -72,3 +72,28 @@ it('preserves the captured input viewport when blur resets its scroll offset', (
   target.dispatchEvent(new Event('scroll'));
   expect(target.scrollLeft).toBe(0);
 });
+
+it.each([
+  { browser: 'Firefox', clientLeft: 13, clientWidth: 304 },
+  { browser: 'Chromium', clientLeft: 1, clientWidth: 328 },
+])(
+  'aligns the selection with input text in $browser',
+  ({ clientLeft, clientWidth }) => {
+    const target = document.createElement('input');
+    target.value = 'Selected text';
+    target.style.cssText = 'padding: 11px 12px; border: 1px solid;';
+    Object.defineProperties(target, {
+      clientLeft: { value: clientLeft },
+      clientWidth: { value: clientWidth },
+    });
+    target.getBoundingClientRect = () => new DOMRect(33, 50, 330, 40);
+    document.body.append(target);
+    const dispose = showInactiveSelection(target, 0, 8);
+    const preview = document.querySelector<HTMLElement>(
+      '.editable-selection-preview',
+    )!;
+    expect(preview.style.left).toBe('46px');
+    expect(preview.style.width).toBe('304px');
+    dispose();
+  },
+);

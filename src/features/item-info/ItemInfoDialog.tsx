@@ -18,6 +18,7 @@ export type ItemInfoField =
   | 'note'
   | 'parent'
   | 'position'
+  | 'profile'
   | 'tags'
   | 'title'
   | 'type'
@@ -29,6 +30,8 @@ interface ItemInfoDialogProps {
   onClose: () => void;
   onCopy: (field: ItemInfoField, value: string) => Promise<void>;
   parentName: string;
+  /** Included only when the item belongs to a different profile. */
+  profileName?: string | undefined;
   dateTimeFormat?: DateTimeFormatPreference;
 }
 
@@ -38,6 +41,7 @@ export function ItemInfoDialog({
   onClose,
   onCopy,
   parentName,
+  profileName,
   dateTimeFormat = 'browser',
 }: ItemInfoDialogProps) {
   const { i18n, t } = useTranslation();
@@ -57,6 +61,15 @@ export function ItemInfoDialog({
       : []),
   ];
   const technicalRows = [
+    ...(profileName
+      ? [
+          {
+            field: 'profile' as const,
+            label: t('itemInfo.profile'),
+            value: profileName,
+          },
+        ]
+      : []),
     {
       field: 'type' as const,
       label: t('itemInfo.type'),
@@ -97,7 +110,7 @@ export function ItemInfoDialog({
     {
       field: 'note' as const,
       label: t('itemInfo.note'),
-      value: value.note.length > 0 ? value.note : emptyValue,
+      value: value.note.trim().length > 0 ? value.note : emptyValue,
     },
     {
       field: 'position' as const,
@@ -136,17 +149,27 @@ export function ItemInfoDialog({
     rows: typeof primaryRows | typeof technicalRows | typeof moreRows,
   ) =>
     rows.map((row) => (
-      <div className="item-info-dialog__row" key={row.field}>
+      <div
+        className="item-info-dialog__row"
+        data-field={row.field}
+        key={row.field}
+      >
         <dt>{row.label}</dt>
         <dd title={row.value}>{row.value}</dd>
-        <button
-          aria-label={t('itemInfo.copyValue', { label: row.label })}
-          onClick={() => void copy(row.field, row.value)}
-          title={t('itemInfo.copyValue', { label: row.label })}
-          type="button"
-        >
-          <CopyIcon />
-        </button>
+        {(row.field !== 'tags' || value.tags.length > 0) &&
+        (row.field !== 'note' || value.note.trim().length > 0) &&
+        (row.field !== 'parent' ||
+          (parentName.trim().length > 0 &&
+            parentName !== t('itemInfo.none'))) ? (
+          <button
+            aria-label={t('itemInfo.copyValue', { label: row.label })}
+            onClick={() => void copy(row.field, row.value)}
+            title={t('itemInfo.copyValue', { label: row.label })}
+            type="button"
+          >
+            <CopyIcon />
+          </button>
+        ) : null}
         <span aria-live="polite" className="visually-hidden">
           {copiedField === row.field ? t('itemInfo.copied') : ''}
         </span>
@@ -159,6 +182,7 @@ export function ItemInfoDialog({
       className="item-info-dialog"
       onCancel={(event) => {
         event.preventDefault();
+        event.stopPropagation();
         onClose();
       }}
       onClick={(event) => {
@@ -186,6 +210,7 @@ export function ItemInfoDialog({
         <div
           aria-label={t('itemInfo.appearance')}
           className="item-info-dialog__appearance"
+          data-kind={value.cardAppearance.kind}
           role="img"
           style={appearanceStyle(value.cardAppearance)}
         />

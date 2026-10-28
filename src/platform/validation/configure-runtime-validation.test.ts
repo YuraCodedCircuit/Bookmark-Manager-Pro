@@ -18,4 +18,22 @@ describe('configureRuntimeValidation', () => {
       false,
     );
   });
+
+  it('rejects oversized constrained arrays before validating their elements', () => {
+    configureRuntimeValidation();
+    let evaluated = 0;
+    const item = z.preprocess((value) => {
+      evaluated++;
+      return value;
+    }, z.string());
+
+    const result = z.array(item).max(2).safeParse(Array(100).fill(null));
+
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toEqual([
+        expect.objectContaining({ code: 'too_big' }),
+      ]);
+    expect(evaluated).toBe(0);
+  });
 });

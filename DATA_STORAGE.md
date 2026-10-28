@@ -85,8 +85,9 @@ source identity fields and current profile-settings record in one transaction.
 Schema version 2 adds `activity` and `activityLogSettings`. Upgrading preserves
 all version-1 profile data because the upgrade is additive. Activity records are
 indexed by profile and timestamp and are validated on every repository read.
-Deleting a profile also deletes its activity records and log settings in the
-same transaction.
+Schema 39 makes activity history application-owned. Deleting a profile removes
+its recording settings but preserves shared history and its internal references.
+Activity records are indexed by session and sequence in addition to timestamp.
 
 Schema version 21 adds folder-owned card size, card spacing, sorting, direction,
 and grouping values without changing folder indexes. The upgrade copies the
@@ -419,3 +420,51 @@ database or an explicit recovery path.
 
 The initial release starts with a new schema. Data and export formats from
 earlier Bookmark Manager Pro implementations are not supported.
+
+## Schema 39: shared activity history
+
+The current application's local schemas upgrade through schema 39. The upgrade
+validates existing activity and preserves IDs, timestamps, and owning-profile
+references in an Earlier activity collection. It assigns deterministic sequence
+numbers, verifies record counts, and initializes shared options once from the
+active profile's existing settings. Only after successful conversion does shared
+retention trim excess Earlier activity. The entire upgrade is transactional;
+validation or storage failure leaves the prior database intact. An older binary
+cannot downgrade a successfully upgraded database and must not delete it.
+
+`activitySessions` owns essential startup, clear, recording-resume, and trim
+status. `activityPending` bounds waiting startup records to 128 across sessions.
+These stores and shared options are independent of profile deletion and
+duplication. The active profile master gate controls all new log records and
+headers. Session identity coordination in browser storage is distinct from
+retained log data and survives clearing history. Shared options reset preserves
+history and master gates, including concurrent gate changes in another surface.
+
+New recovery captures contain empty legacy activity arrays. Native export also
+sanitizes older nested snapshots after validating their original digests, then
+recomputes digests and sizes for the exported copy. Source snapshots remain
+unchanged. Native import remapping and recovery ignore older history without
+merging or replacing the current activity table. Historical schema-specific
+serialization is preserved for old snapshot digest verification.
+
+## Sparse activity incident metadata
+
+The metadata key `activity:incidents:v1` stores at most 128 validated incident
+fingerprints with fixed reason/code, owning profile, browser session, severity,
+and opaque operation ID. Append, coalescing, and escalation share one transaction.
+Repeated unchanged incidents perform no row, sequence, retention, or fingerprint
+write. Successful signals remove matching fingerprints; disabling recording and
+clearing history remove applicable state. Unknown versions are preserved and do
+not suppress new records. This additive local-only metadata requires no schema
+upgrade and is absent from native exports, imports, and recovery payloads.
+
+## Activity view and configuration ownership
+
+Settings > Activity commits the active profile's master recording gate and the
+shared recording/retention options through the existing validated transaction.
+View options never writes stored settings. Its filters and session/event order
+are transient and reset on closing the main log. Existing serialized order
+fields remain intact for compatibility, but the view does not update or consume
+them. No schema or transfer-format version changes are required. Unsaved Settings
+edits have no durable effect; saving lower retention limits can remove
+older records under the existing retention policy.

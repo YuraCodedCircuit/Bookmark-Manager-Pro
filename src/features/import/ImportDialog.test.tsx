@@ -148,20 +148,28 @@ describe('ImportDialog', () => {
     expect(commit).not.toHaveBeenCalled();
     fireEvent.click(within(confirm).getByRole('button', { name: 'Import' }));
     await waitFor(() =>
-      expect(onReport).toHaveBeenCalledWith({
-        level: 'WARN',
-        code: 'import.save.refresh-failed',
-      }),
+      expect(onReport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'WARN',
+          code: 'import.save.refresh-failed',
+          reason: 'committed',
+          operationId: expect.stringMatching(/^op-/),
+        }),
+      ),
     );
     expect(commit).toHaveBeenCalledOnce();
-    expect(onReport).toHaveBeenCalledWith({
-      level: 'INFO',
-      code: 'import.save.succeeded',
-    });
-    expect(onReport).not.toHaveBeenCalledWith({
-      level: 'ERROR',
-      code: 'import.save.failed',
-    });
+    expect(onReport).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'INFO',
+        code: 'import.save.succeeded',
+      }),
+    );
+    expect(onReport).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'ERROR',
+        code: 'import.save.failed',
+      }),
+    );
     expect(JSON.stringify(onReport.mock.calls)).not.toContain('private');
     expect(screen.getByRole('button', { name: 'Import' })).toBeDisabled();
   });

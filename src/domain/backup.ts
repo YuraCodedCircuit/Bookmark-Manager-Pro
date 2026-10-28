@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import {
-  activityLogEntrySchema,
-  activityLogSettingsSchema,
+  activityLogEntrySchema as sharedActivityLogEntrySchema,
+  activityLogSettingsSchema as sharedActivityLogSettingsSchema,
 } from './activity-log';
 import { bookmarkSchema } from './bookmark';
 import { favoriteItemSchema } from './favorite-item';
@@ -12,6 +12,22 @@ import { profileSettingsSchema } from './profile-settings';
 import { syncConnectionSchema } from './synchronization';
 import { noteFolderSchema, noteSchema } from './note';
 import { folderWallpaperSchema } from './folder-wallpaper';
+
+// Historical integrity bytes must not gain defaults from the new local schema.
+const activityLogEntrySchema = sharedActivityLogEntrySchema
+  .omit({ sessionId: true, sequence: true })
+  .extend({ profileId: z.uuid() });
+const activityLogSettingsSchema = z.object({
+  activityEnabled: sharedActivityLogSettingsSchema.shape.activityEnabled,
+  autoDeleteOldest: sharedActivityLogSettingsSchema.shape.autoDeleteOldest,
+  diagnosticsEnabled: sharedActivityLogSettingsSchema.shape.diagnosticsEnabled,
+  enabled: sharedActivityLogSettingsSchema.shape.enabled,
+  includeDiagnosticsExport: z.boolean(),
+  maximumStorageMb: sharedActivityLogSettingsSchema.shape.maximumStorageMb,
+  minimumLevel: sharedActivityLogSettingsSchema.shape.minimumLevel,
+  profileId: z.uuid(),
+  retentionCount: sharedActivityLogSettingsSchema.shape.retentionCount,
+});
 
 export const BACKUP_FORMAT_VERSION = 3;
 export const snapshotTypeSchema = z.enum([

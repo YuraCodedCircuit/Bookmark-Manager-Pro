@@ -6,11 +6,14 @@ import { BookmarkManagerDatabase } from '../../storage/database';
 import { SyncRepository } from '../../storage/sync-repository';
 import { parseNativeBookmarkTree } from './sync-bookmarks';
 import { createContentChangeBridge } from '../content-change/create-content-change-bridge';
+import { i18n } from '../../localization/i18n';
 
 /** Registers restart-safe browser wakes synchronously; IndexedDB owns all progress. */
-export function registerSynchronizationBackground() {
+export function registerSynchronizationBackground(
+  beforeWork: () => Promise<unknown> = async () => undefined,
+) {
   const repository = new SyncRepository(new BookmarkManagerDatabase());
-  const activity = createActivityLogService();
+  const activity = createActivityLogService({ background: true });
   const contentChanges = createContentChangeBridge(() => {
     void browser.runtime
       .sendMessage({
@@ -53,8 +56,9 @@ export function registerSynchronizationBackground() {
       },
       remove: (id) => browser.bookmarks.remove(id),
     },
-    async (profileId, event) => {
-      const failed = event === 'failed',
+    async (profileId, event, summary) => {
+      if (event === 'validation') return;
+      const failed = event === 'failed' || event === 'wake-failed',
         degraded = [
           'conflict',
           'skipped',
@@ -69,16 +73,29 @@ export function registerSynchronizationBackground() {
           durationMs: 0,
           eventCode: `SYNC-${event.toUpperCase()}`,
           itemType: 'Synchronization',
-          itemsAffected: 0,
+          itemsAffected: summary?.changed ?? 0,
           kind: failed ? 'DIAGNOSTIC' : 'ACTIVITY',
           level: failed ? 'ERROR' : degraded ? 'WARN' : 'INFO',
-          message: `Bookmark synchronization: ${event}.`,
+          message: summary
+            ? i18n.t('sync.activityCompleted', {
+                count: summary.changed,
+                direction: i18n.t(
+                  `sync.activityDirection.${summary.direction}`,
+                ),
+              })
+            : event === 'recovered'
+              ? i18n.t('sync.activityRecovered')
+              : event === 'wake-failed'
+                ? i18n.t('sync.activityWakeFailed')
+                : `Bookmark synchronization: ${event}.`,
           outcome: failed ? 'Failed' : degraded ? 'Skipped' : 'Succeeded',
           source: 'Synchronization service',
         })
         .catch(() => console.error('sync-activity-write-failed'));
       const notification =
-        event === 'completed'
+        event === 'completed' ||
+        event === 'recovered' ||
+        event === 'wake-failed'
           ? Promise.resolve()
           : repository
               .publishFeedback(profileId, event)
@@ -93,7 +110,8 @@ export function registerSynchronizationBackground() {
   const wake = () => {
     if (wakeQueued) return;
     wakeQueued = true;
-    void locked(() => service.wake())
+    void beforeWork()
+      .then(() => locked(() => service.wake()))
       .catch(() => console.error('sync-wake-failed'))
       .finally(() => {
         wakeQueued = false;
@@ -133,5 +151,8 @@ export function registerSynchronizationBackground() {
     error: () => console.error('sync-local-observer-failed'),
   });
   wake();
-  return (message: unknown) => locked(() => service.command(message));
+  return async (message: unknown) => {
+    await beforeWork();
+    return locked(() => service.command(message));
+  };
 }

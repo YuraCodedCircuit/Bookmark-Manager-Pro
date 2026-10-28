@@ -64,6 +64,7 @@ const menuSections = [
   items: readonly ProfileMenuItem[];
 }>;
 
+/** Reveals the full profile name on hover or focus only when its display is clipped. */
 export function ProfileMenuPanel({
   initializationState,
   isOpen,
@@ -88,10 +89,20 @@ export function ProfileMenuPanel({
 }: ProfileMenuPanelProps) {
   const { t } = useTranslation();
   const [highlightedItem, setHighlightedItem] = useState<string>();
+  const [showFullName, setShowFullName] = useState(false);
+  const nameHovered = useRef(false);
   const avatarRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const descriptionRef = useRef<HTMLSpanElement>(null);
   const nameRef = useRef<HTMLElement>(null);
+  const revealClippedName = () => {
+    const name = nameRef.current;
+    setShowFullName(
+      name !== null &&
+        (name.scrollHeight > name.clientHeight ||
+          name.scrollWidth > name.clientWidth),
+    );
+  };
   const prefersReducedMotion = usePrefersReducedMotion();
   const motionPreference = useMotionPreference();
   const profileSummaryElements = () =>
@@ -133,6 +144,7 @@ export function ProfileMenuPanel({
     },
     onBeforeOpen: () => {
       setHighlightedItem(undefined);
+      setShowFullName(false);
       profileSummaryElements().forEach((element) => {
         element.style.opacity = motionPreference === 'none' ? '1' : '0';
         element.style.transform = prefersReducedMotion
@@ -175,6 +187,13 @@ export function ProfileMenuPanel({
           onClose();
         }
       }}
+      onKeyDownCapture={(event) => {
+        if (event.key === 'Escape' && showFullName) {
+          event.preventDefault();
+          event.stopPropagation();
+          setShowFullName(false);
+        }
+      }}
       ref={dialogRef}
       tabIndex={-1}
     >
@@ -194,7 +213,37 @@ export function ProfileMenuPanel({
           ) : null}
         </div>
         <div className="profile-menu__identity">
-          <strong ref={nameRef}>{profileName}</strong>
+          <div
+            className="profile-menu__name"
+            onMouseEnter={() => {
+              nameHovered.current = true;
+              revealClippedName();
+            }}
+            onMouseLeave={() => {
+              nameHovered.current = false;
+              if (document.activeElement !== nameRef.current)
+                setShowFullName(false);
+            }}
+          >
+            <strong
+              ref={nameRef}
+              tabIndex={0}
+              onFocus={revealClippedName}
+              onBlur={() => {
+                if (!nameHovered.current) setShowFullName(false);
+              }}
+            >
+              {profileName}
+            </strong>
+            {/* The focused name already exposes the complete text to screen readers. */}
+            <div
+              className="profile-menu__full-name"
+              aria-hidden="true"
+              hidden={!showFullName}
+            >
+              {profileName}
+            </div>
+          </div>
           <span ref={descriptionRef}>{profileStatus}</span>
         </div>
         <button

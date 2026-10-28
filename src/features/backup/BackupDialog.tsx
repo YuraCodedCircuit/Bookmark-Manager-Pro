@@ -20,7 +20,7 @@ interface BackupDialogProps {
   dateTimeFormat: DateTimeFormatPreference;
   onClose: () => void;
   onRestored: (profileId: string) => Promise<void>;
-  onReport?: (event: BackupUiEvent) => void;
+  onReport?: (event: BackupUiEvent, ownerProfileId?: string) => void;
   profiles: readonly ProfileIdentityListItem[];
   storageUsage: readonly ProfileStorageUsage[];
   service: Pick<ManageBackups, 'create' | 'delete' | 'list' | 'restore'>;
@@ -33,7 +33,9 @@ export type BackupUiEvent =
   | 'deleteFailed'
   | 'loadFailed'
   | 'restored'
-  | 'restoreFailed';
+  | 'historyExcluded'
+  | 'restoreFailed'
+  | 'restoreDegraded';
 
 type ChildView =
   | { kind: 'profiles' }
@@ -56,6 +58,13 @@ export function BackupDialog({
   storageUsage,
 }: BackupDialogProps) {
   const { t } = useTranslation();
+  const report = (event: BackupUiEvent, ownerProfileId = profileId) => {
+    try {
+      onReport?.(event, ownerProfileId);
+    } catch {
+      console.error('backup-feedback-failed');
+    }
+  };
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const childRef = useRef<HTMLElement>(null);
@@ -92,9 +101,13 @@ export function BackupDialog({
         })
         .catch(() => {
           setError(t('backup.loadFailed'));
-          reportRef.current?.('loadFailed');
+          try {
+            reportRef.current?.('loadFailed');
+          } catch {
+            console.error('backup-feedback-failed');
+          }
         }),
-    [service, t],
+    [service, t, setError, setSnapshots],
   );
 
   // Reopening a parent native dialog would move it above its child in the top layer.
@@ -405,10 +418,10 @@ export function BackupDialog({
                       type: 'manual',
                     });
                     await complete(t('backup.createdStatus'));
-                    onReport?.('created');
+                    report('created');
                   } catch {
                     setError(t('backup.createFailed'));
-                    onReport?.('createFailed');
+                    report('createFailed');
                   } finally {
                     setBusy(false);
                   }
@@ -428,10 +441,10 @@ export function BackupDialog({
                   try {
                     await service.delete(child.snapshot.id);
                     await complete(t('backup.deletedStatus'));
-                    onReport?.('deleted');
+                    report('deleted');
                   } catch {
                     setError(t('backup.deleteFailed'));
-                    onReport?.('deleteFailed');
+                    report('deleteFailed');
                   } finally {
                     setBusy(false);
                   }
@@ -444,17 +457,30 @@ export function BackupDialog({
                 onCancel={() => setChild(null)}
                 onRestore={async () => {
                   setBusy(true);
+                  let committedId: string | undefined;
                   try {
                     const restoredId = await service.restore(
                       child.snapshot.id,
                       selectedExists ? 'replace' : 'new',
                     );
+                    committedId = restoredId;
                     await onRestored(restoredId);
                     await complete(t('backup.restoredStatus'));
-                    onReport?.('restored');
+                    report('restored', restoredId);
+                    if (child.snapshot.payload.activity.length)
+                      report('historyExcluded', restoredId);
                   } catch {
-                    setError(t('backup.restoreFailed'));
-                    onReport?.('restoreFailed');
+                    setError(
+                      t(
+                        committedId
+                          ? 'activityLog.messages.savedViewDegraded'
+                          : 'backup.restoreFailed',
+                      ),
+                    );
+                    report(
+                      committedId ? 'restoreDegraded' : 'restoreFailed',
+                      committedId,
+                    );
                   } finally {
                     setBusy(false);
                   }
@@ -638,6 +664,7 @@ function RestoreSnapshot({
   return (
     <>
       <h2 id="backup-child-title">{t('backup.restoreTitle')}</h2>
+      <p role="note">{t('activityRebuild.excluded')}</p>
       <p>
         <strong>{snapshot.name}</strong>
       </p>
@@ -666,10 +693,7 @@ function RestoreSnapshot({
             label={t('backup.favorites')}
             value={snapshot.payload.favorites.length}
           />
-          <DetailRow
-            label={t('backup.activityRecords')}
-            value={snapshot.payload.activity.length}
-          />
+          <DetailRow label={t('backup.activityRecords')} value={0} />
         </tbody>
       </table>
       {replacing ? (

@@ -43,8 +43,8 @@ Implemented accessibility behavior includes:
   audit.
 - English (United States) is currently the only complete interface language.
 - Browser and assistive-technology combinations may expose different behavior.
-- Import, Export, and Backup are implemented. Advanced settings remain
-  unavailable. Import/Export have Chromium webpage checks and a packaged
+- Import, Export, and Backup are implemented. Advanced settings are hidden
+  until controls are approved. Import/Export have Chromium webpage checks and a packaged
   Chrome Import smoke check; these do not establish screen-reader behavior or
   packaged Firefox/Edge interaction. Those combinations remain unverified.
 - A nested crop-dialog check has exposed intermittent focus return to the Crop

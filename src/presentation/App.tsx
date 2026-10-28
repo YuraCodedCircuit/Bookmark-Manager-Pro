@@ -8,6 +8,12 @@ import {
   useSyncExternalStore,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ZodError } from 'zod';
+import {
+  claimFolderTab,
+  openFolderTab,
+  FolderTabMissingDestinationError,
+} from '../platform/browser/folder-tabs';
 
 import type { CreateFirstProfileInput } from '../application/profile/create-first-profile';
 import type {
@@ -22,6 +28,7 @@ import {
 } from '../application/activity-log/manage-activity-log';
 import type { ActivityLogSettings } from '../domain/activity-log';
 import type { WebPreflightSnapshot } from '../application/preflight/preflight-state';
+import { watchActivityLogCapacity } from '../application/activity-log/watch-activity-log-capacity';
 import type { ManageProfiles } from '../application/profile/manage-profiles';
 import type {
   ProfileListItem,
@@ -62,7 +69,10 @@ import {
   ItemInfoDialog,
   type ItemInfoField,
 } from '../features/item-info/ItemInfoDialog';
-import { getPathSeparator } from '../platform/navigation/path-separator';
+import {
+  getPathSeparator,
+  formatFolderPath,
+} from '../platform/navigation/path-separator';
 import { writeClipboardText } from '../platform/clipboard/write-clipboard-text';
 import { folderBackgroundStyle } from '../shared/appearance-style';
 import type { BookmarkClickOpening } from '../shared/bookmark-click-opening';
@@ -92,6 +102,12 @@ import {
   type SearchProfileSource,
 } from '../domain/bookmark-search';
 import { SearchDialog } from '../features/search/SearchDialog';
+import type { DateTimeFormatPreference } from '../shared/date-time-format';
+import { UrlMatchActions } from '../application/search/url-match-actions';
+import {
+  loadUrlMatchSnapshot,
+  reportUrlMatchScan,
+} from '../application/search/url-match-snapshot';
 import { AboutDialog } from '../features/about/AboutDialog';
 import { ChangelogDialog } from '../features/changelog/ChangelogDialog';
 import changelogMarkdown from '../../CHANGELOG.md?raw';
@@ -133,16 +149,13 @@ import {
 const browserSearch = createBrowserSearchAdapter();
 
 interface AppProps {
+  subscribeUrlMatchChanges?: (listener: () => void) => () => void;
   backupManager?: Pick<ManageBackups, 'create' | 'delete' | 'list' | 'restore'>;
   activityLog: Pick<
     ManageActivityLog,
-    | 'clear'
-    | 'createExport'
-    | 'getSettings'
-    | 'list'
-    | 'record'
-    | 'updateSettings'
-  >;
+    'clear' | 'getSettings' | 'list' | 'record' | 'updateSettings'
+  > &
+    Partial<Pick<ManageActivityLog, 'full' | 'subscribe'>>;
   applicationVersion: string;
   contentChanges?: {
     profileActivation: ContentChangeBridge['profileActivation'];
@@ -199,7 +212,8 @@ interface AppProps {
     | 'updateBookmarkDisplay'
     | 'updateProfileSettings'
     | 'updateLastOpenedFolder'
-  >;
+  > &
+    Partial<Pick<ManageProfiles, 'getProfileSettings'>>;
   resumePreflight(): Promise<WebPreflightSnapshot>;
   undoHistory: UndoHistoryService;
   updateAnnouncements: Pick<
@@ -239,6 +253,7 @@ const pasteDisabledKeys = new Set(['paste']);
 
 /** Renders the application exclusively from a completed preflight snapshot. */
 export function App({
+  subscribeUrlMatchChanges,
   activityLog,
   backupManager,
   applicationVersion,
@@ -337,6 +352,13 @@ export function App({
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [searchLoadFailed, setSearchLoadFailed] = useState(false);
   const [infoItem, setInfoItem] = useState<NavigationItem | null>(null);
+  const [searchInfoContext, setSearchInfoContext] = useState<{
+    profileId: string;
+    parentName: string;
+    profileName: string | undefined;
+    dateTimeFormat: DateTimeFormatPreference;
+    trigger: HTMLButtonElement;
+  } | null>(null);
   const [isTreeOpen, setIsTreeOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [openActivityLogAfterMenuClose, setOpenActivityLogAfterMenuClose] =
@@ -393,6 +415,7 @@ export function App({
   >([]);
   const [activityLogSettings, setActivityLogSettings] =
     useState<ActivityLogSettings | null>(null);
+  const [activitySettingsReturn, setActivitySettingsReturn] = useState(false);
   const [isWelcomeOpen, setIsWelcomeOpen] = useState(
     currentInitializationState.status === 'first-run',
   );
@@ -413,6 +436,7 @@ export function App({
   const contextMenuFocusRef = useRef<HTMLElement | null>(null);
   const lastFolderByProfileRef = useRef(new Map<string, string>());
   const initializedProfileIdRef = useRef<string | undefined>(undefined);
+  const folderLoadGenerationRef = useRef(0);
   const clipboardProfileIdRef = useRef<string | undefined>(undefined);
   const initializationStateRef = useRef(currentInitializationState);
   const currentFolderIdRef = useRef(currentFolderId);
@@ -484,6 +508,51 @@ export function App({
     [currentInitializationState, showNotification],
   );
 
+  const capacityNotify = useRef(notifyForActiveProfile);
+  const reportedBackgroundUnavailable = useRef(false);
+  useEffect(() => {
+    const unavailable = preflightSnapshot.capabilities.some(
+      (capability) => capability.reason === 'background-unavailable',
+    );
+    if (!unavailable) {
+      reportedBackgroundUnavailable.current = false;
+      return;
+    }
+    if (reportedBackgroundUnavailable.current) return;
+    reportedBackgroundUnavailable.current = true;
+    notifyForActiveProfile({
+      level: 'warning',
+      title: t('activityRebuild.backgroundUnavailableTitle'),
+      message: t('activityRebuild.backgroundUnavailable'),
+    });
+  }, [preflightSnapshot.capabilities, notifyForActiveProfile, t]);
+  useEffect(() => {
+    capacityNotify.current = notifyForActiveProfile;
+  }, [notifyForActiveProfile]);
+  useEffect(() => {
+    const readFull = activityLog.full;
+    const subscribe = activityLog.subscribe;
+    if (!readFull || !subscribe || !readyProfileId) return;
+    return watchActivityLogCapacity(
+      {
+        full: () => readFull.call(activityLog),
+        subscribe: (listener) => subscribe.call(activityLog, listener),
+      },
+      (input) => capacityNotify.current(input),
+      {
+        title: t('activityRebuild.full'),
+        message: t('activityRebuild.fullHelp'),
+        actions: [
+          {
+            id: 'open-activity-log',
+            label: t('activityRebuild.viewLog'),
+            run: () => setProfileWindow('activity-log'),
+          },
+        ],
+      },
+    );
+  }, [activityLog, readyProfileId, t]);
+
   /** Shows a persistent, privacy-safe explanation for an operation failure. */
   const notifyOperationError = useCallback(
     (message: string) => {
@@ -526,7 +595,7 @@ export function App({
   /** Logging is best-effort and never changes the primary operation result. */
   const recordEventForProfile = useCallback(
     async (
-      profileId: string,
+      profileId: string | null,
       input: Parameters<ManageActivityLog['record']>[1],
     ) => {
       try {
@@ -679,6 +748,28 @@ export function App({
 
   useEffect(
     () =>
+      undoHistory.subscribeStorageRecovery?.((profileIds) => {
+        for (const profileId of profileIds)
+          void recordEventForProfile(profileId, {
+            action: 'Recover',
+            category: 'Application',
+            dataChanged: false,
+            durationMs: 0,
+            eventCode: 'UNDO-HISTORY-RECOVERED',
+            itemType: 'Undo history',
+            itemsAffected: 0,
+            kind: 'DIAGNOSTIC',
+            level: 'INFO',
+            message: t('undoHistory.recovered'),
+            outcome: 'Succeeded',
+            source: 'Undo history',
+          });
+      }),
+    [recordEventForProfile, t, undoHistory],
+  );
+
+  useEffect(
+    () =>
       undoHistory.subscribeStoragePressure((profileIds, removedEntries) => {
         if (readyProfileId && profileIds.includes(readyProfileId)) {
           notifyForActiveProfile({
@@ -713,30 +804,47 @@ export function App({
     ],
   );
 
-  /** Reloads the current folder while reusing an authoritative tree when available. */
+  /** Reloads a folder; returns false when newer navigation supersedes the read. */
   const loadFolderContent = useCallback(
     async (
       profileId: string,
       folderId: string,
       knownFolders?: readonly Folder[],
     ) => {
-      const [contents, profileFolders] = await Promise.all([
+      const generation = ++folderLoadGenerationRef.current;
+      const result = await Promise.all([
         bookmarkManager.listContents(profileId, folderId),
         knownFolders
           ? Promise.resolve(knownFolders)
           : bookmarkManager.listFolders(profileId),
-      ]);
+      ]).catch((error: unknown) => {
+        if (generation !== folderLoadGenerationRef.current) return undefined;
+        throw error;
+      });
+      // Reads from a superseded navigation/profile cannot replace the current view.
+      if (!result || generation !== folderLoadGenerationRef.current)
+        return false;
+      const [contents, profileFolders] = result;
       setBookmarks(contents.bookmarks);
       setFolders(contents.folders);
       setAllFolders(profileFolders);
       void bookmarkManager
         .listNavigationItems(profileId, profileFolders)
         .then((navigationItems) => {
-          if (readyProfileIdRef.current !== profileId) return;
+          if (
+            readyProfileIdRef.current !== profileId ||
+            generation !== folderLoadGenerationRef.current
+          )
+            return;
           setFavoriteItems(navigationItems.favorites);
           setRecentItems(navigationItems.recent);
         })
         .catch(async () => {
+          if (
+            generation !== folderLoadGenerationRef.current ||
+            readyProfileIdRef.current !== profileId
+          )
+            return;
           await recordEventForProfile(profileId, {
             action: 'Load',
             category: 'Bookmarks',
@@ -752,6 +860,7 @@ export function App({
             source: 'Bookmark navigation',
           });
         });
+      return true;
     },
     [bookmarkManager, recordEventForProfile, t],
   );
@@ -762,8 +871,15 @@ export function App({
       const folderId = currentFolderIdRef.current;
       if (!profileId || !folderId || (change && change.profileId !== profileId))
         return;
+      let generation = folderLoadGenerationRef.current;
       try {
         const latestFolders = await bookmarkManager.listFolders(profileId);
+        if (
+          generation !== folderLoadGenerationRef.current ||
+          readyProfileIdRef.current !== profileId ||
+          currentFolderIdRef.current !== folderId
+        )
+          return;
         const currentStillExists = latestFolders.some(
           ({ id }) => id === folderId,
         );
@@ -780,7 +896,8 @@ export function App({
               ) ?? latestFolders.find(({ isRoot }) => isRoot);
           if (!fallback) throw new Error('external-refresh-root-unavailable');
           setContentWindow(null);
-          await loadFolderContent(profileId, fallback.id);
+          generation = folderLoadGenerationRef.current + 1;
+          if (!(await loadFolderContent(profileId, fallback.id))) return;
           setCurrentFolderId(fallback.id);
           setCurrentPath(findFolderPath(latestFolders, fallback.id));
           try {
@@ -802,17 +919,30 @@ export function App({
           change.affectedParentIds.includes(folderId) ||
           change.changedFolderIds.includes(folderId);
         if (contentAffected) {
-          await loadFolderContent(profileId, folderId);
+          generation = folderLoadGenerationRef.current + 1;
+          if (!(await loadFolderContent(profileId, folderId))) return;
           setCurrentPath(findFolderPath(latestFolders, folderId));
         } else if (change.navigationChanged || change.changedFolderIds.length) {
           const navigationItems =
             await bookmarkManager.listNavigationItems(profileId);
+          if (
+            generation !== folderLoadGenerationRef.current ||
+            readyProfileIdRef.current !== profileId ||
+            currentFolderIdRef.current !== folderId
+          )
+            return;
           setAllFolders(latestFolders);
           setFavoriteItems(navigationItems.favorites);
           setRecentItems(navigationItems.recent);
           setCurrentPath(findFolderPath(latestFolders, folderId));
         }
       } catch {
+        if (
+          generation !== folderLoadGenerationRef.current ||
+          readyProfileIdRef.current !== profileId ||
+          currentFolderIdRef.current !== folderId
+        )
+          return;
         await recordEventForProfile(profileId, {
           action: 'Load',
           category: 'Bookmarks',
@@ -861,6 +991,7 @@ export function App({
     setIsFolderStyleOpen(false);
     setIsSearchOpen(false);
     setInfoItem(null);
+    setSearchInfoContext(null);
     setIsTreeOpen(false);
     setIsProfileMenuOpen(false);
     setContextMenu(null);
@@ -881,6 +1012,9 @@ export function App({
   }, []);
 
   const clearProfileBoundContent = useCallback(() => {
+    ++folderLoadGenerationRef.current;
+    currentFolderIdRef.current = undefined;
+    allFoldersRef.current = [];
     setBookmarks([]);
     setFolders([]);
     setAllFolders([]);
@@ -1099,8 +1233,8 @@ export function App({
   ]);
 
   const recordUndoHistoryDegraded = useCallback(
-    (profileId: string) => {
-      notifyForActiveProfile({
+    (profileId: string, notify = notifyForActiveProfile) => {
+      notify({
         level: 'warning',
         message: t('undoHistory.recordSkipped'),
         title: t('notifications.limitedDataTitle'),
@@ -1129,6 +1263,7 @@ export function App({
       profileId: string,
       before?: UndoProfileState,
       after?: UndoProfileState,
+      notify = notifyForActiveProfile,
     ) => {
       const change: ContentChangeInput | undefined =
         before && after
@@ -1160,7 +1295,7 @@ export function App({
           outcome: 'Skipped',
           source: 'Local content mutation',
         });
-        notifyForActiveProfile({
+        notify({
           level: 'warning',
           message: t('notifications.localContentChangePublishFailedMessage'),
           title: t('notifications.localContentChangePublishFailedTitle'),
@@ -1178,8 +1313,9 @@ export function App({
       itemType: UndoHistoryItemType,
       action: UndoHistoryAction,
       mutation: () => Promise<void>,
+      notify = notifyForActiveProfile,
     ) => {
-      await undoHistory.runMutation(async () => {
+      return undoHistory.runMutation(async () => {
         let before;
         const useBoundedCapture =
           action === 'deleted' ||
@@ -1192,12 +1328,17 @@ export function App({
             : await bookmarkManager.captureUndoState(profileId);
         } catch {
           await mutation();
-          await publishLocalContentChange(profileId);
+          await publishLocalContentChange(
+            profileId,
+            undefined,
+            undefined,
+            notify,
+          );
           console.error('undo-history-capture-before-failed');
-          await recordUndoHistoryDegraded(profileId);
-          return;
+          await recordUndoHistoryDegraded(profileId, notify);
+          return true;
         }
-        if (!before) return;
+        if (!before) return false;
         await mutation();
         let after: UndoProfileState | undefined;
         try {
@@ -1217,25 +1358,114 @@ export function App({
           });
         } catch {
           console.error('undo-history-record-failed');
-          await recordUndoHistoryDegraded(profileId);
+          await recordUndoHistoryDegraded(profileId, notify);
         }
-        await publishLocalContentChange(profileId, before, after);
+        await publishLocalContentChange(profileId, before, after, notify);
+        return true;
       });
     },
     [
       bookmarkManager,
+      notifyForActiveProfile,
       publishLocalContentChange,
       recordUndoHistoryDegraded,
       undoHistory,
     ],
   );
 
+  const createUrlMatchActions = () =>
+    new UrlMatchActions({
+      readSettings: async (profileId) => {
+        if (profileManager.getProfileSettings)
+          return profileManager.getProfileSettings(profileId);
+        if (profileId === readyProfileId && activeSettings)
+          return activeSettings;
+        throw new Error('profile-settings-unavailable');
+      },
+      readBookmark: async (profileId, itemId) => {
+        const [bookmarks, folders] = await Promise.all([
+          bookmarkManager.listBookmarks(profileId),
+          bookmarkManager.listFolders(profileId),
+        ]);
+        const bookmark = bookmarks.find((item) => item.id === itemId);
+        if (!bookmark) throw new Error('url-match-bookmark-missing');
+        return {
+          bookmark,
+          parentPath: formatFolderPath(
+            findFolderPath(folders, bookmark.parentId),
+            pathSeparator,
+          ),
+        };
+      },
+      // Keep confirmation delivery failures in the source-profile action boundary.
+      confirm: (profileName) =>
+        confirmationService.request({
+          message: t('urlMatches.deleteConfirm', { profile: profileName }),
+          cancelLabel: t('confirmation.cancel'),
+          confirmLabel: t('confirmation.actions.delete'),
+          title: t('confirmation.title'),
+          variant: 'danger',
+        }),
+      remove: async (member, notify) => {
+        const changed = await runUndoable(
+          member.profileId,
+          member.item.id,
+          'bookmark',
+          'deleted',
+          () =>
+            bookmarkManager.deleteItem(
+              member.profileId,
+              member.item.id,
+              'bookmark',
+            ),
+          notify,
+        );
+        if (!changed) throw new Error('url-match-bookmark-missing');
+        if (member.profileId === readyProfileId && currentFolderId) {
+          try {
+            await loadFolderContent(readyProfileId, currentFolderId);
+          } catch {
+            await recordEventForProfile(member.profileId, {
+              action: 'Refresh',
+              category: 'Bookmarks',
+              dataChanged: false,
+              durationMs: 0,
+              eventCode: 'URL-MATCH-VIEW-REFRESH-DEGRADED',
+              itemType: 'Folder view',
+              itemsAffected: 0,
+              kind: 'DIAGNOSTIC',
+              level: 'WARN',
+              message: t('urlMatches.viewRefreshFailed'),
+              outcome: 'Skipped',
+              source: 'URL matches',
+            });
+            notify({
+              level: 'warning',
+              message: t('urlMatches.viewRefreshFailed'),
+              title: t('urlMatches.title'),
+            });
+          }
+        }
+      },
+      writeClipboard: writeClipboardText,
+      record: recordEventForProfile,
+      notify: showNotification,
+      messages: {
+        title: t('urlMatches.title'),
+        deleteComplete: t('bookmarks.deleteSucceeded'),
+        deleteFailed: t('urlMatches.deleteFailed'),
+        infoFailed: t('urlMatches.infoFailed'),
+        copyComplete: t('activityLog.messages.itemInfoValueCopied'),
+        copyFailed: t('activityLog.messages.itemInfoValueCopyFailed'),
+      },
+    });
+
   /** Opens one folder and records only privacy-safe navigation metadata. */
   const openFolder = async (folderId: string, source: string) => {
     const startedAt = performance.now();
     if (!readyProfileId) throw new Error('active-profile-not-ready');
     try {
-      await loadFolderContent(readyProfileId, folderId);
+      if (!(await loadFolderContent(readyProfileId, folderId))) return;
       setCurrentFolderId(folderId);
       setCurrentPath(findFolderPath(allFolders, folderId));
       try {
@@ -1388,9 +1618,38 @@ export function App({
         if (cancelled) return;
         const profileFolders =
           await bookmarkManager.listFolders(readyProfileId);
-        const requestedFolderId = new URLSearchParams(
-          window.location.search,
-        ).get('folder');
+        const legacyFolderId = new URLSearchParams(window.location.search).get(
+          'folder',
+        );
+        let requestedFolderId: string | undefined = legacyFolderId ?? undefined;
+        if (!legacyFolderId) {
+          try {
+            requestedFolderId = await claimFolderTab(readyProfileId);
+          } catch (error) {
+            if (!(error instanceof FolderTabMissingDestinationError))
+              throw error;
+            await recordEventForProfile(readyProfileId, {
+              action: 'Load',
+              category: 'Bookmarks',
+              dataChanged: false,
+              durationMs: 0,
+              eventCode: 'FOLDER-TAB-DESTINATION-MISSING',
+              itemType: 'Folder',
+              itemsAffected: 0,
+              kind: 'DIAGNOSTIC',
+              level: 'WARN',
+              message: t('activityLog.messages.folderOpenFailed'),
+              outcome: 'Skipped',
+              source: 'Application startup',
+            });
+            notifyForActiveProfile({
+              level: 'warning',
+              title: t('notifications.folderTabUnavailableTitle'),
+              message: t('notifications.folderTabUnavailableMessage'),
+            });
+          }
+        }
+        if (cancelled) return;
         const requestedFolder = profileFolders.find(
           (folder) => folder.id === requestedFolderId,
         );
@@ -1436,13 +1695,30 @@ export function App({
           : (requestedFolder ?? configuredFolder ?? rememberedFolder ?? root);
         if (forceHome) forceHomeProfileIdRef.current = undefined;
         setCurrentPath(findFolderPath(profileFolders, initialFolder.id));
-        await loadFolderContent(
+        const loaded = await loadFolderContent(
           readyProfileId,
           initialFolder.id,
           profileFolders,
         );
+        if (cancelled || !loaded) return;
         setCurrentFolderId(initialFolder.id);
         initializedProfileIdRef.current = readyProfileId;
+        if (requestedFolder && !forceHome) {
+          await recordEventForProfile(readyProfileId, {
+            action: 'Open',
+            category: 'Bookmarks',
+            dataChanged: false,
+            durationMs: 0,
+            eventCode: 'FOLDER-TAB-LOAD-COMPLETE',
+            itemType: 'Folder',
+            itemsAffected: 1,
+            kind: 'ACTIVITY',
+            level: 'INFO',
+            message: t('activityLog.messages.folderOpened'),
+            outcome: 'Succeeded',
+            source: 'Application startup',
+          });
+        }
       })
       .catch(async () => {
         if (cancelled) return;
@@ -1460,6 +1736,18 @@ export function App({
           outcome: 'Failed',
           source: 'Application startup',
         });
+        notifyForActiveProfile({
+          level: 'error',
+          title: t('notifications.errorTitle'),
+          message: t('activityLog.messages.initialFolderLoadFailed'),
+          actions: [
+            {
+              id: 'retry-folder-startup',
+              label: t('notifications.retry'),
+              run: () => window.location.reload(),
+            },
+          ],
+        });
       });
     return () => {
       cancelled = true;
@@ -1467,6 +1755,7 @@ export function App({
   }, [
     bookmarkManager,
     loadFolderContent,
+    notifyForActiveProfile,
     readyProfileId,
     recordEventForProfile,
     t,
@@ -1652,23 +1941,35 @@ export function App({
       ? recordEventForProfile(currentInitializationState.profile.id, input)
       : Promise.resolve();
 
-  /** Adds matched INFO/ERROR records around one implemented profile mutation. */
+  /** Reports the commit separately from refresh failures; sparse capture owns admission. */
   const runLoggedProfileAction = async (
-    work: () => Promise<void>,
+    work: (committed: () => void) => Promise<void>,
     action: string,
     eventStem: string,
     successMessage: string,
     failureMessage: string,
     notify = true,
+    ownerProfileId?: string,
   ) => {
+    const recordMutation = (
+      input: Parameters<ManageActivityLog['record']>[1],
+    ) =>
+      ownerProfileId
+        ? recordEventForProfile(ownerProfileId, input)
+        : recordProfileEvent(input);
+    let committed = false;
+    const operationId = `op-${crypto.randomUUID()}`;
     try {
-      await work();
-      await recordProfileEvent({
+      await work(() => {
+        committed = true;
+      });
+      await recordMutation({
         action,
         category: 'Profiles',
         dataChanged: true,
         durationMs: 0,
         eventCode: `PROFILE-${eventStem}-COMPLETE`,
+        operationId,
         itemType: 'Profile settings',
         itemsAffected: 1,
         kind: 'ACTIVITY',
@@ -1684,7 +1985,13 @@ export function App({
           title: t('notifications.operationCompletedTitle'),
         });
     } catch (error) {
-      await recordProfileEvent({
+      await recordMutation({
+        reason: committed
+          ? 'committed'
+          : error instanceof ZodError
+            ? 'validation'
+            : 'system',
+        operationId,
         action,
         category: 'Profiles',
         dataChanged: false,
@@ -1694,10 +2001,20 @@ export function App({
         itemsAffected: 0,
         kind: 'DIAGNOSTIC',
         level: 'ERROR',
-        message: failureMessage,
+        message: committed
+          ? t('activityLog.messages.savedViewDegraded')
+          : failureMessage,
         outcome: 'Failed',
         source: 'Profile manager',
       });
+      if (committed) {
+        notifyForActiveProfile({
+          level: 'warning',
+          message: t('activityLog.messages.savedViewDegraded'),
+          title: t('notifications.limitedDataTitle'),
+        });
+        return;
+      }
       if (notify) notifyOperationError(failureMessage);
       throw error;
     }
@@ -1725,6 +2042,8 @@ export function App({
   ) => {
     if (!readyProfileId || !currentFolderId || !activeSettings)
       throw new Error('active-folder-not-ready');
+    let committed = false;
+    const operationId = `op-${crypto.randomUUID()}`;
     try {
       const settings = activeSettings;
       let preparedValue = {
@@ -1853,6 +2172,7 @@ export function App({
                 : defaultFolderDisplaySettings.bookmarkView,
           });
         }
+        committed = true;
         const undoAfterLineage = await bookmarkManager
           .captureUndoLineage(readyProfileId, currentFolderId)
           .catch(() => undefined);
@@ -1961,14 +2281,32 @@ export function App({
         dataChanged: false,
         durationMs: 0,
         eventCode: `${kind.toUpperCase()}-CREATE-FAILED`,
+        reason: committed
+          ? 'committed'
+          : error instanceof ZodError
+            ? 'validation'
+            : 'system',
+        operationId,
         itemType: kind === 'bookmark' ? 'Bookmark' : 'Folder',
         itemsAffected: 0,
         kind: 'DIAGNOSTIC',
         level: 'ERROR',
-        message: t(`activityLog.messages.${kind}CreateFailed`),
+        message: t(
+          committed
+            ? 'activityLog.messages.savedViewDegraded'
+            : `activityLog.messages.${kind}CreateFailed`,
+        ),
         outcome: 'Failed',
         source: kind === 'bookmark' ? 'Bookmark creator' : 'Folder creator',
       });
+      if (committed) {
+        notifyForActiveProfile({
+          level: 'warning',
+          message: t('activityLog.messages.savedViewDegraded'),
+          title: t('notifications.limitedDataTitle'),
+        });
+        return;
+      }
       notifyContentFailure(error, kind, 'create');
       throw error;
     }
@@ -1983,6 +2321,8 @@ export function App({
       throw new Error('active-folder-not-ready');
     const isBookmark = 'url' in target;
     const itemType = isBookmark ? 'Bookmark' : 'Folder';
+    let committed = false;
+    const operationId = `op-${crypto.randomUUID()}`;
     try {
       const settings = activeSettings;
       let preparedValue = {
@@ -2038,8 +2378,8 @@ export function App({
         target.id,
         isBookmark ? 'bookmark' : 'folder',
         'edited',
-        () =>
-          isBookmark
+        async () => {
+          await (isBookmark
             ? bookmarkManager.updateBookmark(
                 readyProfileId,
                 target.id,
@@ -2062,7 +2402,9 @@ export function App({
                   title: preparedValue.title,
                 },
                 target.updatedAt,
-              ),
+              ));
+          committed = true;
+        },
       );
       if (settings.rememberLastAppearance) {
         try {
@@ -2140,16 +2482,32 @@ export function App({
         dataChanged: false,
         durationMs: 0,
         eventCode: `${itemType.toUpperCase()}-UPDATE-FAILED`,
+        reason: committed
+          ? 'committed'
+          : error instanceof ZodError
+            ? 'validation'
+            : 'system',
+        operationId,
         itemType,
         itemsAffected: 0,
         kind: 'DIAGNOSTIC',
         level: 'ERROR',
         message: t(
-          `activityLog.messages.${isBookmark ? 'bookmarkUpdateFailed' : 'folderUpdateFailed'}`,
+          committed
+            ? 'activityLog.messages.savedViewDegraded'
+            : `activityLog.messages.${isBookmark ? 'bookmarkUpdateFailed' : 'folderUpdateFailed'}`,
         ),
         outcome: 'Failed',
         source: isBookmark ? 'Bookmark editor' : 'Folder editor',
       });
+      if (committed) {
+        notifyForActiveProfile({
+          level: 'warning',
+          message: t('activityLog.messages.savedViewDegraded'),
+          title: t('notifications.limitedDataTitle'),
+        });
+        return;
+      }
       notifyContentFailure(error, isBookmark ? 'bookmark' : 'folder', 'update');
       throw error;
     }
@@ -2975,6 +3333,7 @@ export function App({
                   source: 'Settings',
                 });
             });
+          setActivityLogSettings(null);
           if (readyProfileId)
             void activityLog
               .getSettings(readyProfileId)
@@ -3061,34 +3420,38 @@ export function App({
           }}
           onReport={(event) => {
             const message = t(
-              event.code === 'import.save.succeeded'
-                ? 'import.saved'
-                : event.code === 'import.save.failed'
-                  ? 'import.saveFailed'
-                  : event.code === 'import.save.changed'
-                    ? 'import.destinationChanged'
-                    : event.code === 'import.save.paused'
-                      ? 'import.synchronizationPaused'
-                      : event.code === 'import.save.excluded'
-                        ? 'import.exclusionsSaved'
-                        : event.code === 'import.save.refresh-failed'
-                          ? 'import.refreshFailed'
-                          : event.code === 'import.unlock.failed'
-                            ? 'import.unlockFailed'
-                            : event.code === 'import.destination.failed'
-                              ? 'import.destinationFailed'
-                              : event.code === 'import.destination.missing'
-                                ? 'import.destinationMissing'
-                                : event.code === 'import.validation.csv-flat'
-                                  ? 'import.csvFlat'
-                                  : event.level === 'ERROR'
-                                    ? 'import.validationFailed'
-                                    : 'import.eventMessage',
+              event.code === 'import.save.activity-excluded'
+                ? 'activityRebuild.excluded'
+                : event.code === 'import.save.succeeded'
+                  ? 'import.saved'
+                  : event.code === 'import.save.failed'
+                    ? 'import.saveFailed'
+                    : event.code === 'import.save.changed'
+                      ? 'import.destinationChanged'
+                      : event.code === 'import.save.paused'
+                        ? 'import.synchronizationPaused'
+                        : event.code === 'import.save.excluded'
+                          ? 'import.exclusionsSaved'
+                          : event.code === 'import.save.refresh-failed'
+                            ? 'import.refreshFailed'
+                            : event.code === 'import.unlock.failed'
+                              ? 'import.unlockFailed'
+                              : event.code === 'import.destination.failed'
+                                ? 'import.destinationFailed'
+                                : event.code === 'import.destination.missing'
+                                  ? 'import.destinationMissing'
+                                  : event.code === 'import.validation.csv-flat'
+                                    ? 'import.csvFlat'
+                                    : event.level === 'ERROR'
+                                      ? 'import.validationFailed'
+                                      : 'import.eventMessage',
             );
             reportImportValidation(event, {
               record: (input) =>
                 recordEventForProfile(readyProfileId, {
                   eventCode: input.code.toUpperCase().replaceAll('.', '-'),
+                  reason: input.reason,
+                  operationId: input.operationId,
                   level: input.level,
                   kind: input.level === 'ERROR' ? 'DIAGNOSTIC' : 'ACTIVITY',
                   outcome: importValidationOutcome(input),
@@ -3098,7 +3461,7 @@ export function App({
                   dataChanged: input.code === 'import.save.succeeded',
                   durationMs: 0,
                   itemType: 'Import',
-                  itemsAffected: 0,
+                  itemsAffected: input.itemsAffected ?? 0,
                   source: 'Import window',
                 }),
               notifyFailure: () =>
@@ -3159,7 +3522,11 @@ export function App({
       currentInitializationState.status === 'ready' ? (
         <BackupDialog
           activeProfile={currentInitializationState.profile}
-          dateTimeFormat={activeSettings?.dateTimeFormat ?? 'browser'}
+          dateTimeFormat={
+            searchInfoContext?.dateTimeFormat ??
+            activeSettings?.dateTimeFormat ??
+            'browser'
+          }
           onClose={() => {
             setProfileWindow(null);
             profileButtonRef.current?.focus();
@@ -3175,8 +3542,32 @@ export function App({
               title: t('backup.restoredStatus'),
             });
           }}
-          onReport={(event: BackupUiEvent) => {
+          onReport={(event: BackupUiEvent, ownerProfileId?: string) => {
+            if (event === 'historyExcluded') {
+              const message = t('activityRebuild.excluded');
+              void recordEventForProfile(ownerProfileId ?? null, {
+                action: 'Restore',
+                category: 'Application',
+                dataChanged: false,
+                durationMs: 0,
+                eventCode: 'BACKUP-HISTORY-EXCLUDED',
+                itemType: 'Activity history',
+                itemsAffected: 0,
+                kind: 'ACTIVITY',
+                level: 'WARN',
+                message,
+                outcome: 'Skipped',
+                source: 'Backup window',
+              });
+              notifyForActiveProfile({
+                level: 'warning',
+                title: t('backup.title'),
+                message,
+              });
+              return;
+            }
             const failed = event.endsWith('Failed');
+            const degraded = event === 'restoreDegraded';
             const action = event.startsWith('create')
               ? 'Create'
               : event.startsWith('delete')
@@ -3185,21 +3576,23 @@ export function App({
                   ? 'Restore'
                   : 'Load';
             const message = t(
-              event === 'created'
-                ? 'backup.createdStatus'
-                : event === 'deleted'
-                  ? 'backup.deletedStatus'
-                  : event === 'restored'
-                    ? 'backup.restoredStatus'
-                    : event === 'createFailed'
-                      ? 'backup.createFailed'
-                      : event === 'deleteFailed'
-                        ? 'backup.deleteFailed'
-                        : event === 'restoreFailed'
-                          ? 'backup.restoreFailed'
-                          : 'backup.loadFailed',
+              degraded
+                ? 'activityLog.messages.savedViewDegraded'
+                : event === 'created'
+                  ? 'backup.createdStatus'
+                  : event === 'deleted'
+                    ? 'backup.deletedStatus'
+                    : event === 'restored'
+                      ? 'backup.restoredStatus'
+                      : event === 'createFailed'
+                        ? 'backup.createFailed'
+                        : event === 'deleteFailed'
+                          ? 'backup.deleteFailed'
+                          : event === 'restoreFailed'
+                            ? 'backup.restoreFailed'
+                            : 'backup.loadFailed',
             );
-            void recordEventForProfile(readyProfileId, {
+            void recordEventForProfile(ownerProfileId ?? null, {
               action,
               category: 'Application',
               dataChanged: !failed && event !== 'loadFailed',
@@ -3209,14 +3602,25 @@ export function App({
               itemsAffected: !failed && event !== 'loadFailed' ? 1 : 0,
               kind:
                 failed || event === 'loadFailed' ? 'DIAGNOSTIC' : 'ACTIVITY',
-              level: failed || event === 'loadFailed' ? 'ERROR' : 'INFO',
+              level: degraded
+                ? 'WARN'
+                : failed || event === 'loadFailed'
+                  ? 'ERROR'
+                  : 'INFO',
               message,
-              outcome:
-                failed || event === 'loadFailed' ? 'Failed' : 'Succeeded',
+              outcome: degraded
+                ? 'Skipped'
+                : failed || event === 'loadFailed'
+                  ? 'Failed'
+                  : 'Succeeded',
               source: 'Backup window',
             });
             notifyForActiveProfile({
-              level: failed || event === 'loadFailed' ? 'error' : 'success',
+              level: degraded
+                ? 'warning'
+                : failed || event === 'loadFailed'
+                  ? 'error'
+                  : 'success',
               message,
               title:
                 failed || event === 'loadFailed'
@@ -3455,11 +3859,63 @@ export function App({
         <>
           <BookmarkActivityLogDialog
             activityLog={activityLog}
+            requestClearConfirmation={(sessionId) =>
+              confirmationService.request({
+                cancelLabel: t('activityLog.clear.cancel'),
+                confirmLabel: t(
+                  sessionId
+                    ? 'activityRebuild.clearSession'
+                    : 'activityRebuild.clearAll',
+                ),
+                message: t(
+                  sessionId
+                    ? 'activityRebuild.confirmSession'
+                    : 'activityRebuild.confirmAll',
+                ),
+                title: t(
+                  sessionId
+                    ? 'activityRebuild.clearSession'
+                    : 'activityRebuild.clearAll',
+                ),
+                variant: 'danger',
+              })
+            }
             dateTimeFormat={
               currentInitializationState.settings.dateTimeFormat ?? 'browser'
             }
-            isOpen={profileWindow === 'activity-log'}
+            isOpen={profileWindow === 'activity-log' || activitySettingsReturn}
             onClose={() => setProfileWindow(null)}
+            onOpenSettings={() => {
+              void activityLog
+                .getSettings(currentInitializationState.profile.id)
+                .then((saved) => {
+                  setActivityLogSettings(saved);
+                  setActivitySettingsReturn(true);
+                  setProfileWindow('settings');
+                })
+                .catch(() => {
+                  notifyOperationError(
+                    t('activityLog.messages.settingsLoadFailed'),
+                  );
+                  void recordEventForProfile(
+                    currentInitializationState.profile.id,
+                    {
+                      action: 'Load',
+                      category: 'Application',
+                      dataChanged: false,
+                      durationMs: 0,
+                      eventCode: 'ACTIVITY-LOG-SETTINGS-LOAD-FAILED',
+                      itemType: 'Activity log settings',
+                      itemsAffected: 0,
+                      kind: 'DIAGNOSTIC',
+                      level: 'ERROR',
+                      message: t('activityLog.messages.settingsLoadFailed'),
+                      outcome: 'Failed',
+                      source: 'Activity log window',
+                    },
+                  );
+                });
+            }}
             onNotify={notifyForActiveProfile}
             profileId={currentInitializationState.profile.id}
           />
@@ -3538,12 +3994,21 @@ export function App({
             service={undoHistory}
           />
           <BookmarkDisplaySettingsDialog
+            activityOnly={activitySettingsReturn}
+            activitySettingsAvailable={
+              activityLogSettings?.profileId ===
+              currentInitializationState.profile.id
+            }
             activityLogSettings={
               activityLogSettings ??
               defaultActivityLogSettings(currentInitializationState.profile.id)
             }
             isOpen={profileWindow === 'settings'}
-            onClose={() => setProfileWindow(null)}
+            initialCategory={activitySettingsReturn ? 'activity' : 'general'}
+            onClose={() => {
+              setProfileWindow(activitySettingsReturn ? 'activity-log' : null);
+              setActivitySettingsReturn(false);
+            }}
             onRequestToolbarSavedStatusPermission={async () => {
               try {
                 await toolbarSavedStatus.requestPermission();
@@ -3617,11 +4082,12 @@ export function App({
                 )
                   await toolbarSavedStatus.requestPermission();
                 await runLoggedProfileAction(
-                  async () => {
+                  async (markCommitted) => {
                     await profileManager.updateProfileSettings(
                       currentInitializationState.profile.id,
                       display,
                     );
+                    markCommitted();
                     setPreflightSnapshot(await resumePreflight());
                   },
                   'Update',
@@ -3663,15 +4129,17 @@ export function App({
                 throw error;
               }
             }}
-            onWallpaperRejected={async () => {
+            onWallpaperRejected={async (unexpected) => {
               notifyForActiveProfile({
-                level: 'warning',
-                message: t('folderStyle.imageError', {
-                  max: currentInitializationState.settings
-                    .allowLargeWallpaperImports
-                    ? 10
-                    : 1,
-                }),
+                level: unexpected ? 'error' : 'warning',
+                message: unexpected
+                  ? t('activityLog.messages.wallpaperProcessingFailed')
+                  : t('folderStyle.imageError', {
+                      max: currentInitializationState.settings
+                        .allowLargeWallpaperImports
+                        ? 10
+                        : 1,
+                    }),
                 title: t('notifications.imageNotSelectedTitle'),
               });
               await recordEventForProfile(
@@ -3681,13 +4149,17 @@ export function App({
                   category: 'Application',
                   dataChanged: false,
                   durationMs: 0,
-                  eventCode: 'DEFAULT-FOLDER-WALLPAPER-IMPORT-REJECTED',
+                  eventCode: unexpected
+                    ? 'DEFAULT-FOLDER-WALLPAPER-IMPORT-FAILED'
+                    : 'DEFAULT-FOLDER-WALLPAPER-IMPORT-REJECTED',
                   itemType: 'Default folder background image',
                   itemsAffected: 0,
                   kind: 'DIAGNOSTIC',
-                  level: 'WARN',
+                  level: unexpected ? 'ERROR' : 'WARN',
                   message: t(
-                    'activityLog.messages.folderWallpaperImportRejected',
+                    unexpected
+                      ? 'activityLog.messages.wallpaperProcessingFailed'
+                      : 'activityLog.messages.folderWallpaperImportRejected',
                   ),
                   outcome: 'Skipped',
                   source: 'Settings',
@@ -3696,11 +4168,13 @@ export function App({
             }}
             onSaveActivitySettings={async (next) => {
               const {
+                sessionOrder,
+                eventOrder,
+                enabledCategories,
                 activityEnabled,
                 autoDeleteOldest,
                 diagnosticsEnabled,
                 enabled,
-                includeDiagnosticsExport,
                 maximumStorageMb,
                 minimumLevel,
                 retentionCount,
@@ -3709,11 +4183,13 @@ export function App({
                 const saved = await activityLog.updateSettings(
                   currentInitializationState.profile.id,
                   {
+                    sessionOrder,
+                    eventOrder,
+                    enabledCategories,
                     activityEnabled,
                     autoDeleteOldest,
                     diagnosticsEnabled,
                     enabled,
-                    includeDiagnosticsExport,
                     maximumStorageMb,
                     minimumLevel,
                     retentionCount,
@@ -3872,8 +4348,9 @@ export function App({
         onClose={() => setProfileWindow(null)}
         onCreate={async (input) => {
           await runLoggedProfileAction(
-            async () => {
+            async (markCommitted) => {
               await profileManager.create(input);
+              markCommitted();
               await refreshProfiles();
             },
             'Create',
@@ -3932,37 +4409,44 @@ export function App({
             if (!confirmed) return;
           }
           await runLoggedProfileAction(
-            async () => {
+            async (markCommitted) => {
               await backupService.create({
                 profileId,
                 trigger: 'profile-deletion',
                 type: 'deleted-profile',
               });
               await profileManager.delete(profileId);
+              markCommitted();
               await refreshProfiles();
             },
             'Delete',
             'DELETE',
             t('activityLog.messages.profileDeleted'),
             t('activityLog.messages.profileDeleteFailed'),
+            true,
+            profileId,
           );
         }}
         onDuplicate={async (profileId) => {
           await runLoggedProfileAction(
-            async () => {
+            async (markCommitted) => {
               await profileManager.duplicate(profileId);
+              markCommitted();
               await refreshProfiles();
             },
             'Duplicate',
             'DUPLICATE',
             t('activityLog.messages.profileDuplicated'),
             t('activityLog.messages.profileDuplicateFailed'),
+            true,
+            profileId,
           );
         }}
         onUpdate={async (profileId, input) => {
           await runLoggedProfileAction(
-            async () => {
+            async (markCommitted) => {
               await profileManager.update(profileId, input);
+              markCommitted();
               await refreshProfiles();
               setPreflightSnapshot(await resumePreflight());
             },
@@ -3970,6 +4454,8 @@ export function App({
             'UPDATE',
             t('activityLog.messages.profileUpdated'),
             t('activityLog.messages.profileUpdateFailed'),
+            true,
+            profileId,
           );
         }}
         profiles={profiles}
@@ -4069,13 +4555,14 @@ export function App({
                 title: t('notes.savedTitle'),
               });
           }}
-          onMutationError={() => {
+          onMutationError={(_action, reason) => {
             void recordEventForProfile(currentInitializationState.profile.id, {
               action: 'Update',
               category: 'Notes',
               dataChanged: false,
               durationMs: 0,
               eventCode: 'NOTES-CHANGE-FAILED',
+              reason: reason === 'conflict' ? 'conflict' : 'system',
               itemType: 'Note data',
               itemsAffected: 0,
               kind: 'DIAGNOSTIC',
@@ -4360,12 +4847,14 @@ export function App({
               source: 'Folder style editor',
             });
           }}
-          onImageRejected={async () => {
+          onImageRejected={async (unexpected) => {
             notifyForActiveProfile({
-              level: 'warning',
-              message: t('folderStyle.imageError', {
-                max: activeSettings?.allowLargeWallpaperImports ? 10 : 1,
-              }),
+              level: unexpected ? 'error' : 'warning',
+              message: unexpected
+                ? t('activityLog.messages.wallpaperProcessingFailed')
+                : t('folderStyle.imageError', {
+                    max: activeSettings?.allowLargeWallpaperImports ? 10 : 1,
+                  }),
               title: t('notifications.imageNotSelectedTitle'),
             });
             if (!readyProfileId) return;
@@ -4374,12 +4863,18 @@ export function App({
               category: 'Bookmarks',
               dataChanged: false,
               durationMs: 0,
-              eventCode: 'FOLDER-WALLPAPER-IMPORT-REJECTED',
+              eventCode: unexpected
+                ? 'FOLDER-WALLPAPER-IMPORT-FAILED'
+                : 'FOLDER-WALLPAPER-IMPORT-REJECTED',
               itemType: 'Folder background image',
               itemsAffected: 0,
               kind: 'DIAGNOSTIC',
-              level: 'WARN',
-              message: t('activityLog.messages.folderWallpaperImportRejected'),
+              level: unexpected ? 'ERROR' : 'WARN',
+              message: t(
+                unexpected
+                  ? 'activityLog.messages.wallpaperProcessingFailed'
+                  : 'activityLog.messages.folderWallpaperImportRejected',
+              ),
               outcome: 'Skipped',
               source: 'Folder style editor',
             });
@@ -4513,13 +5008,9 @@ export function App({
             }
             if (key === 'open') {
               if (target.kind === 'folder') {
-                void openFolder(target.value.id, 'Item context menu')
-                  .then(() => {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('folder', target.value.id);
-                    window.history.pushState({}, '', url);
-                  })
-                  .catch(() => undefined);
+                void openFolder(target.value.id, 'Item context menu').catch(
+                  () => undefined,
+                );
               } else {
                 void openBookmark(
                   target.value.url,
@@ -4537,27 +5028,43 @@ export function App({
                 ).catch(() => undefined);
                 return;
               }
-              const url = (() => {
-                const folderUrl = new URL(window.location.href);
-                folderUrl.searchParams.set('folder', target.value.id);
-                return folderUrl.href;
-              })();
-              window.open(url, '_blank', 'noopener,noreferrer');
               if (readyProfileId) {
-                void recordEventForProfile(readyProfileId, {
-                  action: 'Open in new tab',
-                  category: 'Bookmarks',
-                  dataChanged: false,
-                  durationMs: 0,
-                  eventCode: 'FOLDER-OPEN-NEW-TAB-REQUESTED',
-                  itemType: 'Folder',
-                  itemsAffected: 1,
-                  kind: 'ACTIVITY',
-                  level: 'INFO',
-                  message: t('activityLog.messages.folderOpenRequested'),
-                  outcome: 'Succeeded',
-                  source: 'Item context menu',
-                });
+                void openFolderTab(readyProfileId, target.value.id)
+                  .then(() =>
+                    recordEventForProfile(readyProfileId, {
+                      action: 'Open in new tab',
+                      category: 'Bookmarks',
+                      dataChanged: false,
+                      durationMs: 0,
+                      eventCode: 'FOLDER-OPEN-NEW-TAB-REQUESTED',
+                      itemType: 'Folder',
+                      itemsAffected: 1,
+                      kind: 'ACTIVITY',
+                      level: 'INFO',
+                      message: t('activityLog.messages.folderOpenRequested'),
+                      outcome: 'Succeeded',
+                      source: 'Item context menu',
+                    }),
+                  )
+                  .catch(async () => {
+                    await recordEventForProfile(readyProfileId, {
+                      action: 'Open in new tab',
+                      category: 'Bookmarks',
+                      dataChanged: false,
+                      durationMs: 0,
+                      eventCode: 'FOLDER-OPEN-NEW-TAB-FAILED',
+                      itemType: 'Folder',
+                      itemsAffected: 0,
+                      kind: 'DIAGNOSTIC',
+                      level: 'ERROR',
+                      message: t('activityLog.messages.folderOpenFailed'),
+                      outcome: 'Failed',
+                      source: 'Item context menu',
+                    });
+                    notifyOperationError(
+                      t('activityLog.messages.folderOpenFailed'),
+                    );
+                  });
               }
             }
             if (key === 'openNewWindow' && target.kind === 'bookmark') {
@@ -4689,6 +5196,7 @@ export function App({
               })();
             }
             if (key === 'info') {
+              setSearchInfoContext(null);
               setInfoItem(target);
             }
           }}
@@ -4715,6 +5223,211 @@ export function App({
       ) : null}
       {readyProfileId && currentFolderId && activeSettings ? (
         <SearchDialog
+          key={`search:${readyProfileId}`}
+          onConfirmResultProfileChange={() =>
+            requestConfirmation(t('searchWindow.confirmParentProfile'), 'open')
+          }
+          onInspectResult={async (result, trigger) => {
+            try {
+              const [bookmarks, folders, settings] = await Promise.all([
+                bookmarkManager.listBookmarks(result.profileId),
+                bookmarkManager.listFolders(result.profileId),
+                profileManager.getProfileSettings
+                  ? profileManager.getProfileSettings(result.profileId)
+                  : Promise.resolve(activeSettings),
+              ]);
+              const item = (
+                result.kind === 'bookmark' ? bookmarks : folders
+              ).find(
+                (candidate) =>
+                  candidate.id === result.item.id &&
+                  candidate.profileId === result.profileId,
+              );
+              if (!item || settings.profileId !== result.profileId)
+                throw new Error('search-info-item-missing');
+              if (
+                !trigger.isConnected ||
+                !trigger.closest('dialog')?.open ||
+                readyProfileIdRef.current !== readyProfileId
+              )
+                return;
+              setSearchInfoContext({
+                profileId: result.profileId,
+                parentName:
+                  formatFolderPath(
+                    findFolderPath(folders, item.parentId ?? ''),
+                    pathSeparator,
+                  ) || t('itemInfo.none'),
+                profileName:
+                  result.profileId !== readyProfileId
+                    ? result.profileName
+                    : undefined,
+                dateTimeFormat: settings.dateTimeFormat ?? 'browser',
+                trigger,
+              });
+              setInfoItem(
+                result.kind === 'bookmark'
+                  ? { kind: 'bookmark', value: item as Bookmark }
+                  : { kind: 'folder', value: item as Folder },
+              );
+            } catch {
+              await recordEventForProfile(result.profileId, {
+                action: 'Load',
+                category: 'Bookmarks',
+                dataChanged: false,
+                durationMs: 0,
+                eventCode: 'SEARCH-ITEM-INFO-FAILED',
+                itemType: result.kind === 'folder' ? 'Folder' : 'Bookmark',
+                itemsAffected: 0,
+                kind: 'DIAGNOSTIC',
+                level: 'ERROR',
+                message: t('searchWindow.infoFailed'),
+                outcome: 'Failed',
+                source: 'Search window',
+              });
+              notifyOperationError(t('searchWindow.infoFailed'));
+              requestAnimationFrame(() => {
+                if (trigger.isConnected && trigger.closest('dialog')?.open)
+                  trigger.focus();
+              });
+            }
+          }}
+          onInspectUrlMatch={(member) =>
+            createUrlMatchActions().inspect(member)
+          }
+          onDeleteUrlMatch={(member) => createUrlMatchActions().delete(member)}
+          onOpenUrlMatchFolder={async (member, source = 'URL matches') => {
+            let activatedState:
+              Awaited<ReturnType<typeof resumePreflight>> | undefined;
+            try {
+              // Resolve the current parent rather than trusting the Search snapshot.
+              const [items, profileFolders] = await Promise.all([
+                bookmarkManager.listBookmarks(member.profileId),
+                bookmarkManager.listFolders(member.profileId),
+              ]);
+              const item = (
+                member.kind === 'folder' ? profileFolders : items
+              ).find(
+                (item) =>
+                  item.id === member.item.id &&
+                  item.profileId === member.profileId,
+              );
+              const parent = profileFolders.find(
+                (folder) =>
+                  folder.id ===
+                    (item?.parentId ??
+                      (member.kind === 'folder' ? item?.id : undefined)) &&
+                  folder.profileId === member.profileId,
+              );
+              if (!item || !parent) throw new Error('url-match-parent-missing');
+              if (member.profileId === readyProfileId) {
+                await openFolder(parent.id, source);
+                setAllFolders(profileFolders);
+                setCurrentPath(findFolderPath(profileFolders, parent.id));
+              } else {
+                const activation = await profileManager.switchTo(
+                  member.profileId,
+                );
+                if (activation.changed) {
+                  initializedProfileIdRef.current = undefined;
+                  closeProfileBoundState();
+                  clearProfileBoundContent();
+                  await publishProfileActivationSafely(activation);
+                }
+                await recordEventForProfile(member.profileId, {
+                  action: 'Switch',
+                  category: 'Profiles',
+                  dataChanged: activation.changed,
+                  durationMs: 0,
+                  eventCode: 'PROFILE-SWITCH-COMPLETE',
+                  itemType: 'Active profile',
+                  itemsAffected: 1,
+                  kind: 'ACTIVITY',
+                  level: 'INFO',
+                  message: t('activityLog.messages.profileSwitched'),
+                  outcome: 'Succeeded',
+                  source,
+                });
+                activatedState = await resumePreflight();
+                if (
+                  activatedState.initialization.status !== 'ready' ||
+                  activatedState.initialization.profile.id !== member.profileId
+                )
+                  throw new Error('url-match-profile-not-ready');
+                // Install the explicit destination before publishing the new profile state,
+                // so startup preferences cannot overwrite this navigation request.
+                const loaded = await loadFolderContent(
+                  member.profileId,
+                  parent.id,
+                  profileFolders,
+                );
+                if (!loaded) return;
+                setCurrentFolderId(parent.id);
+                setCurrentPath(findFolderPath(profileFolders, parent.id));
+                initializedProfileIdRef.current = member.profileId;
+                setPreflightSnapshot(activatedState);
+                await recordEventForProfile(member.profileId, {
+                  action: 'Open',
+                  category: 'Bookmarks',
+                  dataChanged: false,
+                  durationMs: 0,
+                  eventCode: 'FOLDER-OPEN-COMPLETE',
+                  itemType: 'Folder',
+                  itemsAffected: 1,
+                  kind: 'ACTIVITY',
+                  level: 'INFO',
+                  message: t('activityLog.messages.folderOpened'),
+                  outcome: 'Succeeded',
+                  source,
+                });
+                const preferences =
+                  activatedState.initialization.settings
+                    .notificationPreferences ?? defaultNotificationPreferences;
+                if (activation.changed && preferences.enabled) {
+                  try {
+                    // The destination may enable notices before its viewport commits.
+                    notificationService.configure({
+                      enabled: preferences.enabled,
+                      stackLimit: preferences.stackLimit,
+                    });
+                    showNotification({
+                      id: 'url-match-folder-profile-changed',
+                      level: 'information',
+                      message: t('urlMatches.folderProfileChanged'),
+                      title: t('notifications.profileSwitchedTitle'),
+                    });
+                  } catch {
+                    console.error('url-match-folder-notification-failed');
+                  }
+                }
+              }
+              setIsSearchOpen(false);
+            } catch (cause) {
+              if (activatedState) setPreflightSnapshot(activatedState);
+              await recordEventForProfile(member.profileId, {
+                action: 'Open',
+                category: 'Bookmarks',
+                dataChanged: false,
+                durationMs: 0,
+                eventCode:
+                  source === 'Search window'
+                    ? 'SEARCH-PARENT-FOLDER-OPEN-FAILED'
+                    : 'URL-MATCH-FOLDER-OPEN-FAILED',
+                itemType: 'Folder',
+                itemsAffected: 0,
+                kind: 'DIAGNOSTIC',
+                level: 'ERROR',
+                message: t('urlMatches.openFolderFailed'),
+                outcome: 'Failed',
+                source,
+              });
+              notifyOperationError(t('urlMatches.openFolderFailed'));
+              throw new Error('url-match-folder-open-failed', { cause });
+            }
+          }}
+          onCopyUrlMatchInfo={(details, value) =>
+            createUrlMatchActions().copy(details, value)
+          }
           activeProfileId={readyProfileId}
           bookmarkOpening={activeSettings.bookmarkOpening ?? 'current-tab'}
           currentFolderId={currentFolderId}
@@ -4725,6 +5438,35 @@ export function App({
           isOpen={isSearchOpen}
           loadFailed={searchLoadFailed}
           onClose={() => setIsSearchOpen(false)}
+          onLoadUrlMatches={() =>
+            loadUrlMatchSnapshot({
+              listProfiles: async () =>
+                (await profileManager.list()).map(({ profile }) => ({
+                  id: profile.id,
+                  name: profile.username,
+                })),
+              listBookmarks: (profileId) =>
+                bookmarkManager.listBookmarks(profileId),
+              listFolders: (profileId) =>
+                bookmarkManager.listFolders(profileId),
+            })
+          }
+          onSubscribeUrlMatchChanges={subscribeUrlMatchChanges}
+          onUrlMatchScan={(outcome, explicit, notifyFailure) =>
+            reportUrlMatchScan({
+              outcome,
+              explicit,
+              notifyFailure,
+              record: (event) => recordEventForProfile(readyProfileId, event),
+              notify: notifyForActiveProfile,
+              messages: {
+                title: t('urlMatches.title'),
+                complete: t('urlMatches.complete'),
+                failed: t('urlMatches.failed'),
+                outdated: t('urlMatches.outdated'),
+              },
+            })
+          }
           onOpenResult={async (
             result: BookmarkSearchResult,
             opening: BookmarkClickOpening,
@@ -4912,14 +5654,25 @@ export function App({
       ) : null}
       {infoItem ? (
         <ItemInfoDialog
+          profileName={searchInfoContext?.profileName}
           dateTimeFormat={activeSettings?.dateTimeFormat ?? 'browser'}
           item={infoItem}
-          onClose={() => setInfoItem(null)}
+          onClose={() => {
+            const trigger = searchInfoContext?.trigger;
+            setInfoItem(null);
+            setSearchInfoContext(null);
+            if (trigger)
+              requestAnimationFrame(() => {
+                if (trigger.isConnected) trigger.focus();
+              });
+          }}
           onCopy={async (_field: ItemInfoField, value) => {
             if (!readyProfileId) throw new Error('active-profile-not-ready');
+            const infoProfileId =
+              searchInfoContext?.profileId ?? readyProfileId;
             try {
               await writeClipboardText(value);
-              await recordEventForProfile(readyProfileId, {
+              await recordEventForProfile(infoProfileId, {
                 action: 'Copy',
                 category: 'Bookmarks',
                 dataChanged: false,
@@ -4939,7 +5692,7 @@ export function App({
                 title: t('notifications.copiedTitle'),
               });
             } catch (error) {
-              await recordEventForProfile(readyProfileId, {
+              await recordEventForProfile(infoProfileId, {
                 action: 'Copy',
                 category: 'Bookmarks',
                 dataChanged: false,
@@ -4960,8 +5713,12 @@ export function App({
             }
           }}
           parentName={
-            findFolderPath(allFolders, infoItem.value.parentId ?? '').at(-1) ??
-            t('itemInfo.none')
+            searchInfoContext?.parentName ??
+            (formatFolderPath(
+              findFolderPath(allFolders, infoItem.value.parentId ?? ''),
+              pathSeparator,
+            ) ||
+              t('itemInfo.none'))
           }
         />
       ) : null}
@@ -5008,6 +5765,21 @@ export function App({
             }
           } catch (error) {
             console.error('first-profile-create-failed');
+            await recordEventForProfile(null, {
+              action: 'Create',
+              category: 'Profiles',
+              dataChanged: false,
+              durationMs: 0,
+              eventCode: 'PROFILE-FIRST-CREATE-FAILED',
+              itemsAffected: 0,
+              itemType: 'Local profile',
+              kind: 'DIAGNOSTIC',
+              level: 'ERROR',
+              message: t('activityLog.messages.profileCreateFailed'),
+              outcome: 'Failed',
+              source: 'Welcome window',
+              reason: error instanceof ZodError ? 'validation' : 'system',
+            });
             showNotification({
               level: 'error',
               message: t('activityLog.messages.profileCreateFailed'),

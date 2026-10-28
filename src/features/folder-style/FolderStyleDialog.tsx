@@ -12,7 +12,10 @@ import { GradientDirectionControl } from '../../components/GradientDirectionCont
 import { ImageFitSelect } from '../../components/ImageFitSelect';
 import { ClearIcon } from '../../components/icons/ClearIcon';
 import type { ProfileSettings } from '../../domain/profile-settings';
-import { optimizeFolderWallpaper } from '../../shared/optimize-folder-wallpaper';
+import {
+  optimizeFolderWallpaper,
+  WallpaperOptimizationError,
+} from '../../shared/optimize-folder-wallpaper';
 import { useFileInputCancelRef } from '../../shared/file-input-cancel';
 
 export interface FolderStyleValue {
@@ -44,7 +47,7 @@ interface FolderStyleDialogProps {
   navigationTransparency: number;
   onClose: () => void;
   onCropFailure?: () => void | Promise<void>;
-  onImageRejected?: () => void | Promise<void>;
+  onImageRejected?: (unexpected?: boolean) => void | Promise<void>;
   onSave: (value: FolderStyleValue) => Promise<void>;
 }
 
@@ -181,13 +184,18 @@ export function FolderStyleDialog({
     }
   };
 
-  const reportImageRejection = () => {
+  const reportImageRejection = (cause?: unknown) => {
+    const unexpected =
+      cause !== undefined &&
+      !(
+        cause instanceof WallpaperOptimizationError && cause.reason !== 'encode'
+      );
     setImage(undefined);
     setCropSource(undefined);
     setCropSession(undefined);
     setError('');
     try {
-      void Promise.resolve(onImageRejected?.()).catch(() =>
+      void Promise.resolve(onImageRejected?.(unexpected)).catch(() =>
         console.error('A privacy-safe image warning could not be displayed.'),
       );
     } catch {
@@ -232,7 +240,10 @@ export function FolderStyleDialog({
       onClose={() => setOpenSection(null)}
       ref={dialogRef}
     >
-      <form onSubmit={(event) => void submit(event)}>
+      <form
+        className="content-editor__fixed-form"
+        onSubmit={(event) => void submit(event)}
+      >
         <header>
           <div>
             <h1 id="folder-style-title">{t('folderStyle.title')}</h1>
@@ -246,375 +257,399 @@ export function FolderStyleDialog({
             <ClearIcon />
           </button>
         </header>
-        <details
-          className="folder-style__section"
-          onToggle={(event) => {
-            const isOpen = event.currentTarget.open;
-            setOpenSection((current) =>
-              isOpen ? 'view' : current === 'view' ? null : current,
-            );
-          }}
-          open={openSection === 'view'}
-        >
-          <summary>{t('folderStyle.view')}</summary>
-          <div className="folder-style__section-content">
-            <label>
-              <span>{t('displaySettings.view')}</span>
-              <select
-                onChange={(event) =>
-                  setView(
-                    event.target.value === 'list'
-                      ? 'list'
-                      : event.target.value === 'details'
-                        ? 'details'
-                        : 'card',
-                  )
-                }
-                value={view}
-              >
-                <option value="card">{t('displaySettings.card')}</option>
-                <option value="list">{t('displaySettings.list')}</option>
-                <option value="details">{t('displaySettings.details')}</option>
-              </select>
-            </label>
-            <label>
-              <span>{t('displaySettings.size')}</span>
-              <select
-                disabled={view !== 'card'}
-                onChange={(event) =>
-                  setSize(
-                    event.target.value === 'small'
-                      ? 'small'
-                      : event.target.value === 'large'
-                        ? 'large'
-                        : 'medium',
-                  )
-                }
-                value={size}
-              >
-                <option value="small">{t('displaySettings.small')}</option>
-                <option value="medium">{t('displaySettings.medium')}</option>
-                <option value="large">{t('displaySettings.large')}</option>
-              </select>
-            </label>
-            <label>
-              <span>{t('displaySettings.spacing')}</span>
-              <select
-                disabled={view !== 'card'}
-                onChange={(event) =>
-                  setSpacing(
-                    event.target.value === 'compact'
-                      ? 'compact'
-                      : event.target.value === 'spacious'
-                        ? 'spacious'
-                        : 'comfortable',
-                  )
-                }
-                value={spacing}
-              >
-                <option value="compact">{t('displaySettings.compact')}</option>
-                <option value="comfortable">
-                  {t('displaySettings.comfortable')}
-                </option>
-                <option value="spacious">
-                  {t('displaySettings.spacious')}
-                </option>
-              </select>
-            </label>
-            <label>
-              <span>{t('displaySettings.sortBy')}</span>
-              <select
-                onChange={(event) =>
-                  setSortBy(
-                    event.target.value === 'title' ||
-                      event.target.value === 'createdAt' ||
-                      event.target.value === 'updatedAt' ||
-                      event.target.value === 'domain'
-                      ? event.target.value
-                      : 'manual',
-                  )
-                }
-                value={sortBy}
-              >
-                <option value="manual">
-                  {t('displaySettings.manualOrder')}
-                </option>
-                <option value="title">{t('displaySettings.itemTitle')}</option>
-                <option value="createdAt">
-                  {t('displaySettings.dateCreated')}
-                </option>
-                <option value="updatedAt">
-                  {t('displaySettings.dateModified')}
-                </option>
-                <option value="domain">{t('displaySettings.domain')}</option>
-              </select>
-            </label>
-            <label>
-              <span>{t('displaySettings.direction')}</span>
-              <select
-                disabled={sortBy === 'manual'}
-                onChange={(event) =>
-                  setSortDirection(
-                    event.target.value === 'descending'
-                      ? 'descending'
-                      : 'ascending',
-                  )
-                }
-                value={sortDirection}
-              >
-                <option value="ascending">
-                  {t('displaySettings.ascending')}
-                </option>
-                <option value="descending">
-                  {t('displaySettings.descending')}
-                </option>
-              </select>
-            </label>
-            <label>
-              <span>{t('displaySettings.groupBy')}</span>
-              <select
-                onChange={(event) =>
-                  setGroupBy(
-                    event.target.value === 'type' ||
-                      event.target.value === 'domain'
-                      ? event.target.value
-                      : 'none',
-                  )
-                }
-                value={groupBy}
-              >
-                <option value="none">{t('displaySettings.none')}</option>
-                <option value="type">{t('displaySettings.type')}</option>
-                <option value="domain">{t('displaySettings.domain')}</option>
-              </select>
-            </label>
-            {view === 'details' ? (
+        <div className="content-editor__body folder-style__body">
+          <details
+            className="folder-style__section"
+            onToggle={(event) => {
+              const isOpen = event.currentTarget.open;
+              setOpenSection((current) =>
+                isOpen ? 'view' : current === 'view' ? null : current,
+              );
+            }}
+            open={openSection === 'view'}
+          >
+            <summary>{t('folderStyle.view')}</summary>
+            <div className="folder-style__section-content">
+              <label>
+                <span>{t('displaySettings.view')}</span>
+                <select
+                  onChange={(event) =>
+                    setView(
+                      event.target.value === 'list'
+                        ? 'list'
+                        : event.target.value === 'details'
+                          ? 'details'
+                          : 'card',
+                    )
+                  }
+                  value={view}
+                >
+                  <option value="card">{t('displaySettings.card')}</option>
+                  <option value="list">{t('displaySettings.list')}</option>
+                  <option value="details">
+                    {t('displaySettings.details')}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>{t('displaySettings.size')}</span>
+                <select
+                  disabled={view !== 'card'}
+                  onChange={(event) =>
+                    setSize(
+                      event.target.value === 'small'
+                        ? 'small'
+                        : event.target.value === 'large'
+                          ? 'large'
+                          : 'medium',
+                    )
+                  }
+                  value={size}
+                >
+                  <option value="small">{t('displaySettings.small')}</option>
+                  <option value="medium">{t('displaySettings.medium')}</option>
+                  <option value="large">{t('displaySettings.large')}</option>
+                </select>
+              </label>
+              <label>
+                <span>{t('displaySettings.spacing')}</span>
+                <select
+                  disabled={view !== 'card'}
+                  onChange={(event) =>
+                    setSpacing(
+                      event.target.value === 'compact'
+                        ? 'compact'
+                        : event.target.value === 'spacious'
+                          ? 'spacious'
+                          : 'comfortable',
+                    )
+                  }
+                  value={spacing}
+                >
+                  <option value="compact">
+                    {t('displaySettings.compact')}
+                  </option>
+                  <option value="comfortable">
+                    {t('displaySettings.comfortable')}
+                  </option>
+                  <option value="spacious">
+                    {t('displaySettings.spacious')}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>{t('displaySettings.sortBy')}</span>
+                <select
+                  onChange={(event) =>
+                    setSortBy(
+                      event.target.value === 'title' ||
+                        event.target.value === 'createdAt' ||
+                        event.target.value === 'updatedAt' ||
+                        event.target.value === 'domain'
+                        ? event.target.value
+                        : 'manual',
+                    )
+                  }
+                  value={sortBy}
+                >
+                  <option value="manual">
+                    {t('displaySettings.manualOrder')}
+                  </option>
+                  <option value="title">
+                    {t('displaySettings.itemTitle')}
+                  </option>
+                  <option value="createdAt">
+                    {t('displaySettings.dateCreated')}
+                  </option>
+                  <option value="updatedAt">
+                    {t('displaySettings.dateModified')}
+                  </option>
+                  <option value="domain">{t('displaySettings.domain')}</option>
+                </select>
+              </label>
+              <label>
+                <span>{t('displaySettings.direction')}</span>
+                <select
+                  disabled={sortBy === 'manual'}
+                  onChange={(event) =>
+                    setSortDirection(
+                      event.target.value === 'descending'
+                        ? 'descending'
+                        : 'ascending',
+                    )
+                  }
+                  value={sortDirection}
+                >
+                  <option value="ascending">
+                    {t('displaySettings.ascending')}
+                  </option>
+                  <option value="descending">
+                    {t('displaySettings.descending')}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>{t('displaySettings.groupBy')}</span>
+                <select
+                  onChange={(event) =>
+                    setGroupBy(
+                      event.target.value === 'type' ||
+                        event.target.value === 'domain'
+                        ? event.target.value
+                        : 'none',
+                    )
+                  }
+                  value={groupBy}
+                >
+                  <option value="none">{t('displaySettings.none')}</option>
+                  <option value="type">{t('displaySettings.type')}</option>
+                  <option value="domain">{t('displaySettings.domain')}</option>
+                </select>
+              </label>
+              {view === 'details' ? (
+                <label>
+                  <span>
+                    {t('folderStyle.detailsTableTransparency', {
+                      value: tableTransparency,
+                    })}
+                  </span>
+                  <input
+                    aria-label={t('folderStyle.detailsTableTransparency', {
+                      value: tableTransparency,
+                    })}
+                    max={100}
+                    min={0}
+                    onChange={(event) =>
+                      setTableTransparency(Number(event.target.value))
+                    }
+                    step={1}
+                    type="range"
+                    value={tableTransparency}
+                  />
+                  <span className="content-editor__help">
+                    {t('folderStyle.detailsTableTransparencyHelp')}
+                  </span>
+                </label>
+              ) : null}
+            </div>
+          </details>
+          <details
+            className="folder-style__section"
+            onToggle={(event) => {
+              const isOpen = event.currentTarget.open;
+              setOpenSection((current) =>
+                isOpen
+                  ? 'background'
+                  : current === 'background'
+                    ? null
+                    : current,
+              );
+            }}
+            open={openSection === 'background'}
+          >
+            <summary>{t('folderStyle.background')}</summary>
+            <div className="folder-style__section-content">
+              <div className="content-editor__appearance-options">
+                {(['none', 'color', 'gradient', 'image'] as const).map(
+                  (option) => (
+                    <label key={option}>
+                      <input
+                        checked={kind === option}
+                        name="folder-style"
+                        onChange={() => {
+                          setKind(option);
+                          setAppearanceAnnouncement('');
+                        }}
+                        type="radio"
+                      />
+                      {option === 'none'
+                        ? t('folderStyle.noBackground')
+                        : t(`contentEditor.appearanceKinds.${option}`)}
+                    </label>
+                  ),
+                )}
+              </div>
+              {kind === 'color' ? (
+                <div className="content-editor__color-controls">
+                  <input
+                    aria-label={t('folderStyle.color')}
+                    onChange={(event) => setColor(event.target.value)}
+                    type="color"
+                    value={color}
+                  />
+                  <button
+                    className="content-editor__randomize-button"
+                    onClick={randomizeColor}
+                    type="button"
+                  >
+                    {t('contentEditor.randomColor')}
+                  </button>
+                </div>
+              ) : null}
+              {kind === 'gradient' ? (
+                <div className="content-editor__gradient-controls">
+                  <div className="content-editor__gradient-colors">
+                    {colors.map((value, index) => (
+                      <label key={index}>
+                        <span>
+                          {t('contentEditor.gradientColor', {
+                            number: index + 1,
+                          })}
+                        </span>
+                        <input
+                          aria-label={t('contentEditor.gradientColor', {
+                            number: index + 1,
+                          })}
+                          onChange={(event) => {
+                            const next = [...colors] as [
+                              string,
+                              string,
+                              string,
+                            ];
+                            next[index] = event.target.value;
+                            setColors(next);
+                          }}
+                          type="color"
+                          value={value}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <GradientDirectionControl
+                    onChange={setDirection}
+                    value={direction}
+                  />
+                  <div
+                    aria-label={t('contentEditor.gradientPreview')}
+                    className="content-editor__gradient-preview"
+                    role="img"
+                    style={{
+                      background: `linear-gradient(${direction}deg, ${colors.join(', ')})`,
+                    }}
+                  />
+                  <button
+                    className="content-editor__randomize-button"
+                    onClick={randomizeGradient}
+                    type="button"
+                  >
+                    {t('contentEditor.randomGradient')}
+                  </button>
+                </div>
+              ) : null}
+              {kind === 'image' ? (
+                <div className="content-editor__image-input">
+                  <ImageFitSelect onChange={setImageFit} value={imageFit} />
+                  <input
+                    accept="image/png,image/jpeg,image/bmp"
+                    aria-label={t('folderStyle.image')}
+                    disabled={processingImage}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) {
+                        reportImageRejection();
+                        return;
+                      }
+                      setError('');
+                      setProcessingImage(true);
+                      setAppearanceAnnouncement(
+                        t('folderStyle.imageProcessing'),
+                      );
+                      void optimizeFolderWallpaper(
+                        file,
+                        allowLargeWallpaperImports,
+                      )
+                        .then((optimized) => {
+                          setImage(optimized);
+                          setCropSource(optimized);
+                          setCropSession(undefined);
+                          setAppearanceAnnouncement(
+                            t('folderStyle.imageOptimized'),
+                          );
+                        })
+                        .catch(reportImageRejection)
+                        .finally(() => setProcessingImage(false));
+                    }}
+                    ref={imageInputCancelRef}
+                    required={!image}
+                    type="file"
+                  />
+                  {image ? (
+                    <>
+                      <img alt={t('folderStyle.imagePreview')} src={image} />
+                      <button
+                        className="content-editor__randomize-button"
+                        disabled={saving || processingImage}
+                        onClick={() => setCropOpen(true)}
+                        ref={cropButtonRef}
+                        type="button"
+                      >
+                        {t('contentEditor.crop.title')}
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+              <span aria-live="polite" className="visually-hidden">
+                {appearanceAnnouncement}
+              </span>
+            </div>
+          </details>
+          <details
+            className="folder-style__section"
+            onToggle={(event) => {
+              const isOpen = event.currentTarget.open;
+              setOpenSection((current) =>
+                isOpen
+                  ? 'navigation'
+                  : current === 'navigation'
+                    ? null
+                    : current,
+              );
+            }}
+            open={openSection === 'navigation'}
+          >
+            <summary>{t('folderStyle.navigationPanel')}</summary>
+            <div className="folder-style__section-content">
+              <label className="folder-style__navigation-toggle">
+                <input
+                  checked={includeNavigation}
+                  disabled={kind === 'none'}
+                  onChange={(event) =>
+                    setIncludeNavigation(event.target.checked)
+                  }
+                  type="checkbox"
+                />
+                <span>{t('folderStyle.includeNavigation')}</span>
+              </label>
               <label>
                 <span>
-                  {t('folderStyle.detailsTableTransparency', {
-                    value: tableTransparency,
+                  {t('folderStyle.navigationTransparency', {
+                    value: transparency,
                   })}
                 </span>
                 <input
-                  aria-label={t('folderStyle.detailsTableTransparency', {
-                    value: tableTransparency,
-                  })}
+                  disabled={!includeNavigation || kind === 'none'}
                   max={100}
                   min={0}
                   onChange={(event) =>
-                    setTableTransparency(Number(event.target.value))
+                    setTransparency(Number(event.target.value))
                   }
                   step={1}
                   type="range"
-                  value={tableTransparency}
+                  value={transparency}
                 />
-                <span className="content-editor__help">
-                  {t('folderStyle.detailsTableTransparencyHelp')}
-                </span>
               </label>
-            ) : null}
-          </div>
-        </details>
-        <details
-          className="folder-style__section"
-          onToggle={(event) => {
-            const isOpen = event.currentTarget.open;
-            setOpenSection((current) =>
-              isOpen ? 'background' : current === 'background' ? null : current,
-            );
-          }}
-          open={openSection === 'background'}
-        >
-          <summary>{t('folderStyle.background')}</summary>
-          <div className="folder-style__section-content">
-            <div className="content-editor__appearance-options">
-              {(['none', 'color', 'gradient', 'image'] as const).map(
-                (option) => (
-                  <label key={option}>
-                    <input
-                      checked={kind === option}
-                      name="folder-style"
-                      onChange={() => {
-                        setKind(option);
-                        setAppearanceAnnouncement('');
-                      }}
-                      type="radio"
-                    />
-                    {option === 'none'
-                      ? t('folderStyle.noBackground')
-                      : t(`contentEditor.appearanceKinds.${option}`)}
-                  </label>
-                ),
-              )}
+              <p className="content-editor__help">
+                {t('folderStyle.navigationHelp')}
+              </p>
             </div>
-            {kind === 'color' ? (
-              <div className="content-editor__color-controls">
-                <input
-                  aria-label={t('folderStyle.color')}
-                  onChange={(event) => setColor(event.target.value)}
-                  type="color"
-                  value={color}
-                />
-                <button
-                  className="content-editor__randomize-button"
-                  onClick={randomizeColor}
-                  type="button"
-                >
-                  {t('contentEditor.randomColor')}
-                </button>
-              </div>
-            ) : null}
-            {kind === 'gradient' ? (
-              <div className="content-editor__gradient-controls">
-                <div className="content-editor__gradient-colors">
-                  {colors.map((value, index) => (
-                    <label key={index}>
-                      <span>
-                        {t('contentEditor.gradientColor', {
-                          number: index + 1,
-                        })}
-                      </span>
-                      <input
-                        aria-label={t('contentEditor.gradientColor', {
-                          number: index + 1,
-                        })}
-                        onChange={(event) => {
-                          const next = [...colors] as [string, string, string];
-                          next[index] = event.target.value;
-                          setColors(next);
-                        }}
-                        type="color"
-                        value={value}
-                      />
-                    </label>
-                  ))}
-                </div>
-                <GradientDirectionControl
-                  onChange={setDirection}
-                  value={direction}
-                />
-                <div
-                  aria-label={t('contentEditor.gradientPreview')}
-                  className="content-editor__gradient-preview"
-                  role="img"
-                  style={{
-                    background: `linear-gradient(${direction}deg, ${colors.join(', ')})`,
-                  }}
-                />
-                <button
-                  className="content-editor__randomize-button"
-                  onClick={randomizeGradient}
-                  type="button"
-                >
-                  {t('contentEditor.randomGradient')}
-                </button>
-              </div>
-            ) : null}
-            {kind === 'image' ? (
-              <div className="content-editor__image-input">
-                <ImageFitSelect onChange={setImageFit} value={imageFit} />
-                <input
-                  accept="image/png,image/jpeg,image/bmp"
-                  aria-label={t('folderStyle.image')}
-                  disabled={processingImage}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (!file) {
-                      reportImageRejection();
-                      return;
-                    }
-                    setError('');
-                    setProcessingImage(true);
-                    setAppearanceAnnouncement(t('folderStyle.imageProcessing'));
-                    void optimizeFolderWallpaper(
-                      file,
-                      allowLargeWallpaperImports,
-                    )
-                      .then((optimized) => {
-                        setImage(optimized);
-                        setCropSource(optimized);
-                        setCropSession(undefined);
-                        setAppearanceAnnouncement(
-                          t('folderStyle.imageOptimized'),
-                        );
-                      })
-                      .catch(reportImageRejection)
-                      .finally(() => setProcessingImage(false));
-                  }}
-                  ref={imageInputCancelRef}
-                  required={!image}
-                  type="file"
-                />
-                {image ? (
-                  <>
-                    <img alt={t('folderStyle.imagePreview')} src={image} />
-                    <button
-                      className="content-editor__randomize-button"
-                      disabled={saving || processingImage}
-                      onClick={() => setCropOpen(true)}
-                      ref={cropButtonRef}
-                      type="button"
-                    >
-                      {t('contentEditor.crop.title')}
-                    </button>
-                  </>
-                ) : null}
-              </div>
-            ) : null}
-            <span aria-live="polite" className="visually-hidden">
-              {appearanceAnnouncement}
-            </span>
-          </div>
-        </details>
-        <details
-          className="folder-style__section"
-          onToggle={(event) => {
-            const isOpen = event.currentTarget.open;
-            setOpenSection((current) =>
-              isOpen ? 'navigation' : current === 'navigation' ? null : current,
-            );
-          }}
-          open={openSection === 'navigation'}
-        >
-          <summary>{t('folderStyle.navigationPanel')}</summary>
-          <div className="folder-style__section-content">
-            <label className="folder-style__navigation-toggle">
-              <input
-                checked={includeNavigation}
-                disabled={kind === 'none'}
-                onChange={(event) => setIncludeNavigation(event.target.checked)}
-                type="checkbox"
-              />
-              <span>{t('folderStyle.includeNavigation')}</span>
-            </label>
-            <label>
-              <span>
-                {t('folderStyle.navigationTransparency', {
-                  value: transparency,
-                })}
-              </span>
-              <input
-                disabled={!includeNavigation || kind === 'none'}
-                max={100}
-                min={0}
-                onChange={(event) =>
-                  setTransparency(Number(event.target.value))
-                }
-                step={1}
-                type="range"
-                value={transparency}
-              />
-            </label>
-            <p className="content-editor__help">
-              {t('folderStyle.navigationHelp')}
+          </details>
+          {error ? (
+            <p className="content-editor__error" role="alert">
+              {error}
             </p>
-          </div>
-        </details>
-        {error ? (
-          <p className="content-editor__error" role="alert">
-            {error}
-          </p>
-        ) : null}
+          ) : null}
+        </div>
         <footer>
           <button
             disabled={saving || processingImage || cropOpen}

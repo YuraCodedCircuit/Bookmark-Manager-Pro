@@ -27,7 +27,7 @@ import { defaultShortcutPreferences } from '../../domain/keyboard-shortcuts';
 import { ShortcutSettingsPanel } from './ShortcutSettingsPanel';
 import {
   isSettingsCategoryDisabled,
-  settingsCategories,
+  visibleSettingsCategories,
   type SettingsCategory,
 } from './settings-categories';
 import {
@@ -41,11 +41,16 @@ import type { ImageFit } from '../../domain/bookmark';
 import { GradientDirectionControl } from '../../components/GradientDirectionControl';
 import { ImageFitSelect } from '../../components/ImageFitSelect';
 import { ClearableInput } from '../../components/ClearableInput';
-import { optimizeFolderWallpaper } from '../../shared/optimize-folder-wallpaper';
+import {
+  optimizeFolderWallpaper,
+  WallpaperOptimizationError,
+} from '../../shared/optimize-folder-wallpaper';
 import { parseGradientDirection } from '../../shared/gradient-direction';
 import { useFileInputCancelRef } from '../../shared/file-input-cancel';
 import { defaultExportPreferences } from '../../domain/csv-export';
 import { CsvExportSettings } from './CsvExportSettings';
+import { ActivitySettingsPanel } from './ActivitySettingsPanel';
+import { activityLogSettingsSchema } from '../../domain/activity-log';
 
 const FEATURE_REQUEST_URL =
   'https://github.com/YuraCodedCircuit/Bookmark-Manager-Pro/issues/new';
@@ -58,22 +63,25 @@ const createRandomColor = (): string =>
 interface BookmarkDisplaySettingsDialogProps {
   isOpen: boolean;
   initialCategory?: SettingsCategory;
+  /** Restricts navigation, search results, and edits to Activity for log shortcuts. */
+  activityOnly?: boolean;
   onClose: () => void;
   onSave: (value: ProfileSettings) => Promise<void>;
   onSaveActivitySettings: (value: ActivityLogSettings) => Promise<void>;
   onSaveUpdateAnnouncements?: (enabled: boolean) => Promise<void>;
   onOpenExternalLink?: (url: string) => void;
   onRequestToolbarSavedStatusPermission?: () => Promise<void>;
-  onWallpaperRejected?: () => void | Promise<void>;
+  onWallpaperRejected?: (unexpected?: boolean) => void | Promise<void>;
   profiles: readonly ProfileIdentityListItem[];
   activityLogSettings: ActivityLogSettings;
+  activitySettingsAvailable?: boolean;
   settings: ProfileSettings;
   storageUsage: readonly ProfileStorageUsage[];
   updateAnnouncementsEnabled?: boolean;
 }
 
 /**
- * Presents profile-owned application settings in a searchable category layout.
+ * Presents profile-owned and explicitly labeled shared settings by category.
  * Form values remain local until Save succeeds, so Cancel never mutates the
  * active profile. Additional categories can be added without changing the
  * dialog's top navigation/content and bottom action structure.
@@ -81,7 +89,9 @@ interface BookmarkDisplaySettingsDialogProps {
 export function BookmarkDisplaySettingsDialog({
   isOpen,
   initialCategory = 'general',
+  activityOnly = false,
   activityLogSettings,
+  activitySettingsAvailable = true,
   onClose,
   onSave,
   onSaveActivitySettings,
@@ -103,9 +113,14 @@ export function BookmarkDisplaySettingsDialog({
   const [exportPreferences, setExportPreferences] = useState(
     settings.exportPreferences ?? defaultExportPreferences,
   );
-  const [selectedCategory, setSelectedCategory] =
+  const [selectedCategoryState, setSelectedCategory] =
     useState<SettingsCategory>('general');
+  const selectedCategory = activityOnly ? 'activity' : selectedCategoryState;
+  const availableCategories = activityOnly
+    ? (['activity'] as const)
+    : visibleSettingsCategories;
   const [saving, setSaving] = useState(false);
+  const [activityFormSession, setActivityFormSession] = useState(0);
   const [requestingToolbarPermission, setRequestingToolbarPermission] =
     useState(false);
   const [
@@ -219,7 +234,7 @@ export function BookmarkDisplaySettingsDialog({
     () => getSettingsCategoryMatches(t, normalizedSearch),
     [normalizedSearch, t],
   );
-  const enabledMatches = settingsCategories.filter(
+  const enabledMatches = availableCategories.filter(
     (category) =>
       !isSettingsCategoryDisabled(category) && categoryMatches.has(category),
   );
@@ -255,11 +270,12 @@ export function BookmarkDisplaySettingsDialog({
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (isOpen && !dialog.open) {
+      setActivityFormSession((session) => session + 1);
       setSearch('');
       setExportPreferences(
         settings.exportPreferences ?? defaultExportPreferences,
       );
-      setSelectedCategory(initialCategory);
+      setSelectedCategory(activityOnly ? 'activity' : initialCategory);
       setError(null);
       setRequestingToolbarPermission(false);
       setToolbarSavedStatusPermissionAvailable(
@@ -339,6 +355,7 @@ export function BookmarkDisplaySettingsDialog({
     }
   }, [
     initialCategory,
+    activityOnly,
     isOpen,
     settings.accentColorMode,
     settings.exportPreferences,
@@ -399,6 +416,7 @@ export function BookmarkDisplaySettingsDialog({
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (activityOnly && !showActivity) return;
     const data = new FormData(event.currentTarget);
     let defaultFolderBackgroundAppearance: FolderBackgroundAppearance = {
       kind: 'none',
@@ -428,10 +446,20 @@ export function BookmarkDisplaySettingsDialog({
       const currentPreferences =
         settings.profilePreferences ?? defaultProfilePreferences;
       if (showActivity) {
-        await onSaveActivitySettings({
-          ...activityLogSettings,
-          enabled: data.has('activityLogEnabled'),
-        });
+        if (!activitySettingsAvailable) return;
+        await onSaveActivitySettings(
+          activityLogSettingsSchema.parse({
+            ...activityLogSettings,
+            enabled: data.has('activityLogEnabled'),
+            activityEnabled: data.has('activityEnabled'),
+            diagnosticsEnabled: data.has('diagnosticsEnabled'),
+            autoDeleteOldest: data.has('autoDeleteOldest'),
+            minimumLevel: data.get('minimumLevel'),
+            retentionCount: Number(data.get('retentionCount')),
+            maximumStorageMb: Number(data.get('maximumStorageMb')),
+            enabledCategories: data.getAll('enabledCategories'),
+          }),
+        );
       } else
         await onSave(
           showProfiles
@@ -775,7 +803,7 @@ export function BookmarkDisplaySettingsDialog({
                     t,
                     nextNormalizedSearch,
                   );
-                  const firstMatch = settingsCategories.find(
+                  const firstMatch = availableCategories.find(
                     (category) =>
                       !isSettingsCategoryDisabled(category) &&
                       nextMatches.has(category),
@@ -801,7 +829,7 @@ export function BookmarkDisplaySettingsDialog({
               />
             </label>
             <nav aria-label={t('displaySettings.categories')}>
-              {settingsCategories.map((category) => {
+              {availableCategories.map((category) => {
                 const permanentlyDisabled =
                   isSettingsCategoryDisabled(category);
                 const hasMatch = hasSearch && categoryMatches.has(category);
@@ -1376,11 +1404,17 @@ export function BookmarkDisplaySettingsDialog({
                               setFolderBackgroundImage(value);
                               setFolderBackgroundImageId(undefined);
                             })
-                            .catch(() => {
+                            .catch((cause: unknown) => {
                               setFolderBackgroundImage(undefined);
                               try {
                                 void Promise.resolve(
-                                  onWallpaperRejected?.(),
+                                  onWallpaperRejected?.(
+                                    !(
+                                      cause instanceof
+                                        WallpaperOptimizationError &&
+                                      cause.reason !== 'encode'
+                                    ),
+                                  ),
                                 ).catch(() =>
                                   console.error(
                                     'settings-wallpaper-warning-failed',
@@ -1950,20 +1984,16 @@ export function BookmarkDisplaySettingsDialog({
                   </h2>
                   <p>{t('displaySettings.activity.description')}</p>
                 </div>
-                <fieldset>
-                  <legend>{t('displaySettings.activity.logging')}</legend>
-                  <label className="settings-checkbox-row">
-                    <input
-                      defaultChecked={activityLogSettings.enabled}
-                      name="activityLogEnabled"
-                      type="checkbox"
-                    />
-                    <span>{t('displaySettings.activity.enabled')}</span>
-                  </label>
-                  <p className="settings-dialog__help">
-                    {t('displaySettings.activity.help')}
+                {activitySettingsAvailable ? (
+                  <ActivitySettingsPanel
+                    key={`${activityLogSettings.profileId}:${activityFormSession}`}
+                    value={activityLogSettings}
+                  />
+                ) : (
+                  <p role="alert">
+                    {t('displaySettings.activity.unavailable')}
                   </p>
-                </fieldset>
+                )}
               </section>
             ) : showExport ? (
               <CsvExportSettings
@@ -2250,6 +2280,7 @@ export function BookmarkDisplaySettingsDialog({
             disabled={
               saving ||
               processingWallpaper ||
+              (showActivity && !activitySettingsAvailable) ||
               (!showGeneral &&
                 !showAppearance &&
                 !showProfiles &&

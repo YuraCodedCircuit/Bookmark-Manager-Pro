@@ -1,7 +1,11 @@
 import type { BackupRepository } from '../backup/backup-repository';
 import { stringifyTreeJson } from '../../domain/stringify-tree-json';
 import { BoundedText, utf8TextBytes } from '../../domain/bounded-text';
-import { digestBackupPayload, type BackupSnapshot } from '../../domain/backup';
+import {
+  digestBackupPayload,
+  encodeBackupPayload,
+  type BackupSnapshot,
+} from '../../domain/backup';
 import {
   encodeNativeExport,
   estimateNativeExportBytes,
@@ -180,7 +184,8 @@ export class ExportProfiles {
           settings: source.settings,
           activityLogSettings: source.activityLogSettings,
         });
-      if (categories.includes('activity')) profile.activity = source.activity;
+      // Retain the legacy category shape without transferring local history.
+      if (categories.includes('activity')) profile.activity = [];
       if (categories.includes('synchronization'))
         profile.synchronization = source.synchronization;
       size += new TextEncoder().encode(JSON.stringify(profile)).byteLength;
@@ -199,11 +204,25 @@ export class ExportProfiles {
       for await (const snapshot of history) {
         signal.throwIfAborted();
         if (!options.profileIds.includes(snapshot.profileId)) continue;
-        size += new TextEncoder().encode(JSON.stringify(snapshot)).byteLength;
-        if (size > MAX_EXPORT_BYTES) throw new Error('export-too-large');
+        if (
+          new TextEncoder().encode(JSON.stringify(snapshot)).byteLength >
+          MAX_EXPORT_BYTES - size
+        )
+          throw new Error('export-too-large');
         if ((await digestBackupPayload(snapshot.payload)) !== snapshot.digest)
           throw new Error('export-backup-integrity-failed');
-        backups.push(snapshot);
+        // Verify the source first, then authenticate the history-free copy.
+        // Never mutate an existing recovery snapshot or invalidate its digest.
+        const payload = { ...snapshot.payload, activity: [] };
+        const sanitized = {
+          ...snapshot,
+          payload,
+          digest: await digestBackupPayload(payload),
+          sizeBytes: encodeBackupPayload(payload).byteLength,
+        };
+        size += new TextEncoder().encode(JSON.stringify(sanitized)).byteLength;
+        if (size > MAX_EXPORT_BYTES) throw new Error('export-too-large');
+        backups.push(sanitized);
       }
       backups.sort((a, b) => b.createdAt - a.createdAt);
     }

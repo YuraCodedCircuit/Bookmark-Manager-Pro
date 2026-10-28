@@ -202,28 +202,8 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
             );
           }
         }
-        if (preferences.duplicateActivityLogs) {
-          const [entries, settings] = await Promise.all([
-            this.database.activity
-              .where('profileId')
-              .equals(sourceProfileId)
-              .toArray(),
-            this.database.activityLogSettings.get(sourceProfileId),
-          ]);
-          await this.database.activity.bulkAdd(
-            entries.map((entry) => ({
-              ...entry,
-              id: crypto.randomUUID(),
-              operationId: `op-duplicate-${crypto.randomUUID().replaceAll('-', '').slice(0, 12)}`,
-              profileId: targetProfileId,
-            })),
-          );
-          if (settings)
-            await this.database.activityLogSettings.add({
-              ...settings,
-              profileId: targetProfileId,
-            });
-        }
+        // History belongs to the application. Duplication copies neither
+        // events nor shared options; the new profile starts with its own gate.
       },
     );
   }
@@ -252,7 +232,6 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
       profiles.map(async (profile) => {
         const [
           settings,
-          activity,
           activitySettings,
           bookmarks,
           folders,
@@ -262,10 +241,6 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
           wallpapers,
         ] = await Promise.all([
           this.database.profileSettings.get(profile.id),
-          this.database.activity
-            .where('profileId')
-            .equals(profile.id)
-            .toArray(),
           this.database.activityLogSettings.get(profile.id),
           this.database.bookmarks
             .where('profileId')
@@ -290,7 +265,6 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
           profile,
           settings,
           activitySettings,
-          ...activity,
           ...bookmarks,
           ...folders,
           ...favorites,
@@ -402,10 +376,6 @@ export class DexieProfileManagementRepository implements ProfileManagementReposi
           throw new Error('only-profile-cannot-be-deleted');
         await this.database.profiles.delete(profileId);
         await this.database.profileSettings.delete(profileId);
-        await this.database.activity
-          .where('profileId')
-          .equals(profileId)
-          .delete();
         await this.database.activityLogSettings.delete(profileId);
         await this.database.bookmarks
           .where('profileId')

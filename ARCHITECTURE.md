@@ -161,7 +161,8 @@ remain UI-surface responsibilities because extension workers have no DOM or
 
 ## State ownership
 
-- IndexedDB owns profiles, profile-scoped activity logs and logging settings,
+- IndexedDB owns profiles, shared activity history and application log options,
+  independent profile recording gates,
   bookmark trees, customization, recovery snapshots, and resumable
   synchronization state in metadata.
 - The schema-32 `folderWallpapers` store owns optimized profile-local folder
@@ -263,3 +264,169 @@ not evident from types and names. Comments do not paraphrase straightforward
 assignments, control flow, or test expectations. Tests use descriptive suite and
 case names as their primary behavioral documentation, with comments only when a
 fixture or timing constraint is otherwise unclear.
+
+## Folder-tab background handoff
+
+Folder-tab opening uses the versioned `folder-tab` runtime protocol. The
+background validates the manager-page sender and repository ownership, creates
+an inactive temporary extension page, and persists its destination in
+`storage.session`. The temporary page requests readiness; the background
+validates its binding and activates it. The page then replaces itself with the
+canonical manager URL. Activation failure keeps the binding retryable after
+worker restart.
+
+Claims derive tab ownership from the browser sender, not message fields.
+Independent keys prevent concurrent tabs from overwriting each other's
+destinations. Closing a tab removes its binding; browser session end clears
+the store. There is no durable database migration.
+
+Bindings preserve the former query destination on reload and only apply to the
+matching initialized profile. They do not change profile selection, startup
+preferences, or other tabs. Temporary creation intents expire after two minutes;
+requests prune expired intents and reject excessive pending/bound records.
+
+Chrome hides both blank and extension-page tab URLs without optional tab access.
+Readiness therefore verifies the browser-provided sender page and tab, not a
+`tabs.get()` URL. Navigation is local to the requesting document, so leaving it
+cannot trigger a later worker redirect of another document. Early requests
+retry up to 50 times at 100 ms intervals in the page, never in the worker.
+
+Failure displays a localized error with a focused Retry button. Retry requests
+readiness again without opening another tab. Interrupted creation can leave
+this recoverable page; it is never automatically duplicated or recovered by
+guessing ownership of other tabs. New tabs use no query, fragment, or handoff
+token. Existing query links remain accepted unchanged.
+
+## URL match snapshots
+
+Search owns a transient URL matches session. Its application loader reads every
+profile through existing managers and rejects the whole scan on any read or URL
+validation failure. Entering the mode reads fresh sources; matching
+level, scope, and literal filtering operate on the last successful snapshot.
+Request generations prevent late results from replacing a newer session.
+
+The storage adapter observes committed bookmark, folder, and profile mutations
+through Dexie's cross-context storage event. The active visible match view
+debounces bursts and serializes reads; hidden views defer work and revalidate on
+return. New sessions invalidate abandoned reads. This covers editing, transfers,
+restores, synchronization, Undo/Redo, and profile metadata changes without adding
+publish hooks or observing log/settings writes. The manual Refresh control is
+removed; Retry remains available after failures.
+
+Automatic rereads retain the displayed snapshot when grouping and display
+inputs are equivalent, regardless of record order. The pure source comparator
+checks membership, ownership, titles, URLs, folder ancestry, and profile names;
+it excludes image data and metadata that item actions always reread. Existing
+results remain enabled without an added loading row during automatic rereads.
+Initial scans and explicit Retry retain loading feedback; failures still mark
+prior results outdated. A quiet unchanged success can clear a prior error.
+
+The pure domain engine uses collision-safe structured keys, full stored equality
+for Exact, and bundled `tldts` private/public suffix rules for Site. It neither
+changes bookmark records nor shares save-time duplicate policy. Groups and
+members are paged in the UI, with complete filtered membership totals. Failed
+refresh retains old results and marks them outdated. Safe result opening reuses
+the existing Search callback. No schema, runtime protocol, permission, remote
+lookup, persistent settings, or browser-history behavior changes are required.
+
+URL-match member actions read fresh source-profile metadata and validated
+settings through application contracts. `ManageProfiles.getProfileSettings`
+reads without activation. Confirmed individual deletion uses existing bounded
+Undo capture and content-change publication for the source profile. The optional
+bookmark-only deletion contract is checked again inside the repository's
+readwrite transaction, preventing stale result IDs from deleting folders.
+
+The UI removes a committed deletion from its transient snapshot before an
+automatic full refresh; failed refresh cannot resurrect it. Get info is nested
+inside Search, contains its cancel event, and restores its trigger focus.
+No serialized format, schema version, runtime protocol, or permission changes
+are required. Ordinary Search opening remains unchanged.
+
+URL-match Open folder reads the fresh bookmark and containing folder with source
+ownership checks before navigation. A different owner uses the existing profile
+activation/publication flow; its explicit destination is installed before the
+resumed preflight state so startup preferences do not replace it. The action
+closes Search and uses the current manager tab. Failed target resolution leaves
+the active profile unchanged.
+
+URL-match scan state and options remain owned by UrlMatchesPanel. Its toolbar
+is portaled into SearchDialog's query row so URL match options shares the input layout
+without introducing imperative scan handles or duplicate state. Matching level
+and Scope regroup the snapshot immediately from a native child options dialog;
+child Escape is contained and focus restores to its trigger. No stored settings
+or runtime protocols change.
+
+Folder view reads use a surface-local generation. Starting a newer folder load
+or clearing profile-bound content invalidates older results before they can
+publish content or navigation state. Cross-context refresh also rechecks its
+captured profile and folder after asynchronous reads. Superseded work returns
+without changing breadcrumb identity or reporting an unrelated operation error.
+The generation is transient and does not change durable records or protocols.
+
+Activity-log view filters and ordering apply immediately and transiently in a
+native child view-options dialog. Recording and retention controls live in
+Settings > Activity and commit through its Save action. The main log requests
+clear confirmation through the application-owned ConfirmationService. Only a
+positive decision invokes the existing profile-owned clear operation; canceled
+or failed decisions do not mutate records. Notification delivery is isolated from
+log operations. No record grouping, startup protocol, retention, or schema changes
+are part of this UI increment.
+
+## Activity history transfer boundary
+
+Profile capture excludes activity records from new recovery snapshots. Native
+export assembly emits empty legacy activity arrays and verifies older nested
+snapshots before replacing their activity arrays in the exported copy. Digests
+and byte sizes describe that copy; stored snapshots remain unchanged. Native
+import remapping discards activity, and the writer never inserts those records.
+Replace and new-profile recovery leave the current activity table untouched.
+No database or file-format version changes are required: existing activity
+fields remain readable, with empty arrays in newly captured payloads.
+
+Schema 39 owns shared activity records, session headers, and a bounded startup
+queue. Existing local rows become Earlier activity without invented browser
+membership. Shared options are initialized once from the active profile; its
+recording gate and every other profile gate remain independent. Conversion is
+one IndexedDB upgrade transaction, with source validation and count verification.
+Failed upgrades roll back; older application binaries cannot open schema 39.
+
+Observed browser startup creates a new identity. Worker restarts and additional
+surfaces reuse the browser session marker through a validated worker request.
+An explicit extension update can recover its known marker from extension local
+storage; missing exact identity otherwise creates a detected group. The
+coordination marker is independent of retained log history. No clean shutdown
+is inferred. Local webpage preview uses a detected tab-session identity because
+the page cannot observe browser startup. Real-browser reload/update and crash
+behavior remains a manual verification requirement across supported targets.
+
+Background preflight precedes surface startup. Ordinary logging writes are
+scheduled without blocking primary operations. Up to 128 waiting ordinary events
+are kept in IndexedDB during preflight; oldest waiting events are dropped on
+overflow and counted in the header. Filtering does not suppress essential header
+outcomes. A primary cached preflight can only establish that checks ended when
+recovering an interrupted log queue; it never restores erased startup details.
+
+The UI subscribes to shared IndexedDB changes. It pages 50 groups and 50 matching
+events per expanded group, preserves reader position, and exposes New events
+when following is paused. Local calendar-day unions are transient and do not
+change stored timestamps. Shared-option updates and reset preserve master gates.
+
+## Sparse activity admission
+
+The domain capture policy excludes routine success and expected rejection before
+row IDs or durable append. Callers classify only fixed reasons and preserve
+notification feedback separately. The repository atomically coalesces bounded
+local incidents across surfaces and worker resumes; success signals resolve
+matching failures. Primary mutation commit checkpoints distinguish later Undo or
+view failures from failed persistence. Synchronization summaries describe only
+operations in the final wake, avoiding invented counts across resumed work.
+
+## Folder path presentation
+
+The navigation separator adapter selects a backslash for Windows and a forward
+slash elsewhere. Display paths join intact names with spaces around that
+separator. Search and URL-match domain functions receive it explicitly; they
+remain independent of browser APIs. Get info, Import destination summaries,
+Synchronization folder labels, and Notes breadcrumbs use the same convention.
+URLs, durable identities, reconciliation keys, and transfer formats are not
+reformatted. Copied parent paths match the displayed path.

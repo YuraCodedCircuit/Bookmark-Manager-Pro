@@ -22,27 +22,110 @@ export interface BackgroundCapabilitySource {
 
 /** Runs and caches browser-session startup without relying on worker memory. */
 export class RunBackgroundPreflight {
+  private logging: Promise<void> | undefined;
   constructor(
     private readonly repository: InitializationRepository,
     private readonly sessionStore: BackgroundSessionSnapshotStore,
     private readonly languageSource: BackgroundLanguageSource,
     private readonly capabilitySource: BackgroundCapabilitySource,
-    private readonly activityLog: Pick<ManageActivityLog, 'record'>,
+    private readonly activityLog: Pick<ManageActivityLog, 'record'> &
+      Partial<Pick<ManageActivityLog, 'beginSession' | 'finishSession'>>,
     private readonly isStorageAvailable: () => boolean,
     private readonly createOperationId: () => string = () =>
       crypto.randomUUID(),
     private readonly now: () => Date = () => new Date(),
+    private readonly message: (
+      eventCode: string,
+      level: 'INFO' | 'WARN' | 'ERROR',
+    ) => string = (code, level) =>
+      level === 'ERROR'
+        ? 'Background preflight failed.'
+        : level === 'WARN'
+          ? 'Background preflight session caching is unavailable.'
+          : code.endsWith('STARTED')
+            ? 'Background preflight started.'
+            : 'Background preflight completed.',
   ) {}
 
-  async execute(): Promise<BackgroundPreflightSnapshot> {
+  async execute(update = false): Promise<BackgroundPreflightSnapshot> {
     const cached = backgroundPreflightSnapshotSchema.safeParse(
       await this.readCacheSafely(),
     );
-    if (cached.success) return cached.data;
+    if (cached.success) {
+      // Recover a pending durable queue after worker suspension. finishSession
+      // only updates an existing pending header, so cleared details stay erased.
+      if (!this.logging) void this.finishSafely(cached.data, update);
+      return cached.data;
+    }
 
-    const snapshot = await this.run();
+    const startedAt = this.now().getTime();
+    const loggingStarted = (async () => {
+      try {
+        if (!update) await this.activityLog.beginSession?.();
+      } catch {
+        console.error('background-preflight-session-start-failed');
+      }
+      await this.recordSafely(
+        null,
+        update
+          ? 'BACKGROUND-UPDATE-PREFLIGHT-STARTED'
+          : 'BACKGROUND-PREFLIGHT-STARTED',
+        'INFO',
+        startedAt,
+      );
+    })();
+    const result = await this.run();
+    const snapshot: BackgroundPreflightSnapshot = {
+      ...result,
+      completedAt: this.now().toISOString(),
+      purpose: update ? 'update' : 'startup',
+    };
+    const succeeded =
+      snapshot.initialization.status === 'ready' ||
+      snapshot.initialization.status === 'first-run';
+    const completedAt = this.now().getTime();
+    // Logging preserves actual observation times and ordering, but never holds
+    // the primary startup result behind IndexedDB or queue draining.
+    const logging = loggingStarted
+      .then(async () => {
+        await this.recordSafely(
+          null,
+          update
+            ? succeeded
+              ? 'BACKGROUND-UPDATE-PREFLIGHT-COMPLETE'
+              : 'BACKGROUND-UPDATE-PREFLIGHT-FAILED'
+            : succeeded
+              ? 'BACKGROUND-PREFLIGHT-COMPLETE'
+              : 'BACKGROUND-PREFLIGHT-FAILED',
+          succeeded ? 'INFO' : 'ERROR',
+          completedAt,
+        );
+        await this.finishSafely(snapshot, update);
+      })
+      .catch(() => console.error('background-preflight-logging-failed'));
+    this.logging = logging;
+    void logging.finally(() => {
+      if (this.logging === logging) this.logging = undefined;
+    });
     await this.writeCacheSafely(snapshot);
     return snapshot;
+  }
+
+  private async finishSafely(
+    snapshot: BackgroundPreflightSnapshot,
+    update: boolean,
+  ) {
+    const succeeded =
+      snapshot.initialization.status === 'ready' ||
+      snapshot.initialization.status === 'first-run';
+    try {
+      await this.activityLog.finishSession?.(
+        succeeded,
+        update || snapshot.purpose === 'update',
+      );
+    } catch {
+      console.error('background-preflight-session-finish-failed');
+    }
   }
 
   private async run(): Promise<BackgroundPreflightSnapshot> {
@@ -99,9 +182,6 @@ export class RunBackgroundPreflight {
           : { status: 'ready', profileId: data.profile.id },
     });
 
-    if (data.kind === 'active-profile') {
-      await this.recordSafely(data.profile.id, 'BACKGROUND-PREFLIGHT-COMPLETE');
-    }
     return snapshot;
   }
 
@@ -132,7 +212,7 @@ export class RunBackgroundPreflight {
           ? snapshot.initialization.profileId
           : undefined;
       if (profileId) {
-        await this.recordSafely(
+        void this.recordSafely(
           profileId,
           'BACKGROUND-PREFLIGHT-SESSION-CACHE-UNAVAILABLE',
           'WARN',
@@ -142,28 +222,35 @@ export class RunBackgroundPreflight {
   }
 
   private async recordSafely(
-    profileId: string,
+    profileId: string | null,
     eventCode: string,
-    level: 'INFO' | 'WARN' = 'INFO',
+    level: 'INFO' | 'WARN' | 'ERROR' = 'INFO',
+    timestamp?: number,
   ): Promise<void> {
     try {
-      await this.activityLog.record(profileId, {
-        action: 'Initialize',
-        category: 'Application',
-        dataChanged: false,
-        durationMs: 0,
-        eventCode,
-        itemType: 'Application startup',
-        itemsAffected: 1,
-        kind: 'DIAGNOSTIC',
-        level,
-        message:
-          level === 'INFO'
-            ? 'Background preflight completed.'
-            : 'Background preflight session caching is unavailable.',
-        outcome: level === 'INFO' ? 'Succeeded' : 'Skipped',
-        source: 'Background preflight service',
-      });
+      await this.activityLog.record(
+        profileId,
+        {
+          action: 'Initialize',
+          category: 'Application',
+          dataChanged: false,
+          durationMs: 0,
+          eventCode,
+          itemType: 'Application startup',
+          itemsAffected: 1,
+          kind: 'DIAGNOSTIC',
+          level,
+          message: this.message(eventCode, level),
+          outcome:
+            level === 'INFO'
+              ? 'Succeeded'
+              : level === 'ERROR'
+                ? 'Failed'
+                : 'Skipped',
+          source: 'Background preflight service',
+        },
+        timestamp,
+      );
     } catch {
       console.error('background-preflight-activity-log-write-failed');
     }

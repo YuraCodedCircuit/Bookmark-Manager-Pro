@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next';
 
 import {
-  settingsCategories,
+  visibleSettingsCategories,
   type SettingsCategory,
 } from './settings-categories';
 
@@ -55,7 +55,11 @@ const CATEGORY_RESOURCE_KEYS: Partial<
   Record<SettingsCategory, readonly string[]>
 > = {
   accessibility: ['displaySettings.accessibility'],
-  activity: ['displaySettings.activity'],
+  activity: [
+    'displaySettings.activity',
+    'activityLog.settings',
+    'activityRebuild.recordCategories',
+  ],
   appearance: APPEARANCE_KEYS.map((key) => `displaySettings.${key}`),
   backup: ['displaySettings.backupSettings'],
   import: ['displaySettings.importSettings'],
@@ -78,10 +82,10 @@ export function getSettingsCategoryMatches(
   query: string,
 ): ReadonlySet<SettingsCategory> {
   const normalizedQuery = normalize(query);
-  if (!normalizedQuery) return new Set(settingsCategories);
+  if (!normalizedQuery) return new Set(visibleSettingsCategories);
 
   return new Set(
-    settingsCategories.filter((category) =>
+    visibleSettingsCategories.filter((category) =>
       getCategoryText(t, category).some((value) =>
         normalize(value).includes(normalizedQuery),
       ),

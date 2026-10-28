@@ -10,8 +10,8 @@ export type PreflightCapabilityId =
 /** A capability result retained in the snapshot instead of failing local startup. */
 export interface PreflightCapability {
   id: PreflightCapabilityId;
-  status: 'unavailable';
-  reason: 'web-preview';
+  status: 'unavailable' | 'available';
+  reason?: string | undefined;
 }
 
 /**

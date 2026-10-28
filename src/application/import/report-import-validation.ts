@@ -36,6 +36,7 @@ export function reportImportValidation(
     else if (
       event.code === 'import.save.changed' ||
       event.code === 'import.save.excluded' ||
+      event.code === 'import.save.activity-excluded' ||
       event.code === 'import.save.paused' ||
       event.code === 'import.save.refresh-failed'
     )

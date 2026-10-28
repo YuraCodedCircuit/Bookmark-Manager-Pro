@@ -150,7 +150,6 @@ export function ProfilesSettingsPanel({
           [
             ['duplicateBookmarks', 'bookmarksAndFolders'],
             ['duplicateSettings', 'profileSettings'],
-            ['duplicateActivityLogs', 'activityLogs'],
             ['duplicateFavorites', 'favorites'],
             ['duplicateAppearance', 'appearance'],
             ['duplicateImages', 'imagesAndIcon'],

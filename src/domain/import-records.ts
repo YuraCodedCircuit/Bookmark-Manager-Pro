@@ -128,7 +128,7 @@ export function createPortableRecords(
   return { folders, bookmarks };
 }
 
-/** Remaps one native profile (including historical records) without touching personal text. */
+/** Remaps native profile data while excluding local-only activity history. */
 export function remapNativeProfile(
   source: ExportPayload['profiles'][number],
   profileId: string,
@@ -219,10 +219,7 @@ export function remapNativeProfile(
       profileId,
       itemId: remap(item.itemId, item.kind),
     })),
-    activity: rows(source.activity, 'activity').map((item) => ({
-      ...item,
-      operationId: `op-${remap(item.operationId, 'operation')}`,
-    })),
+    activity: [],
     notes: rows(source.notes, 'note').map((item) => ({
       ...item,
       folderId: remap(item.folderId, 'note-folder'),

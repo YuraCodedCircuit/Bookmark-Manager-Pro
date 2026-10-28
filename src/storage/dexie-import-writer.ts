@@ -30,6 +30,7 @@ import {
 } from '../domain/profile-settings';
 import { folderSchema } from '../domain/folder';
 import { normalizeBookmarkUrl } from '../domain/bookmark-url';
+import { activityLogSettingsSchema } from '../domain/activity-log';
 
 /** Stores complete imports and their safety/history snapshots in one abortable IndexedDB transaction. */
 export class DexieImportWriter implements ImportWriter {
@@ -170,6 +171,14 @@ export class DexieImportWriter implements ImportWriter {
           synchronizationPaused: profiles.some(
             (p) => p.value.synchronization !== null,
           ),
+          activityHistoryExcluded:
+            sourceProfiles.some((source) => !!source.activity?.length) ||
+            payload.backups.some(
+              (snapshot) =>
+                sourceProfiles.some(
+                  (source) => source.profile.id === snapshot.profileId,
+                ) && snapshot.payload.activity.length > 0,
+            ),
         },
         signal,
         async () => {
@@ -418,9 +427,10 @@ export class DexieImportWriter implements ImportWriter {
     await this.addRows(value.favorites, (batch) =>
       db.favoriteItems.bulkAdd(batch),
     );
-    await this.addRows(value.activity, (batch) => db.activity.bulkAdd(batch));
     if (value.activityLogSettings)
-      await db.activityLogSettings.add(value.activityLogSettings);
+      await db.activityLogSettings.add(
+        activityLogSettingsSchema.parse(value.activityLogSettings),
+      );
     await this.addRows(value.notes ?? [], (batch) => db.notes.bulkAdd(batch));
     await this.addRows(value.noteFolders ?? [], (batch) =>
       db.noteFolders.bulkAdd(batch),

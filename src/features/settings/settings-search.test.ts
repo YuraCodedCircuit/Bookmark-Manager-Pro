@@ -9,6 +9,14 @@ import {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('settings search', () => {
+  it('excludes the hidden Advanced category from empty and matching searches', () => {
+    expect(getSettingsCategoryMatches(i18n.t.bind(i18n), '')).not.toContain(
+      'advanced',
+    );
+    expect(
+      getSettingsCategoryMatches(i18n.t.bind(i18n), 'Advanced'),
+    ).not.toContain('advanced');
+  });
   it('matches localized category content and native option labels', () => {
     const matches = getSettingsCategoryMatches(
       i18n.t.bind(i18n),

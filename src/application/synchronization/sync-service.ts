@@ -36,6 +36,9 @@ export type SyncEvent =
   | 'resumed'
   | 'disconnected'
   | 'completed'
+  | 'recovered'
+  | 'wake-failed'
+  | 'validation'
   | 'conflict'
   | 'skipped'
   | 'failed'
@@ -62,14 +65,23 @@ export class SyncService {
     private readonly report: (
       profileId: string,
       event: SyncEvent,
+      summary?: {
+        changed: number;
+        direction: 'extension' | 'browser' | 'both';
+      },
     ) => Promise<void>,
     private readonly publishContentChange: (
       change: ContentChangeInput,
     ) => Promise<unknown> = async () => undefined,
   ) {}
-  private async feedback(profileId: string, event: SyncEvent) {
+  private async feedback(
+    profileId: string,
+    event: SyncEvent,
+    summary?: { changed: number; direction: 'extension' | 'browser' | 'both' },
+  ) {
     try {
-      await this.report(profileId, event);
+      if (summary) await this.report(profileId, event, summary);
+      else await this.report(profileId, event);
     } catch {
       console.error('sync-feedback-failed');
     }
@@ -203,7 +215,11 @@ export class SyncService {
         ).find((c) => c === message) ?? 'failed';
       await this.feedback(
         profileId,
-        code === 'permission' ? 'permission' : 'failed',
+        ['stale', 'overlap', 'inactive'].includes(code)
+          ? 'validation'
+          : code === 'permission'
+            ? 'permission'
+            : 'failed',
       );
       return {
         ...response,
@@ -230,13 +246,16 @@ export class SyncService {
   }
   /** Event/alarms recovery reads durable active-profile state, never cached tab state. */
   async wake() {
+    let owner: string | null = null;
     try {
       const profileId = await this.repository.activeProfileOrNull();
       if (!profileId) return;
+      owner = profileId;
       const connection = await this.repository.get(profileId);
       if (connection?.status === 'connected') await this.run(connection);
     } catch {
       console.error('sync-wake-failed');
+      if (owner) await this.feedback(owner, 'wake-failed');
     }
   }
   private async run(connection: SyncConnection) {
@@ -265,6 +284,8 @@ export class SyncService {
         await this.repository.save(connection);
       }
       const hadOperations = connection.operations.length > 0;
+      const pendingCount = connection.operations.length;
+      const sides = new Set(connection.operations.map(({ side }) => side));
       // Bound a wake; the periodic alarm resumes any remaining durable operations.
       for (
         let count = 0;
@@ -378,8 +399,19 @@ export class SyncService {
         await this.repository.save(connection);
         if (hadOperations) {
           await this.flushPendingContentChange(connection);
-          await this.feedback(profileId, 'completed');
+          if (!connection.issue)
+            await this.feedback(profileId, 'completed', {
+              changed: pendingCount,
+              direction:
+                sides.size > 1
+                  ? 'both'
+                  : sides.has('extension')
+                    ? 'extension'
+                    : 'browser',
+            });
         }
+        if (!hadOperations && !connection.issue)
+          await this.feedback(profileId, 'recovered');
       }
     } catch (error) {
       // Reload the last committed checkpoint: an aborted local transaction must not lose its operation.

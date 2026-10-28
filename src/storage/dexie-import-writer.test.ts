@@ -16,6 +16,7 @@ import {
 import { readPortableJson } from '../domain/portable-import';
 import { validateExport, type ExportPayload } from '../domain/profile-export';
 import { activityLogEntrySchema } from '../domain/activity-log';
+import { digestBackupPayload } from '../domain/backup';
 import { DexieProfileManagementRepository } from './dexie-profile-management-repository';
 
 let db: BookmarkManagerDatabase;
@@ -410,6 +411,33 @@ describe('foreground import persistence', () => {
       type: 'manual',
       trigger: 'manual',
     });
+    const local = activityLogEntrySchema.parse({
+      id: crypto.randomUUID(),
+      profileId,
+      action: 'Import',
+      applicationVersion: '0.7.0',
+      browserTarget: 'Test',
+      category: 'Application',
+      dataChanged: false,
+      durationMs: 0,
+      eventCode: 'IMPORT-SAVE-COMPLETE',
+      itemType: 'Import',
+      itemsAffected: 0,
+      kind: 'ACTIVITY',
+      level: 'INFO',
+      message: 'Synthetic history.',
+      operationId: 'op-test-import',
+      outcome: 'Succeeded',
+      schemaVersion: 1,
+      source: 'Import',
+      timestamp: 1,
+    });
+    await db.activity.add(local);
+    original.activity = [{ ...local, profileId, id: crypto.randomUUID() }];
+    history.payload.activity = [
+      { ...local, profileId, id: crypto.randomUUID() },
+    ];
+    history.digest = await digestBackupPayload(history.payload);
     const payload: ExportPayload = {
       format: 'bookmark-manager-pro',
       version: 1,
@@ -424,6 +452,7 @@ describe('foreground import persistence', () => {
       signal(),
     );
     expect(plan.snapshotMode).toBe('not-needed');
+    expect(plan.activityHistoryExcluded).toBe(true);
     expect(await db.profiles.count()).toBe(1);
     const result = await plan.commit(signal());
     const importedId = result.profileIds[0]!;
@@ -444,6 +473,10 @@ describe('foreground import persistence', () => {
       .toArray();
     expect(snapshots).toHaveLength(1);
     expect(snapshots[0]!.payload.profile.id).toBe(importedId);
+    expect(snapshots[0]!.payload.activity).toEqual([]);
+    expect(await db.activity.toArray()).toEqual([local]);
+    expect(original.activity).toHaveLength(1);
+    expect(history.payload.activity).toHaveLength(1);
     expect((await db.metadata.get('activeProfileId'))!.value).toBe(profileId);
     await new DexieProfileManagementRepository(db).delete(importedId);
     expect(await db.profiles.get(importedId)).toBeUndefined();

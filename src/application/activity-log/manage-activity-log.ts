@@ -1,20 +1,20 @@
+import { z } from 'zod';
 import {
   activityLogEntrySchema,
   activityLogSettingsSchema,
   type ActivityLogEntry,
-  type ActivityLogKind,
-  type ActivityLogLevel,
   type ActivityLogSettings,
+  type ActivitySessionIdentity,
+  activityCaptureLevel,
+  activityRecoveryCodes,
+  activityReasonSchema,
+  type ActivityReason,
 } from '../../domain/activity-log';
 import type { ActivityLogRepository } from './activity-log-repository';
 
-const levelRank: Record<ActivityLogLevel, number> = {
-  INFO: 0,
-  WARN: 1,
-  ERROR: 2,
-};
-
 export interface RecordActivityInput {
+  reason?: ActivityReason | undefined;
+  operationId?: string | undefined;
   action: string;
   category: ActivityLogEntry['category'];
   dataChanged: boolean;
@@ -22,182 +22,159 @@ export interface RecordActivityInput {
   eventCode: string;
   itemType: string;
   itemsAffected: number;
-  kind: ActivityLogKind;
-  level: ActivityLogLevel;
+  kind: ActivityLogEntry['kind'];
+  level: ActivityLogEntry['level'];
   message: string;
   outcome: ActivityLogEntry['outcome'];
   source: string;
 }
 
-export interface ActivityLogExport {
-  content: string;
-  filename: string;
-  mimeType: 'text/plain';
-}
-
-const pad = (value: number, length = 2) => String(value).padStart(length, '0');
-
-/** Formats a timestamp as local ISO-8601 with an explicit numeric UTC offset. */
-export function formatLocalLogTimestamp(timestamp: number): string {
-  const date = new Date(timestamp);
-  const offsetMinutes = -date.getTimezoneOffset();
-  const sign = offsetMinutes >= 0 ? '+' : '-';
-  const absoluteOffset = Math.abs(offsetMinutes);
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${pad(date.getMilliseconds(), 3)}${sign}${pad(Math.floor(absoluteOffset / 60))}:${pad(absoluteOffset % 60)}`;
-}
-
-const safeLogText = (value: string | number | boolean): string =>
-  String(value)
-    .replace(/[\r\n]/g, ' ')
-    .replaceAll('[', '(')
-    .replaceAll(']', ')')
-    .replaceAll('|', '/');
-
-/** Serializes one event as exactly one stable, grep-friendly text line. */
-export function formatActivityLogEntry(entry: ActivityLogEntry): string {
-  const prefix = `${formatLocalLogTimestamp(entry.timestamp)} [${entry.level}] [${safeLogText(entry.source)}]`;
-  const fields: ReadonlyArray<readonly [string, string | number | boolean]> = [
-    ['Event code', entry.eventCode],
-    ['Outcome', entry.outcome],
-    ['Action', entry.action],
-    ['Item type', entry.itemType],
-    ['Items affected', entry.itemsAffected],
-    ['Data changed', entry.dataChanged ? 'Yes' : 'No'],
-    ['Duration', `${entry.durationMs} ms`],
-    ['Operation ID', entry.operationId],
-  ];
-  return `${prefix} ${safeLogText(entry.message)} | ${fields
-    .map(([label, value]) => `${label}: ${safeLogText(value)}`)
-    .join(' | ')}`;
-}
-
+/** Shared defaults; enabled is the independent profile recording permission. */
 export const defaultActivityLogSettings = (
   profileId: string,
 ): ActivityLogSettings =>
   activityLogSettingsSchema.parse({
-    activityEnabled: true,
-    autoDeleteOldest: true,
-    diagnosticsEnabled: true,
-    enabled: true,
-    includeDiagnosticsExport: false,
-    maximumStorageMb: 25,
-    minimumLevel: 'INFO',
     profileId,
+    enabled: true,
+    activityEnabled: true,
+    diagnosticsEnabled: true,
+    minimumLevel: 'INFO',
     retentionCount: 10_000,
+    maximumStorageMb: 25,
+    autoDeleteOldest: true,
   });
 
-/** Validates, retains, exports, and clears privacy-safe profile activity. */
+/** Coordinates local-only shared history without an export or clipboard path. */
 export class ManageActivityLog {
   constructor(
     private readonly repository: ActivityLogRepository,
     private readonly environment: {
       applicationVersion: string;
       browserTarget: string;
-      operatingSystem: string;
-      operatingSystemVersion: string;
     },
     private readonly createId: () => string = () => crypto.randomUUID(),
     private readonly now: () => number = () => Date.now(),
+    private readonly identity: () => Promise<ActivitySessionIdentity> = async () => ({
+      id: 'preview',
+      startedAt: Date.now(),
+      origin: 'detected',
+    }),
   ) {}
-
-  list(profileId: string): Promise<readonly ActivityLogEntry[]> {
+  list(profileId: string) {
     return this.repository.list(profileId);
   }
-
+  sessions() {
+    return this.repository.sessions?.() ?? Promise.resolve([]);
+  }
+  profiles() {
+    return this.repository.profiles?.() ?? Promise.resolve([]);
+  }
+  full() {
+    return this.repository.full?.() ?? Promise.resolve(false);
+  }
+  subscribe(listener: () => void) {
+    return this.repository.subscribe?.(listener) ?? (() => undefined);
+  }
+  currentSession() {
+    return this.identity();
+  }
+  async beginSession() {
+    await this.repository.begin?.(await this.identity());
+  }
+  async finishSession(succeeded: boolean, update = false) {
+    await this.repository.finish?.(await this.identity(), succeeded, update);
+  }
   async getSettings(profileId: string): Promise<ActivityLogSettings> {
     return (
       (await this.repository.getSettings(profileId)) ??
       defaultActivityLogSettings(profileId)
     );
   }
-
   async updateSettings(
     profileId: string,
-    input: Omit<ActivityLogSettings, 'profileId'>,
+    input: Omit<z.input<typeof activityLogSettingsSchema>, 'profileId'>,
   ): Promise<ActivityLogSettings> {
     const settings = activityLogSettingsSchema.parse({ ...input, profileId });
     await this.repository.putSettings(settings);
-    await this.applyRetention(profileId, settings);
     return settings;
   }
-
-  async record(profileId: string, input: RecordActivityInput): Promise<void> {
-    const settings = await this.getSettings(profileId);
-    if (!this.shouldRecord(input.kind, input.level, settings)) return;
-    const timestamp = this.now();
+  /** Saves application options without changing any profile's recording gate. */
+  async updateOptions(
+    profileId: string,
+    input: ActivityLogSettings,
+  ): Promise<ActivityLogSettings> {
+    await this.repository.putSettings(
+      activityLogSettingsSchema.parse({ ...input, profileId }),
+      true,
+    );
+    return this.getSettings(profileId);
+  }
+  /** Applies sparse capture before allocation; successful signals may close an incident. */
+  async record(
+    profileId: string | null,
+    input: RecordActivityInput,
+    timestamp = this.now(),
+  ): Promise<void> {
+    if (input.reason !== undefined) activityReasonSchema.parse(input.reason);
+    let level = activityCaptureLevel(input);
+    const recovering =
+      input.level === 'INFO' && input.outcome === 'Succeeded'
+        ? await this.repository.resolveIncidents?.(
+            profileId,
+            activityRecoveryCodes(input.eventCode),
+          )
+        : false;
+    if (
+      level === null &&
+      recovering &&
+      ['SYNC-RECOVERED', 'UNDO-HISTORY-RECOVERED'].includes(input.eventCode)
+    )
+      level = 'INFO';
+    if (level === null) return;
+    const active = await this.repository.activeProfileId?.();
+    const settings = await this.getSettings(
+      active ?? profileId ?? '00000000-0000-4000-8000-000000000000',
+    );
+    const rank = { INFO: 0, WARN: 1, ERROR: 2 };
+    if (!settings.enabled) return;
+    if (
+      !this.repository.append &&
+      (!settings.enabledCategories.includes(input.category) ||
+        rank[level] < rank[settings.minimumLevel] ||
+        ((level === 'INFO' ? input.kind : 'DIAGNOSTIC') === 'ACTIVITY'
+          ? !settings.activityEnabled
+          : !settings.diagnosticsEnabled))
+    )
+      return;
+    const identity = await this.identity();
     const entry = activityLogEntrySchema.parse({
       ...input,
+      level,
+      kind: level === 'INFO' ? input.kind : 'DIAGNOSTIC',
+      ...(input.reason === 'committed'
+        ? {
+            eventCode: input.eventCode.endsWith('-REFRESH-FAILED')
+              ? input.eventCode
+              : input.eventCode.replace(/-FAILED$/, '-VIEW-REFRESH-DEGRADED'),
+            dataChanged: true,
+            outcome: 'Skipped',
+          }
+        : {}),
       applicationVersion: this.environment.applicationVersion,
       browserTarget: this.environment.browserTarget,
       id: this.createId(),
-      operationId: `op-${this.createId()}`,
+      operationId: input.operationId ?? `op-${this.createId()}`,
       profileId,
-      schemaVersion: 4,
+      schemaVersion: 5,
       timestamp,
+      sessionId: identity.id,
+      sequence: 0,
     });
-    await this.repository.add(entry);
-    await this.applyRetention(profileId, settings);
+    if (this.repository.append)
+      await this.repository.append(entry, identity, input.reason);
+    else await this.repository.add(entry);
   }
-
-  clear(profileId: string): Promise<void> {
-    return this.repository.clear(profileId);
-  }
-
-  async createExport(profileId: string): Promise<ActivityLogExport> {
-    const settings = await this.getSettings(profileId);
-    const entries = (await this.list(profileId)).filter(
-      (entry) => settings.includeDiagnosticsExport || entry.kind === 'ACTIVITY',
-    );
-    const generatedAt = this.now();
-    const header = [
-      '# Bookmark Manager Pro activity log',
-      '# Export format: 2',
-      `# Exported: ${formatLocalLogTimestamp(generatedAt)}`,
-      `# Application: ${safeLogText(this.environment.applicationVersion)}`,
-      `# Browser target: ${safeLogText(this.environment.browserTarget)}`,
-      `# Operating system: ${safeLogText(this.environment.operatingSystem)}`,
-      `# Operating system version: ${safeLogText(this.environment.operatingSystemVersion)}`,
-      '# Database schema version: 2',
-    ];
-    return {
-      content: `${header.join('\n')}\n\n${entries.map(formatActivityLogEntry).join('\n')}\n`,
-      filename: `bookmark-manager-pro-activity-log-${new Date(generatedAt).toISOString().slice(0, 10)}.log`,
-      mimeType: 'text/plain',
-    };
-  }
-
-  private shouldRecord(
-    kind: ActivityLogKind,
-    level: ActivityLogLevel,
-    settings: ActivityLogSettings,
-  ): boolean {
-    if (!settings.enabled) return false;
-    if (kind === 'ACTIVITY') return settings.activityEnabled;
-    return (
-      settings.diagnosticsEnabled &&
-      levelRank[level] >= levelRank[settings.minimumLevel]
-    );
-  }
-
-  private async applyRetention(
-    profileId: string,
-    settings: ActivityLogSettings,
-  ): Promise<void> {
-    if (!settings.autoDeleteOldest) return;
-    const entries = await this.repository.list(profileId);
-    const maximumBytes = settings.maximumStorageMb * 1024 * 1024;
-    let estimatedBytes = entries.reduce(
-      (total, entry) => total + JSON.stringify(entry).length * 2,
-      0,
-    );
-    let excessCount = Math.max(0, entries.length - settings.retentionCount);
-    const ids: string[] = [];
-    for (const entry of [...entries].reverse()) {
-      if (excessCount <= 0 && estimatedBytes <= maximumBytes) break;
-      ids.push(entry.id);
-      excessCount -= 1;
-      estimatedBytes -= JSON.stringify(entry).length * 2;
-    }
-    if (ids.length) await this.repository.deleteEntries(ids);
+  clear(profileId: string, sessionId?: string) {
+    return this.repository.clear(profileId, sessionId);
   }
 }

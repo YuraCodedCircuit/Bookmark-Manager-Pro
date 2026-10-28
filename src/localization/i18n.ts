@@ -9,6 +9,118 @@ void i18n.use(initReactI18next).init({
   resources: {
     'en-US': {
       translation: {
+        dialogBadges: {
+          group: 'Feature notices',
+          preview: 'Badge preview',
+          about: 'About {{title}}',
+          updated: 'Updated',
+          experimental: 'Experimental',
+          urlMatchesExperimental:
+            'URL matching is experimental. How matches are found, the available options, and the way this window looks may change in future updates.',
+          deprecated: 'Deprecated',
+          activityLogUpdated:
+            'Activity history is now grouped by browser session. Use View options to adjust which events are shown.',
+          experimentalPreview:
+            'Visual preview only. An Experimental badge identifies a feature that is being evaluated and may change. This preview does not mark the activity log as experimental.',
+          deprecatedPreview:
+            'Visual preview only. A Deprecated badge identifies a feature planned for removal and explains its replacement. The activity log is not scheduled for removal.',
+        },
+        activityRebuild: {
+          backgroundUnavailableTitle: 'Background checks unavailable',
+          backgroundUnavailable:
+            'Background startup checks are unavailable. Local profile data remains available. Reopen the application to retry.',
+          background: {
+            started: 'Background preflight started.',
+            completed: 'Background preflight completed.',
+            failed: 'Background preflight failed.',
+            updateStarted: 'Post-update checks started.',
+            updateCompleted: 'Post-update checks completed.',
+            updateFailed: 'Post-update checks failed.',
+            cacheUnavailable:
+              'Background preflight session caching is unavailable.',
+          },
+          preflightFailed: 'Preflight failed.',
+          previousSessions: 'Previous sessions',
+          viewLog: 'Open activity log',
+          recordingResumed:
+            'Recording resumed. Activity while recording was disabled is not available.',
+          keyboardHelp: 'Calendar keyboard controls',
+          preflightStarted: 'Preflight started.',
+          summary: 'Shared local activity history, grouped by browser session.',
+          earlier: 'Earlier activity',
+          session: 'Browser session',
+          detected: 'Session detected after extension became available.',
+          deletedProfile: 'Deleted profile',
+          applicationWide: 'Application-wide',
+          allProfiles: 'All profiles',
+          currentProfile: 'Current profile',
+          profileFilter: 'Profile',
+          chooseProfile: 'Choose activity log profile',
+          filterProfiles: 'Filter profiles',
+          selectedProfile: 'Profile: {{name}}',
+          counts: '{{matching}} matching / {{retained}} retained events',
+          trimmed: '{{count}} older events removed from this session.',
+          omitted: '{{count}} waiting events omitted at startup.',
+          cleared: 'Earlier history was cleared.',
+          clearAll: 'Clear all sessions',
+          clearSession: 'Clear this session',
+          clearSessionShort: 'Clear',
+          sessionSummary:
+            '{{status}} · {{matching}} matching / {{retained}} retained',
+          confirmAll:
+            'Delete all saved activity sessions? Filters do not limit this action. Recording settings will be preserved.',
+          confirmSession:
+            'Delete all saved activity in this session? Filters do not limit this action. Recording settings will be preserved.',
+          sessionOrder: 'Session order',
+          eventOrder: 'Event order',
+          newest: 'Newest first',
+          oldest: 'Oldest first',
+          recordCategories: 'Recorded categories',
+          newEvents: 'New events',
+          showMoreEvents: 'Show more events',
+          showMoreSessions: 'Show more sessions',
+          full: 'Activity log is full',
+          fullHelp:
+            'Recording is paused. Clear history, increase limits in Settings > Activity, or enable automatic cleanup. Dropped events will not be replayed.',
+          retry: 'Retry',
+          dateTitle: 'Select activity dates',
+          cancel: 'Cancel',
+          apply: 'Apply',
+          presets: 'Date preset',
+          custom: 'Custom dates',
+          selectionMode: 'Selection mode',
+          individual: 'Individual dates',
+          range: 'Date ranges',
+          previous: 'Previous month',
+          next: 'Next month',
+          calendarHelp:
+            'Use arrow keys to move by day or week, Home and End for a week edge, and Page Up or Page Down for a month. Enter or Space selects a date.',
+          chooseEnd: 'Range starts on {{date}}. Choose the end date.',
+          rangeStart: 'Range start',
+          hasActivity: 'Contains matching activity',
+          activityMarker:
+            'A document icon marks dates with activity matching the other filters. All dates can be selected.',
+          removeDate: 'Remove {{date}}',
+          excluded:
+            'Activity history stays local. Activity records and session details in older files are ignored; current history is preserved.',
+          startup: {
+            pending: 'Startup checks in progress',
+            succeeded: 'Startup checks succeeded',
+            failed: 'Startup checks failed',
+            'not-recorded': 'Startup events were not recorded',
+            cleared: 'Startup history was cleared',
+          },
+          preset: {
+            all: 'All time',
+            today: 'Today',
+            yesterday: 'Yesterday',
+            seven: 'Last 7 days',
+            fourteen: 'Last 14 days',
+            thirty: 'Last 30 days',
+            month: 'This month',
+            previousMonth: 'Previous month',
+          },
+        },
         import: {
           reviewPages: 'Import review pages',
           previousPage: 'Previous page',
@@ -308,7 +420,7 @@ void i18n.use(initReactI18next).init({
           localWarning:
             'Snapshots are stored only in this browser profile. Removing the extension or clearing its data also removes its snapshots.',
           includes:
-            'Includes folders, bookmarks, favorites, activity records, local images, profile settings, and synchronization configuration.',
+            'Includes folders, bookmarks, favorites, local images, profile settings, and synchronization configuration. Activity history is excluded.',
           includedContent: 'Included content',
           nameOptional: 'Snapshot name (optional)',
           namePlaceholder: 'e.g. Before making changes',
@@ -324,7 +436,7 @@ void i18n.use(initReactI18next).init({
           restoreTitle: 'Restore snapshot',
           restoreSummary: 'Snapshot content to restore',
           replaceWarning:
-            'This will replace the current profile content, settings, and newer activity history.',
+            'This will replace the current profile content and settings. Current activity history will be preserved.',
           syncPausedWarning:
             'Synchronization connections will be paused. Review them before resuming.',
           replaceAcknowledgment:
@@ -367,6 +479,15 @@ void i18n.use(initReactI18next).init({
           },
         },
         sync: {
+          activityCompleted:
+            'Synchronization completed; the final wake applied {{count}} operations to {{direction}}.',
+          activityDirection: {
+            extension: 'the extension',
+            browser: 'the browser',
+            both: 'both sides',
+          },
+          activityRecovered: 'Bookmark synchronization is available again.',
+          activityWakeFailed: 'Bookmark synchronization could not resume.',
           serviceEvents: {
             enabled: 'Bookmark synchronization is enabled.',
             paused: 'Bookmark synchronization is paused.',
@@ -551,6 +672,7 @@ void i18n.use(initReactI18next).init({
           version: 'Application version',
         },
         undoHistory: {
+          recovered: 'Undo history storage is available again.',
           actions: {
             created: 'Created',
             deleted: 'Deleted',
@@ -640,6 +762,12 @@ void i18n.use(initReactI18next).init({
             'Open this bookmark outside Bookmark Manager Pro?',
         },
         activityLog: {
+          options: {
+            title: 'Activity log view options',
+            close: 'Close activity log view options',
+          },
+          viewOptions: 'View options',
+          openSettings: 'Activity settings',
           categories: {
             all: 'All categories',
             application: 'Application',
@@ -710,10 +838,10 @@ void i18n.use(initReactI18next).init({
           },
           exportError: 'The activity log file could not be created.',
           filters: {
-            category: 'Category',
+            category: 'Displayed categories',
             date: 'Date',
             label: 'Activity-log filters',
-            level: 'Level',
+            level: 'Displayed levels',
             search: 'Search',
             searchPlaceholder: 'Search safe event details',
           },
@@ -721,6 +849,10 @@ void i18n.use(initReactI18next).init({
           loadError: 'The activity log could not be loaded.',
           localBadge: 'Saved locally',
           messages: {
+            wallpaperProcessingFailed:
+              'The background image could not be processed. Try again.',
+            savedViewDegraded:
+              'Changes were saved, but the view could not be refreshed. Reopen the application to reload the saved data.',
             updateReleaseNotesUnavailable:
               'Release notes for this update are unavailable.',
             bookmarkOpenFailed: 'A bookmark could not be opened.',
@@ -818,9 +950,8 @@ void i18n.use(initReactI18next).init({
             autoDelete: 'Auto-delete oldest records',
             diagnostics: 'Record diagnostics',
             includeDiagnostics: 'Include diagnostics on export',
-            maximumSize: 'Maximum storage size',
-            minimumLevel: 'Minimum diagnostic level',
-            reset: 'Reset settings',
+            maximumSize: 'Maximum storage size (MB)',
+            minimumLevel: 'Minimum recording level',
             retention: 'Retention (records)',
             title: 'Log settings',
           },
@@ -1068,10 +1199,18 @@ void i18n.use(initReactI18next).init({
           },
           activity: {
             description:
-              'Choose whether this profile records activity and diagnostic events.',
+              "Manage this profile's recording permission and the shared activity log.",
             enabled: 'Enable the log service',
             help: 'When disabled, new activity and diagnostic records are not stored. Existing records remain available.',
             logging: 'Logging',
+            thisProfile: 'This profile',
+            unavailable:
+              'Activity settings are unavailable. Close and reopen Settings to retry.',
+            shared: 'Shared activity log',
+            sharedHelp:
+              'These recording and retention settings apply across all profiles. Lower limits may remove older records when settings are saved.',
+            recordingHelp:
+              'Minimum recording level and recorded categories control future records. Use View options in the activity log to filter existing history.',
           },
           security: {
             confirmExternal: 'Confirm before opening external links',
@@ -1449,6 +1588,9 @@ void i18n.use(initReactI18next).init({
           dismiss: 'Dismiss notification',
           errorMessage: 'The operation could not be completed.',
           errorTitle: 'Operation failed',
+          folderTabUnavailableTitle: 'Folder unavailable',
+          folderTabUnavailableMessage:
+            'The requested folder is unavailable. Startup settings were used.',
           actionFailed: 'A notification action could not be completed.',
           topLayerUnavailable:
             'Notifications are using a fallback display layer because the browser top layer is unavailable.',
@@ -1588,6 +1730,57 @@ void i18n.use(initReactI18next).init({
           pastePermissionDenied:
             'Clipboard access was not granted, so the text was not pasted.',
         },
+        urlMatches: {
+          profile: 'Profile: {{profile}}',
+          openFolder: 'Open folder',
+          folderProfileChanged:
+            "Switched to the bookmark's profile and opened its containing folder.",
+          options: 'URL match options',
+          closeOptions: 'Close URL match options',
+          openFolderFailed:
+            'The containing folder could not be opened. Try again.',
+          folder: 'Folder: {{path}}',
+          getInfo: 'Get info',
+          delete: 'Delete',
+          deleteConfirm: 'Delete this bookmark from profile "{{profile}}"?',
+          deleteFailed: 'The bookmark could not be deleted. Try again.',
+          infoFailed: 'Bookmark details could not be loaded. Try again.',
+          viewRefreshFailed:
+            'The bookmark was deleted, but the folder view could not refresh. Reopen the folder.',
+          title: 'URL matches',
+          level: 'Matching level',
+          scope: 'Scope',
+          currentProfile: 'Current profile',
+          allProfiles: 'All profiles',
+          retry: 'Retry',
+          levels: {
+            site: 'Site',
+            host: 'Host',
+            path: 'Path',
+            parameters: 'Parameters',
+            exact: 'Exact',
+          },
+          filterPlaceholder: 'Filter bookmark titles or URLs',
+          filterHelp:
+            'An empty filter shows all groups. A matching title or URL keeps the whole group.',
+          loading: 'Reading saved bookmarks. Previous results remain visible.',
+          complete: 'URL matches were refreshed.',
+          failed: 'URL matches could not be loaded. Try again.',
+          outdated:
+            'Results are outdated because refreshing failed. Try again.',
+          totals: '{{groups}} · {{bookmarks}}',
+          groupCount_one: '{{count}} group',
+          groupCount_other: '{{count}} groups',
+          groupSummary: '{{key}} · {{members}}',
+          memberCount_one: '{{count}} bookmark',
+          memberCount_other: '{{count}} bookmarks',
+          empty: 'No matching groups.',
+          showMore: 'Show more',
+          pages: 'URL match pages',
+          previous: 'Previous',
+          next: 'Next',
+          page: 'Page {{page}} of {{pages}}',
+        },
         searchWindow: {
           bookmarkPlaceholder: 'Search bookmarks and folders',
           close: 'Close search',
@@ -1642,6 +1835,10 @@ void i18n.use(initReactI18next).init({
           resultCount_one: '{{count}} result',
           resultCount_other: '{{count}} results',
           resultOpenFailed: 'The selected search result could not be opened.',
+          openParentFolder: 'Open parent folder',
+          infoFailed: 'Item details could not be loaded. Try again.',
+          confirmParentProfile:
+            'Switch to the other profile and open the parent folder?',
           searchWebFor: 'Search the web for “{{query}}”',
           summary:
             'Find saved items or send a selected query through the browser.',
@@ -1655,6 +1852,7 @@ void i18n.use(initReactI18next).init({
           webUnavailableTitle: 'Web search unavailable',
         },
         itemInfo: {
+          profile: 'Profile',
           appearance: 'Item appearance',
           appearanceType: 'Appearance type',
           appearanceTypes: {

@@ -11,15 +11,22 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import '../../localization/i18n';
 import { FolderStyleDialog } from './FolderStyleDialog';
+import {
+  optimizeFolderWallpaper,
+  WallpaperOptimizationError,
+} from '../../shared/optimize-folder-wallpaper';
 
-vi.mock('../../shared/optimize-folder-wallpaper', () => ({
+vi.mock('../../shared/optimize-folder-wallpaper', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('../../shared/optimize-folder-wallpaper')
+  >()),
   optimizeFolderWallpaper: vi.fn(
     async (file: File, allowLargeSource: boolean) => {
       if (
         !['image/png', 'image/jpeg', 'image/bmp'].includes(file.type) ||
         file.size > (allowLargeSource ? 10_000_000 : 1_000_000)
       ) {
-        throw new Error('wallpaper-rejected');
+        throw new WallpaperOptimizationError('size');
       }
       return 'data:image/webp;base64,b3B0aW1pemVk';
     },
@@ -178,6 +185,16 @@ describe('FolderStyleDialog', () => {
       },
     });
     await waitFor(() => expect(onImageRejected).toHaveBeenCalledTimes(2));
+    expect(onImageRejected.mock.calls).toEqual([[false], [false]]);
+    vi.mocked(optimizeFolderWallpaper).mockRejectedValueOnce(
+      new WallpaperOptimizationError('encode'),
+    );
+    fireEvent.change(input, {
+      target: {
+        files: [new File(['small'], 'small.png', { type: 'image/png' })],
+      },
+    });
+    await waitFor(() => expect(onImageRejected).toHaveBeenLastCalledWith(true));
 
     fireEvent.change(input, {
       target: {

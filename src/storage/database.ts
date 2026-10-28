@@ -12,11 +12,16 @@ import type { FavoriteItem } from '../domain/favorite-item';
 import type {
   ActivityLogEntry,
   ActivityLogSettings,
+  ActivitySession,
 } from '../domain/activity-log';
 import type { UndoHistoryRecord } from './undo-history-record';
 import type { Note, NoteFolder } from '../domain/note';
 import type { FolderWallpaper } from '../domain/folder-wallpaper';
 import type { BackupSnapshot } from '../domain/backup';
+import {
+  activityLogEntrySchema,
+  activityLogSettingsSchema,
+} from '../domain/activity-log';
 
 export interface MetadataRecord {
   key: string;
@@ -29,6 +34,8 @@ export class BookmarkManagerDatabase extends Dexie {
   readonly metadata!: EntityTable<MetadataRecord, 'key'>;
   readonly activity!: EntityTable<ActivityLogEntry, 'id'>;
   readonly activityLogSettings!: EntityTable<ActivityLogSettings, 'profileId'>;
+  readonly activitySessions!: EntityTable<ActivitySession, 'id'>;
+  readonly activityPending!: EntityTable<ActivityLogEntry, 'id'>;
   readonly bookmarks!: EntityTable<Bookmark, 'id'>;
   readonly folders!: EntityTable<Folder, 'id'>;
   readonly favoriteItems!: Table<FavoriteItem, [string, string]>;
@@ -1001,6 +1008,84 @@ export class BookmarkManagerDatabase extends Dexie {
       backupSnapshots:
         '&id, profileId, [profileId+createdAt], type, trigger, createdAt',
     });
+    this.version(39)
+      .stores({
+        activity: '&id, profileId, sessionId, [sessionId+sequence], timestamp',
+        activitySessions: '&id, startedAt',
+        activityPending: '&id, sequence, sessionId',
+      })
+      .upgrade(async (transaction) => {
+        const activity = transaction.table('activity');
+        const count = await activity.count();
+        let sequence = 0;
+        await activity.orderBy('timestamp').modify((entry) => {
+          Object.assign(entry, activityLogEntrySchema.parse(entry));
+          entry.sessionId = 'earlier';
+          entry.sequence = ++sequence;
+        });
+        if ((await activity.count()) !== count)
+          throw new Error('activity-conversion-count-mismatch');
+        if (count)
+          await transaction.table('activitySessions').put({
+            id: 'earlier',
+            startedAt: 0,
+            origin: 'earlier',
+            startup: 'not-recorded',
+            trimmedCount: 0,
+            omittedCount: 0,
+            cleared: false,
+          });
+        const metadata = transaction.table('metadata');
+        const active = await metadata.get('activeProfileId');
+        const settings = active
+          ? await transaction.table('activityLogSettings').get(active.value)
+          : undefined;
+        await metadata.put({
+          key: 'activity:options',
+          value: settings ? activityLogSettingsSchema.parse(settings) : null,
+        });
+        await metadata.put({ key: 'activity:sequence', value: sequence });
+        // Retention follows successful validation/conversion. Earlier activity
+        // has no known session boundaries, so trim rows rather than inventing
+        // membership or deleting the entire historical collection.
+        const limits = settings
+          ? activityLogSettingsSchema.parse(settings)
+          : {
+              autoDeleteOldest: true,
+              retentionCount: 10_000,
+              maximumStorageMb: 25,
+            };
+        if (count && limits.autoDeleteOldest) {
+          const rows = await activity.orderBy('timestamp').toArray();
+          const header = await transaction
+            .table('activitySessions')
+            .get('earlier');
+          const sizeOf = (value: unknown) =>
+            new TextEncoder().encode(JSON.stringify(value)).byteLength;
+          let size = rows.reduce(
+            (sum, row) => sum + sizeOf(row),
+            sizeOf(header),
+          );
+          let retained = rows.length;
+          const removed: string[] = [];
+          for (const row of rows) {
+            if (
+              retained <= limits.retentionCount &&
+              size <= limits.maximumStorageMb * 1024 * 1024
+            )
+              break;
+            removed.push(row.id);
+            retained--;
+            size -= sizeOf(row);
+          }
+          if (removed.length) {
+            await activity.bulkDelete(removed);
+            await transaction
+              .table('activitySessions')
+              .update('earlier', { trimmedCount: removed.length });
+          }
+        }
+      });
   }
 }
 

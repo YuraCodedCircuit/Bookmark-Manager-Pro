@@ -1,44 +1,47 @@
-# What's New in 0.7.0
+# What's New in 0.7.1
 
-Released October 20, 2026.
+Released October 28, 2026.
 
-This release adds local Import and Export, with file review, optional encrypted
-exports, and improvements to dialogs, menus, and profile management.
+This release adds URL matches in Search, shared activity history organized by
+browser session, and improvements to navigation, dialogs, and startup recovery.
 
 ## Highlights
 
-- **Import with review** - Import native profiles or selected bookmarks and
-  folders from JSON, HTML, and CSV. Review the contents before saving, choose a
-  destination, and resolve duplicate warnings. Folder trees and paged review
-  help navigate larger files.
-- **Export profiles and bookmarks** - Save selected profiles to a native file
-  with stored images, optional backup history, and optional password encryption.
-  Export bookmarks as JSON, CSV, or browser-compatible HTML. Configure CSV
-  columns and their order in Settings.
-- **Local file processing** - Import files, previews, and passwords stay local.
-  Passwords are not remembered, and closing the dialog discards transient file
-  data. Progress and cancellation are available during supported processing.
+- **Find matching web addresses** - Open Search and choose URL matches to review
+  related bookmarks in one or all profiles. Inspect their details, open their
+  parent folders, or remove unwanted copies with confirmation and Undo. This
+  feature is marked Experimental while its matching behavior is evaluated.
+- **Review shared activity history** - Activity history now spans profiles and
+  groups records by browser session. View options controls the displayed records;
+  Settings > Activity controls recording and how much history is kept.
+- **Keep activity history local** - Profile exports, recovery copies, imports,
+  restores, and profile duplication no longer transfer activity records. Existing
+  local history stays in place when importing or restoring profile data.
 
 ## Other Improvements
 
-- Profile lists and backup browsing are easier to navigate, with clearer
-  validation and searchable profile selection.
-- Bookmark and folder editors keep their actions available while scrolling.
-- Dialogs, menus, destructive controls, and bookmark/folder icons use more
-  consistent visual feedback.
-- Text fields share editing menus and visible selection highlights, including
-  the Save current URL popup.
-- Item menus distinguish opening links from folders. Firefox uses its native
-  UI font and base size throughout the app.
-- Privacy documentation explains local file processing, exported profile data,
-  and recovery snapshots.
+- Search results offer item details and navigation to the parent folder, with
+  confirmation before switching profiles.
+- Activity history highlights startup checks and errors, groups repeated
+  problems, and confirms clearing a session or all history.
+- Local profiles remain usable when some startup checks are unavailable.
+- Folder paths follow the operating system's style, and Get info shows complete
+  titles and folder paths with clearer profile context.
+- Folder style keeps its title and actions visible while settings scroll.
+- Image cropping keeps its preview separate from controls and shows resize
+  directions. Firefox input selection stays aligned with editing menus.
+- Long profile names remain accessible, Details view distinguishes folders and
+  bookmarks with icons, and folder tabs keep internal IDs out of the address bar.
+- Validation rejects oversized data collections before processing their elements
+  to reduce excessive memory use.
 
 ## Compatibility Notes
 
-The storage update moves current recovery snapshots into the primary database.
-The original backup database remains available as an unchanged recovery copy.
-Export important data before downgrading: older versions do not understand all
-data and file formats introduced in this release.
+The local storage update groups existing records under Earlier activity and
+applies the configured history limits after conversion. Activity history has no
+export or copy action. Export important profile data before downgrading: older
+versions cannot open the updated local database, and exports do not include
+activity history.
 
 ## Full Changelog
 

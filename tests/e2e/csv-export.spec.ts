@@ -75,7 +75,7 @@ test('CSV settings persist, cancel safely, and control exported headers', async 
   await expect(titleColumn).toBeChecked();
   await page.emulateMedia({ forcedColors: 'none' });
   await page.screenshot({
-    path: 'design/csv-export-settings.png',
+    path: 'codex-internal/verification/csv-export-settings.png',
     animations: 'disabled',
   });
   await settings.getByRole('button', { name: 'Save', exact: true }).click();

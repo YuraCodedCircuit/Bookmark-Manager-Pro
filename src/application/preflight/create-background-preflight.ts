@@ -28,7 +28,13 @@ export function createBackgroundPreflight(): RunBackgroundPreflight {
         },
       ],
     },
-    createActivityLogService(),
+    createActivityLogService({ background: true }),
     () => typeof indexedDB !== 'undefined',
+    undefined,
+    undefined,
+    (code, level) =>
+      i18n.t(
+        `activityRebuild.background.${level === 'WARN' ? 'cacheUnavailable' : code.includes('UPDATE') ? (code.endsWith('STARTED') ? 'updateStarted' : level === 'ERROR' ? 'updateFailed' : 'updateCompleted') : code.endsWith('STARTED') ? 'started' : level === 'ERROR' ? 'failed' : 'completed'}`,
+      ),
   );
 }

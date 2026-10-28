@@ -43,6 +43,17 @@ export class ManageProfiles {
     return this.repository.list();
   }
 
+  /** Reads validated settings without activating or modifying their owner. */
+  async getProfileSettings(profileId: string): Promise<ProfileSettings> {
+    const id = z.uuid().parse(profileId);
+    const settings = profileSettingsSchema.parse(
+      await this.repository.getSettings(id),
+    );
+    if (settings.profileId !== id)
+      throw new Error('profile-settings-id-mismatch');
+    return settings;
+  }
+
   getStorageUsage() {
     return this.repository.getStorageUsage();
   }

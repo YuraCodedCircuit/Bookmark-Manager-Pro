@@ -378,9 +378,10 @@ version.
 
 ### Advanced settings
 
-- Keep the category disabled until specific advanced controls are approved.
+- Keep the category hidden until specific advanced controls are approved.
 - Add only settings that have a clear user benefit, safe default, understandable
-  warning text, and a reliable restore-defaults path.
+  warning text, and predictable behavior. Restoration and reset controls belong
+  elsewhere.
 - Do not use Advanced settings to bypass data validation, browser security, or
   privacy protections.
 

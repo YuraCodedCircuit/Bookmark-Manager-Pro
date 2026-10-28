@@ -3,6 +3,36 @@ import type { ProfileManagementRepository } from './profile-management-repositor
 import { ManageProfiles } from './manage-profiles';
 
 describe('ManageProfiles', () => {
+  it('reads source-profile settings without activation and rejects mismatched ownership', async () => {
+    const profileId = '11111111-1111-4111-8111-111111111111';
+    const settings = {
+      profileId,
+      theme: 'dark' as const,
+      bookmarkView: 'card' as const,
+      cardSize: 'small' as const,
+    };
+    const repository: ProfileManagementRepository = {
+      create: vi.fn(),
+      copyOwnedData: vi.fn(),
+      delete: vi.fn(),
+      getDeletionImpact: vi.fn(),
+      getSettings: vi.fn(async () => settings),
+      isProfileIdAvailable: vi.fn(),
+      getStorageUsage: vi.fn(),
+      list: vi.fn(),
+      switchTo: vi.fn(),
+      update: vi.fn(),
+      updateSettings: vi.fn(),
+    };
+    const service = new ManageProfiles(repository);
+    await expect(service.getProfileSettings(profileId)).resolves.toMatchObject(
+      settings,
+    );
+    expect(repository.switchTo).not.toHaveBeenCalled();
+    await expect(
+      service.getProfileSettings('22222222-2222-4222-8222-222222222222'),
+    ).rejects.toThrow('profile-settings-id-mismatch');
+  });
   it('creates profiles with Home-aligned folder-view defaults', async () => {
     const profileId = 'df6f88b6-10c7-43d7-b516-a063b77db6c6';
     const repository: ProfileManagementRepository = {

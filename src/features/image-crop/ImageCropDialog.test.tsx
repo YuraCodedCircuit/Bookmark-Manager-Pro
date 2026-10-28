@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import '../../localization/i18n';
 import { ImageCropDialog } from './ImageCropDialog';
+import { ImageCropError, processCroppedImage } from './process-cropped-image';
 
 vi.mock('./process-cropped-image', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./process-cropped-image')>()),
@@ -17,6 +18,28 @@ afterEach(() => {
 });
 
 describe('ImageCropDialog', () => {
+  it.each(['dimensions', 'encode'] as const)(
+    'keeps %s feedback while logging only unexpected crop faults',
+    async (reason) => {
+      const user = userEvent.setup();
+      const failure = vi.fn();
+      vi.mocked(processCroppedImage).mockRejectedValueOnce(
+        new ImageCropError(reason),
+      );
+      render(
+        <ImageCropDialog
+          onApply={vi.fn()}
+          onCancel={vi.fn()}
+          onFailure={failure}
+          source="data:image/png;base64,source"
+        />,
+      );
+      await screen.findByRole('group', { name: 'Crop region' });
+      await user.click(screen.getByRole('button', { name: 'Apply crop' }));
+      expect(await screen.findByRole('alert')).toBeVisible();
+      expect(failure).toHaveBeenCalledTimes(reason === 'encode' ? 1 : 0);
+    },
+  );
   it('closes from the named header control without applying the crop', async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();

@@ -14,6 +14,7 @@ import {
 } from '../../domain/portable-import';
 
 import { FolderIcon } from '../../components/icons/FolderIcon';
+import { formatFolderPath } from '../../platform/navigation/path-separator';
 import { BookmarkIcon } from '../../components/icons/BookmarkIcon';
 import { ProfileIcon } from '../../components/icons/ProfileIcon';
 import { NoteIcon } from '../../components/icons/NoteIcon';
@@ -367,7 +368,7 @@ export function PortableImportPanel({
               idPrefix="import-destination"
               {...(folder ? { selectedFolderId: folder.id } : {})}
               onSelect={(path, id) => {
-                setFolder({ id, path: path.join(' / ') });
+                setFolder({ id, path: formatFolderPath(path) });
                 setRememberedMissing(false);
               }}
             />

@@ -6,12 +6,14 @@ import { readBookmarkHtml } from '../../domain/portable-text-import';
 import {
   backupPayloadSchema,
   digestBackupPayload,
+  encodeBackupPayload,
   type BackupSnapshot,
 } from '../../domain/backup';
 import {
   decodeNativeExport,
   exportCategories,
 } from '../../domain/profile-export';
+import { activityLogEntrySchema } from '../../domain/activity-log';
 
 const id = '11111111-1111-4111-8111-111111111111';
 const root = '22222222-2222-4222-8222-222222222222';
@@ -77,6 +79,91 @@ function source() {
 }
 afterEach(() => vi.unstubAllGlobals());
 describe('ExportProfiles', () => {
+  it.each([false, true])(
+    'excludes current and nested legacy activity from encrypted=%s exports',
+    async (encrypted) => {
+      vi.stubGlobal('crypto', webcrypto);
+      const original = source();
+      original.activity.push({
+        ...activityLogEntrySchema.parse({
+          id: crypto.randomUUID(),
+          profileId: id,
+          action: 'Import',
+          applicationVersion: '0.7.0',
+          browserTarget: 'Test',
+          category: 'Application',
+          dataChanged: false,
+          durationMs: 0,
+          eventCode: 'IMPORT-SAVE-COMPLETE',
+          itemType: 'Import',
+          itemsAffected: 0,
+          kind: 'ACTIVITY',
+          level: 'INFO',
+          message: 'Synthetic history marker.',
+          operationId: 'op-test-import',
+          outcome: 'Succeeded',
+          schemaVersion: 1,
+          source: 'Import',
+          timestamp: 1,
+        }),
+        profileId: id,
+      });
+      const snapshot: BackupSnapshot = {
+        id: crypto.randomUUID(),
+        profileId: id,
+        profileName: 'Synthetic profile',
+        name: 'Old snapshot',
+        type: 'manual',
+        trigger: 'manual',
+        createdAt: 1,
+        verifiedAt: 1,
+        sizeBytes: encodeBackupPayload(original).byteLength,
+        digest: await digestBackupPayload(original),
+        payload: original,
+      };
+      const before = JSON.stringify(snapshot);
+      const password = encrypted ? 'LongTestPassword1!' : undefined;
+      const service = new ExportProfiles({
+        captureProfile: async () => original,
+        list: async () => [snapshot],
+      });
+      const file = await service.create(
+        {
+          profileIds: [id],
+          format: 'bmpro',
+          categories: [...exportCategories],
+          includeBackups: true,
+          password,
+        },
+        new AbortController().signal,
+        vi.fn(),
+      );
+      const decoded = await decodeNativeExport(file.content, password);
+      expect(decoded.profiles[0]!.activity).toEqual([]);
+      expect(decoded.backups[0]!.payload.activity).toEqual([]);
+      expect(JSON.stringify(decoded)).not.toContain('Synthetic history marker');
+      expect(decoded.backups[0]!.digest).toBe(
+        await digestBackupPayload(decoded.backups[0]!.payload),
+      );
+      expect(decoded.backups[0]!.sizeBytes).toBe(
+        encodeBackupPayload(decoded.backups[0]!.payload).byteLength,
+      );
+      expect(JSON.stringify(snapshot)).toBe(before);
+      snapshot.digest = '0'.repeat(64);
+      await expect(
+        service.create(
+          {
+            profileIds: [id],
+            format: 'bmpro',
+            categories: [...exportCategories],
+            includeBackups: true,
+          },
+          new AbortController().signal,
+          vi.fn(),
+        ),
+      ).rejects.toThrow('export-backup-integrity-failed');
+    },
+  );
   it('round-trips 10,000 nested folders and their deepest bookmark in supported tree formats', async () => {
     vi.stubGlobal('crypto', webcrypto);
     const original = source();
@@ -253,7 +340,9 @@ describe('ExportProfiles', () => {
       (await service.create(options, new AbortController().signal, vi.fn()))
         .content,
     );
-    expect(selected.backups).toEqual([snapshot]);
+    expect(selected.backups).toEqual([
+      { ...snapshot, sizeBytes: encodeBackupPayload(original).byteLength },
+    ]);
     expect(selected.profiles).toHaveLength(1);
     const multiple = await decodeNativeExport(
       (

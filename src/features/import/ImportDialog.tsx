@@ -100,6 +100,7 @@ export function ImportDialog({
   const phaseRef = useRef('empty');
   const returnFocus = useRef<'profiles' | 'unlock' | null>(null);
   const reportRef = useRef(onReport);
+  const logOperation = useRef<string | undefined>(undefined);
   const [phase, setPhase] = useState<
     'empty' | 'checking' | 'locked' | 'ready' | 'failed'
   >('empty');
@@ -125,7 +126,10 @@ export function ImportDialog({
   }, [onReport]);
   const report = (event: ImportValidationEvent) => {
     try {
-      reportRef.current(event);
+      reportRef.current({
+        ...event,
+        operationId: (logOperation.current ??= `op-${crypto.randomUUID()}`),
+      });
     } catch {
       console.error('import-feedback-failed');
     }
@@ -190,6 +194,7 @@ export function ImportDialog({
   };
   const load = (file: File) => {
     stop();
+    logOperation.current = `op-${crypto.randomUUID()}`;
     setHasContent(false);
     setBusy(null);
     setPlan(null);
@@ -268,7 +273,11 @@ export function ImportDialog({
     } catch {
       receive({
         type: 'event',
-        event: { level: 'ERROR', code: 'import.validation.failed' },
+        event: {
+          level: 'ERROR',
+          code: 'import.validation.failed',
+          reason: 'worker',
+        },
       });
       receive({ type: 'failed' });
     }
@@ -344,16 +353,34 @@ export function ImportDialog({
       setSelected([]);
       setPortableItems(null);
       setPortableSelection(null);
-      report({ level: 'INFO', code: 'import.save.succeeded' });
+      let completion: ImportValidationEvent = {
+        level: 'INFO',
+        code: 'import.save.succeeded',
+      };
       if (plan.excluded)
-        report({ level: 'WARN', code: 'import.save.excluded' });
+        completion = {
+          level: 'WARN',
+          code: 'import.save.excluded',
+          reason: 'committed',
+        };
+      if (plan.activityHistoryExcluded)
+        report({ level: 'WARN', code: 'import.save.activity-excluded' });
       if (plan.synchronizationPaused)
-        report({ level: 'WARN', code: 'import.save.paused' });
+        completion = {
+          level: 'WARN',
+          code: 'import.save.paused',
+          reason: 'committed',
+        };
       try {
         await onImported?.(result.profileIds);
       } catch {
-        report({ level: 'WARN', code: 'import.save.refresh-failed' });
+        completion = {
+          level: 'WARN',
+          code: 'import.save.refresh-failed',
+          reason: 'committed',
+        };
       }
+      report({ ...completion, itemsAffected: plan.bookmarks + plan.folders });
       if (preferences.closeAfterSuccess) onClose();
     } catch (error) {
       if (!controller.signal.aborted) {
@@ -618,7 +645,10 @@ export function ImportDialog({
               <ImportCounts bookmarks={plan.bookmarks} folders={plan.folders} />
             </p>
             {plan.profiles ? (
-              <p>{t('import.newProfiles', { count: plan.profiles })}</p>
+              <>
+                <p>{t('import.newProfiles', { count: plan.profiles })}</p>
+                <p role="note">{t('activityRebuild.excluded')}</p>
+              </>
             ) : null}
             {plan.duplicates ? (
               <div className="export-dialog__notice is-warning" role="status">
@@ -697,7 +727,11 @@ export function ImportDialog({
             } catch {
               setUnlockBusy(false);
               setUnlockFailed(true);
-              report({ level: 'ERROR', code: 'import.unlock.failed' });
+              report({
+                level: 'ERROR',
+                code: 'import.unlock.failed',
+                reason: 'worker',
+              });
             }
           }}
         />

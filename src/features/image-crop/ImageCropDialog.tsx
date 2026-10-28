@@ -22,6 +22,7 @@ import {
 } from './crop-geometry';
 import {
   inspectCropSource,
+  ImageCropError,
   MAX_CROP_OUTPUT_EDGE,
   processCroppedImage,
 } from './process-cropped-image';
@@ -115,10 +116,14 @@ export function ImageCropDialog({
             : centeredCrop(nextDimensions, shape),
         );
       })
-      .catch(() => {
+      .catch((cause: unknown) => {
         if (!active) return;
         setError(t('contentEditor.crop.error'));
-        onFailure?.();
+        if (!(
+          cause instanceof ImageCropError &&
+          ['dimensions', 'size'].includes(cause.reason)
+        ))
+          onFailure?.();
       });
     return () => {
       active = false;
@@ -235,9 +240,13 @@ export function ImageCropDialog({
       const finalCrop = roundedCrop(clampCrop(crop, dimensions));
       const result = await processCroppedImage(source, finalCrop);
       onApply(result, { crop: finalCrop, shape, zoom });
-    } catch {
+    } catch (cause) {
       setError(t('contentEditor.crop.error'));
-      onFailure?.();
+      if (!(
+        cause instanceof ImageCropError &&
+        ['dimensions', 'size'].includes(cause.reason)
+      ))
+        onFailure?.();
       setIsProcessing(false);
     }
   };

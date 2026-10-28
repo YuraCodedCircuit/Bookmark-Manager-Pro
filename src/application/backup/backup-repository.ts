@@ -12,7 +12,11 @@ export interface CreateSnapshotInput {
   type: SnapshotType;
 }
 
-/** Persistence boundary for immutable profile recovery snapshots. */
+/**
+ * Persistence boundary for immutable profile recovery snapshots.
+ * New captures exclude activity records. Restores ignore legacy activity and
+ * preserve the application's current local history.
+ */
 export interface BackupRepository {
   captureProfile(profileId: string): Promise<BackupPayload>;
   delete(snapshotId: string): Promise<void>;

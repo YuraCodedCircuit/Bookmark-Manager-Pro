@@ -16,19 +16,152 @@ import { SearchDialog } from './SearchDialog';
 afterEach(cleanup);
 
 describe('SearchDialog', () => {
+  it('keeps same-name profile groups separate and marks only the active profile', async () => {
+    const user = userEvent.setup();
+    const sources = ['active', 'other'].map((profileId) => ({
+      profileId,
+      profileName: 'Shared name',
+      folders: [],
+      bookmarks: [
+        {
+          id: `bookmark-${profileId}`,
+          profileId,
+          title: `Example ${profileId}`,
+          url: 'https://example.com/',
+          parentId: 'root',
+          index: 0,
+          tags: [],
+          note: '',
+          createdAt: 1,
+          updatedAt: 1,
+          cardAppearance: { kind: 'color' as const, value: '#123456' },
+        },
+      ],
+    }));
+    render(
+      <SearchDialog
+        activeProfileId="active"
+        bookmarkOpening="new-tab"
+        currentFolderId="root"
+        initialPreferences={{ ...defaultSearchPreferences, allProfiles: true }}
+        isLoading={false}
+        isOpen
+        loadFailed={false}
+        onClose={vi.fn()}
+        onOpenResult={vi.fn()}
+        onWebSearch={vi.fn()}
+        onWebUnavailable={vi.fn()}
+        sources={sources}
+        webSearchAvailable={false}
+      />,
+    );
+    await user.type(screen.getByRole('searchbox'), 'Example');
+    const headers = screen.getAllByRole('heading', { level: 3 });
+    expect(headers).toHaveLength(2);
+    expect(within(headers[0]!).getByText('Active')).toHaveClass(
+      'profile-status',
+    );
+    expect(within(headers[1]!).queryByText('Active')).not.toBeInTheDocument();
+  });
+  it('keeps URL match choices and filter separate across modes and resets on close', async () => {
+    const user = userEvent.setup();
+    const onLoadUrlMatches = vi.fn().mockResolvedValue([]);
+    const props = {
+      activeProfileId: 'p',
+      bookmarkOpening: 'new-tab' as const,
+      currentFolderId: 'root',
+      initialPreferences: defaultSearchPreferences,
+      isLoading: false,
+      loadFailed: false,
+      sources: [],
+      webSearchAvailable: true,
+      onClose: vi.fn(),
+      onOpenResult: vi.fn(),
+      onWebSearch: vi.fn(),
+      onWebUnavailable: vi.fn(),
+      onLoadUrlMatches,
+    };
+    const { rerender } = render(<SearchDialog {...props} isOpen />);
+    expect(
+      screen.queryByRole('button', { name: 'About Experimental' }),
+    ).not.toBeInTheDocument();
+    await user.type(screen.getByRole('searchbox'), 'ordinary search');
+    await user.click(screen.getByRole('button', { name: 'URL matches' }));
+    const badge = screen.getByRole('button', { name: 'About Experimental' });
+    expect(badge).toBeVisible();
+    await user.click(badge);
+    expect(screen.getByRole('tooltip')).toHaveTextContent(
+      'URL matching is experimental.',
+    );
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    expect(props.onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+    expect(
+      screen.queryByRole('button', { name: 'Search options' }),
+    ).not.toBeInTheDocument();
+    await waitFor(() => expect(onLoadUrlMatches).toHaveBeenCalledTimes(1));
+    await user.type(screen.getByRole('searchbox'), 'x');
+    const matchOptions = screen.getByRole('button', {
+      name: 'URL match options',
+    });
+    expect(
+      screen.queryByRole('button', { name: 'Refresh' }),
+    ).not.toBeInTheDocument();
+    expect(matchOptions.closest('.search-window__query-row')).toContainElement(
+      screen.getByRole('searchbox'),
+    );
+    await user.click(matchOptions);
+    const child = screen.getByRole('dialog', { name: 'URL match options' });
+    await user.selectOptions(screen.getByLabelText('Matching level'), 'path');
+    await user.selectOptions(screen.getByLabelText('Scope'), 'all');
+    fireEvent(child, new Event('cancel', { bubbles: true, cancelable: true }));
+    await waitFor(() => expect(matchOptions).toHaveFocus());
+    expect(screen.getByRole('dialog', { name: 'Search' })).toHaveAttribute(
+      'open',
+    );
+    expect(onLoadUrlMatches).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Bookmarks' }));
+    expect(
+      screen.queryByRole('button', { name: 'About Experimental' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('searchbox')).toHaveValue('ordinary search');
+    await user.click(screen.getByRole('button', { name: 'URL matches' }));
+    expect(screen.getByRole('searchbox')).toHaveValue('x');
+    expect(screen.getByLabelText('Matching level')).toHaveValue('path');
+    expect(screen.getByLabelText('Scope')).toHaveValue('all');
+    await waitFor(() => expect(onLoadUrlMatches).toHaveBeenCalledTimes(2));
+    rerender(<SearchDialog {...props} isOpen={false} />);
+    rerender(<SearchDialog {...props} isOpen />);
+    expect(screen.getByRole('button', { name: 'Bookmarks' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+    await user.click(screen.getByRole('button', { name: 'URL matches' }));
+    expect(screen.getByLabelText('Matching level')).toHaveValue('exact');
+    expect(screen.getByLabelText('Scope')).toHaveValue('current');
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+  });
   it('searches while typing and exposes bookmark options', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     const onOpenResult = vi.fn();
+    const onInspectResult = vi.fn().mockResolvedValue(undefined);
+    const onOpenUrlMatchFolder = vi.fn().mockResolvedValue(undefined);
+    const onConfirmResultProfileChange = vi.fn().mockResolvedValue(false);
     const props = {
       activeProfileId: '11111111-1111-4111-8111-111111111111',
       bookmarkOpening: 'new-tab' as const,
       currentFolderId: '22222222-2222-4222-8222-222222222222',
-      initialPreferences: defaultSearchPreferences,
+      initialPreferences: { ...defaultSearchPreferences, allProfiles: true },
       isLoading: false,
       loadFailed: false,
       onClose,
       onOpenResult,
+      onInspectResult,
+      onOpenUrlMatchFolder,
+      onConfirmResultProfileChange,
       onWebSearch: vi.fn(),
       onWebUnavailable: vi.fn(),
       sources: [
@@ -59,6 +192,34 @@ describe('SearchDialog', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Search' });
     await user.type(within(dialog).getByRole('searchbox'), 'React');
+    await user.click(within(dialog).getByRole('button', { name: 'Get info' }));
+    expect(onInspectResult).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'bookmark',
+        profileId: props.activeProfileId,
+      }),
+      expect.any(HTMLButtonElement),
+    );
+    expect(onOpenResult).not.toHaveBeenCalled();
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Open parent folder' }),
+    );
+    expect(onOpenUrlMatchFolder).toHaveBeenCalledTimes(1);
+    expect(onConfirmResultProfileChange).not.toHaveBeenCalled();
+    rerender(
+      <SearchDialog {...props} activeProfileId="other-profile" isOpen />,
+    );
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Open parent folder' }),
+    );
+    expect(onConfirmResultProfileChange).toHaveBeenCalledTimes(1);
+    expect(onOpenUrlMatchFolder).toHaveBeenCalledTimes(1);
+    onConfirmResultProfileChange.mockResolvedValue(true);
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Open parent folder' }),
+    );
+    expect(onOpenUrlMatchFolder).toHaveBeenCalledTimes(2);
+    rerender(<SearchDialog {...props} isOpen />);
     expect(
       within(dialog).getByRole('button', { name: /React reference/ }),
     ).toBeVisible();

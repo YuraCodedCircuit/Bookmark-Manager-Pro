@@ -26,6 +26,158 @@ const settings = {
 };
 const activityLogSettings = defaultActivityLogSettings(settings.profileId);
 
+function renderActivitySettings(
+  onSaveActivitySettings = vi.fn(async (value: typeof activityLogSettings) => {
+    void value;
+  }),
+  activityOnly = false,
+) {
+  const onClose = vi.fn();
+  render(
+    <BookmarkDisplaySettingsDialog
+      activityOnly={activityOnly}
+      activityLogSettings={activityLogSettings}
+      initialCategory="activity"
+      isOpen
+      onClose={onClose}
+      onSave={vi.fn(async () => undefined)}
+      onSaveActivitySettings={onSaveActivitySettings}
+      profiles={[]}
+      settings={settings}
+      storageUsage={[]}
+    />,
+  );
+  return { onClose, onSaveActivitySettings };
+}
+
+describe('Activity recording settings', () => {
+  it('restricts shortcut navigation and search to Activity', async () => {
+    const user = userEvent.setup();
+    const { onSaveActivitySettings } = renderActivitySettings(undefined, true);
+    const navigation = screen.getByRole('navigation', {
+      name: 'Settings categories',
+    });
+    expect(within(navigation).getAllByRole('button')).toHaveLength(1);
+    expect(
+      within(navigation).getByRole('button', { name: 'Activity' }),
+    ).toHaveAttribute('aria-current', 'page');
+    const search = screen.getByRole('searchbox', { name: 'Search settings' });
+    await user.type(search, 'wallpaper');
+    expect(
+      screen.queryByRole('heading', { name: 'Appearance' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(within(navigation).getAllByRole('button')).toHaveLength(1);
+    await user.clear(search);
+    await user.type(search, 'retention');
+    expect(screen.getByRole('heading', { name: 'Activity' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onSaveActivitySettings).toHaveBeenCalledWith(activityLogSettings);
+  });
+  it('prevents saving settings that could not be loaded', () => {
+    const save = vi.fn(async () => undefined);
+    render(
+      <BookmarkDisplaySettingsDialog
+        activityLogSettings={activityLogSettings}
+        activitySettingsAvailable={false}
+        initialCategory="activity"
+        isOpen
+        onClose={vi.fn()}
+        onSave={save}
+        onSaveActivitySettings={save}
+        profiles={[]}
+        settings={settings}
+        storageUsage={[]}
+      />,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Activity settings are unavailable',
+    );
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(
+      screen.queryByLabelText('Retention (records)'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('retains the draft after a failed save', async () => {
+    const user = userEvent.setup();
+    const save = vi.fn(async () => {
+      throw new Error('synthetic failure');
+    });
+    const { onClose } = renderActivitySettings(save);
+    fireEvent.change(screen.getByLabelText('Retention (records)'), {
+      target: { value: '500' },
+    });
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(screen.getByRole('alert')).toBeVisible();
+    expect(screen.getByLabelText('Retention (records)')).toHaveValue(500);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+  it('saves shared recording and retention options only on Save', async () => {
+    const user = userEvent.setup();
+    const { onSaveActivitySettings } = renderActivitySettings();
+    expect(screen.getByRole('group', { name: 'This profile' })).toBeVisible();
+    expect(
+      screen.getByRole('group', { name: 'Shared activity log' }),
+    ).toBeVisible();
+    await user.clear(screen.getByLabelText('Retention (records)'));
+    await user.type(screen.getByLabelText('Retention (records)'), '500');
+    await user.click(screen.getByLabelText('Enable the log service'));
+    await user.click(screen.getByLabelText('Record diagnostics'));
+    await user.selectOptions(
+      screen.getByLabelText('Minimum recording level'),
+      'ERROR',
+    );
+    const categories = screen.getByRole('group', {
+      name: 'Recorded categories',
+    });
+    await user.click(within(categories).getByLabelText('Notes'));
+    expect(onSaveActivitySettings).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onSaveActivitySettings).toHaveBeenCalledWith({
+      ...activityLogSettings,
+      enabled: false,
+      diagnosticsEnabled: false,
+      minimumLevel: 'ERROR',
+      retentionCount: 500,
+      enabledCategories: ['Application', 'Bookmarks', 'Profiles'],
+    });
+  });
+
+  it('discards edits when canceled', async () => {
+    const user = userEvent.setup();
+    const { onSaveActivitySettings, onClose } = renderActivitySettings();
+    await user.click(screen.getByLabelText('Record diagnostics'));
+    expect(
+      screen.queryByRole('button', { name: 'Reset settings' }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onClose).toHaveBeenCalled();
+    expect(onSaveActivitySettings).not.toHaveBeenCalled();
+  });
+
+  it('validates limits before saving and preserves the edited gate', async () => {
+    const user = userEvent.setup();
+    const { onSaveActivitySettings } = renderActivitySettings();
+    fireEvent.change(screen.getByLabelText('Retention (records)'), {
+      target: { value: '99' },
+    });
+    expect(screen.getByLabelText('Retention (records)')).toBeInvalid();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onSaveActivitySettings).not.toHaveBeenCalled();
+    await user.click(screen.getByLabelText('Enable the log service'));
+    expect(screen.getByLabelText('Enable the log service')).not.toBeChecked();
+    fireEvent.change(screen.getByLabelText('Retention (records)'), {
+      target: { value: '10000' },
+    });
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onSaveActivitySettings).toHaveBeenCalledWith({
+      ...activityLogSettings,
+      enabled: false,
+    });
+  });
+});
+
 describe('BookmarkDisplaySettingsDialog', () => {
   it('moves bookmark display to Appearance and saves it', async () => {
     const user = userEvent.setup();
@@ -54,10 +206,10 @@ describe('BookmarkDisplaySettingsDialog', () => {
       name: 'Settings categories',
     });
     expect(categoryNavigation).toHaveTextContent(
-      'GeneralAppearanceLanguageBookmarksSearchProfilesActivityNotificationsImportExportBackupSecurityAccessibilityShortcutsAdvanced',
+      'GeneralAppearanceLanguageBookmarksSearchProfilesActivityNotificationsImportExportBackupSecurityAccessibilityShortcuts',
     );
-    expect(within(categoryNavigation).getAllByRole('button')).toHaveLength(15);
-    expect(categoryNavigation.querySelectorAll('button svg')).toHaveLength(15);
+    expect(within(categoryNavigation).getAllByRole('button')).toHaveLength(14);
+    expect(categoryNavigation.querySelectorAll('button svg')).toHaveLength(14);
     expect(
       within(categoryNavigation)
         .getByRole('button', { name: 'General' })
@@ -74,17 +226,8 @@ describe('BookmarkDisplaySettingsDialog', () => {
         .querySelectorAll('circle'),
     ).toHaveLength(2);
     expect(
-      within(categoryNavigation)
-        .getByRole('button', { name: 'Advanced' })
-        .querySelectorAll('ellipse'),
-    ).toHaveLength(1);
-    for (const category of ['Advanced']) {
-      const button = within(categoryNavigation).getByRole('button', {
-        name: category,
-      });
-      expect(button).toBeDisabled();
-      expect(button).not.toHaveAttribute('aria-current');
-    }
+      within(categoryNavigation).queryByRole('button', { name: 'Advanced' }),
+    ).not.toBeInTheDocument();
     expect(
       within(categoryNavigation).getByRole('button', { name: 'Backup' }),
     ).toBeEnabled();
@@ -286,7 +429,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
     });
     const search = within(dialog).getByPlaceholderText('Search settings');
     await user.type(search, 'not-a-category');
-    expect(within(navigation).getAllByRole('button')).toHaveLength(15);
+    expect(within(navigation).getAllByRole('button')).toHaveLength(14);
     for (const category of within(navigation).getAllByRole('button'))
       expect(category).toBeDisabled();
     expect(
@@ -361,7 +504,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
     expect(
       within(navigation).getByRole('button', { name: 'Import' }),
     ).toBeDisabled();
-    expect(within(navigation).getAllByRole('button')).toHaveLength(15);
+    expect(within(navigation).getAllByRole('button')).toHaveLength(14);
     expect(
       within(dialog).getByRole('heading', { name: 'Bookmarks' }),
     ).toBeVisible();
@@ -398,7 +541,7 @@ describe('BookmarkDisplaySettingsDialog', () => {
     ).toHaveTextContent('bookmarks');
   });
 
-  it('enables Export while keeping Advanced unavailable', async () => {
+  it('enables Export while keeping Advanced hidden', async () => {
     const user = userEvent.setup();
     render(
       <BookmarkDisplaySettingsDialog
@@ -424,8 +567,8 @@ describe('BookmarkDisplaySettingsDialog', () => {
     expect(exportCategory).toHaveAttribute('aria-current', 'page');
     expect(general).not.toHaveAttribute('aria-current');
     expect(
-      within(dialog).getByRole('button', { name: 'Advanced' }),
-    ).toBeDisabled();
+      within(dialog).queryByRole('button', { name: 'Advanced' }),
+    ).not.toBeInTheDocument();
     expect(
       within(dialog).getByRole('heading', { name: 'Export' }),
     ).toBeVisible();
@@ -829,7 +972,9 @@ describe('BookmarkDisplaySettingsDialog', () => {
       within(dialog).getByRole('button', { name: 'Show profile sizes' }),
     );
     expect(within(dialog).getByText('Primary')).toBeVisible();
-    expect(within(dialog).getByLabelText('Activity logs')).not.toBeChecked();
+    expect(
+      within(dialog).queryByLabelText('Activity logs'),
+    ).not.toBeInTheDocument();
     expect(
       within(dialog).getByLabelText('Bookmarks and folders'),
     ).toBeChecked();

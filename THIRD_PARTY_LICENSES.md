@@ -1,6 +1,6 @@
 # Third-party Licenses and Notices
 
-**Updated:** August 24, 2026
+**Updated:** October 28, 2026
 
 The production application includes the following third-party packages. The
 inventory is derived from the installed production dependency tree; development
@@ -26,7 +26,7 @@ and testing tools that are not shipped in the extension are excluded.
 - `react-i18next` 17.0.11 — Jan Mühlemann and contributors
 - `scheduler` 0.27.0 — Meta Platforms, Inc. and contributors
 - `use-sync-external-store` 1.6.0 — Meta Platforms, Inc. and contributors
-- `zod` 4.4.3 — Colin McDonnell
+- `zod` 4.6.6 - Colin McDonnell
 - `zustand` 5.0.14 — Paul Henschel and contributors
 
 MIT license text: https://opensource.org/license/mit
@@ -60,3 +60,11 @@ the component if this summary and the applicable license differ.
 Package source distributions in the dependency tree contain their applicable
 copyright and license notices. Release preparation must regenerate and review
 this inventory whenever production dependencies change.
+
+## Offline URL matching
+
+URL matches includes `tldts` 7.4.10 and `tldts-core` 7.4.10 from
+https://github.com/remusao/tldts under the MIT license. Both resolved packages
+carry Copyright (c) 2017 Thomas Parisot, 2018 Rémi Berson. The full notice is
+included in `public/url-matches-licenses.txt` and copied into browser builds.
+The bundled suffix trie is used offline with private-domain rules enabled.

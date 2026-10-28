@@ -48,7 +48,12 @@ export interface BookmarkRepository {
   updateFolder(folder: Folder, expectedUpdatedAt?: number): Promise<void>;
   setFavorite(favorite: FavoriteItem): Promise<void>;
   removeFavorite(profileId: string, itemId: string): Promise<void>;
-  deleteItem(profileId: string, itemId: string): Promise<void>;
+  /** An expected bookmark must never fall back to deleting a folder. */
+  deleteItem(
+    profileId: string,
+    itemId: string,
+    expectedKind?: 'bookmark',
+  ): Promise<void>;
   moveItem(
     profileId: string,
     itemId: string,

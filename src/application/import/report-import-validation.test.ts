@@ -11,6 +11,7 @@ describe('import preview feedback', () => {
     ['import.save.failed', 'ERROR', 'failure'],
     ['import.save.changed', 'WARN', 'warning'],
     ['import.save.excluded', 'WARN', 'warning'],
+    ['import.save.activity-excluded', 'WARN', 'warning'],
     ['import.save.paused', 'WARN', 'warning'],
     ['import.save.refresh-failed', 'WARN', 'warning'],
     ['import.save.cancelled', 'WARN', 'quiet'],
@@ -37,7 +38,11 @@ describe('import preview feedback', () => {
       expect(warning).toHaveBeenCalledTimes(channel === 'warning' ? 1 : 0);
     },
   );
-  it.each(['import.save.succeeded', 'import.save.excluded'] as const)(
+  it.each([
+    'import.save.succeeded',
+    'import.save.excluded',
+    'import.save.activity-excluded',
+  ] as const)(
     'isolates failed and disabled secondary services for %s',
     async (code) => {
       vi.spyOn(console, 'error').mockImplementation(() => {});

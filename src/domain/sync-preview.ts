@@ -44,7 +44,7 @@ export function validateSyncTree(input: unknown): SyncNode[] {
 }
 
 /** Returns folder paths for native selection controls without exposing bookmark URLs. */
-export function syncFolderOptions(nodes: readonly SyncNode[]) {
+export function syncFolderOptions(nodes: readonly SyncNode[], separator = '/') {
   const byId = new Map(nodes.map((node) => [node.id, node]));
   return nodes
     .filter((node) => node.url === undefined)
@@ -56,7 +56,10 @@ export function syncFolderOptions(nodes: readonly SyncNode[]) {
         parent =
           parent.parentId === null ? undefined : byId.get(parent.parentId);
       }
-      return { id: node.id, label: parts.filter(Boolean).join(' / ') };
+      return {
+        id: node.id,
+        label: parts.filter(Boolean).join(` ${separator} `),
+      };
     })
     .filter((option) => option.label.length > 0);
 }
@@ -65,6 +68,7 @@ export function syncFolderOptions(nodes: readonly SyncNode[]) {
 export function syncSelectedPath(
   nodes: readonly SyncNode[],
   id: string,
+  separator = '/',
 ): string {
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const parts: string[] = [],
@@ -75,7 +79,7 @@ export function syncSelectedPath(
     if (node.title) parts.push(node.title);
     node = node.parentId ? byId.get(node.parentId) : undefined;
   }
-  return parts.reverse().join(' / ');
+  return parts.reverse().join(` ${separator} `);
 }
 
 /**

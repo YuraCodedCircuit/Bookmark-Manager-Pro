@@ -72,6 +72,8 @@ export function searchBookmarks(input: {
   preferences: SearchPreferences;
   query: string;
   sources: readonly SearchProfileSource[];
+  /** Presentation only; folder names, matching, and persisted data stay unchanged. */
+  pathSeparator?: '/' | '\\';
 }): readonly BookmarkSearchResult[] {
   const query = normalize(input.query);
   if (query.length < 2) return [];
@@ -113,7 +115,11 @@ export function searchBookmarks(input: {
         item,
         kind: 'url' in item ? 'bookmark' : 'folder',
         matchedField: candidate.field,
-        parentPath: folderPath(foldersById, item.parentId),
+        parentPath: folderPath(
+          foldersById,
+          item.parentId,
+          input.pathSeparator ?? '/',
+        ),
         profileId: source.profileId,
         profileName: source.profileName,
         score: candidate.score,
@@ -185,6 +191,7 @@ function resolveAllowedFolders(
 function folderPath(
   folders: ReadonlyMap<string, Folder>,
   parentId: string | null,
+  separator: string,
 ): string {
   const names: string[] = [];
   const visited = new Set<string>();
@@ -196,7 +203,7 @@ function folderPath(
     names.unshift(folder.title);
     currentId = folder.parentId;
   }
-  return names.join(' › ');
+  return names.join(` ${separator} `);
 }
 
 function compareResults(

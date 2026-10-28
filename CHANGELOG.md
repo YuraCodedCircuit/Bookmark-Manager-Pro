@@ -6,6 +6,54 @@ behavior. Developer-facing implementation details are maintained in the
 
 ## Unreleased
 
+## 0.7.1 - 2026-10-28
+
+### New
+
+- Dialog header badges explain updates, features being tested, and features
+  planned for removal, with mouse and keyboard access.
+- Find matching web addresses in one or all profiles, with automatic updates
+  that keep unchanged results in place.
+- Review matching bookmarks and remove unwanted copies with confirmation and Undo.
+
+### Improved
+
+- Folder paths follow the operating system's style across dialogs.
+- Settings hides the unused Advanced category.
+- Get info shows complete titles and folder paths, with clearer profile context.
+- Search results offer item details and a shortcut to the parent folder, with
+  confirmation before switching profiles.
+- Activity history is shared across profiles and grouped by browser session.
+- View options changes which records are shown; Settings > Activity controls
+  recording and how much history is kept.
+- Set history storage limits and confirm before clearing one session or all history.
+- Activity history highlights errors and startup checks, summarizes large
+  changes, and groups repeated problems.
+- Exported profiles and recovery copies leave out activity history; importing or
+  restoring them keeps the existing local history.
+- Import and Export use consistent button and window styles.
+- Search fields across the app show a single clear button.
+- Folder style keeps its title and action buttons visible while settings scroll.
+- Details view shows icons beside names to distinguish folders from bookmarks.
+- Opening a folder in a new tab keeps its internal ID out of the address bar.
+
+### Fixed
+
+- Long profile names fit within the profile menu, with hidden text revealed on
+  hover or keyboard focus.
+- Local profiles remain usable when some startup checks are unavailable.
+- Selected input text stays aligned when opening its context menu in Firefox.
+- Image cropping keeps the preview clear of its controls and shows which
+  directions each resize handle can move.
+
+### Removed
+
+- Activity history can no longer be exported or copied when duplicating a profile.
+
+### Security
+
+- Reduce excessive memory use when validating oversized data collections.
+
 ## 0.7.0 - 2026-10-20
 
 ### New

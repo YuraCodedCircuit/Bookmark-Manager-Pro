@@ -37,6 +37,60 @@ afterEach(async () =>
 );
 
 describe('DexieBookmarkRepository', () => {
+  it('never deletes a folder through a stale bookmark-only request and keeps other profiles intact', async () => {
+    const database = new BookmarkManagerDatabase(
+      `bookmark-only-delete-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = new DexieBookmarkRepository(database);
+    await repository.ensureRoot(profileId, root);
+    const folderId = '22222222-2222-4222-8222-222222222222';
+    await repository.addFolder({
+      ...root,
+      id: folderId,
+      parentId: rootId,
+      isRoot: false,
+    });
+    await expect(
+      repository.deleteItem(profileId, folderId, 'bookmark'),
+    ).rejects.toThrow('delete-bookmark-not-found');
+    expect(await repository.getFolder(profileId, folderId)).toBeDefined();
+    const bookmarkId = '33333333-3333-4333-8333-333333333333';
+    const bookmark = {
+      id: bookmarkId,
+      profileId,
+      parentId: folderId,
+      title: 'Private bookmark',
+      url: 'https://example.com/',
+      index: 0,
+      note: '',
+      tags: [],
+      createdAt: 1,
+      updatedAt: 1,
+      cardAppearance: root.cardAppearance,
+    };
+    await repository.addBookmark(bookmark);
+    await expect(
+      repository.deleteItem(
+        '44444444-4444-4444-8444-444444444444',
+        bookmarkId,
+        'bookmark',
+      ),
+    ).rejects.toThrow();
+    expect(await repository.getBookmark(profileId, bookmarkId)).toBeDefined();
+    await repository.setFavorite({
+      profileId,
+      itemId: bookmarkId,
+      kind: 'bookmark',
+      favoritedAt: 1,
+    });
+    await repository.deleteItem(profileId, bookmarkId, 'bookmark');
+    expect(await repository.getBookmark(profileId, bookmarkId)).toBeUndefined();
+    expect(
+      await database.favoriteItems.get([profileId, bookmarkId]),
+    ).toBeUndefined();
+    expect(await repository.getFolder(profileId, folderId)).toBeDefined();
+  });
   it('returns validated tree summaries without image-bearing appearance data', async () => {
     const database = new BookmarkManagerDatabase(
       `folder-summaries-${crypto.randomUUID()}`,

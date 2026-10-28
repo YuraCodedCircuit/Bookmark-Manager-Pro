@@ -45,14 +45,22 @@ export function createNativePreviewClient(
     event.preventDefault();
     receive({
       type: 'event',
-      event: { level: 'ERROR', code: 'import.validation.failed' },
+      event: {
+        level: 'ERROR',
+        code: 'import.validation.failed',
+        reason: 'worker',
+      },
     });
     receive({ type: 'failed' });
   };
   worker.onmessageerror = () => {
     receive({
       type: 'event',
-      event: { level: 'ERROR', code: 'import.validation.failed' },
+      event: {
+        level: 'ERROR',
+        code: 'import.validation.failed',
+        reason: 'worker',
+      },
     });
     receive({ type: 'failed' });
   };

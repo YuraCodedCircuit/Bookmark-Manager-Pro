@@ -69,9 +69,10 @@ profile, export them as JSON, HTML, or CSV and select that profile during Import
 
 Yes. Duplication creates a separate inactive profile. The active profile's
 Profiles settings control whether bookmarks/folders, favorites, appearance,
-images, settings, and activity logs are copied, and whether Copy is appended
+images and settings are copied, and whether Copy is appended
 to the name. Notes, undo history, recovery snapshots, and synchronization
-connections are not copied by profile duplication. Native Export and Import
+connections are not copied by profile duplication. Shared activity history is
+never copied. Native Export and Import
 provide a separate way to transfer supported profile data.
 
 ### 13. Why can I not delete a profile?
@@ -367,14 +368,14 @@ activity and technical problem records without deleting existing entries.
 
 ### 58. Can the activity log be cleared?
 
-Yes. Clear log requires confirmation and removes the active profile's retained
-records.
+Yes. Clear all sessions and Clear this session require separate confirmations.
+Filters do not limit either action, and recording settings are preserved.
 
-### 59. What is included in an activity-log export?
+### 59. Can activity history be exported?
 
-The local text export includes safe event information plus basic application,
-browser, operating-system, and export details. Profile IDs and personal
-bookmark content are omitted.
+No. Activity records and session details stay in local managed history. They are
+excluded from native profile exports, backups, restores, and app-provided
+clipboard actions. Older imported files do not replace or merge current history.
 
 ### 60. Does Bookmark Manager Pro send analytics or telemetry?
 
@@ -401,7 +402,7 @@ above the history list.
 
 ### 63. Is activity-history retention limited?
 
-Activity settings specify record-count and estimated-storage limits. When
+Settings > Activity specifies record-count and estimated-storage limits. When
 automatic deletion is enabled, the oldest records are removed to meet those
 limits. With automatic deletion disabled, those settings do not prune records;
 Clear log remains available.

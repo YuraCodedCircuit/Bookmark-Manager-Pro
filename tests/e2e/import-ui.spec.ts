@@ -193,7 +193,7 @@ test('Import preferences persist and automatically open flat CSV item review', a
     })
     .check();
   await page.screenshot({
-    path: 'design/import-settings-implemented.png',
+    path: 'codex-internal/verification/import-settings-implemented.png',
     animations: 'disabled',
   });
   await settings.getByRole('button', { name: 'Save', exact: true }).click();
@@ -266,7 +266,7 @@ test('Import preferences persist and automatically open flat CSV item review', a
   await expect(review.getByRole('checkbox')).toHaveCount(1);
   await review.getByRole('searchbox').fill('');
   await page.screenshot({
-    path: 'design/import-csv-review.png',
+    path: 'codex-internal/verification/import-csv-review.png',
     animations: 'disabled',
   });
   await expect(
@@ -295,25 +295,20 @@ test('Import preferences persist and automatically open flat CSV item review', a
                   (record) => record.eventCode === 'IMPORT-VALIDATION-CSV-FLAT',
                 );
                 database.close();
-                resolve(
-                  event
-                    ? {
-                        level: event.level,
-                        outcome: event.outcome,
-                        containsContent:
-                          JSON.stringify(event).includes('=SUM') ||
-                          JSON.stringify(event).includes(
-                            'https://example.com/',
-                          ),
-                      }
-                    : null,
-                );
+                resolve({
+                  eventPresent: event !== undefined,
+                  containsContent:
+                    JSON.stringify(records.result).includes('=SUM') ||
+                    JSON.stringify(records.result).includes(
+                      'https://example.com/',
+                    ),
+                });
               };
             };
           }),
       ),
     )
-    .toEqual({ level: 'WARN', outcome: 'Skipped', containsContent: false });
+    .toEqual({ eventPresent: false, containsContent: false });
   await page.keyboard.press('Escape');
   await expect(
     dialog.getByRole('button', { name: 'Review items', exact: true }),
@@ -385,7 +380,7 @@ test('native worker validates profiles with scoped selection, focus restoration,
     1,
   );
   await page.screenshot({
-    path: 'design/import-profile-filter.png',
+    path: 'codex-internal/verification/import-profile-filter.png',
     animations: 'disabled',
   });
   await child.getByRole('button', { name: 'Clear input' }).click();
@@ -473,7 +468,9 @@ test('native worker validates profiles with scoped selection, focus restoration,
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await expect(dialog).toHaveCSS('background-color', 'rgb(17, 26, 37)');
-  await page.screenshot({ path: 'design/import-ui-implemented-desktop.png' });
+  await page.screenshot({
+    path: 'codex-internal/verification/import-ui-implemented-desktop.png',
+  });
   for (const theme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: theme });
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
@@ -558,7 +555,7 @@ test('encrypted native file unlocks with generic retry and clears its password',
     .click();
   await passwordInput.fill('Wrong1!');
   await page.screenshot({
-    path: 'design/import-unlock-implemented.png',
+    path: 'codex-internal/verification/import-unlock-implemented.png',
     animations: 'disabled',
   });
   await child.getByRole('button', { name: 'Unlock', exact: true }).click();
@@ -974,7 +971,7 @@ test('JSON preview reuses destination pickers and reviews hidden descendants wit
     }),
   ).toBeInViewport();
   await page.screenshot({
-    path: 'design/import-destination-folder-implemented.png',
+    path: 'codex-internal/verification/import-destination-folder-implemented.png',
     animations: 'disabled',
   });
   await expect(folderChild.locator('header p')).toHaveText(
@@ -1001,9 +998,12 @@ test('JSON preview reuses destination pickers and reviews hidden descendants wit
     'footer .export-profile-picker__count',
   );
   await expect(selectedPath).toHaveCSS('white-space', 'nowrap');
+  const pathSeparator = await page.evaluate(() =>
+    /win/i.test(navigator.platform) ? '\\' : '/',
+  );
   await expect(selectedPath).toHaveAttribute(
     'title',
-    `Home / ${'Long destination folder '.repeat(8).trim()}`,
+    `Home ${pathSeparator} ${'Long destination folder '.repeat(8).trim()}`,
   );
   await expect(folder.locator('span[title]')).toHaveCSS(
     'white-space',
@@ -1064,7 +1064,7 @@ test('JSON preview reuses destination pickers and reviews hidden descendants wit
       .evaluate((element) => getComputedStyle(element).backgroundColor),
   );
   await page.screenshot({
-    path: 'design/import-json-review-implemented.png',
+    path: 'codex-internal/verification/import-json-review-implemented.png',
     animations: 'disabled',
   });
   await page.setViewportSize({ width: 360, height: 640 });

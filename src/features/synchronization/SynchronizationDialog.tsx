@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getPathSeparator } from '../../platform/navigation/path-separator';
 
 import { ClearIcon } from '../../components/icons/ClearIcon';
 import { InformationIcon } from '../../components/icons/InformationIcon';
@@ -69,11 +70,16 @@ export function SynchronizationDialog({
   const [choices, setChoices] = useState<SyncChoices>({});
   const [serviceError, setServiceError] = useState('');
   const extensionLabel = useMemo(
-    () => syncSelectedPath(validateSyncTree(extensionFolders), extensionId),
+    () =>
+      syncSelectedPath(
+        validateSyncTree(extensionFolders),
+        extensionId,
+        getPathSeparator(),
+      ),
     [extensionFolders, extensionId],
   );
   const browserLabel = useMemo(
-    () => syncSelectedPath(browserNodes, browserId),
+    () => syncSelectedPath(browserNodes, browserId, getPathSeparator()),
     [browserNodes, browserId],
   );
   const isManagedConnection = !!connection && connection.status !== 'conflict';

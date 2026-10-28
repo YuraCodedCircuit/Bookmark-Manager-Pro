@@ -204,9 +204,9 @@ test('uses the refined Get info visual hierarchy without hiding full values', as
         <button type="button">Close</button>
       </header>
       <div class="item-info-dialog__scroll-region">
-        <div class="item-info-dialog__appearance"></div>
+        <div class="item-info-dialog__appearance" data-kind="color"></div>
         <div class="item-info-dialog__content">
-          <dl><div class="item-info-dialog__row"><dt>Title</dt><dd>${longValue}</dd><button type="button">Copy</button></div></dl>
+          <dl><div class="item-info-dialog__row" data-field="title"><dt>Title</dt><dd>${longValue}</dd><button type="button">Copy</button></div></dl>
           <details class="item-info-dialog__more"><summary><svg></svg><span>More details</span></summary></details>
         </div>
       </div>
@@ -215,9 +215,16 @@ test('uses the refined Get info visual hierarchy without hiding full values', as
 
   await expect(page.locator('.item-info-dialog__appearance')).toHaveCSS(
     'min-height',
-    '152px',
+    '48px',
   );
-  await expect(page.locator('.item-info-dialog__row button')).toHaveCSS(
+  await page.locator('.item-info-dialog__appearance').evaluate((element) => {
+    element.setAttribute('data-kind', 'image');
+  });
+  await expect(page.locator('.item-info-dialog__appearance')).toHaveCSS(
+    'min-height',
+    '96px',
+  );
+  await expect(page.locator('.item-info-dialog__row button')).not.toHaveCSS(
     'border-color',
     'rgba(0, 0, 0, 0)',
   );
@@ -227,8 +234,12 @@ test('uses the refined Get info visual hierarchy without hiding full values', as
     'rgba(0, 0, 0, 0)',
   );
   await expect(page.locator('.item-info-dialog__row dd')).toHaveCSS(
-    '-webkit-line-clamp',
-    '3',
+    'display',
+    'block',
+  );
+  await expect(page.locator('.item-info-dialog__row dd')).toHaveCSS(
+    'overflow',
+    'visible',
   );
   await expect(page.locator('.item-info-dialog__row dd')).toHaveText(longValue);
 

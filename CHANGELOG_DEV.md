@@ -6,6 +6,76 @@ benefits and behavior are maintained in `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.7.1 - 2026-10-28
+
+### Added
+
+- Added reusable localized dialog badges with exact-release or configurable
+  version-range visibility and manually configured feature-status notices.
+- URL grouping isolates protocols and ports, recognizes private suffixes, and
+  compares decoded query-pair multisets.
+- Search snapshots reject stale reads, retain equivalent matching inputs, and
+  preserve prior results on refresh failure.
+- URL matches observes committed bookmark, folder, and profile writes across
+  contexts, with debounced reads, hidden-view deferral, and session cancellation.
+- Added direct runtime dependency `tldts` 7.4.10 with bundled suffix data and
+  private-domain rules; matching requires no network access or new permissions.
+- URL-match actions revalidate ownership and use the source profile's settings,
+  Undo, and activity logging.
+- Inspection and deletion preserve activation; folder navigation activates its
+  owner. Refresh failures preserve committed deletions.
+- Bookmark-only deletion checks run inside the storage transaction to prevent
+  stale bookmark actions from falling back to folder deletion.
+
+### Changed
+
+- Folder-path display reuses the OS separator adapter; domain formatting accepts
+  an injected separator without changing transfer formats or stored names.
+- Search item actions revalidate ownership and parent folders before inspection
+  or navigation, preserving Search state during inspection.
+- Shared clearable-input CSS suppresses native search cancel controls, replacing
+  screen-specific rules and covering all shared search fields.
+- Activity view controls are transient; recording and retention edits use
+  validated Save/Cancel with existing profile and shared ownership.
+- Log shortcuts restrict Settings navigation, search, and submission to Activity;
+  normal Settings retains all categories.
+- Sparse activity admission runs before row allocation. Cached preflight checks
+  do not replay startup or update diagnostics.
+- Versioned incident metadata atomically coalesces failures across surfaces and
+  worker restarts while preserving escalation and recovery.
+- Activity reporting distinguishes committed mutations from primary persistence
+  failures without changing historical rows or transfer formats.
+- Capture and transfer operations exclude activity records. Legacy nested
+  snapshots are verified and rehashed after log removal, preserving format shape.
+- Schema 39 converts local activity into an Earlier activity collection and
+  introduces shared session records, deterministic event sequences, a bounded
+  durable startup queue, and application-owned options. Active-profile recording
+  permission gates cross-profile and application-wide events.
+- Shared activity history uses IndexedDB subscriptions, group-aware retention,
+  capacity pause, scoped clearing, and local calendar-day unions.
+- Background preflight coordinates extension startup and update checks without
+  blocking readiness or duplicating session identity.
+- Unavailable background checks fall back to local initialization with
+  content-free feedback and isolated notification failures.
+- Folder content and navigation reads discard superseded results across folder
+  and profile transitions, preserving the current tree and breadcrumb destination.
+- Details title controls reuse shared decorative item-type icons while preserving
+  native activation, accessible names, and long-title truncation.
+- Folder tabs receive validated destinations through background messaging and
+  tab-bound session storage instead of URL parameters. Startup profile selection
+  is preserved; no new permissions or durable schema changes are required.
+- Removed folder context-menu history writes without adding Back/Forward routing.
+
+### Fixed
+
+- Input selection previews use border-box geometry to avoid counting Firefox's
+  inner-editor padding twice; textarea geometry remains unchanged.
+
+### Security
+
+- Update Zod from 4.4.3 to 4.6.6 to check collection limits before element
+  validation, addressing GHSA-mrhx-c7xc-m3w5.
+
 ## 0.7.0 - 2026-10-20
 
 ### Added

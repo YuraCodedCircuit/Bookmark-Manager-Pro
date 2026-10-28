@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ZodError } from 'zod';
 
 import type { ManageActivityLog } from '../../application/activity-log/manage-activity-log';
 import type {
@@ -325,6 +326,7 @@ export function SaveCurrentPagePopup({
     eventCode: string,
     level: 'INFO' | 'WARN' | 'ERROR',
     outcome: 'Succeeded' | 'Failed',
+    reason?: 'validation',
   ) => {
     try {
       await dependencies.activityLog.record(ready.profileId, {
@@ -343,6 +345,7 @@ export function SaveCurrentPagePopup({
             : 'Current page operation failed.',
         outcome,
         source: 'Toolbar popup',
+        reason,
       });
     } catch {
       console.error('current-tab-popup-activity-log-write-failed');
@@ -369,22 +372,30 @@ export function SaveCurrentPagePopup({
             ? [...value.tags].sort((left, right) => left.localeCompare(right))
             : value.tags,
       });
-      const afterLineage =
-        await dependencies.bookmarkManager.captureUndoLineage(
-          ready.profileId,
-          selectedFolder.id,
+      try {
+        const afterLineage =
+          await dependencies.bookmarkManager.captureUndoLineage(
+            ready.profileId,
+            selectedFolder.id,
+          );
+        await dependencies.undoHistory.record({
+          action: 'created',
+          after: {
+            ...afterLineage,
+            bookmarks: [created],
+          },
+          before,
+          itemId: created.id,
+          itemType: 'bookmark',
+          profileId: ready.profileId,
+        });
+      } catch {
+        await recordDiagnostic(
+          'CURRENT-TAB-UNDO-HISTORY-DEGRADED',
+          'WARN',
+          'Current page was saved without complete undo history.',
         );
-      await dependencies.undoHistory.record({
-        action: 'created',
-        after: {
-          ...afterLineage,
-          bookmarks: [created],
-        },
-        before,
-        itemId: created.id,
-        itemType: 'bookmark',
-        profileId: ready.profileId,
-      });
+      }
     };
     const undoReady = await dependencies.initializeUndo();
     if (undoReady) await dependencies.undoHistory.runMutation(mutate);
@@ -413,7 +424,14 @@ export function SaveCurrentPagePopup({
         navigationChanged: true,
         profileId: ready.profileId,
       })
-      .catch(() => console.error('popup-content-change-publish-failed'));
+      .catch(async () => {
+        console.error('popup-content-change-publish-failed');
+        await recordDiagnostic(
+          'CURRENT-TAB-VIEW-REFRESH-DEGRADED',
+          'WARN',
+          'Current page was saved, but open views could not be refreshed.',
+        );
+      });
     await record('CURRENT-TAB-BOOKMARK-CREATE-COMPLETE', 'INFO', 'Succeeded');
   };
 
@@ -464,7 +482,12 @@ export function SaveCurrentPagePopup({
           error.message === 'popup-profile-changed')
       )
         throw error;
-      await record('CURRENT-TAB-BOOKMARK-CREATE-FAILED', 'ERROR', 'Failed');
+      await record(
+        'CURRENT-TAB-BOOKMARK-CREATE-FAILED',
+        'ERROR',
+        'Failed',
+        error instanceof ZodError ? 'validation' : undefined,
+      );
       throw error;
     }
   };

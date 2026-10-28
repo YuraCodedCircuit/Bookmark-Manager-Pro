@@ -68,7 +68,9 @@ describe('BookmarkManagerDatabase schema upgrades', () => {
 
     await database.open();
 
-    expect(database.verno).toBe(38);
+    expect(database.verno).toBe(39);
+    expect(database.activitySessions.schema.primKey.name).toBe('id');
+    expect(database.activityPending.schema.primKey.name).toBe('id');
     expect(database.backupSnapshots.schema.primKey.name).toBe('id');
     expect(database.folderWallpapers.schema.primKey.name).toBe('id');
     expect(database.notes.schema.primKey.name).toBe('id');

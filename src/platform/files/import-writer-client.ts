@@ -21,6 +21,7 @@ const planSchema = z.object({
     'no-changes',
   ]),
   synchronizationPaused: z.boolean().optional(),
+  activityHistoryExcluded: z.boolean().optional(),
 });
 
 /** Keeps validation, remapping, snapshot preparation and atomic writes off the UI thread. */
@@ -49,6 +50,7 @@ export function createWorkerImportWriter(): ImportWriter {
       const summary = {
         ...parsed,
         synchronizationPaused: parsed.synchronizationPaused ?? false,
+        activityHistoryExcluded: parsed.activityHistoryExcluded ?? false,
       };
       const discard = () => owner.discard();
       signal.addEventListener('abort', discard, { once: true });

@@ -374,7 +374,11 @@ export class DexieBookmarkRepository implements BookmarkRepository {
     await this.database.favoriteItems.delete([profileId, itemId]);
   }
 
-  async deleteItem(profileId: string, itemId: string): Promise<void> {
+  async deleteItem(
+    profileId: string,
+    itemId: string,
+    expectedKind?: 'bookmark',
+  ): Promise<void> {
     await this.database.transaction(
       'rw',
       [
@@ -391,6 +395,8 @@ export class DexieBookmarkRepository implements BookmarkRepository {
           await this.database.favoriteItems.delete([profileId, itemId]);
           return;
         }
+        if (expectedKind === 'bookmark')
+          throw new Error('delete-bookmark-not-found');
         const folder = await this.database.folders.get(itemId);
         if (!folder || folder.profileId !== profileId || folder.isRoot)
           throw new Error('delete-item-not-found');

@@ -74,6 +74,7 @@ addEventListener('message', (event: MessageEvent<unknown>) => {
           duplicatePolicy: plan.duplicatePolicy,
           snapshotMode: plan.snapshotMode,
           synchronizationPaused: plan.synchronizationPaused,
+          activityHistoryExcluded: plan.activityHistoryExcluded,
         };
         postMessage({ version: 1, id, type: 'result', value: summary });
       } else {

@@ -66,6 +66,8 @@ export class UndoHistoryService {
   private readonly peers = new Set<string>();
   private readonly storageWriteFailureListeners =
     new Set<StorageWriteFailureListener>();
+  private readonly storageRecoveryListeners =
+    new Set<StorageWriteFailureListener>();
   private readonly storagePressureListeners =
     new Set<StoragePressureListener>();
 
@@ -125,6 +127,12 @@ export class UndoHistoryService {
   ): () => void {
     this.storageWriteFailureListeners.add(listener);
     return () => this.storageWriteFailureListeners.delete(listener);
+  }
+
+  /** Signals only confirmed durable writes; the activity service decides whether recovery is new. */
+  subscribeStorageRecovery(listener: StorageWriteFailureListener): () => void {
+    this.storageRecoveryListeners.add(listener);
+    return () => this.storageRecoveryListeners.delete(listener);
   }
 
   /** Reports capacity-driven removal without exposing saved item data. */
@@ -382,6 +390,16 @@ export class UndoHistoryService {
     while (retainedEntries.length) {
       try {
         await this.storage.save(retainedEntries);
+        const profileIds = [
+          ...new Set(retainedEntries.map(({ profileId }) => profileId)),
+        ];
+        for (const listener of this.storageRecoveryListeners) {
+          try {
+            listener(profileIds);
+          } catch {
+            console.error('undo-history-recovery-listener-failed');
+          }
+        }
         this.store.setState({ entries: retainedEntries });
         if (broadcast) this.broadcast('sync', retainedEntries);
         const removedEntries = entries.length - retainedEntries.length;

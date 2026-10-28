@@ -13,7 +13,10 @@ import {
   processCroppedImage,
 } from '../image-crop/process-cropped-image';
 import { FolderStyleDialog } from './FolderStyleDialog';
-vi.mock('../image-crop/process-cropped-image', () => ({
+vi.mock('../image-crop/process-cropped-image', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('../image-crop/process-cropped-image')
+  >()),
   MAX_CROP_OUTPUT_EDGE: 870,
   inspectCropSource: vi.fn(async () => ({ width: 1000, height: 600 })),
   processCroppedImage: vi.fn(async () => 'data:image/webp;base64,cropped'),

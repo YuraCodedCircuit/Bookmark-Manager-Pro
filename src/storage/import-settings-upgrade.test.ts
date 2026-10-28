@@ -24,7 +24,7 @@ describe('schema 37 Import preferences', () => {
     const upgraded = new BookmarkManagerDatabase(name);
     try {
       await upgraded.open();
-      expect(upgraded.verno).toBe(38);
+      expect(upgraded.verno).toBe(39);
       expect(await upgraded.profileSettings.get(first)).toMatchObject({
         theme: 'dark',
         importPreferences: defaultImportPreferences,

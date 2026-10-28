@@ -8,6 +8,7 @@ import { BookmarkManagerDatabase } from './database';
 import { BackupDatabase } from './backup-database';
 import packageMetadata from '../../package.json';
 import { migrateBackupSnapshots } from './migrate-backup-snapshots';
+import { activityLogSettingsSchema } from '../domain/activity-log';
 
 export class DexieBackupRepository implements BackupRepository {
   constructor(
@@ -32,7 +33,6 @@ export class DexieBackupRepository implements BackupRepository {
         this.primary.bookmarks,
         this.primary.folders,
         this.primary.favoriteItems,
-        this.primary.activity,
         this.primary.metadata,
         this.primary.notes,
         this.primary.noteFolders,
@@ -46,7 +46,6 @@ export class DexieBackupRepository implements BackupRepository {
           bookmarks,
           folders,
           favorites,
-          activity,
           syncRecord,
           notes,
           noteFolders,
@@ -61,7 +60,6 @@ export class DexieBackupRepository implements BackupRepository {
             .where('profileId')
             .equals(profileId)
             .toArray(),
-          this.primary.activity.where('profileId').equals(profileId).toArray(),
           this.primary.metadata.get(`sync:v1:${profileId}`),
           this.primary.notes.where('profileId').equals(profileId).toArray(),
           this.primary.noteFolders
@@ -80,11 +78,14 @@ export class DexieBackupRepository implements BackupRepository {
           applicationVersion: packageMetadata.version,
           profile,
           settings,
-          activityLogSettings: activityLogSettings ?? null,
+          activityLogSettings: activityLogSettings
+            ? { ...activityLogSettings, includeDiagnosticsExport: false }
+            : null,
           bookmarks,
           folders,
           favorites,
-          activity,
+          // Kept empty for older payload readers; history never enters recovery data.
+          activity: [],
           synchronization: syncRecord
             ? syncConnectionSchema.parse(syncRecord.value)
             : null,
@@ -156,7 +157,6 @@ export class DexieBackupRepository implements BackupRepository {
         this.primary.bookmarks,
         this.primary.folders,
         this.primary.favoriteItems,
-        this.primary.activity,
         this.primary.metadata,
         this.primary.notes,
         this.primary.noteFolders,
@@ -172,7 +172,6 @@ export class DexieBackupRepository implements BackupRepository {
             .where('profileId')
             .equals(profileId)
             .delete(),
-          this.primary.activity.where('profileId').equals(profileId).delete(),
           this.primary.notes.where('profileId').equals(profileId).delete(),
           this.primary.noteFolders
             .where('profileId')
@@ -187,13 +186,12 @@ export class DexieBackupRepository implements BackupRepository {
         await this.primary.profileSettings.put(payload.settings);
         if (payload.activityLogSettings)
           await this.primary.activityLogSettings.put(
-            payload.activityLogSettings,
+            activityLogSettingsSchema.parse(payload.activityLogSettings),
           );
         else await this.primary.activityLogSettings.delete(profileId);
         await this.primary.bookmarks.bulkPut(payload.bookmarks);
         await this.primary.folders.bulkPut(payload.folders);
         await this.primary.favoriteItems.bulkPut(payload.favorites);
-        await this.primary.activity.bulkPut(payload.activity);
         await this.primary.notes.bulkPut(payload.notes ?? []);
         await this.primary.noteFolders.bulkPut(payload.noteFolders ?? []);
         await this.primary.folderWallpapers.bulkPut(
@@ -240,7 +238,6 @@ export class DexieBackupRepository implements BackupRepository {
         this.primary.bookmarks,
         this.primary.folders,
         this.primary.favoriteItems,
-        this.primary.activity,
         this.primary.metadata,
         this.primary.notes,
         this.primary.noteFolders,
@@ -273,10 +270,12 @@ export class DexieBackupRepository implements BackupRepository {
             : undefined,
         });
         if (payload.activityLogSettings)
-          await this.primary.activityLogSettings.add({
-            ...payload.activityLogSettings,
-            profileId,
-          });
+          await this.primary.activityLogSettings.add(
+            activityLogSettingsSchema.parse({
+              ...payload.activityLogSettings,
+              profileId,
+            }),
+          );
         await this.primary.folders.bulkAdd(
           payload.folders.map((item) => ({
             ...item,
@@ -306,14 +305,6 @@ export class DexieBackupRepository implements BackupRepository {
             ...item,
             profileId,
             itemId: remap(item.itemId),
-          })),
-        );
-        await this.primary.activity.bulkAdd(
-          payload.activity.map((item) => ({
-            ...item,
-            id: crypto.randomUUID(),
-            operationId: `op-${crypto.randomUUID()}`,
-            profileId,
           })),
         );
         await this.primary.noteFolders.bulkAdd(

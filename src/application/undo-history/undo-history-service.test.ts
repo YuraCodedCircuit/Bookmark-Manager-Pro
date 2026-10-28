@@ -653,6 +653,8 @@ describe('UndoHistoryService', () => {
       vi.fn(async () => undefined),
     );
     service.subscribeStorageWriteFailures(onStorageWriteFailure);
+    const recovery = vi.fn();
+    service.subscribeStorageRecovery(recovery);
     await service.record({
       action: 'created',
       after,
@@ -663,6 +665,29 @@ describe('UndoHistoryService', () => {
     });
     expect(service.store.getState().entries[0]?.status).toBe('unavailable');
     expect(onStorageWriteFailure).toHaveBeenCalledWith([profileId]);
+    expect(recovery).not.toHaveBeenCalled();
+  });
+
+  it('signals confirmed storage writes and isolates a failed recovery listener', async () => {
+    const service = new UndoHistoryService(
+      { load: async () => [], save: async () => undefined },
+      vi.fn(async () => undefined),
+    );
+    const recovery = vi.fn();
+    service.subscribeStorageRecovery(() => {
+      throw new Error('private');
+    });
+    service.subscribeStorageRecovery(recovery);
+    await service.record({
+      action: 'created',
+      after,
+      before,
+      itemId,
+      itemType: 'folder',
+      profileId,
+    });
+    expect(recovery).toHaveBeenCalledExactlyOnceWith([profileId]);
+    expect(service.store.getState().entries[0]?.status).not.toBe('unavailable');
   });
 
   it('drops only oldest entries when accumulated history exceeds storage capacity', async () => {

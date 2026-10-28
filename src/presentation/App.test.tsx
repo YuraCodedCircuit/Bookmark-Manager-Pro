@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -7,7 +8,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import type { InitializationState } from '../application/initialization/initialization-state';
 import type { WebPreflightSnapshot } from '../application/preflight/preflight-state';
@@ -19,6 +20,18 @@ import { defaultNotificationPreferences } from '../domain/profile-settings';
 import type { NavigationItems } from '../application/bookmark/manage-bookmarks';
 import '../localization/i18n';
 import { App } from './App';
+import { FolderTabMissingDestinationError } from '../platform/browser/folder-tabs';
+const { claimFolderTab, openFolderTab } = vi.hoisted(() => ({
+  claimFolderTab: vi.fn<() => Promise<string | undefined>>(
+    async () => undefined,
+  ),
+  openFolderTab: vi.fn(async () => undefined),
+}));
+vi.mock('../platform/browser/folder-tabs', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/browser/folder-tabs')>()),
+  claimFolderTab,
+  openFolderTab,
+}));
 import { defaultActivityLogSettings } from '../application/activity-log/manage-activity-log';
 import { UndoHistoryService } from '../application/undo-history/undo-history-service';
 import type { ContentChange } from '../messaging/content-change-protocol';
@@ -145,6 +158,10 @@ const bookmarkManager = {
   updateFolderStyle: vi.fn(),
 };
 const profileManager = {
+  getProfileSettings: vi.fn(async (profileId: string) => ({
+    ...createdProfile.settings,
+    profileId,
+  })),
   create: vi.fn(),
   delete: vi.fn(),
   duplicate: vi.fn(),
@@ -201,6 +218,7 @@ function renderApp(
   toolbarSavedStatus?: NonNullable<
     Parameters<typeof App>[0]['toolbarSavedStatus']
   >,
+  initialCapabilities: WebPreflightSnapshot['capabilities'] = [],
 ) {
   const changeBridge = {
     profileActivation: vi.fn(async () => ({
@@ -222,7 +240,7 @@ function renderApp(
       bookmarkManager={bookmarkManager}
       createProfileAndResumePreflight={createProfileAndResumePreflight}
       initialPreflightSnapshot={{
-        capabilities: [],
+        capabilities: initialCapabilities,
         initialization: initializationState,
         language: 'en-US',
         operationId: 'initial-operation',
@@ -247,6 +265,8 @@ function renderApp(
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  claimFolderTab.mockResolvedValue(undefined);
+  openFolderTab.mockResolvedValue(undefined);
   bookmarkManager.listContents.mockImplementation(async () => ({
     bookmarks: [storedBookmark],
     folders: [],
@@ -259,6 +279,10 @@ afterEach(() => {
   }));
   bookmarkManager.setFavorite.mockResolvedValue(undefined);
   profileManager.list.mockResolvedValue([]);
+  profileManager.getProfileSettings.mockImplementation(async (profileId) => ({
+    ...createdProfile.settings,
+    profileId,
+  }));
   profileManager.getDeletionImpact.mockResolvedValue({
     bookmarkCount: 0,
     folderCount: 1,
@@ -274,6 +298,673 @@ afterEach(() => {
 });
 
 describe('App', () => {
+  it.each([true, false])(
+    'keeps local Home usable and honors notification enablement=%s when background checks are unavailable',
+    async (enabled) => {
+      renderApp(
+        {
+          status: 'ready',
+          theme: 'dark',
+          ...createdProfile,
+          settings: {
+            ...createdProfile.settings,
+            notificationPreferences: {
+              ...defaultNotificationPreferences,
+              enabled,
+            },
+          },
+        },
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        [
+          {
+            id: 'runtime-messaging',
+            status: 'unavailable',
+            reason: 'background-unavailable',
+          },
+        ],
+      );
+      expect(
+        await screen.findByRole('button', { name: 'Open search' }),
+      ).toBeVisible();
+      const message =
+        'Background startup checks are unavailable. Local profile data remains available. Reopen the application to retry.';
+      if (enabled) expect(await screen.findByText(message)).toBeVisible();
+      else expect(screen.queryByText(message)).not.toBeInTheDocument();
+    },
+  );
+  it.each(['content', 'tree', 'error'] as const)(
+    'ignores previous-profile %s completion after URL-match navigation and Home',
+    async (stage) => {
+      const user = userEvent.setup();
+      const otherId = '44444444-4444-4444-8444-444444444444';
+      const otherProfile = {
+        ...createdProfile.profile,
+        id: otherId,
+        username: 'Other owner',
+      };
+      const otherSettings = { ...createdProfile.settings, profileId: otherId };
+      const otherRoot = {
+        ...rootFolder,
+        id: '55555555-5555-4555-8555-555555555555',
+        profileId: otherId,
+      };
+      const child = {
+        ...otherRoot,
+        id: '66666666-6666-4666-8666-666666666666',
+        parentId: otherRoot.id,
+        isRoot: false,
+        title: 'Destination',
+      };
+      const match = {
+        ...storedBookmark,
+        id: '77777777-7777-4777-8777-777777777777',
+        profileId: otherId,
+        parentId: child.id,
+        title: 'Destination match',
+      };
+      const homeItem = {
+        ...match,
+        id: '88888888-8888-4888-8888-888888888888',
+        parentId: otherRoot.id,
+        title: 'Destination Home content',
+      };
+      profileManager.list.mockResolvedValue([
+        { ...createdProfile, isActive: true, bookmarkCount: 1, folderCount: 1 },
+        {
+          profile: otherProfile,
+          isActive: false,
+          bookmarkCount: 2,
+          folderCount: 2,
+        },
+      ]);
+      bookmarkManager.listFolders.mockImplementation(async (id) =>
+        id === otherId ? [otherRoot, child] : [rootFolder],
+      );
+      bookmarkManager.listBookmarks.mockImplementation(async (id) =>
+        id === otherId ? [match, homeItem] : [storedBookmark],
+      );
+      const contents = async (profileId: string, folderId: string) => ({
+        bookmarks:
+          profileId === otherId
+            ? [folderId === child.id ? match : homeItem]
+            : [storedBookmark],
+        folders: [],
+      });
+      bookmarkManager.listContents.mockImplementation(contents);
+      let receive: ((change: ContentChange) => void) | undefined;
+      renderApp(
+        { status: 'ready', theme: 'dark', ...createdProfile },
+        {
+          status: 'ready',
+          theme: 'dark',
+          profile: otherProfile,
+          settings: otherSettings,
+        },
+        undefined,
+        {
+          subscribe: (next) => {
+            receive = next;
+            return () => undefined;
+          },
+        },
+      );
+      await screen.findByText('Example');
+      let finish:
+        ((value: Awaited<ReturnType<typeof contents>>) => void) | undefined;
+      let fail: ((cause: Error) => void) | undefined;
+      const delayed = new Promise<Awaited<ReturnType<typeof contents>>>(
+        (resolve, reject) => {
+          finish = resolve;
+          fail = reject;
+        },
+      );
+      let finishTree: ((value: readonly Folder[]) => void) | undefined;
+      const delayedTree = new Promise<readonly Folder[]>((resolve) => {
+        finishTree = resolve;
+      });
+      const treeReads = bookmarkManager.listFolders.mock.calls.length;
+      if (stage === 'tree')
+        bookmarkManager.listFolders.mockImplementationOnce(() => delayedTree);
+      else bookmarkManager.listContents.mockImplementationOnce(() => delayed);
+      receive?.({
+        affectedParentIds: [rootFolder.id],
+        changedFolderIds: [],
+        deletedFolderPaths: [],
+        fullRefresh: true,
+        navigationChanged: false,
+        profileId: createdProfile.profile.id,
+        protocolVersion: 1,
+        revision: 1,
+        type: 'content.changed',
+      });
+      await waitFor(() =>
+        stage === 'tree'
+          ? expect(bookmarkManager.listFolders).toHaveBeenCalledTimes(
+              treeReads + 1,
+            )
+          : expect(bookmarkManager.listContents).toHaveBeenCalledTimes(2),
+      );
+      await user.click(screen.getByRole('button', { name: 'Open search' }));
+      const search = screen.getByRole('dialog', { name: 'Search' });
+      await user.click(
+        within(search).getByRole('button', { name: 'URL matches' }),
+      );
+      await user.click(
+        within(search).getByRole('button', { name: 'URL match options' }),
+      );
+      await user.selectOptions(within(search).getByLabelText('Scope'), 'all');
+      fireEvent(
+        within(search).getByRole('dialog', { name: 'URL match options' }),
+        new Event('cancel', { bubbles: true, cancelable: true }),
+      );
+      await user.click(
+        await within(search).findByRole('button', {
+          name: `${storedBookmark.url} · 3 bookmarks`,
+        }),
+      );
+      const row = within(search).getByText('Destination match').closest('li');
+      if (!row) throw new Error('missing-row');
+      await user.click(
+        within(row).getByRole('button', { name: 'Open folder' }),
+      );
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('dialog', { name: 'Search' }),
+        ).not.toBeInTheDocument(),
+      );
+      await user.click(screen.getByRole('button', { name: 'Home' }));
+      expect(await screen.findByText('Destination Home content')).toBeVisible();
+      await act(async () => {
+        if (stage === 'tree') finishTree?.([rootFolder]);
+        else if (stage === 'error') fail?.(new Error('superseded-read-failed'));
+        else finish?.(await contents(createdProfile.profile.id, rootFolder.id));
+      });
+      expect(screen.queryByText('Loading folder...')).not.toBeInTheDocument();
+      expect(screen.getByText('Destination Home content')).toBeVisible();
+      expect(activityLog.record).not.toHaveBeenCalledWith(
+        createdProfile.profile.id,
+        expect.objectContaining({
+          eventCode: 'EXTERNAL-CONTENT-REFRESH-FAILED',
+        }),
+      );
+    },
+  );
+  it.each([
+    'current',
+    'other',
+    'missing',
+    'other-disabled',
+    'other-from-disabled',
+    'other-feedback-failed',
+  ] as const)(
+    'opens the fresh containing folder for a %s URL-match target',
+    async (scenario) => {
+      const user = userEvent.setup();
+      const notice =
+        "Switched to the bookmark's profile and opened its containing folder.";
+      const originalShow = NotificationService.prototype.show;
+      const show = vi
+        .spyOn(NotificationService.prototype, 'show')
+        .mockImplementation(function (this: NotificationService, input) {
+          if (scenario === 'other-feedback-failed' && input.message === notice)
+            throw new Error('synthetic-notification-failure');
+          return originalShow.call(this, input);
+        });
+      onTestFinished(() => show.mockRestore());
+      const otherId = '44444444-4444-4444-8444-444444444444';
+      const otherProfile = {
+        ...createdProfile.profile,
+        id: otherId,
+        username: 'Other owner',
+      };
+      const otherSettings = {
+        ...createdProfile.settings,
+        profileId: otherId,
+        notificationPreferences: {
+          ...defaultNotificationPreferences,
+          enabled: scenario !== 'other-disabled',
+        },
+      };
+      const otherRoot = {
+        ...rootFolder,
+        id: '55555555-5555-4555-8555-555555555555',
+        profileId: otherId,
+        title: 'Other home',
+      };
+      const destination = {
+        ...otherRoot,
+        id: '66666666-6666-4666-8666-666666666666',
+        parentId: otherRoot.id,
+        isRoot: false,
+        title: 'Moved destination',
+      };
+      const otherBookmark = {
+        ...storedBookmark,
+        id: '77777777-7777-4777-8777-777777777777',
+        profileId: otherId,
+        parentId: otherRoot.id,
+        title: 'Other bookmark',
+      };
+      let clicked = false;
+      profileManager.list.mockResolvedValue([
+        { ...createdProfile, isActive: true, bookmarkCount: 1, folderCount: 1 },
+        {
+          profile: otherProfile,
+          isActive: false,
+          bookmarkCount: 1,
+          folderCount: 2,
+        },
+      ]);
+      bookmarkManager.listFolders.mockImplementation(async (id) =>
+        id === otherId ? [otherRoot, destination] : [rootFolder],
+      );
+      bookmarkManager.listBookmarks.mockImplementation(async (id) =>
+        id === otherId
+          ? clicked && scenario === 'missing'
+            ? []
+            : [
+                {
+                  ...otherBookmark,
+                  parentId: clicked ? destination.id : otherRoot.id,
+                },
+              ]
+          : [storedBookmark],
+      );
+      renderApp(
+        {
+          status: 'ready',
+          theme: 'dark',
+          ...createdProfile,
+          settings: {
+            ...createdProfile.settings,
+            notificationPreferences: {
+              ...defaultNotificationPreferences,
+              enabled: scenario !== 'other-from-disabled',
+            },
+          },
+        },
+        {
+          status: 'ready',
+          theme: 'dark',
+          profile: otherProfile,
+          settings: otherSettings,
+        },
+      );
+      await screen.findByText('Example');
+      await user.click(screen.getByRole('button', { name: 'Open search' }));
+      const search = screen.getByRole('dialog', { name: 'Search' });
+      await user.click(
+        within(search).getByRole('button', { name: 'URL matches' }),
+      );
+      await user.selectOptions(within(search).getByLabelText('Scope'), 'all');
+      await user.click(
+        await within(search).findByRole('button', {
+          name: `${storedBookmark.url} · 2 bookmarks`,
+        }),
+      );
+      const row = within(search)
+        .getByText(scenario === 'current' ? 'Example' : 'Other bookmark')
+        .closest('li');
+      if (!row) throw new Error('missing-row');
+      clicked = true;
+      await user.click(
+        within(row).getByRole('button', { name: 'Open folder' }),
+      );
+      if (scenario === 'missing') {
+        expect(search).toHaveAttribute('open');
+        expect(
+          await within(
+            within(search).getByRole('region', { name: 'URL matches' }),
+          ).findByRole('alert'),
+        ).toHaveTextContent(
+          'The containing folder could not be opened. Try again.',
+        );
+        expect(profileManager.switchTo).not.toHaveBeenCalled();
+        expect(activityLog.record).toHaveBeenCalledWith(
+          otherId,
+          expect.objectContaining({
+            eventCode: 'URL-MATCH-FOLDER-OPEN-FAILED',
+            level: 'ERROR',
+          }),
+        );
+      } else {
+        await waitFor(() =>
+          expect(
+            screen.queryByRole('dialog', { name: 'Search' }),
+          ).not.toBeInTheDocument(),
+        );
+        expect(bookmarkManager.listContents).toHaveBeenCalledWith(
+          scenario === 'current' ? createdProfile.profile.id : otherId,
+          scenario === 'current' ? rootFolder.id : destination.id,
+        );
+        if (scenario !== 'current')
+          expect(profileManager.switchTo).toHaveBeenCalledWith(otherId);
+        else expect(profileManager.switchTo).not.toHaveBeenCalled();
+      }
+      if (
+        scenario === 'other' ||
+        scenario === 'other-feedback-failed' ||
+        scenario === 'other-from-disabled'
+      ) {
+        expect(show).toHaveBeenCalledWith(
+          expect.objectContaining({
+            level: 'information',
+            message: notice,
+            title: 'Profile switched',
+          }),
+        );
+        if (scenario !== 'other-feedback-failed')
+          expect(await screen.findByText(notice)).toBeVisible();
+        expect(activityLog.record).not.toHaveBeenCalledWith(
+          otherId,
+          expect.objectContaining({
+            eventCode: 'URL-MATCH-FOLDER-OPEN-FAILED',
+          }),
+        );
+      } else {
+        expect(show).not.toHaveBeenCalledWith(
+          expect.objectContaining({ message: notice }),
+        );
+      }
+    },
+  );
+  it('inspects and deletes an other-profile URL match without activation and owns Undo in that profile', async () => {
+    const user = userEvent.setup();
+    const sourceProfileId = '11111111-1111-4111-8111-111111111111';
+    const sourceRoot = {
+      ...rootFolder,
+      id: '22222222-2222-4222-8222-222222222222',
+      profileId: sourceProfileId,
+      title: 'Other home',
+    };
+    const sourceBookmark = {
+      ...storedBookmark,
+      id: '33333333-3333-4333-8333-333333333333',
+      profileId: sourceProfileId,
+      parentId: sourceRoot.id,
+      title: 'Other profile bookmark',
+    };
+    let deleted = false;
+    profileManager.list.mockResolvedValue([
+      { ...createdProfile, isActive: true, bookmarkCount: 1, folderCount: 1 },
+      {
+        profile: {
+          ...createdProfile.profile,
+          id: sourceProfileId,
+          username: 'Other owner',
+        },
+        isActive: false,
+        bookmarkCount: 1,
+        folderCount: 1,
+      },
+    ]);
+    bookmarkManager.listBookmarks.mockImplementation(async (id) =>
+      id === sourceProfileId
+        ? deleted
+          ? []
+          : [sourceBookmark]
+        : [storedBookmark],
+    );
+    bookmarkManager.listFolders.mockImplementation(async (id) =>
+      id === sourceProfileId ? [sourceRoot] : [rootFolder],
+    );
+    bookmarkManager.captureItemUndoState.mockResolvedValueOnce({
+      bookmarks: [sourceBookmark],
+      favorites: [],
+      folders: [sourceRoot],
+    });
+    bookmarkManager.captureUndoStateByIds.mockResolvedValueOnce({
+      bookmarks: [],
+      favorites: [],
+      folders: [sourceRoot],
+    });
+    bookmarkManager.deleteItem.mockImplementationOnce(async () => {
+      deleted = true;
+    });
+    const undo = new UndoHistoryService(
+      { load: async () => [], save: async () => undefined },
+      bookmarkManager.restoreUndoState,
+    );
+    renderApp(
+      { status: 'ready', theme: 'dark', ...createdProfile },
+      undefined,
+      undo,
+    );
+    await screen.findByText('Example');
+    await user.click(screen.getByRole('button', { name: 'Open search' }));
+    const search = screen.getByRole('dialog', { name: 'Search' });
+    await user.click(
+      within(search).getByRole('button', { name: 'URL matches' }),
+    );
+    await user.selectOptions(within(search).getByLabelText('Scope'), 'all');
+    await user.click(
+      await within(search).findByRole('button', {
+        name: `${storedBookmark.url} · 2 bookmarks`,
+      }),
+    );
+    const row = within(search)
+      .getByText('Other profile bookmark')
+      .closest('li');
+    if (!row) throw new Error('missing-member-row');
+    await user.click(within(row).getByRole('button', { name: 'Get info' }));
+    const info = await screen.findByRole('dialog', { name: 'Get info' });
+    expect(within(info).getByText('Other home')).toBeVisible();
+    fireEvent(info, new Event('cancel', { bubbles: true, cancelable: true }));
+    expect(search).toHaveAttribute('open');
+    await user.click(within(row).getByRole('button', { name: 'Delete' }));
+    const confirmation = await screen.findByRole('dialog', {
+      name: 'Confirm action',
+    });
+    expect(
+      within(confirmation).getByText(
+        'Delete this bookmark from profile "Other owner"?',
+      ),
+    ).toBeVisible();
+    await user.click(
+      within(confirmation).getByRole('button', { name: 'Delete' }),
+    );
+    await waitFor(() =>
+      expect(bookmarkManager.deleteItem).toHaveBeenCalledWith(
+        sourceProfileId,
+        sourceBookmark.id,
+        'bookmark',
+      ),
+    );
+    expect(
+      await within(search).findByText('No matching groups.'),
+    ).toBeVisible();
+    expect(within(search).queryByText('Other profile bookmark')).toBeNull();
+    expect(within(search).queryByText('0 groups · 0 bookmarks')).toBeNull();
+    expect(profileManager.switchTo).not.toHaveBeenCalled();
+    expect(undo.store.getState().entries).toEqual([
+      expect.objectContaining({
+        profileId: sourceProfileId,
+        itemId: sourceBookmark.id,
+        action: 'deleted',
+      }),
+    ]);
+    expect(activityLog.record).toHaveBeenCalledWith(
+      sourceProfileId,
+      expect.objectContaining({
+        eventCode: 'URL-MATCH-DELETE-COMPLETE',
+        level: 'INFO',
+      }),
+    );
+  });
+  it('keeps ordinary startup available when a bound destination was deleted', async () => {
+    claimFolderTab.mockRejectedValueOnce(
+      new FolderTabMissingDestinationError(),
+    );
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+    await screen.findByText('Example');
+    expect(
+      await screen.findByText(
+        'The requested folder is unavailable. Startup settings were used.',
+      ),
+    ).toBeVisible();
+    expect(activityLog.record).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      expect.objectContaining({
+        eventCode: 'FOLDER-TAB-DESTINATION-MISSING',
+        level: 'WARN',
+      }),
+    );
+  });
+
+  it('offers Retry instead of treating session failure as ordinary startup', async () => {
+    claimFolderTab.mockRejectedValueOnce(new Error('session-unavailable'));
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+    expect(
+      await screen.findByText(
+        'The initial folder contents could not be loaded.',
+      ),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
+    expect(bookmarkManager.listContents).not.toHaveBeenCalled();
+  });
+
+  it('opens from the keyboard even when activity recording fails', async () => {
+    const folder = {
+      ...rootFolder,
+      id: '33333333-3333-4333-8333-333333333333',
+      isRoot: false,
+      parentId: rootFolder.id,
+      title: 'Destination',
+    };
+    bookmarkManager.listFolders.mockResolvedValue([rootFolder, folder]);
+    bookmarkManager.listContents.mockResolvedValue({
+      bookmarks: [],
+      folders: [folder],
+    });
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+    fireEvent.contextMenu(await screen.findByText('Destination'), {
+      clientX: 100,
+      clientY: 100,
+    });
+    activityLog.record.mockRejectedValueOnce(
+      new Error('recording-unavailable'),
+    );
+    const diagnostic = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    try {
+      await userEvent.keyboard('{ArrowDown}{Enter}');
+      await waitFor(() =>
+        expect(openFolderTab).toHaveBeenCalledWith(
+          createdProfile.profile.id,
+          folder.id,
+        ),
+      );
+      await waitFor(() =>
+        expect(diagnostic).toHaveBeenCalledWith(
+          'profile-activity-log-write-failed',
+        ),
+      );
+      expect(activityLog.record).not.toHaveBeenCalledWith(
+        createdProfile.profile.id,
+        expect.objectContaining({ eventCode: 'FOLDER-OPEN-NEW-TAB-FAILED' }),
+      );
+      expect(
+        screen.queryByText('A folder could not be opened.'),
+      ).not.toBeInTheDocument();
+    } finally {
+      diagnostic.mockRestore();
+    }
+  });
+
+  it('loads the background destination without writing browser history', async () => {
+    const folder = {
+      ...rootFolder,
+      id: '33333333-3333-4333-8333-333333333333',
+      isRoot: false,
+      parentId: rootFolder.id,
+      title: 'Destination',
+    };
+    bookmarkManager.listFolders.mockResolvedValue([rootFolder, folder]);
+    claimFolderTab.mockResolvedValue(folder.id);
+    const push = vi.spyOn(window.history, 'pushState');
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+    await screen.findByRole('button', { name: 'Destination' });
+    expect(claimFolderTab).toHaveBeenCalledWith(createdProfile.profile.id);
+    expect(bookmarkManager.listContents).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      folder.id,
+    );
+    expect(push).not.toHaveBeenCalled();
+    push.mockRestore();
+    expect(activityLog.record).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      expect.objectContaining({
+        eventCode: 'FOLDER-TAB-LOAD-COMPLETE',
+        level: 'INFO',
+      }),
+    );
+  });
+
+  it.each([true, false])(
+    'reports folder-tab failure and honors notifications enabled=%s',
+    async (enabled) => {
+      const folder = {
+        ...rootFolder,
+        id: '33333333-3333-4333-8333-333333333333',
+        isRoot: false,
+        parentId: rootFolder.id,
+        title: 'Destination',
+      };
+      bookmarkManager.listFolders.mockResolvedValue([rootFolder, folder]);
+      bookmarkManager.listContents.mockResolvedValue({
+        bookmarks: [],
+        folders: [folder],
+      });
+      openFolderTab.mockRejectedValue(new Error('unavailable'));
+      renderApp({
+        status: 'ready',
+        theme: 'dark',
+        ...createdProfile,
+        settings: {
+          ...createdProfile.settings,
+          notificationPreferences: {
+            ...defaultNotificationPreferences,
+            enabled,
+          },
+        },
+      });
+      fireEvent.contextMenu(await screen.findByText('Destination'), {
+        clientX: 100,
+        clientY: 100,
+      });
+      await userEvent.click(
+        await screen.findByRole('menuitem', { name: 'Open folder in new tab' }),
+      );
+      await waitFor(() =>
+        expect(openFolderTab).toHaveBeenCalledWith(
+          createdProfile.profile.id,
+          folder.id,
+        ),
+      );
+      await waitFor(() =>
+        expect(activityLog.record).toHaveBeenCalledWith(
+          createdProfile.profile.id,
+          expect.objectContaining({
+            eventCode: 'FOLDER-OPEN-NEW-TAB-FAILED',
+            level: 'ERROR',
+          }),
+        ),
+      );
+      if (enabled)
+        expect(
+          await screen.findByText('A folder could not be opened.'),
+        ).toBeVisible();
+      else
+        expect(
+          screen.queryByText('A folder could not be opened.'),
+        ).not.toBeInTheDocument();
+    },
+  );
+
   it('re-reads only the visible affected folder after a cross-context change', async () => {
     let receive: ((change: ContentChange) => void) | undefined;
     const contentChanges = {
@@ -308,6 +999,46 @@ describe('App', () => {
     });
 
     expect(await screen.findByText('Added from popup')).toBeVisible();
+  });
+
+  it('reports a current folder refresh failure while preserving its content', async () => {
+    let receive: ((change: ContentChange) => void) | undefined;
+    renderApp(
+      { status: 'ready', theme: 'dark', ...createdProfile },
+      undefined,
+      undefined,
+      {
+        subscribe: (next) => {
+          receive = next;
+          return () => undefined;
+        },
+      },
+    );
+    await screen.findByText('Example');
+    bookmarkManager.listContents.mockRejectedValueOnce(
+      new Error('synthetic-current-read-failure'),
+    );
+    receive?.({
+      affectedParentIds: [rootFolder.id],
+      changedFolderIds: [],
+      deletedFolderPaths: [],
+      fullRefresh: true,
+      navigationChanged: false,
+      profileId: createdProfile.profile.id,
+      protocolVersion: 1,
+      revision: 1,
+      type: 'content.changed',
+    });
+    await waitFor(() =>
+      expect(activityLog.record).toHaveBeenCalledWith(
+        createdProfile.profile.id,
+        expect.objectContaining({
+          eventCode: 'EXTERNAL-CONTENT-REFRESH-FAILED',
+          level: 'ERROR',
+        }),
+      ),
+    );
+    expect(screen.getByText('Example')).toBeVisible();
   });
 
   it('opens the closest surviving ancestor when sync removes the displayed folder', async () => {
@@ -925,6 +1656,122 @@ describe('App', () => {
     searchDialog = await screen.findByRole('dialog', { name: 'Search' });
     expect(within(searchDialog).getByRole('searchbox')).toHaveFocus();
   });
+
+  it('shows fresh Search item information and opens its containing folder', async () => {
+    const user = userEvent.setup();
+    profileManager.list.mockResolvedValue([
+      { isActive: true, profile: createdProfile.profile },
+    ]);
+    bookmarkManager.listBookmarks.mockResolvedValue([storedBookmark]);
+    renderApp({ status: 'ready', theme: 'dark', ...createdProfile });
+    await screen.findByRole('link', { name: 'Open Example' });
+    await user.click(screen.getByRole('button', { name: 'Open search' }));
+    const search = await screen.findByRole('dialog', {
+      name: 'Search',
+    });
+    await user.type(within(search).getByRole('searchbox'), 'Example');
+    const infoButton = await within(search).findByRole('button', {
+      name: 'Get info',
+    });
+    bookmarkManager.listBookmarks.mockResolvedValue([
+      { ...storedBookmark, title: 'Fresh Example' },
+    ]);
+    await user.click(infoButton);
+    const info = await screen.findByRole('dialog', { name: /Get info/ });
+    expect(
+      within(info).getByText('Fresh Example', { exact: true }),
+    ).toBeVisible();
+    expect(search).toBeVisible();
+    await user.click(
+      within(info).getByRole('button', {
+        name: 'Close item information',
+      }),
+    );
+    await waitFor(() => expect(infoButton).toHaveFocus());
+    expect(within(search).getByRole('searchbox')).toHaveValue('Example');
+    await user.click(
+      within(search).getByRole('button', { name: 'Open parent folder' }),
+    );
+    await waitFor(() => expect(search).not.toHaveAttribute('open'));
+    expect(profileManager.switchTo).not.toHaveBeenCalled();
+    expect(bookmarkManager.listContents).toHaveBeenCalledWith(
+      createdProfile.profile.id,
+      rootFolder.id,
+    );
+  });
+
+  it.each([true, false])(
+    'reports stale Search actions with notifications enabled=%s',
+    async (enabled) => {
+      const user = userEvent.setup();
+      profileManager.list.mockResolvedValue([
+        { isActive: true, profile: createdProfile.profile },
+      ]);
+      bookmarkManager.listBookmarks.mockResolvedValue([storedBookmark]);
+      renderApp({
+        status: 'ready',
+        theme: 'dark',
+        ...createdProfile,
+        settings: {
+          ...createdProfile.settings,
+          notificationPreferences: {
+            ...defaultNotificationPreferences,
+            enabled,
+          },
+        },
+      });
+      await screen.findByRole('link', { name: 'Open Example' });
+      await user.click(screen.getByRole('button', { name: 'Open search' }));
+      const search = await screen.findByRole('dialog', {
+        name: 'Search',
+      });
+      await user.type(within(search).getByRole('searchbox'), 'Example');
+      await within(search).findByRole('button', { name: 'Get info' });
+      bookmarkManager.listBookmarks.mockResolvedValue([]);
+      if (!enabled)
+        activityLog.record.mockRejectedValueOnce(
+          new Error('synthetic-log-failure'),
+        );
+      await user.click(
+        within(search).getByRole('button', { name: 'Get info' }),
+      );
+      await waitFor(() =>
+        expect(activityLog.record).toHaveBeenCalledWith(
+          createdProfile.profile.id,
+          expect.objectContaining({
+            eventCode: 'SEARCH-ITEM-INFO-FAILED',
+            level: 'ERROR',
+          }),
+        ),
+      );
+      expect(search).toBeVisible();
+      await user.click(
+        within(search).getByRole('button', { name: 'Open parent folder' }),
+      );
+      await waitFor(() =>
+        expect(activityLog.record).toHaveBeenCalledWith(
+          createdProfile.profile.id,
+          expect.objectContaining({
+            eventCode: 'SEARCH-PARENT-FOLDER-OPEN-FAILED',
+            level: 'ERROR',
+          }),
+        ),
+      );
+      expect(
+        within(search).getByText(
+          'The selected search result could not be opened.',
+          { exact: true },
+        ),
+      ).toHaveAttribute('role', 'alert');
+      if (!enabled)
+        expect(
+          screen.queryByText(
+            'The containing folder could not be opened. Try again.',
+          ),
+        ).not.toBeInTheDocument();
+      expect(profileManager.switchTo).not.toHaveBeenCalled();
+    },
+  );
 
   it('uses the saved app-local search binding instead of its default', async () => {
     renderApp({
@@ -1706,10 +2553,14 @@ describe('App', () => {
       name: 'Bookmark activity log',
     });
     expect(logWindow).toBeVisible();
-    expect(within(logWindow).getByText('Saved locally')).toBeVisible();
     expect(
-      within(logWindow).getByRole('button', { name: 'Export' }),
-    ).toBeEnabled();
+      within(logWindow).getByText(
+        'Shared local activity history, grouped by browser session.',
+      ),
+    ).toBeVisible();
+    expect(
+      within(logWindow).queryByRole('button', { name: 'Export' }),
+    ).not.toBeInTheDocument();
   });
 
   it('saves profile display defaults without changing the current folder', async () => {

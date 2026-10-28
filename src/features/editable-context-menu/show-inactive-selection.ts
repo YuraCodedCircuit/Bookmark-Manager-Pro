@@ -19,15 +19,25 @@ export function showInactiveSelection(
   const pixels = (value: string) => Number.parseFloat(value) || 0;
   const left = pixels(style.paddingLeft);
   const top = pixels(style.paddingTop);
+  // Firefox's input clientLeft/clientWidth describe its inner editor and
+  // already exclude horizontal padding. Use the outer border box for inputs
+  // so padding is counted once in both Firefox and Chromium.
+  const singleLine = target instanceof HTMLInputElement;
+  const borderLeft = singleLine
+    ? pixels(style.borderLeftWidth)
+    : target.clientLeft;
+  const innerWidth = singleLine
+    ? bounds.width - borderLeft - pixels(style.borderRightWidth)
+    : target.clientWidth;
   const preview = document.createElement('div');
   preview.className = 'editable-selection-preview';
   preview.setAttribute('aria-hidden', 'true');
   preview.inert = true;
   Object.assign(preview.style, {
     position: 'fixed',
-    left: `${bounds.left + target.clientLeft + left}px`,
+    left: `${bounds.left + borderLeft + left}px`,
     top: `${bounds.top + target.clientTop + top}px`,
-    width: `${Math.max(0, target.clientWidth - left - pixels(style.paddingRight))}px`,
+    width: `${Math.max(0, innerWidth - left - pixels(style.paddingRight))}px`,
     height: `${Math.max(0, target.clientHeight - top - pixels(style.paddingBottom))}px`,
     overflow: 'hidden',
     pointerEvents: 'none',
